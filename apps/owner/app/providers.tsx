@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 import { configureApi } from '@iziwellpass/api/client';
 import { ApiProvider } from '@iziwellpass/api/provider';
@@ -30,14 +30,12 @@ function noopAuthClient(): AuthClient {
 /** Wires the auth token getter into the api client exactly once (client-side only). */
 function ApiConfigurator({ children }: { children: ReactNode }) {
   const { getToken } = useAuth();
-  const configured = useRef(false);
-  if (!configured.current) {
+  useEffect(() => {
     configureApi({
       baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? '',
       getToken,
     });
-    configured.current = true;
-  }
+  }, [getToken]);
   return children;
 }
 
@@ -53,9 +51,14 @@ export function Providers({ children }: { children: ReactNode }) {
         userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID ?? '',
         clientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? '',
       });
-    } catch {
-      // Missing/empty Cognito config (e.g. build-time SSR prerender) — fail
-      // loudly at runtime via rejected calls instead of at build time.
+    } catch (err) {
+      // Missing/empty Cognito config (e.g. build-time SSR prerender) — fails
+      // loudly at first sign-in attempt (rejected calls) and via a console
+      // error now, instead of failing silently or breaking the build.
+      console.error(
+        '[auth] Cognito client not configured — check NEXT_PUBLIC_COGNITO_* env vars:',
+        err,
+      );
       return noopAuthClient();
     }
   });
