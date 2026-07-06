@@ -7,21 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/compon
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
 function VenuesCard() {
-  // SP2 unwrap-typing verification (see SP4 plan header) — verified via a
-  // throwaway tsc probe, not guessed. Orval typed `listVenuesResponse` as a
-  // `{data, status} & {headers}` envelope, but the mutator (`customFetch`)
-  // actually resolves to the raw JSON body cast to `T` — it never builds
-  // that wrapper at runtime. So the true runtime value is already
-  // `ApiResponseVecVenue` (`{data: Venue[], request_id}`), one level
-  // shallower than the TYPE claims. `select: unwrap` type-checks (`unwrap`'s
-  // constraint is satisfied by the response union) and TData collapses to
-  // `ApiResponseVecVenue | ErrorResponse | undefined` — i.e. TypeScript
-  // believes `unwrap` peeled the outer envelope, leaving an object that
-  // still has its own `.data`. But `unwrap` ran against the REAL runtime
-  // value (already `ApiResponseVecVenue`), so at runtime it already
-  // returned `Venue[]` directly — one hop shallower than the type says.
-  // `venuesQuery.data.data` below type-checks against the (wrong) TYPE; see
-  // the final report for the recommended SP5–SP9 pattern.
+  // Canonical SP5–SP9 hooks pattern: `select: unwrap` peels the
+  // `{ data, request_id }` envelope that customFetch actually resolves to,
+  // so `venuesQuery.data` is `Venue[] | undefined` — typed AND
+  // runtime-correct (generated types now match the mutator's runtime shape;
+  // see packages/api/orval.config.ts's includeHttpResponseReturnType: false).
+  // Reuse this select-unwrap + `instanceof ApiError` shape for every
+  // generated query hook rather than reaching into `.data.data` by hand.
   const venuesQuery = useListVenues({ query: { select: unwrap } });
 
   if (venuesQuery.isLoading) {
@@ -41,9 +33,7 @@ function VenuesCard() {
     return <p className="text-sm text-destructive">{message}</p>;
   }
 
-  // Matches the (mismatched, see above) TYPE: venuesQuery.data is typed as
-  // ApiResponseVecVenue | ErrorResponse, both of which carry a `.data` field.
-  const venues = venuesQuery.data && 'data' in venuesQuery.data ? venuesQuery.data.data : [];
+  const venues = venuesQuery.data ?? [];
 
   if (venues.length === 0) {
     return <p className="text-sm text-muted-foreground">No venues yet.</p>;
