@@ -60,6 +60,9 @@ importers:
       '@iziwellpass/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: ^5.80.0
+        version: 5.101.2(react@19.2.7)
       next:
         specifier: ^15.3.0
         version: 15.5.20(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
