@@ -46,4 +46,9 @@ describe('parseClaims', () => {
   it('throws on a malformed token', () => {
     expect(() => parseClaims('not-a-jwt')).toThrow();
   });
+
+  it('parses an unknown role string to null', () => {
+    const token = fakeJwt({ sub: 'u', role: 'superadmin', exp: 1 });
+    expect(parseClaims(token).role).toBeNull();
+  });
 });

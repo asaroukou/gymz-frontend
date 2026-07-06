@@ -2,7 +2,13 @@
 // Client-side only and NEVER trusted for authorization — the API authorizer
 // re-validates everything; this exists purely for UI gating (nav, buttons).
 
-export type Role = 'platform_admin' | 'owner' | 'admin' | 'trainer' | 'receptionist' | 'consumer';
+const ROLES = ['platform_admin', 'owner', 'admin', 'trainer', 'receptionist', 'consumer'] as const;
+
+export type Role = (typeof ROLES)[number];
+
+function isRole(value: unknown): value is Role {
+  return typeof value === 'string' && (ROLES as readonly string[]).includes(value);
+}
 
 export interface SessionClaims {
   sub: string;
@@ -45,11 +51,12 @@ export function parseClaims(idToken: string): SessionClaims {
   ) as Record<string, unknown>;
 
   return {
-    sub: String(payload.sub ?? ''),
+    sub: typeof payload.sub === 'string' ? payload.sub : '',
     email: typeof payload.email === 'string' ? payload.email : null,
     orgId: typeof payload.org_id === 'string' ? payload.org_id : null,
-    role: typeof payload.role === 'string' ? (payload.role as Role) : null,
+    role: isRole(payload.role) ? payload.role : null,
     permissions: parsePermissions(payload.permissions),
+    // 0 = treat-as-expired sentinel (fails closed)
     expiresAt: typeof payload.exp === 'number' ? payload.exp : 0,
   };
 }
