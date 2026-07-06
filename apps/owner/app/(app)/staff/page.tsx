@@ -74,10 +74,12 @@ import {
 
 /**
  * Roles assignable to staff via invite/change-role. Excludes `platform_admin`
- * (platform-level, not tenant staff) and `consumer` (marketplace end-user, not
- * staff) per the plan's "Role enum minus platform_admin/consumer" rule.
+ * (platform-level, not tenant staff), `consumer` (marketplace end-user, not
+ * staff), and `owner` — the backend domain validation rejects inviting or
+ * assigning owner via staff invite ("Cannot invite owner or platform_admin
+ * via staff invite").
  */
-const ASSIGNABLE_ROLES = [Role.owner, Role.admin, Role.trainer, Role.receptionist] as const;
+const ASSIGNABLE_ROLES = [Role.admin, Role.trainer, Role.receptionist] as const;
 
 function apiErrorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? `${fallback} (${err.code})` : fallback;
@@ -94,6 +96,17 @@ function staffName(staff: Staff): string {
 function roleBadgeVariant(role: Staff['role']): 'default' | 'secondary' | 'outline' {
   if (role === 'owner' || role === 'admin') return 'default';
   return 'outline';
+}
+
+/**
+ * A staff row's current role may be `owner` (not assignable/editable here —
+ * see ASSIGNABLE_ROLES). Fall back to `admin` as the dialog's default in that
+ * case so the form always starts on a value the select actually offers.
+ */
+function assignableRoleOrFallback(role: Staff['role']): (typeof ASSIGNABLE_ROLES)[number] {
+  return (ASSIGNABLE_ROLES as readonly string[]).includes(role)
+    ? (role as (typeof ASSIGNABLE_ROLES)[number])
+    : Role.admin;
 }
 
 // ---------------------------------------------------------------------------
@@ -264,7 +277,7 @@ function ChangeRoleDialog({
 
   const form = useForm<ChangeRoleValues>({
     resolver: zodResolver(changeRoleSchema),
-    defaultValues: { role: staff.role as (typeof ASSIGNABLE_ROLES)[number] },
+    defaultValues: { role: assignableRoleOrFallback(staff.role) },
   });
 
   const onSubmit = (values: ChangeRoleValues) => {
@@ -289,7 +302,7 @@ function ChangeRoleDialog({
       onOpenChange={(next) => {
         onOpenChange(next);
         if (!next) {
-          form.reset({ role: staff.role as (typeof ASSIGNABLE_ROLES)[number] });
+          form.reset({ role: assignableRoleOrFallback(staff.role) });
         }
       }}
     >
