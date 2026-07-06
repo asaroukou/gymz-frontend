@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,15 +35,25 @@ const confirmSchema = z.object({
 
 type ConfirmValues = z.infer<typeof confirmSchema>;
 
+const RESEND_COOLDOWN_SECONDS = 30;
+
 function ConfirmForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { client } = useAuth();
+  const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   const form = useForm<ConfirmValues>({
     resolver: zodResolver(confirmSchema),
     defaultValues: { email: searchParams.get('email') ?? '', code: '' },
   });
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const onSubmit = async (values: ConfirmValues) => {
     try {
@@ -54,6 +64,26 @@ function ConfirmForm() {
       const message = err instanceof Error ? err.message : 'Could not confirm account';
       form.setError('root', { message });
       toast.error(message);
+    }
+  };
+
+  const onResend = async () => {
+    const email = form.getValues('email');
+    const parsed = z.email().safeParse(email);
+    if (!parsed.success) {
+      form.setError('email', { message: 'Enter a valid email address' });
+      return;
+    }
+    setResending(true);
+    try {
+      await client.resendConfirmationCode(email);
+      toast.success('Code sent');
+      setCooldown(RESEND_COOLDOWN_SECONDS);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not resend code';
+      toast.error(message);
+    } finally {
+      setResending(false);
     }
   };
 
@@ -97,6 +127,15 @@ function ConfirmForm() {
         ) : null}
         <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
           {form.formState.isSubmitting ? 'Confirming…' : 'Confirm account'}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full"
+          disabled={resending || cooldown > 0}
+          onClick={() => void onResend()}
+        >
+          {cooldown > 0 ? `Resend code (${cooldown}s)` : resending ? 'Sending…' : 'Resend code'}
         </Button>
       </form>
     </Form>

@@ -20,6 +20,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,10 +28,12 @@ import {
 } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
 
+import { passwordSchema, PASSWORD_REQUIREMENTS_TEXT } from '@/lib/password';
+
 const signupSchema = z
   .object({
     email: z.email('Enter a valid email address'),
-    password: z.string().min(8, 'Must be at least 8 characters'),
+    password: passwordSchema,
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -91,6 +94,7 @@ export default function SignupPage() {
                   <FormControl>
                     <Input type="password" autoComplete="new-password" {...field} />
                   </FormControl>
+                  <FormDescription>{PASSWORD_REQUIREMENTS_TEXT}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
