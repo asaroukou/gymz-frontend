@@ -1,0 +1,38 @@
+{
+  "name": "@iziwellpass/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": "./src/cognito.ts",
+    "./claims": "./src/claims.ts",
+    "./provider": "./src/provider.tsx",
+    "./middleware": "./src/middleware.ts",
+    "./session-cookie": "./src/session-cookie.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "amazon-cognito-identity-js": "^6.3.0"
+  },
+  "peerDependencies": {
+    "next": "^15.3.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@iziwellpass/config": "workspace:*",
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.0.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "eslint": "^9.25.0",
+    "jsdom": "^26.0.0",
+    "next": "^15.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

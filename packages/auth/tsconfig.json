@@ -1,0 +1,10 @@
+{
+  "extends": "@iziwellpass/config/typescript/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "types": ["vitest/globals"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vitest.config.ts"],
+  "exclude": ["node_modules"]
+}
