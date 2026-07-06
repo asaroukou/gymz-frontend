@@ -26,9 +26,18 @@ export class ApiError extends Error {
 
 export type TokenGetter = () => Promise<string | null>;
 
+/**
+ * Called on a 401 response (once per original request). Should attempt a
+ * session refresh and return the new token to retry with, or null/undefined
+ * to give up (the caller then sees the original 401 ApiError). Implementations
+ * typically also handle redirecting to sign-in when the refresh itself fails.
+ */
+export type UnauthorizedHandler = () => Promise<string | null | undefined>;
+
 interface ApiConfig {
   baseUrl: string;
   getToken: TokenGetter;
+  onUnauthorized?: UnauthorizedHandler;
 }
 
 // Process-wide mutable state: call configureApi() from CLIENT code only.
@@ -44,10 +53,27 @@ export function configureApi(next: Partial<ApiConfig>): void {
   config = { ...config, ...next };
 }
 
-/** Orval mutator: every generated operation funnels through here. */
-export async function customFetch<T>(url: string, options: RequestInit): Promise<T> {
+async function parseErrorResponse(response: Response): Promise<ApiError> {
+  let body: ErrorBody = { code: 'UNKNOWN', message: `HTTP ${response.status}` };
+  let requestId: string | undefined;
+  try {
+    const parsed = (await response.json()) as {
+      error?: ErrorBody;
+      request_id?: string;
+    };
+    if (parsed.error) {
+      body = parsed.error;
+    }
+    requestId = parsed.request_id;
+  } catch {
+    // non-JSON error body (gateway timeouts etc.) — keep the UNKNOWN default
+  }
+  return new ApiError(response.status, body, requestId);
+}
+
+/** Performs the actual request with a given bearer token (or none). */
+async function doFetch(url: string, options: RequestInit, token: string | null): Promise<Response> {
   const headers = new Headers(options.headers);
-  const token = await config.getToken();
   if (token) {
     headers.set('authorization', `Bearer ${token}`);
   }
@@ -57,24 +83,25 @@ export async function customFetch<T>(url: string, options: RequestInit): Promise
 
   // Network-level failures (offline/DNS) intentionally pass through as raw TypeError —
   // callers distinguish transport errors (not ApiError) from API errors (ApiError).
-  const response = await fetch(`${config.baseUrl}${url}`, { ...options, headers });
+  return fetch(`${config.baseUrl}${url}`, { ...options, headers });
+}
+
+/** Orval mutator: every generated operation funnels through here. */
+export async function customFetch<T>(url: string, options: RequestInit): Promise<T> {
+  const token = await config.getToken();
+  let response = await doFetch(url, options, token);
+
+  if (response.status === 401 && config.onUnauthorized) {
+    const freshToken = await config.onUnauthorized();
+    if (freshToken) {
+      response = await doFetch(url, options, freshToken);
+    } else {
+      throw await parseErrorResponse(response);
+    }
+  }
 
   if (!response.ok) {
-    let body: ErrorBody = { code: 'UNKNOWN', message: `HTTP ${response.status}` };
-    let requestId: string | undefined;
-    try {
-      const parsed = (await response.json()) as {
-        error?: ErrorBody;
-        request_id?: string;
-      };
-      if (parsed.error) {
-        body = parsed.error;
-      }
-      requestId = parsed.request_id;
-    } catch {
-      // non-JSON error body (gateway timeouts etc.) — keep the UNKNOWN default
-    }
-    throw new ApiError(response.status, body, requestId);
+    throw await parseErrorResponse(response);
   }
 
   if (response.status === 204) {

@@ -6,6 +6,7 @@ import { configureApi } from '@iziwellpass/api/client';
 import { ApiProvider } from '@iziwellpass/api/provider';
 import { createAuthClient, type AuthClient } from '@iziwellpass/auth/client';
 import { AuthProvider, useAuth } from '@iziwellpass/auth/provider';
+import { clearSessionCookie } from '@iziwellpass/auth/session-cookie';
 import { Toaster } from '@iziwellpass/ui/components/sonner';
 
 /**
@@ -31,13 +32,28 @@ function noopAuthClient(): AuthClient {
 
 /** Wires the auth token getter into the api client exactly once (client-side only). */
 function ApiConfigurator({ children }: { children: ReactNode }) {
-  const { getToken } = useAuth();
+  const { getToken, client } = useAuth();
   useEffect(() => {
     configureApi({
       baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? '',
       getToken,
+      onUnauthorized: async () => {
+        // In unconfigured envs `client` is the noopAuthClient, whose
+        // forceRefreshSession() always resolves null — that's fine here:
+        // those envs have no real Cognito session to refresh anyway, so
+        // falling through to the sign-in redirect below is the correct
+        // (and only reachable) outcome.
+        const token = await client.forceRefreshSession();
+        if (!token) {
+          clearSessionCookie();
+          if (typeof window !== 'undefined') {
+            window.location.assign('/login?next=' + encodeURIComponent(window.location.pathname));
+          }
+        }
+        return token;
+      },
     });
-  }, [getToken]);
+  }, [getToken, client]);
   return children;
 }
 

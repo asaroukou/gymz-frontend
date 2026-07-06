@@ -9,7 +9,11 @@ const jsonResponse = (status: number, body: unknown) =>
 
 describe('customFetch', () => {
   beforeEach(() => {
-    configureApi({ baseUrl: 'https://api.test/v1', getToken: () => Promise.resolve(null) });
+    configureApi({
+      baseUrl: 'https://api.test/v1',
+      getToken: () => Promise.resolve(null),
+      onUnauthorized: undefined,
+    });
     vi.stubGlobal('fetch', vi.fn());
   });
   afterEach(() => {
@@ -96,6 +100,86 @@ describe('customFetch', () => {
     vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }));
     const res = await customFetch('/gms/v1/staff/1', { method: 'DELETE' });
     expect(res).toBeUndefined();
+  });
+});
+
+describe('customFetch 401 refresh-once interceptor', () => {
+  beforeEach(() => {
+    configureApi({
+      baseUrl: 'https://api.test/v1',
+      getToken: () => Promise.resolve('tok-old'),
+      onUnauthorized: undefined,
+    });
+    vi.stubGlobal('fetch', vi.fn());
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('retries once with the refreshed token when onUnauthorized resolves a token', async () => {
+    const onUnauthorized = vi.fn().mockResolvedValue('tok-2');
+    configureApi({ onUnauthorized });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        jsonResponse(401, {
+          error: { code: 'UNAUTHORIZED', message: 'Expired' },
+          request_id: 'r1',
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse(200, { data: { ok: true }, request_id: 'r2' }));
+
+    const res = await customFetch<{ data: { ok: boolean } }>('/gms/v1/staff', { method: 'GET' });
+
+    expect(res.data.ok).toBe(true);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    const secondCallHeaders = new Headers(vi.mocked(fetch).mock.calls[1]?.[1]?.headers);
+    expect(secondCallHeaders.get('authorization')).toBe('Bearer tok-2');
+  });
+
+  it('throws the original ApiError(401) after one call when onUnauthorized resolves null', async () => {
+    const onUnauthorized = vi.fn().mockResolvedValue(null);
+    configureApi({ onUnauthorized });
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(401, { error: { code: 'UNAUTHORIZED', message: 'Expired' }, request_id: 'r1' }),
+    );
+
+    const err = await customFetch('/gms/v1/staff', { method: 'GET' }).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ApiError);
+    expect((err as ApiError).status).toBe(401);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws when the retried request also 401s, without calling onUnauthorized again', async () => {
+    const onUnauthorized = vi.fn().mockResolvedValue('tok-2');
+    configureApi({ onUnauthorized });
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(401, {
+        error: { code: 'UNAUTHORIZED', message: 'Still expired' },
+        request_id: 'r1',
+      }),
+    );
+
+    const err = await customFetch('/gms/v1/staff', { method: 'GET' }).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ApiError);
+    expect((err as ApiError).status).toBe(401);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws the ApiError on the first 401 without retrying when no onUnauthorized is configured', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(401, { error: { code: 'UNAUTHORIZED', message: 'Expired' }, request_id: 'r1' }),
+    );
+
+    const err = await customFetch('/gms/v1/staff', { method: 'GET' }).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ApiError);
+    expect((err as ApiError).status).toBe(401);
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
 
