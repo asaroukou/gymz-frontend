@@ -8,7 +8,7 @@ import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { ApiError, unwrap } from '@iziwellpass/api/client';
+import { unwrap } from '@iziwellpass/api/client';
 import {
   getGetVenueQueryKey,
   getListResourcesQueryKey,
@@ -71,12 +71,9 @@ import {
 } from '@iziwellpass/ui/components/table';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 
 const VENUE_TYPE_VALUES = Object.values(VenueType) as [VenueType, ...VenueType[]];
-
-function apiErrorMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? `${fallback} (${err.code})` : fallback;
-}
 
 function venueTypeLabel(venueType: string): string {
   return venueType.replace(/_/g, ' ');
@@ -154,7 +151,9 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
           void queryClient.invalidateQueries({ queryKey: getListVenuesQueryKey() });
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to update venue'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to update venue'));
+          }
         },
       },
     );
@@ -380,7 +379,9 @@ function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: Resour
           setOpen(false);
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to create resource type'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to create resource type'));
+          }
         },
       },
     );
@@ -639,7 +640,9 @@ function AddResourceDialog({
           setOpen(false);
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to add resource'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to add resource'));
+          }
         },
       },
     );
@@ -732,7 +735,9 @@ function EditResourceDialog({
           onOpenChange(false);
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to update resource'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to update resource'));
+          }
         },
       },
     );

@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { ApiError, unwrap } from '@iziwellpass/api/client';
+import { unwrap } from '@iziwellpass/api/client';
 import {
   getListMembersQueryKey,
   useListMembers,
@@ -55,15 +55,12 @@ import {
 } from '@iziwellpass/ui/components/table';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
   ...MembershipType[],
 ];
-
-function apiErrorMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? `${fallback} (${err.code})` : fallback;
-}
 
 function labelize(value: string): string {
   return value.replace(/_/g, ' ');
@@ -148,7 +145,9 @@ function AddMemberDialog() {
           setOpen(false);
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to add member'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to add member'));
+          }
         },
       },
     );

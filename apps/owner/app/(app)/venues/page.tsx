@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { ApiError, unwrap } from '@iziwellpass/api/client';
+import { unwrap } from '@iziwellpass/api/client';
 import { useListVenues } from '@iziwellpass/api/generated';
 import type { Venue } from '@iziwellpass/api/schemas';
 import { Badge } from '@iziwellpass/ui/components/badge';
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/compon
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { apiErrorMessage } from '@/lib/api-error';
 
 function addressSummary(venue: Venue): string {
   const parts = [venue.address_line, venue.city, venue.country].filter(
@@ -59,10 +60,11 @@ function VenuesGrid() {
   }
 
   if (venuesQuery.isError) {
-    const err = venuesQuery.error;
-    const message =
-      err instanceof ApiError ? `Failed to load venues (${err.code})` : 'Failed to load venues';
-    return <p className="text-sm text-destructive">{message}</p>;
+    return (
+      <p className="text-sm text-destructive">
+        {apiErrorMessage(venuesQuery.error, 'Failed to load venues')}
+      </p>
+    );
   }
 
   const venues = venuesQuery.data ?? [];

@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { ApiError, unwrap } from '@iziwellpass/api/client';
+import { unwrap } from '@iziwellpass/api/client';
 import {
   getGetAttendanceQueryKey,
   getListCheckInsQueryKey,
@@ -50,12 +50,9 @@ import {
 } from '@iziwellpass/ui/components/table';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { formatDateTime } from '@/lib/datetime';
 import { useVenueSelection } from '@/lib/use-venue-selection';
-
-function apiErrorMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? `${fallback} (${err.code})` : fallback;
-}
 
 function memberName(member: Member): string {
   return `${member.first_name} ${member.last_name}`.trim();
@@ -217,7 +214,9 @@ function ManualCheckinForm({ venueId, members }: { venueId: string; members: Mem
           form.reset({ member_id: '', booking_id: '' });
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to check in member'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to check in member'));
+          }
         },
       },
     );
@@ -291,7 +290,9 @@ function QrCheckinForm({ venueId }: { venueId: string }) {
           form.reset({ qr_token: '' });
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to check in member'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to check in member'));
+          }
         },
       },
     );

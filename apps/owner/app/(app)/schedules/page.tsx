@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { ApiError, unwrap } from '@iziwellpass/api/client';
+import { unwrap } from '@iziwellpass/api/client';
 import {
   getListBookingsForSlotQueryKey,
   getListSchedulesQueryKey,
@@ -82,6 +82,7 @@ import {
 } from '@iziwellpass/ui/components/table';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { formatDateHeading, formatTime, venueDateKey } from '@/lib/datetime';
 import { useVenueSelection } from '@/lib/use-venue-selection';
 import {
@@ -93,10 +94,6 @@ import {
   type RecurrenceEditorState,
   type Weekday,
 } from '@/lib/recurrence';
-
-function apiErrorMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? `${fallback} (${err.code})` : fallback;
-}
 
 function labelize(value: string): string {
   return value.replace(/_/g, ' ');
@@ -467,7 +464,9 @@ function AddScheduleDialog({
           setOpen(false);
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to create schedule'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to create schedule'));
+          }
         },
       },
     );
@@ -568,7 +567,9 @@ function EditScheduleDialog({
           onOpenChange(false);
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to update schedule'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to update schedule'));
+          }
         },
       },
     );
@@ -847,7 +848,9 @@ function AddBookingDialog({
           setOpen(false);
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to add booking'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Failed to add booking'));
+          }
         },
       },
     );

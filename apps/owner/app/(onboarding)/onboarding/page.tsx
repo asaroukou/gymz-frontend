@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { ApiError, unwrap } from '@iziwellpass/api/client';
+import { unwrap } from '@iziwellpass/api/client';
 import { useOnboardVenue } from '@iziwellpass/api/generated';
 import { VenueType } from '@iziwellpass/api/schemas';
 import { parseClaims } from '@iziwellpass/auth/claims';
@@ -38,16 +38,13 @@ import {
 } from '@iziwellpass/ui/components/select';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
+import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { navForRole } from '@/lib/nav';
 
 const VENUE_TYPE_VALUES = Object.values(VenueType) as [VenueType, ...VenueType[]];
 
 function venueTypeLabel(venueType: string): string {
   return venueType.replace(/_/g, ' ');
-}
-
-function apiErrorMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? `${fallback} (${err.code})` : fallback;
 }
 
 function detectTimezone(): string {
@@ -142,7 +139,9 @@ function OnboardingForm() {
           router.replace('/login?onboarded=1');
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Could not create your venue'));
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, 'Could not create your venue'));
+          }
         },
       },
     );

@@ -1,10 +1,12 @@
 'use client';
 
-import { ApiError, unwrap } from '@iziwellpass/api/client';
+import { unwrap } from '@iziwellpass/api/client';
 import { useListVenues } from '@iziwellpass/api/generated';
 import { useSession } from '@iziwellpass/auth/provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/components/card';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+
+import { apiErrorMessage } from '@/lib/api-error';
 
 function VenuesCard() {
   // Canonical SP5–SP9 hooks pattern: `select: unwrap` peels the
@@ -27,10 +29,11 @@ function VenuesCard() {
   }
 
   if (venuesQuery.isError) {
-    const err = venuesQuery.error;
-    const message =
-      err instanceof ApiError ? `Failed to load venues (${err.code})` : 'Failed to load venues';
-    return <p className="text-sm text-destructive">{message}</p>;
+    return (
+      <p className="text-sm text-destructive">
+        {apiErrorMessage(venuesQuery.error, 'Failed to load venues')}
+      </p>
+    );
   }
 
   const venues = venuesQuery.data ?? [];
