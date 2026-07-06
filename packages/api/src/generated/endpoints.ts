@@ -79,37 +79,6 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Get one booking by id.
  */
-export type getBookingResponse200 = {
-  data: ApiResponseBooking;
-  status: 200;
-};
-
-export type getBookingResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type getBookingResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type getBookingResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type getBookingResponseSuccess = getBookingResponse200 & {
-  headers: Headers;
-};
-export type getBookingResponseError = (
-  getBookingResponse401 | getBookingResponse403 | getBookingResponse404
-) & {
-  headers: Headers;
-};
-
-export type getBookingResponse = getBookingResponseSuccess | getBookingResponseError;
-
 export const getGetBookingUrl = (bid: string) => {
   return `/gms/v1/bookings/${bid}`;
 };
@@ -117,8 +86,8 @@ export const getGetBookingUrl = (bid: string) => {
 export const getBooking = async (
   bid: string,
   options?: RequestInit,
-): Promise<getBookingResponse> => {
-  return customFetch<getBookingResponse>(getGetBookingUrl(bid), {
+): Promise<ApiResponseBooking> => {
+  return customFetch<ApiResponseBooking>(getGetBookingUrl(bid), {
     ...options,
     method: 'GET',
   });
@@ -233,45 +202,6 @@ export function useGetBooking<
 /**
  * @summary Cancel a booking.
  */
-export type cancelBookingResponse200 = {
-  data: ApiResponseBooking;
-  status: 200;
-};
-
-export type cancelBookingResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type cancelBookingResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type cancelBookingResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type cancelBookingResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type cancelBookingResponseSuccess = cancelBookingResponse200 & {
-  headers: Headers;
-};
-export type cancelBookingResponseError = (
-  | cancelBookingResponse400
-  | cancelBookingResponse401
-  | cancelBookingResponse403
-  | cancelBookingResponse404
-) & {
-  headers: Headers;
-};
-
-export type cancelBookingResponse = cancelBookingResponseSuccess | cancelBookingResponseError;
-
 export const getCancelBookingUrl = (bid: string) => {
   return `/gms/v1/bookings/${bid}/cancel`;
 };
@@ -280,8 +210,8 @@ export const cancelBooking = async (
   bid: string,
   cancelBookingRequest: CancelBookingRequest,
   options?: RequestInit,
-): Promise<cancelBookingResponse> => {
-  return customFetch<cancelBookingResponse>(getCancelBookingUrl(bid), {
+): Promise<ApiResponseBooking> => {
+  return customFetch<ApiResponseBooking>(getCancelBookingUrl(bid), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -357,45 +287,6 @@ export const useCancelBooking = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Check in a member manually by booking id.
  */
-export type checkInManualResponse201 = {
-  data: ApiResponseCheckIn;
-  status: 201;
-};
-
-export type checkInManualResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type checkInManualResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type checkInManualResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type checkInManualResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type checkInManualResponseSuccess = checkInManualResponse201 & {
-  headers: Headers;
-};
-export type checkInManualResponseError = (
-  | checkInManualResponse400
-  | checkInManualResponse401
-  | checkInManualResponse403
-  | checkInManualResponse404
-) & {
-  headers: Headers;
-};
-
-export type checkInManualResponse = checkInManualResponseSuccess | checkInManualResponseError;
-
 export const getCheckInManualUrl = () => {
   return `/gms/v1/checkins/manual`;
 };
@@ -403,8 +294,8 @@ export const getCheckInManualUrl = () => {
 export const checkInManual = async (
   manualCheckinRequest: ManualCheckinRequest,
   options?: RequestInit,
-): Promise<checkInManualResponse> => {
-  return customFetch<checkInManualResponse>(getCheckInManualUrl(), {
+): Promise<ApiResponseCheckIn> => {
+  return customFetch<ApiResponseCheckIn>(getCheckInManualUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -480,45 +371,6 @@ export const useCheckInManual = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Check in a member by scanning their QR code.
  */
-export type checkInViaQrResponse201 = {
-  data: ApiResponseCheckIn;
-  status: 201;
-};
-
-export type checkInViaQrResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type checkInViaQrResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type checkInViaQrResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type checkInViaQrResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type checkInViaQrResponseSuccess = checkInViaQrResponse201 & {
-  headers: Headers;
-};
-export type checkInViaQrResponseError = (
-  | checkInViaQrResponse400
-  | checkInViaQrResponse401
-  | checkInViaQrResponse403
-  | checkInViaQrResponse404
-) & {
-  headers: Headers;
-};
-
-export type checkInViaQrResponse = checkInViaQrResponseSuccess | checkInViaQrResponseError;
-
 export const getCheckInViaQrUrl = () => {
   return `/gms/v1/checkins/qr`;
 };
@@ -526,8 +378,8 @@ export const getCheckInViaQrUrl = () => {
 export const checkInViaQr = async (
   qrCheckinRequest: QrCheckinRequest,
   options?: RequestInit,
-): Promise<checkInViaQrResponse> => {
-  return customFetch<checkInViaQrResponse>(getCheckInViaQrUrl(), {
+): Promise<ApiResponseCheckIn> => {
+  return customFetch<ApiResponseCheckIn>(getCheckInViaQrUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -603,36 +455,12 @@ export const useCheckInViaQr = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary List members in the current tenant.
  */
-export type listMembersResponse200 = {
-  data: ApiResponseVecMember;
-  status: 200;
-};
-
-export type listMembersResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listMembersResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listMembersResponseSuccess = listMembersResponse200 & {
-  headers: Headers;
-};
-export type listMembersResponseError = (listMembersResponse401 | listMembersResponse403) & {
-  headers: Headers;
-};
-
-export type listMembersResponse = listMembersResponseSuccess | listMembersResponseError;
-
 export const getListMembersUrl = () => {
   return `/gms/v1/members`;
 };
 
-export const listMembers = async (options?: RequestInit): Promise<listMembersResponse> => {
-  return customFetch<listMembersResponse>(getListMembersUrl(), {
+export const listMembers = async (options?: RequestInit): Promise<ApiResponseVecMember> => {
+  return customFetch<ApiResponseVecMember>(getListMembersUrl(), {
     ...options,
     method: 'GET',
   });
@@ -740,37 +568,6 @@ export function useListMembers<
 /**
  * @summary Register a new member in the current tenant.
  */
-export type registerMemberResponse201 = {
-  data: ApiResponseMember;
-  status: 201;
-};
-
-export type registerMemberResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type registerMemberResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type registerMemberResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type registerMemberResponseSuccess = registerMemberResponse201 & {
-  headers: Headers;
-};
-export type registerMemberResponseError = (
-  registerMemberResponse400 | registerMemberResponse401 | registerMemberResponse403
-) & {
-  headers: Headers;
-};
-
-export type registerMemberResponse = registerMemberResponseSuccess | registerMemberResponseError;
-
 export const getRegisterMemberUrl = () => {
   return `/gms/v1/members`;
 };
@@ -778,8 +575,8 @@ export const getRegisterMemberUrl = () => {
 export const registerMember = async (
   createMemberRequest: CreateMemberRequest,
   options?: RequestInit,
-): Promise<registerMemberResponse> => {
-  return customFetch<registerMemberResponse>(getRegisterMemberUrl(), {
+): Promise<ApiResponseMember> => {
+  return customFetch<ApiResponseMember>(getRegisterMemberUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -855,43 +652,12 @@ export const useRegisterMember = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Get one member by id.
  */
-export type getMemberResponse200 = {
-  data: ApiResponseMember;
-  status: 200;
-};
-
-export type getMemberResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type getMemberResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type getMemberResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type getMemberResponseSuccess = getMemberResponse200 & {
-  headers: Headers;
-};
-export type getMemberResponseError = (
-  getMemberResponse401 | getMemberResponse403 | getMemberResponse404
-) & {
-  headers: Headers;
-};
-
-export type getMemberResponse = getMemberResponseSuccess | getMemberResponseError;
-
 export const getGetMemberUrl = (mid: string) => {
   return `/gms/v1/members/${mid}`;
 };
 
-export const getMember = async (mid: string, options?: RequestInit): Promise<getMemberResponse> => {
-  return customFetch<getMemberResponse>(getGetMemberUrl(mid), {
+export const getMember = async (mid: string, options?: RequestInit): Promise<ApiResponseMember> => {
+  return customFetch<ApiResponseMember>(getGetMemberUrl(mid), {
     ...options,
     method: 'GET',
   });
@@ -994,45 +760,6 @@ export function useGetMember<TData = Awaited<ReturnType<typeof getMember>>, TErr
 /**
  * @summary Update a member.
  */
-export type updateMemberResponse200 = {
-  data: ApiResponseMember;
-  status: 200;
-};
-
-export type updateMemberResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type updateMemberResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type updateMemberResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type updateMemberResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type updateMemberResponseSuccess = updateMemberResponse200 & {
-  headers: Headers;
-};
-export type updateMemberResponseError = (
-  | updateMemberResponse400
-  | updateMemberResponse401
-  | updateMemberResponse403
-  | updateMemberResponse404
-) & {
-  headers: Headers;
-};
-
-export type updateMemberResponse = updateMemberResponseSuccess | updateMemberResponseError;
-
 export const getUpdateMemberUrl = (mid: string) => {
   return `/gms/v1/members/${mid}`;
 };
@@ -1041,8 +768,8 @@ export const updateMember = async (
   mid: string,
   updateMemberRequest: UpdateMemberRequest,
   options?: RequestInit,
-): Promise<updateMemberResponse> => {
-  return customFetch<updateMemberResponse>(getUpdateMemberUrl(mid), {
+): Promise<ApiResponseMember> => {
+  return customFetch<ApiResponseMember>(getUpdateMemberUrl(mid), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -1118,37 +845,6 @@ export const useUpdateMember = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Suspend a member.
  */
-export type suspendMemberResponse200 = {
-  data: ApiResponseMember;
-  status: 200;
-};
-
-export type suspendMemberResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type suspendMemberResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type suspendMemberResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type suspendMemberResponseSuccess = suspendMemberResponse200 & {
-  headers: Headers;
-};
-export type suspendMemberResponseError = (
-  suspendMemberResponse401 | suspendMemberResponse403 | suspendMemberResponse404
-) & {
-  headers: Headers;
-};
-
-export type suspendMemberResponse = suspendMemberResponseSuccess | suspendMemberResponseError;
-
 export const getSuspendMemberUrl = (mid: string) => {
   return `/gms/v1/members/${mid}/suspend`;
 };
@@ -1156,8 +852,8 @@ export const getSuspendMemberUrl = (mid: string) => {
 export const suspendMember = async (
   mid: string,
   options?: RequestInit,
-): Promise<suspendMemberResponse> => {
-  return customFetch<suspendMemberResponse>(getSuspendMemberUrl(mid), {
+): Promise<ApiResponseMember> => {
+  return customFetch<ApiResponseMember>(getSuspendMemberUrl(mid), {
     ...options,
     method: 'PUT',
   });
@@ -1230,41 +926,14 @@ export const useSuspendMember = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary List resource types in the current tenant.
  */
-export type listResourceTypesResponse200 = {
-  data: ApiResponseVecResourceType;
-  status: 200;
-};
-
-export type listResourceTypesResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listResourceTypesResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listResourceTypesResponseSuccess = listResourceTypesResponse200 & {
-  headers: Headers;
-};
-export type listResourceTypesResponseError = (
-  listResourceTypesResponse401 | listResourceTypesResponse403
-) & {
-  headers: Headers;
-};
-
-export type listResourceTypesResponse =
-  listResourceTypesResponseSuccess | listResourceTypesResponseError;
-
 export const getListResourceTypesUrl = () => {
   return `/gms/v1/resource-types`;
 };
 
 export const listResourceTypes = async (
   options?: RequestInit,
-): Promise<listResourceTypesResponse> => {
-  return customFetch<listResourceTypesResponse>(getListResourceTypesUrl(), {
+): Promise<ApiResponseVecResourceType> => {
+  return customFetch<ApiResponseVecResourceType>(getListResourceTypesUrl(), {
     ...options,
     method: 'GET',
   });
@@ -1374,38 +1043,6 @@ export function useListResourceTypes<
 /**
  * @summary Create a resource type in the current tenant.
  */
-export type createResourceTypeResponse201 = {
-  data: ApiResponseResourceType;
-  status: 201;
-};
-
-export type createResourceTypeResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type createResourceTypeResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type createResourceTypeResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type createResourceTypeResponseSuccess = createResourceTypeResponse201 & {
-  headers: Headers;
-};
-export type createResourceTypeResponseError = (
-  createResourceTypeResponse400 | createResourceTypeResponse401 | createResourceTypeResponse403
-) & {
-  headers: Headers;
-};
-
-export type createResourceTypeResponse =
-  createResourceTypeResponseSuccess | createResourceTypeResponseError;
-
 export const getCreateResourceTypeUrl = () => {
   return `/gms/v1/resource-types`;
 };
@@ -1413,8 +1050,8 @@ export const getCreateResourceTypeUrl = () => {
 export const createResourceType = async (
   createResourceTypeRequest: CreateResourceTypeRequest,
   options?: RequestInit,
-): Promise<createResourceTypeResponse> => {
-  return customFetch<createResourceTypeResponse>(getCreateResourceTypeUrl(), {
+): Promise<ApiResponseResourceType> => {
+  return customFetch<ApiResponseResourceType>(getCreateResourceTypeUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -1492,37 +1129,6 @@ export const useCreateResourceType = <TError = ErrorResponse, TContext = unknown
 /**
  * @summary Get one schedule by id.
  */
-export type getScheduleResponse200 = {
-  data: ApiResponseSchedule;
-  status: 200;
-};
-
-export type getScheduleResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type getScheduleResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type getScheduleResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type getScheduleResponseSuccess = getScheduleResponse200 & {
-  headers: Headers;
-};
-export type getScheduleResponseError = (
-  getScheduleResponse401 | getScheduleResponse403 | getScheduleResponse404
-) & {
-  headers: Headers;
-};
-
-export type getScheduleResponse = getScheduleResponseSuccess | getScheduleResponseError;
-
 export const getGetScheduleUrl = (sid: string) => {
   return `/gms/v1/schedules/${sid}`;
 };
@@ -1530,8 +1136,8 @@ export const getGetScheduleUrl = (sid: string) => {
 export const getSchedule = async (
   sid: string,
   options?: RequestInit,
-): Promise<getScheduleResponse> => {
-  return customFetch<getScheduleResponse>(getGetScheduleUrl(sid), {
+): Promise<ApiResponseSchedule> => {
+  return customFetch<ApiResponseSchedule>(getGetScheduleUrl(sid), {
     ...options,
     method: 'GET',
   });
@@ -1646,45 +1252,6 @@ export function useGetSchedule<
 /**
  * @summary Update a schedule.
  */
-export type updateScheduleResponse200 = {
-  data: ApiResponseSchedule;
-  status: 200;
-};
-
-export type updateScheduleResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type updateScheduleResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type updateScheduleResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type updateScheduleResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type updateScheduleResponseSuccess = updateScheduleResponse200 & {
-  headers: Headers;
-};
-export type updateScheduleResponseError = (
-  | updateScheduleResponse400
-  | updateScheduleResponse401
-  | updateScheduleResponse403
-  | updateScheduleResponse404
-) & {
-  headers: Headers;
-};
-
-export type updateScheduleResponse = updateScheduleResponseSuccess | updateScheduleResponseError;
-
 export const getUpdateScheduleUrl = (sid: string) => {
   return `/gms/v1/schedules/${sid}`;
 };
@@ -1693,8 +1260,8 @@ export const updateSchedule = async (
   sid: string,
   updateScheduleRequest: UpdateScheduleRequest,
   options?: RequestInit,
-): Promise<updateScheduleResponse> => {
-  return customFetch<updateScheduleResponse>(getUpdateScheduleUrl(sid), {
+): Promise<ApiResponseSchedule> => {
+  return customFetch<ApiResponseSchedule>(getUpdateScheduleUrl(sid), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -1770,46 +1337,12 @@ export const useUpdateSchedule = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Cancel (delete) a schedule.
  */
-export type cancelScheduleResponse204 = {
-  data: void;
-  status: 204;
-};
-
-export type cancelScheduleResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type cancelScheduleResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type cancelScheduleResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type cancelScheduleResponseSuccess = cancelScheduleResponse204 & {
-  headers: Headers;
-};
-export type cancelScheduleResponseError = (
-  cancelScheduleResponse401 | cancelScheduleResponse403 | cancelScheduleResponse404
-) & {
-  headers: Headers;
-};
-
-export type cancelScheduleResponse = cancelScheduleResponseSuccess | cancelScheduleResponseError;
-
 export const getCancelScheduleUrl = (sid: string) => {
   return `/gms/v1/schedules/${sid}`;
 };
 
-export const cancelSchedule = async (
-  sid: string,
-  options?: RequestInit,
-): Promise<cancelScheduleResponse> => {
-  return customFetch<cancelScheduleResponse>(getCancelScheduleUrl(sid), {
+export const cancelSchedule = async (sid: string, options?: RequestInit): Promise<void> => {
+  return customFetch<void>(getCancelScheduleUrl(sid), {
     ...options,
     method: 'DELETE',
   });
@@ -1883,33 +1416,6 @@ export const useCancelSchedule = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary List bookings for a slot.
  */
-export type listBookingsForSlotResponse200 = {
-  data: ApiResponseVecBooking;
-  status: 200;
-};
-
-export type listBookingsForSlotResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listBookingsForSlotResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listBookingsForSlotResponseSuccess = listBookingsForSlotResponse200 & {
-  headers: Headers;
-};
-export type listBookingsForSlotResponseError = (
-  listBookingsForSlotResponse401 | listBookingsForSlotResponse403
-) & {
-  headers: Headers;
-};
-
-export type listBookingsForSlotResponse =
-  listBookingsForSlotResponseSuccess | listBookingsForSlotResponseError;
-
 export const getListBookingsForSlotUrl = (sid: string) => {
   return `/gms/v1/slots/${sid}/bookings`;
 };
@@ -1917,8 +1423,8 @@ export const getListBookingsForSlotUrl = (sid: string) => {
 export const listBookingsForSlot = async (
   sid: string,
   options?: RequestInit,
-): Promise<listBookingsForSlotResponse> => {
-  return customFetch<listBookingsForSlotResponse>(getListBookingsForSlotUrl(sid), {
+): Promise<ApiResponseVecBooking> => {
+  return customFetch<ApiResponseVecBooking>(getListBookingsForSlotUrl(sid), {
     ...options,
     method: 'GET',
   });
@@ -2045,45 +1551,6 @@ export function useListBookingsForSlot<
 /**
  * @summary Create a booking for a slot.
  */
-export type createBookingResponse201 = {
-  data: ApiResponseBooking;
-  status: 201;
-};
-
-export type createBookingResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type createBookingResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type createBookingResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type createBookingResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type createBookingResponseSuccess = createBookingResponse201 & {
-  headers: Headers;
-};
-export type createBookingResponseError = (
-  | createBookingResponse400
-  | createBookingResponse401
-  | createBookingResponse403
-  | createBookingResponse404
-) & {
-  headers: Headers;
-};
-
-export type createBookingResponse = createBookingResponseSuccess | createBookingResponseError;
-
 export const getCreateBookingUrl = (sid: string) => {
   return `/gms/v1/slots/${sid}/bookings`;
 };
@@ -2092,8 +1559,8 @@ export const createBooking = async (
   sid: string,
   createBookingRequest: CreateBookingRequest,
   options?: RequestInit,
-): Promise<createBookingResponse> => {
-  return customFetch<createBookingResponse>(getCreateBookingUrl(sid), {
+): Promise<ApiResponseBooking> => {
+  return customFetch<ApiResponseBooking>(getCreateBookingUrl(sid), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2169,37 +1636,6 @@ export const useCreateBooking = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Cancel a single schedule slot.
  */
-export type cancelSlotResponse200 = {
-  data: ApiResponseScheduleSlot;
-  status: 200;
-};
-
-export type cancelSlotResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type cancelSlotResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type cancelSlotResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type cancelSlotResponseSuccess = cancelSlotResponse200 & {
-  headers: Headers;
-};
-export type cancelSlotResponseError = (
-  cancelSlotResponse401 | cancelSlotResponse403 | cancelSlotResponse404
-) & {
-  headers: Headers;
-};
-
-export type cancelSlotResponse = cancelSlotResponseSuccess | cancelSlotResponseError;
-
 export const getCancelSlotUrl = (sid: string) => {
   return `/gms/v1/slots/${sid}/cancel`;
 };
@@ -2207,8 +1643,8 @@ export const getCancelSlotUrl = (sid: string) => {
 export const cancelSlot = async (
   sid: string,
   options?: RequestInit,
-): Promise<cancelSlotResponse> => {
-  return customFetch<cancelSlotResponse>(getCancelSlotUrl(sid), {
+): Promise<ApiResponseScheduleSlot> => {
+  return customFetch<ApiResponseScheduleSlot>(getCancelSlotUrl(sid), {
     ...options,
     method: 'PUT',
   });
@@ -2273,36 +1709,12 @@ export const useCancelSlot = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary List all active staff in the current tenant.
  */
-export type listStaffResponse200 = {
-  data: ApiResponseVecStaff;
-  status: 200;
-};
-
-export type listStaffResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listStaffResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listStaffResponseSuccess = listStaffResponse200 & {
-  headers: Headers;
-};
-export type listStaffResponseError = (listStaffResponse401 | listStaffResponse403) & {
-  headers: Headers;
-};
-
-export type listStaffResponse = listStaffResponseSuccess | listStaffResponseError;
-
 export const getListStaffUrl = () => {
   return `/gms/v1/staff`;
 };
 
-export const listStaff = async (options?: RequestInit): Promise<listStaffResponse> => {
-  return customFetch<listStaffResponse>(getListStaffUrl(), {
+export const listStaff = async (options?: RequestInit): Promise<ApiResponseVecStaff> => {
+  return customFetch<ApiResponseVecStaff>(getListStaffUrl(), {
     ...options,
     method: 'GET',
   });
@@ -2398,42 +1810,6 @@ export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TErr
 /**
  * @summary Invite a staff member to the current tenant.
  */
-export type inviteStaffResponse201 = {
-  data: ApiResponseStaff;
-  status: 201;
-};
-
-export type inviteStaffResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type inviteStaffResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type inviteStaffResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type inviteStaffResponse500 = {
-  data: ErrorResponse;
-  status: 500;
-};
-
-export type inviteStaffResponseSuccess = inviteStaffResponse201 & {
-  headers: Headers;
-};
-export type inviteStaffResponseError = (
-  inviteStaffResponse400 | inviteStaffResponse401 | inviteStaffResponse403 | inviteStaffResponse500
-) & {
-  headers: Headers;
-};
-
-export type inviteStaffResponse = inviteStaffResponseSuccess | inviteStaffResponseError;
-
 export const getInviteStaffUrl = () => {
   return `/gms/v1/staff/invite`;
 };
@@ -2441,8 +1817,8 @@ export const getInviteStaffUrl = () => {
 export const inviteStaff = async (
   inviteStaffRequest: InviteStaffRequest,
   options?: RequestInit,
-): Promise<inviteStaffResponse> => {
-  return customFetch<inviteStaffResponse>(getInviteStaffUrl(), {
+): Promise<ApiResponseStaff> => {
+  return customFetch<ApiResponseStaff>(getInviteStaffUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2518,43 +1894,12 @@ export const useInviteStaff = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Get one staff member by id.
  */
-export type getStaffResponse200 = {
-  data: ApiResponseStaff;
-  status: 200;
-};
-
-export type getStaffResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type getStaffResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type getStaffResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type getStaffResponseSuccess = getStaffResponse200 & {
-  headers: Headers;
-};
-export type getStaffResponseError = (
-  getStaffResponse401 | getStaffResponse403 | getStaffResponse404
-) & {
-  headers: Headers;
-};
-
-export type getStaffResponse = getStaffResponseSuccess | getStaffResponseError;
-
 export const getGetStaffUrl = (sid: string) => {
   return `/gms/v1/staff/${sid}`;
 };
 
-export const getStaff = async (sid: string, options?: RequestInit): Promise<getStaffResponse> => {
-  return customFetch<getStaffResponse>(getGetStaffUrl(sid), {
+export const getStaff = async (sid: string, options?: RequestInit): Promise<ApiResponseStaff> => {
+  return customFetch<ApiResponseStaff>(getGetStaffUrl(sid), {
     ...options,
     method: 'GET',
   });
@@ -2657,46 +2002,12 @@ export function useGetStaff<TData = Awaited<ReturnType<typeof getStaff>>, TError
 /**
  * @summary Remove (soft-delete) a staff member; disables their Cognito user.
  */
-export type removeStaffResponse204 = {
-  data: void;
-  status: 204;
-};
-
-export type removeStaffResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type removeStaffResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type removeStaffResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type removeStaffResponseSuccess = removeStaffResponse204 & {
-  headers: Headers;
-};
-export type removeStaffResponseError = (
-  removeStaffResponse401 | removeStaffResponse403 | removeStaffResponse404
-) & {
-  headers: Headers;
-};
-
-export type removeStaffResponse = removeStaffResponseSuccess | removeStaffResponseError;
-
 export const getRemoveStaffUrl = (sid: string) => {
   return `/gms/v1/staff/${sid}`;
 };
 
-export const removeStaff = async (
-  sid: string,
-  options?: RequestInit,
-): Promise<removeStaffResponse> => {
-  return customFetch<removeStaffResponse>(getRemoveStaffUrl(sid), {
+export const removeStaff = async (sid: string, options?: RequestInit): Promise<void> => {
+  return customFetch<void>(getRemoveStaffUrl(sid), {
     ...options,
     method: 'DELETE',
   });
@@ -2769,42 +2080,6 @@ export const useRemoveStaff = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Change a staff member's role.
  */
-export type changeRoleResponse200 = {
-  data: ApiResponseStaff;
-  status: 200;
-};
-
-export type changeRoleResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type changeRoleResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type changeRoleResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type changeRoleResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type changeRoleResponseSuccess = changeRoleResponse200 & {
-  headers: Headers;
-};
-export type changeRoleResponseError = (
-  changeRoleResponse400 | changeRoleResponse401 | changeRoleResponse403 | changeRoleResponse404
-) & {
-  headers: Headers;
-};
-
-export type changeRoleResponse = changeRoleResponseSuccess | changeRoleResponseError;
-
 export const getChangeRoleUrl = (sid: string) => {
   return `/gms/v1/staff/${sid}/role`;
 };
@@ -2813,8 +2088,8 @@ export const changeRole = async (
   sid: string,
   changeRoleRequest: ChangeRoleRequest,
   options?: RequestInit,
-): Promise<changeRoleResponse> => {
-  return customFetch<changeRoleResponse>(getChangeRoleUrl(sid), {
+): Promise<ApiResponseStaff> => {
+  return customFetch<ApiResponseStaff>(getChangeRoleUrl(sid), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2887,36 +2162,12 @@ export const useChangeRole = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary List all venues in the current tenant.
  */
-export type listVenuesResponse200 = {
-  data: ApiResponseVecVenue;
-  status: 200;
-};
-
-export type listVenuesResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listVenuesResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listVenuesResponseSuccess = listVenuesResponse200 & {
-  headers: Headers;
-};
-export type listVenuesResponseError = (listVenuesResponse401 | listVenuesResponse403) & {
-  headers: Headers;
-};
-
-export type listVenuesResponse = listVenuesResponseSuccess | listVenuesResponseError;
-
 export const getListVenuesUrl = () => {
   return `/gms/v1/venues`;
 };
 
-export const listVenues = async (options?: RequestInit): Promise<listVenuesResponse> => {
-  return customFetch<listVenuesResponse>(getListVenuesUrl(), {
+export const listVenues = async (options?: RequestInit): Promise<ApiResponseVecVenue> => {
+  return customFetch<ApiResponseVecVenue>(getListVenuesUrl(), {
     ...options,
     method: 'GET',
   });
@@ -3024,43 +2275,12 @@ export function useListVenues<
 /**
  * @summary Get one venue by id.
  */
-export type getVenueResponse200 = {
-  data: ApiResponseVenue;
-  status: 200;
-};
-
-export type getVenueResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type getVenueResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type getVenueResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type getVenueResponseSuccess = getVenueResponse200 & {
-  headers: Headers;
-};
-export type getVenueResponseError = (
-  getVenueResponse401 | getVenueResponse403 | getVenueResponse404
-) & {
-  headers: Headers;
-};
-
-export type getVenueResponse = getVenueResponseSuccess | getVenueResponseError;
-
 export const getGetVenueUrl = (id: string) => {
   return `/gms/v1/venues/${id}`;
 };
 
-export const getVenue = async (id: string, options?: RequestInit): Promise<getVenueResponse> => {
-  return customFetch<getVenueResponse>(getGetVenueUrl(id), {
+export const getVenue = async (id: string, options?: RequestInit): Promise<ApiResponseVenue> => {
+  return customFetch<ApiResponseVenue>(getGetVenueUrl(id), {
     ...options,
     method: 'GET',
   });
@@ -3163,42 +2383,6 @@ export function useGetVenue<TData = Awaited<ReturnType<typeof getVenue>>, TError
 /**
  * @summary Update a venue.
  */
-export type updateVenueResponse200 = {
-  data: ApiResponseVenue;
-  status: 200;
-};
-
-export type updateVenueResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type updateVenueResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type updateVenueResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type updateVenueResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type updateVenueResponseSuccess = updateVenueResponse200 & {
-  headers: Headers;
-};
-export type updateVenueResponseError = (
-  updateVenueResponse400 | updateVenueResponse401 | updateVenueResponse403 | updateVenueResponse404
-) & {
-  headers: Headers;
-};
-
-export type updateVenueResponse = updateVenueResponseSuccess | updateVenueResponseError;
-
 export const getUpdateVenueUrl = (id: string) => {
   return `/gms/v1/venues/${id}`;
 };
@@ -3207,8 +2391,8 @@ export const updateVenue = async (
   id: string,
   updateVenueRequest: UpdateVenueRequest,
   options?: RequestInit,
-): Promise<updateVenueResponse> => {
-  return customFetch<updateVenueResponse>(getUpdateVenueUrl(id), {
+): Promise<ApiResponseVenue> => {
+  return customFetch<ApiResponseVenue>(getUpdateVenueUrl(id), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3284,30 +2468,6 @@ export const useUpdateVenue = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary List resources within a venue.
  */
-export type listResourcesResponse200 = {
-  data: ApiResponseVecResource;
-  status: 200;
-};
-
-export type listResourcesResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listResourcesResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listResourcesResponseSuccess = listResourcesResponse200 & {
-  headers: Headers;
-};
-export type listResourcesResponseError = (listResourcesResponse401 | listResourcesResponse403) & {
-  headers: Headers;
-};
-
-export type listResourcesResponse = listResourcesResponseSuccess | listResourcesResponseError;
-
 export const getListResourcesUrl = (id: string) => {
   return `/gms/v1/venues/${id}/resources`;
 };
@@ -3315,8 +2475,8 @@ export const getListResourcesUrl = (id: string) => {
 export const listResources = async (
   id: string,
   options?: RequestInit,
-): Promise<listResourcesResponse> => {
-  return customFetch<listResourcesResponse>(getListResourcesUrl(id), {
+): Promise<ApiResponseVecResource> => {
+  return customFetch<ApiResponseVecResource>(getListResourcesUrl(id), {
     ...options,
     method: 'GET',
   });
@@ -3431,45 +2591,6 @@ export function useListResources<
 /**
  * @summary Create a resource within a venue.
  */
-export type createResourceResponse201 = {
-  data: ApiResponseResource;
-  status: 201;
-};
-
-export type createResourceResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type createResourceResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type createResourceResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type createResourceResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type createResourceResponseSuccess = createResourceResponse201 & {
-  headers: Headers;
-};
-export type createResourceResponseError = (
-  | createResourceResponse400
-  | createResourceResponse401
-  | createResourceResponse403
-  | createResourceResponse404
-) & {
-  headers: Headers;
-};
-
-export type createResourceResponse = createResourceResponseSuccess | createResourceResponseError;
-
 export const getCreateResourceUrl = (id: string) => {
   return `/gms/v1/venues/${id}/resources`;
 };
@@ -3478,8 +2599,8 @@ export const createResource = async (
   id: string,
   createResourceRequest: CreateResourceRequest,
   options?: RequestInit,
-): Promise<createResourceResponse> => {
-  return customFetch<createResourceResponse>(getCreateResourceUrl(id), {
+): Promise<ApiResponseResource> => {
+  return customFetch<ApiResponseResource>(getCreateResourceUrl(id), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3555,30 +2676,6 @@ export const useCreateResource = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Get attendance statistics for a venue.
  */
-export type getAttendanceResponse200 = {
-  data: ApiResponseAttendanceStats;
-  status: 200;
-};
-
-export type getAttendanceResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type getAttendanceResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type getAttendanceResponseSuccess = getAttendanceResponse200 & {
-  headers: Headers;
-};
-export type getAttendanceResponseError = (getAttendanceResponse401 | getAttendanceResponse403) & {
-  headers: Headers;
-};
-
-export type getAttendanceResponse = getAttendanceResponseSuccess | getAttendanceResponseError;
-
 export const getGetAttendanceUrl = (vid: string) => {
   return `/gms/v1/venues/${vid}/attendance`;
 };
@@ -3586,8 +2683,8 @@ export const getGetAttendanceUrl = (vid: string) => {
 export const getAttendance = async (
   vid: string,
   options?: RequestInit,
-): Promise<getAttendanceResponse> => {
-  return customFetch<getAttendanceResponse>(getGetAttendanceUrl(vid), {
+): Promise<ApiResponseAttendanceStats> => {
+  return customFetch<ApiResponseAttendanceStats>(getGetAttendanceUrl(vid), {
     ...options,
     method: 'GET',
   });
@@ -3702,30 +2799,6 @@ export function useGetAttendance<
 /**
  * @summary List check-ins for a venue.
  */
-export type listCheckInsResponse200 = {
-  data: ApiResponseVecCheckIn;
-  status: 200;
-};
-
-export type listCheckInsResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listCheckInsResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listCheckInsResponseSuccess = listCheckInsResponse200 & {
-  headers: Headers;
-};
-export type listCheckInsResponseError = (listCheckInsResponse401 | listCheckInsResponse403) & {
-  headers: Headers;
-};
-
-export type listCheckInsResponse = listCheckInsResponseSuccess | listCheckInsResponseError;
-
 export const getListCheckInsUrl = (vid: string) => {
   return `/gms/v1/venues/${vid}/checkins`;
 };
@@ -3733,8 +2806,8 @@ export const getListCheckInsUrl = (vid: string) => {
 export const listCheckIns = async (
   vid: string,
   options?: RequestInit,
-): Promise<listCheckInsResponse> => {
-  return customFetch<listCheckInsResponse>(getListCheckInsUrl(vid), {
+): Promise<ApiResponseVecCheckIn> => {
+  return customFetch<ApiResponseVecCheckIn>(getListCheckInsUrl(vid), {
     ...options,
     method: 'GET',
   });
@@ -3849,45 +2922,6 @@ export function useListCheckIns<
 /**
  * @summary Update a resource within a venue.
  */
-export type updateResourceResponse200 = {
-  data: ApiResponseResource;
-  status: 200;
-};
-
-export type updateResourceResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type updateResourceResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type updateResourceResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type updateResourceResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type updateResourceResponseSuccess = updateResourceResponse200 & {
-  headers: Headers;
-};
-export type updateResourceResponseError = (
-  | updateResourceResponse400
-  | updateResourceResponse401
-  | updateResourceResponse403
-  | updateResourceResponse404
-) & {
-  headers: Headers;
-};
-
-export type updateResourceResponse = updateResourceResponseSuccess | updateResourceResponseError;
-
 export const getUpdateResourceUrl = (vid: string, rid: string) => {
   return `/gms/v1/venues/${vid}/resources/${rid}`;
 };
@@ -3897,8 +2931,8 @@ export const updateResource = async (
   rid: string,
   updateResourceRequest: UpdateResourceRequest,
   options?: RequestInit,
-): Promise<updateResourceResponse> => {
-  return customFetch<updateResourceResponse>(getUpdateResourceUrl(vid, rid), {
+): Promise<ApiResponseResource> => {
+  return customFetch<ApiResponseResource>(getUpdateResourceUrl(vid, rid), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3974,37 +3008,6 @@ export const useUpdateResource = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Delete a resource within a venue.
  */
-export type deleteResourceResponse204 = {
-  data: void;
-  status: 204;
-};
-
-export type deleteResourceResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type deleteResourceResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type deleteResourceResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type deleteResourceResponseSuccess = deleteResourceResponse204 & {
-  headers: Headers;
-};
-export type deleteResourceResponseError = (
-  deleteResourceResponse401 | deleteResourceResponse403 | deleteResourceResponse404
-) & {
-  headers: Headers;
-};
-
-export type deleteResourceResponse = deleteResourceResponseSuccess | deleteResourceResponseError;
-
 export const getDeleteResourceUrl = (vid: string, rid: string) => {
   return `/gms/v1/venues/${vid}/resources/${rid}`;
 };
@@ -4013,8 +3016,8 @@ export const deleteResource = async (
   vid: string,
   rid: string,
   options?: RequestInit,
-): Promise<deleteResourceResponse> => {
-  return customFetch<deleteResourceResponse>(getDeleteResourceUrl(vid, rid), {
+): Promise<void> => {
+  return customFetch<void>(getDeleteResourceUrl(vid, rid), {
     ...options,
     method: 'DELETE',
   });
@@ -4088,30 +3091,6 @@ export const useDeleteResource = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary List schedules for a venue.
  */
-export type listSchedulesResponse200 = {
-  data: ApiResponseVecSchedule;
-  status: 200;
-};
-
-export type listSchedulesResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listSchedulesResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listSchedulesResponseSuccess = listSchedulesResponse200 & {
-  headers: Headers;
-};
-export type listSchedulesResponseError = (listSchedulesResponse401 | listSchedulesResponse403) & {
-  headers: Headers;
-};
-
-export type listSchedulesResponse = listSchedulesResponseSuccess | listSchedulesResponseError;
-
 export const getListSchedulesUrl = (vid: string) => {
   return `/gms/v1/venues/${vid}/schedules`;
 };
@@ -4119,8 +3098,8 @@ export const getListSchedulesUrl = (vid: string) => {
 export const listSchedules = async (
   vid: string,
   options?: RequestInit,
-): Promise<listSchedulesResponse> => {
-  return customFetch<listSchedulesResponse>(getListSchedulesUrl(vid), {
+): Promise<ApiResponseVecSchedule> => {
+  return customFetch<ApiResponseVecSchedule>(getListSchedulesUrl(vid), {
     ...options,
     method: 'GET',
   });
@@ -4235,45 +3214,6 @@ export function useListSchedules<
 /**
  * @summary Create a schedule for a venue.
  */
-export type createScheduleResponse201 = {
-  data: ApiResponseSchedule;
-  status: 201;
-};
-
-export type createScheduleResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type createScheduleResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type createScheduleResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type createScheduleResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type createScheduleResponseSuccess = createScheduleResponse201 & {
-  headers: Headers;
-};
-export type createScheduleResponseError = (
-  | createScheduleResponse400
-  | createScheduleResponse401
-  | createScheduleResponse403
-  | createScheduleResponse404
-) & {
-  headers: Headers;
-};
-
-export type createScheduleResponse = createScheduleResponseSuccess | createScheduleResponseError;
-
 export const getCreateScheduleUrl = (vid: string) => {
   return `/gms/v1/venues/${vid}/schedules`;
 };
@@ -4282,8 +3222,8 @@ export const createSchedule = async (
   vid: string,
   createScheduleRequest: CreateScheduleRequest,
   options?: RequestInit,
-): Promise<createScheduleResponse> => {
-  return customFetch<createScheduleResponse>(getCreateScheduleUrl(vid), {
+): Promise<ApiResponseSchedule> => {
+  return customFetch<ApiResponseSchedule>(getCreateScheduleUrl(vid), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -4359,36 +3299,15 @@ export const useCreateSchedule = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary List generated slots for a venue.
  */
-export type listSlotsResponse200 = {
-  data: ApiResponseVecScheduleSlot;
-  status: 200;
-};
-
-export type listSlotsResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listSlotsResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listSlotsResponseSuccess = listSlotsResponse200 & {
-  headers: Headers;
-};
-export type listSlotsResponseError = (listSlotsResponse401 | listSlotsResponse403) & {
-  headers: Headers;
-};
-
-export type listSlotsResponse = listSlotsResponseSuccess | listSlotsResponseError;
-
 export const getListSlotsUrl = (vid: string) => {
   return `/gms/v1/venues/${vid}/slots`;
 };
 
-export const listSlots = async (vid: string, options?: RequestInit): Promise<listSlotsResponse> => {
-  return customFetch<listSlotsResponse>(getListSlotsUrl(vid), {
+export const listSlots = async (
+  vid: string,
+  options?: RequestInit,
+): Promise<ApiResponseVecScheduleSlot> => {
+  return customFetch<ApiResponseVecScheduleSlot>(getListSlotsUrl(vid), {
     ...options,
     method: 'GET',
   });
@@ -4491,22 +3410,12 @@ export function useListSlots<TData = Awaited<ReturnType<typeof listSlots>>, TErr
 /**
  * @summary Liveness/health probe. Public — no authentication required.
  */
-export type healthResponse200 = {
-  data: HealthResponse;
-  status: 200;
-};
-
-export type healthResponseSuccess = healthResponse200 & {
-  headers: Headers;
-};
-export type healthResponse = healthResponseSuccess;
-
 export const getHealthUrl = () => {
   return `/health`;
 };
 
-export const health = async (options?: RequestInit): Promise<healthResponse> => {
-  return customFetch<healthResponse>(getHealthUrl(), {
+export const health = async (options?: RequestInit): Promise<HealthResponse> => {
+  return customFetch<HealthResponse>(getHealthUrl(), {
     ...options,
     method: 'GET',
   });
@@ -4602,51 +3511,6 @@ export function useHealth<TData = Awaited<ReturnType<typeof health>>, TError = u
 /**
  * @summary Book a marketplace slot using pass credits.
  */
-export type bookViaPassResponse201 = {
-  data: ApiResponsePassBookingResult;
-  status: 201;
-};
-
-export type bookViaPassResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type bookViaPassResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type bookViaPassResponse402 = {
-  data: ErrorResponse;
-  status: 402;
-};
-
-export type bookViaPassResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type bookViaPassResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type bookViaPassResponseSuccess = bookViaPassResponse201 & {
-  headers: Headers;
-};
-export type bookViaPassResponseError = (
-  | bookViaPassResponse400
-  | bookViaPassResponse401
-  | bookViaPassResponse402
-  | bookViaPassResponse403
-  | bookViaPassResponse404
-) & {
-  headers: Headers;
-};
-
-export type bookViaPassResponse = bookViaPassResponseSuccess | bookViaPassResponseError;
-
 export const getBookViaPassUrl = () => {
   return `/platform/v1/marketplace/book`;
 };
@@ -4654,8 +3518,8 @@ export const getBookViaPassUrl = () => {
 export const bookViaPass = async (
   bookViaPassRequest: BookViaPassRequest,
   options?: RequestInit,
-): Promise<bookViaPassResponse> => {
-  return customFetch<bookViaPassResponse>(getBookViaPassUrl(), {
+): Promise<ApiResponsePassBookingResult> => {
+  return customFetch<ApiResponsePassBookingResult>(getBookViaPassUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -4731,24 +3595,14 @@ export const useBookViaPass = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Browse the venue catalog (paginated). Public — no authentication required.
  */
-export type listMarketplaceVenuesResponse200 = {
-  data: PaginatedApiResponseVecVenueCatalogEntry;
-  status: 200;
-};
-
-export type listMarketplaceVenuesResponseSuccess = listMarketplaceVenuesResponse200 & {
-  headers: Headers;
-};
-export type listMarketplaceVenuesResponse = listMarketplaceVenuesResponseSuccess;
-
 export const getListMarketplaceVenuesUrl = () => {
   return `/platform/v1/marketplace/venues`;
 };
 
 export const listMarketplaceVenues = async (
   options?: RequestInit,
-): Promise<listMarketplaceVenuesResponse> => {
-  return customFetch<listMarketplaceVenuesResponse>(getListMarketplaceVenuesUrl(), {
+): Promise<PaginatedApiResponseVecVenueCatalogEntry> => {
+  return customFetch<PaginatedApiResponseVecVenueCatalogEntry>(getListMarketplaceVenuesUrl(), {
     ...options,
     method: 'GET',
   });
@@ -4868,26 +3722,6 @@ export function useListMarketplaceVenues<
 /**
  * @summary Get marketplace venue detail. Public — no authentication required.
  */
-export type getMarketplaceVenueResponse200 = {
-  data: ApiResponseVenueDetail;
-  status: 200;
-};
-
-export type getMarketplaceVenueResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type getMarketplaceVenueResponseSuccess = getMarketplaceVenueResponse200 & {
-  headers: Headers;
-};
-export type getMarketplaceVenueResponseError = getMarketplaceVenueResponse404 & {
-  headers: Headers;
-};
-
-export type getMarketplaceVenueResponse =
-  getMarketplaceVenueResponseSuccess | getMarketplaceVenueResponseError;
-
 export const getGetMarketplaceVenueUrl = (vid: string) => {
   return `/platform/v1/marketplace/venues/${vid}`;
 };
@@ -4895,8 +3729,8 @@ export const getGetMarketplaceVenueUrl = (vid: string) => {
 export const getMarketplaceVenue = async (
   vid: string,
   options?: RequestInit,
-): Promise<getMarketplaceVenueResponse> => {
-  return customFetch<getMarketplaceVenueResponse>(getGetMarketplaceVenueUrl(vid), {
+): Promise<ApiResponseVenueDetail> => {
+  return customFetch<ApiResponseVenueDetail>(getGetMarketplaceVenueUrl(vid), {
     ...options,
     method: 'GET',
   });
@@ -5023,16 +3857,6 @@ export function useGetMarketplaceVenue<
 /**
  * @summary List available slots for a marketplace venue. Public — no authentication required.
  */
-export type listMarketplaceSlotsResponse200 = {
-  data: ApiResponseVecMarketplaceSlot;
-  status: 200;
-};
-
-export type listMarketplaceSlotsResponseSuccess = listMarketplaceSlotsResponse200 & {
-  headers: Headers;
-};
-export type listMarketplaceSlotsResponse = listMarketplaceSlotsResponseSuccess;
-
 export const getListMarketplaceSlotsUrl = (vid: string) => {
   return `/platform/v1/marketplace/venues/${vid}/slots`;
 };
@@ -5040,8 +3864,8 @@ export const getListMarketplaceSlotsUrl = (vid: string) => {
 export const listMarketplaceSlots = async (
   vid: string,
   options?: RequestInit,
-): Promise<listMarketplaceSlotsResponse> => {
-  return customFetch<listMarketplaceSlotsResponse>(getListMarketplaceSlotsUrl(vid), {
+): Promise<ApiResponseVecMarketplaceSlot> => {
+  return customFetch<ApiResponseVecMarketplaceSlot>(getListMarketplaceSlotsUrl(vid), {
     ...options,
     method: 'GET',
   });
@@ -5168,45 +3992,6 @@ export function useListMarketplaceSlots<
 /**
  * @summary Onboard a new venue: provisions a tenant, venue, and default resource types.
  */
-export type onboardVenueResponse201 = {
-  data: ApiResponseOnboardVenueResponse;
-  status: 201;
-};
-
-export type onboardVenueResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type onboardVenueResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type onboardVenueResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type onboardVenueResponse500 = {
-  data: ErrorResponse;
-  status: 500;
-};
-
-export type onboardVenueResponseSuccess = onboardVenueResponse201 & {
-  headers: Headers;
-};
-export type onboardVenueResponseError = (
-  | onboardVenueResponse400
-  | onboardVenueResponse401
-  | onboardVenueResponse403
-  | onboardVenueResponse500
-) & {
-  headers: Headers;
-};
-
-export type onboardVenueResponse = onboardVenueResponseSuccess | onboardVenueResponseError;
-
 export const getOnboardVenueUrl = () => {
   return `/platform/v1/onboarding/venue`;
 };
@@ -5214,8 +3999,8 @@ export const getOnboardVenueUrl = () => {
 export const onboardVenue = async (
   onboardVenueRequest: OnboardVenueRequest,
   options?: RequestInit,
-): Promise<onboardVenueResponse> => {
-  return customFetch<onboardVenueResponse>(getOnboardVenueUrl(), {
+): Promise<ApiResponseOnboardVenueResponse> => {
+  return customFetch<ApiResponseOnboardVenueResponse>(getOnboardVenueUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -5291,41 +4076,14 @@ export const useOnboardVenue = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary List the caller's pass bookings.
  */
-export type listPassBookingsResponse200 = {
-  data: ApiResponseVecPassBooking;
-  status: 200;
-};
-
-export type listPassBookingsResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type listPassBookingsResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type listPassBookingsResponseSuccess = listPassBookingsResponse200 & {
-  headers: Headers;
-};
-export type listPassBookingsResponseError = (
-  listPassBookingsResponse401 | listPassBookingsResponse403
-) & {
-  headers: Headers;
-};
-
-export type listPassBookingsResponse =
-  listPassBookingsResponseSuccess | listPassBookingsResponseError;
-
 export const getListPassBookingsUrl = () => {
   return `/platform/v1/pass/bookings`;
 };
 
 export const listPassBookings = async (
   options?: RequestInit,
-): Promise<listPassBookingsResponse> => {
-  return customFetch<listPassBookingsResponse>(getListPassBookingsUrl(), {
+): Promise<ApiResponseVecPassBooking> => {
+  return customFetch<ApiResponseVecPassBooking>(getListPassBookingsUrl(), {
     ...options,
     method: 'GET',
   });
@@ -5433,38 +4191,6 @@ export function useListPassBookings<
 /**
  * @summary Cancel one of the caller's pass bookings.
  */
-export type cancelPassBookingResponse200 = {
-  data: ApiResponsePassBooking;
-  status: 200;
-};
-
-export type cancelPassBookingResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type cancelPassBookingResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type cancelPassBookingResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type cancelPassBookingResponseSuccess = cancelPassBookingResponse200 & {
-  headers: Headers;
-};
-export type cancelPassBookingResponseError = (
-  cancelPassBookingResponse401 | cancelPassBookingResponse403 | cancelPassBookingResponse404
-) & {
-  headers: Headers;
-};
-
-export type cancelPassBookingResponse =
-  cancelPassBookingResponseSuccess | cancelPassBookingResponseError;
-
 export const getCancelPassBookingUrl = (bid: string) => {
   return `/platform/v1/pass/bookings/${bid}/cancel`;
 };
@@ -5472,8 +4198,8 @@ export const getCancelPassBookingUrl = (bid: string) => {
 export const cancelPassBooking = async (
   bid: string,
   options?: RequestInit,
-): Promise<cancelPassBookingResponse> => {
-  return customFetch<cancelPassBookingResponse>(getCancelPassBookingUrl(bid), {
+): Promise<ApiResponsePassBooking> => {
+  return customFetch<ApiResponsePassBooking>(getCancelPassBookingUrl(bid), {
     ...options,
     method: 'PUT',
   });
@@ -5549,36 +4275,12 @@ export const useCancelPassBooking = <TError = ErrorResponse, TContext = unknown>
 /**
  * @summary Get the caller's credit balance.
  */
-export type getCreditsResponse200 = {
-  data: ApiResponseCreditBalance;
-  status: 200;
-};
-
-export type getCreditsResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type getCreditsResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type getCreditsResponseSuccess = getCreditsResponse200 & {
-  headers: Headers;
-};
-export type getCreditsResponseError = (getCreditsResponse401 | getCreditsResponse403) & {
-  headers: Headers;
-};
-
-export type getCreditsResponse = getCreditsResponseSuccess | getCreditsResponseError;
-
 export const getGetCreditsUrl = () => {
   return `/platform/v1/pass/credits`;
 };
 
-export const getCredits = async (options?: RequestInit): Promise<getCreditsResponse> => {
-  return customFetch<getCreditsResponse>(getGetCreditsUrl(), {
+export const getCredits = async (options?: RequestInit): Promise<ApiResponseCreditBalance> => {
+  return customFetch<ApiResponseCreditBalance>(getGetCreditsUrl(), {
     ...options,
     method: 'GET',
   });
@@ -5686,41 +4388,12 @@ export function useGetCredits<
 /**
  * @summary Get the caller's pass holder profile.
  */
-export type getMeResponse200 = {
-  data: ApiResponsePassHolder;
-  status: 200;
-};
-
-export type getMeResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type getMeResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type getMeResponse404 = {
-  data: ErrorResponse;
-  status: 404;
-};
-
-export type getMeResponseSuccess = getMeResponse200 & {
-  headers: Headers;
-};
-export type getMeResponseError = (getMeResponse401 | getMeResponse403 | getMeResponse404) & {
-  headers: Headers;
-};
-
-export type getMeResponse = getMeResponseSuccess | getMeResponseError;
-
 export const getGetMeUrl = () => {
   return `/platform/v1/pass/me`;
 };
 
-export const getMe = async (options?: RequestInit): Promise<getMeResponse> => {
-  return customFetch<getMeResponse>(getGetMeUrl(), {
+export const getMe = async (options?: RequestInit): Promise<ApiResponsePassHolder> => {
+  return customFetch<ApiResponsePassHolder>(getGetMeUrl(), {
     ...options,
     method: 'GET',
   });
@@ -5816,37 +4489,6 @@ export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = Err
 /**
  * @summary Change the caller's subscription plan.
  */
-export type changePlanResponse200 = {
-  data: ApiResponsePassHolder;
-  status: 200;
-};
-
-export type changePlanResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type changePlanResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type changePlanResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type changePlanResponseSuccess = changePlanResponse200 & {
-  headers: Headers;
-};
-export type changePlanResponseError = (
-  changePlanResponse400 | changePlanResponse401 | changePlanResponse403
-) & {
-  headers: Headers;
-};
-
-export type changePlanResponse = changePlanResponseSuccess | changePlanResponseError;
-
 export const getChangePlanUrl = () => {
   return `/platform/v1/pass/plan`;
 };
@@ -5854,8 +4496,8 @@ export const getChangePlanUrl = () => {
 export const changePlan = async (
   changePlanRequest: ChangePlanRequest,
   options?: RequestInit,
-): Promise<changePlanResponse> => {
-  return customFetch<changePlanResponse>(getChangePlanUrl(), {
+): Promise<ApiResponsePassHolder> => {
+  return customFetch<ApiResponsePassHolder>(getChangePlanUrl(), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -5928,38 +4570,6 @@ export const useChangePlan = <TError = ErrorResponse, TContext = unknown>(
 /**
  * @summary Register the caller as a pass holder.
  */
-export type registerPassHolderResponse201 = {
-  data: ApiResponsePassHolder;
-  status: 201;
-};
-
-export type registerPassHolderResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type registerPassHolderResponse401 = {
-  data: ErrorResponse;
-  status: 401;
-};
-
-export type registerPassHolderResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
-export type registerPassHolderResponseSuccess = registerPassHolderResponse201 & {
-  headers: Headers;
-};
-export type registerPassHolderResponseError = (
-  registerPassHolderResponse400 | registerPassHolderResponse401 | registerPassHolderResponse403
-) & {
-  headers: Headers;
-};
-
-export type registerPassHolderResponse =
-  registerPassHolderResponseSuccess | registerPassHolderResponseError;
-
 export const getRegisterPassHolderUrl = () => {
   return `/platform/v1/pass/register`;
 };
@@ -5967,8 +4577,8 @@ export const getRegisterPassHolderUrl = () => {
 export const registerPassHolder = async (
   registerPassHolderRequest: RegisterPassHolderRequest,
   options?: RequestInit,
-): Promise<registerPassHolderResponse> => {
-  return customFetch<registerPassHolderResponse>(getRegisterPassHolderUrl(), {
+): Promise<ApiResponsePassHolder> => {
+  return customFetch<ApiResponsePassHolder>(getRegisterPassHolderUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },

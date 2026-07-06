@@ -20,6 +20,14 @@ export default defineConfig({
           useQuery: true,
           useMutation: true,
         },
+        // The mutator (customFetch) resolves to the raw parsed response body,
+        // not an { data, status, headers } wrapper — so generated response
+        // types must not add that wrapper either. Without this flag, Orval's
+        // fetch client types responses one envelope deeper than what
+        // customFetch actually returns at runtime.
+        fetch: {
+          includeHttpResponseReturnType: false,
+        },
       },
     },
   },
