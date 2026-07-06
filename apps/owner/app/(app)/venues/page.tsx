@@ -9,6 +9,8 @@ import { Badge } from '@iziwellpass/ui/components/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/components/card';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
+import { RequirePageAccess } from '@/components/page-access';
+
 function addressSummary(venue: Venue): string {
   const parts = [venue.address_line, venue.city, venue.country].filter(
     (part): part is string => !!part,
@@ -87,14 +89,16 @@ function VenuesGrid() {
 
 export default function VenuesPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Venues</h1>
-        <p className="text-sm text-muted-foreground">
-          Your tenant&apos;s venues and their bookable resources.
-        </p>
+    <RequirePageAccess href="/venues">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Venues</h1>
+          <p className="text-sm text-muted-foreground">
+            Your tenant&apos;s venues and their bookable resources.
+          </p>
+        </div>
+        <VenuesGrid />
       </div>
-      <VenuesGrid />
-    </div>
+    </RequirePageAccess>
   );
 }

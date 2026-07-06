@@ -81,6 +81,7 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 
+import { RequirePageAccess } from '@/components/page-access';
 import { formatDateHeading, formatTime, venueDateKey } from '@/lib/datetime';
 import { useVenueSelection } from '@/lib/use-venue-selection';
 import {
@@ -1292,7 +1293,7 @@ function SlotsSection({
 // Page
 // ---------------------------------------------------------------------------
 
-export default function SchedulesPage() {
+function SchedulesContent() {
   const role = useRole();
   const canManageSchedules = role === 'owner' || role === 'admin';
   const canManageBookings = role === 'owner' || role === 'admin' || role === 'receptionist';
@@ -1340,5 +1341,13 @@ export default function SchedulesPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function SchedulesPage() {
+  return (
+    <RequirePageAccess href="/schedules">
+      <SchedulesContent />
+    </RequirePageAccess>
   );
 }

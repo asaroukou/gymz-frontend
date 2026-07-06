@@ -17,16 +17,9 @@ import {
 } from '@iziwellpass/api/generated';
 import type { Staff } from '@iziwellpass/api/schemas';
 import { Role } from '@iziwellpass/api/schemas';
-import { useRole, useSession } from '@iziwellpass/auth/provider';
+import { useSession } from '@iziwellpass/auth/provider';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@iziwellpass/ui/components/card';
 import {
   Dialog,
   DialogContent,
@@ -67,6 +60,8 @@ import {
   TableHeader,
   TableRow,
 } from '@iziwellpass/ui/components/table';
+
+import { RequirePageAccess } from '@/components/page-access';
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -547,48 +542,11 @@ function StaffSection({ selfUserId }: { selfUserId: string | null }) {
 }
 
 // ---------------------------------------------------------------------------
-// No-access notice (inline belt-and-braces; nav already hides this route)
-// ---------------------------------------------------------------------------
-
-function NoAccessCard() {
-  return (
-    <Card className="max-w-sm">
-      <CardHeader>
-        <CardTitle>No access</CardTitle>
-        <CardDescription>Only owners and admins can manage staff.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Ask an owner or admin at your tenant for help with staff changes.
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
-export default function StaffPage() {
-  const role = useRole();
+function StaffContent() {
   const session = useSession();
-  const canManage = role === 'owner' || role === 'admin' || role === 'platform_admin';
-
-  if (!canManage) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Staff</h1>
-          <p className="text-sm text-muted-foreground">
-            Staff members at your tenant and their roles.
-          </p>
-        </div>
-        <NoAccessCard />
-      </div>
-    );
-  }
-
   const selfUserId = session.status === 'signed-in' ? session.claims.sub : null;
 
   return (
@@ -604,5 +562,13 @@ export default function StaffPage() {
       </div>
       <StaffSection selfUserId={selfUserId} />
     </div>
+  );
+}
+
+export default function StaffPage() {
+  return (
+    <RequirePageAccess href="/staff">
+      <StaffContent />
+    </RequirePageAccess>
   );
 }

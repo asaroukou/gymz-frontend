@@ -48,6 +48,8 @@ import {
 } from '@iziwellpass/ui/components/select';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
+import { RequirePageAccess } from '@/components/page-access';
+
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
   ...MembershipType[],
@@ -416,7 +418,7 @@ function ProfileCard({ member, canEdit }: { member: Member; canEdit: boolean }) 
 // Page
 // ---------------------------------------------------------------------------
 
-export default function MemberDetailPage() {
+function MemberDetailContent() {
   const params = useParams<{ id: string }>();
   const memberId = params.id;
   const role = useRole();
@@ -455,5 +457,13 @@ export default function MemberDetailPage() {
       <ProfileCard member={member} canEdit={canEdit} />
       <EditMemberForm member={member} canEdit={canEdit} />
     </div>
+  );
+}
+
+export default function MemberDetailPage() {
+  return (
+    <RequirePageAccess href="/members">
+      <MemberDetailContent />
+    </RequirePageAccess>
   );
 }

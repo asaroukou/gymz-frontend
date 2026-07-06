@@ -49,6 +49,7 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 
+import { RequirePageAccess } from '@/components/page-access';
 import { formatDateTime } from '@/lib/datetime';
 import { useVenueSelection } from '@/lib/use-venue-selection';
 
@@ -460,7 +461,7 @@ function RecentCheckInsSection({
 // Page
 // ---------------------------------------------------------------------------
 
-export default function CheckinsPage() {
+function CheckinsContent() {
   const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = useVenueSelection();
 
   return (
@@ -500,5 +501,13 @@ export default function CheckinsPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function CheckinsPage() {
+  return (
+    <RequirePageAccess href="/checkins">
+      <CheckinsContent />
+    </RequirePageAccess>
   );
 }

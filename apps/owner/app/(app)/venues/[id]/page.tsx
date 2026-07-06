@@ -70,6 +70,8 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 
+import { RequirePageAccess } from '@/components/page-access';
+
 const VENUE_TYPE_VALUES = Object.values(VenueType) as [VenueType, ...VenueType[]];
 
 function apiErrorMessage(err: unknown, fallback: string): string {
@@ -925,7 +927,7 @@ function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
 // Page
 // ---------------------------------------------------------------------------
 
-export default function VenueDetailPage() {
+function VenueDetailContent() {
   const params = useParams<{ id: string }>();
   const venueId = params.id;
   const role = useRole();
@@ -966,5 +968,13 @@ export default function VenueDetailPage() {
       <ProfileSection venue={venue} canEdit={canEdit} />
       <ResourcesSection venueId={venue.id} canEdit={canEdit} />
     </div>
+  );
+}
+
+export default function VenueDetailPage() {
+  return (
+    <RequirePageAccess href="/venues">
+      <VenueDetailContent />
+    </RequirePageAccess>
   );
 }

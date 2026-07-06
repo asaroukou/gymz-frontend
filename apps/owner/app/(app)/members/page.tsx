@@ -54,6 +54,8 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 
+import { RequirePageAccess } from '@/components/page-access';
+
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
   ...MembershipType[],
@@ -399,7 +401,7 @@ function MembersSection({ canCreate }: { canCreate: boolean }) {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function MembersPage() {
+function MembersContent() {
   const role = useRole();
   const canCreate = role === 'owner' || role === 'admin' || role === 'receptionist';
 
@@ -416,5 +418,13 @@ export default function MembersPage() {
       </div>
       <MembersSection canCreate={canCreate} />
     </div>
+  );
+}
+
+export default function MembersPage() {
+  return (
+    <RequirePageAccess href="/members">
+      <MembersContent />
+    </RequirePageAccess>
   );
 }

@@ -29,3 +29,22 @@ export function navForRole(role: Role | null): { title: string; href: string }[]
     href,
   }));
 }
+
+/**
+ * True when `role` may access the page at `href`. Platform admins always
+ * pass; an `href` with no matching NAV_ITEMS entry defaults to true (nothing
+ * to gate). Used as a belt-and-braces inline guard for role-holders who
+ * navigate to a page outside their own nav (e.g. a trainer opening
+ * `/venues` directly) — role-less sessions never reach these pages at all
+ * (the (app) layout redirects them to `/onboarding` first).
+ */
+export function canAccessPath(role: Role | null, href: string): boolean {
+  if (role === 'platform_admin') {
+    return true;
+  }
+  const item = NAV_ITEMS.find((i) => i.href === href);
+  if (!item) {
+    return true;
+  }
+  return role !== null && item.roles.includes(role);
+}
