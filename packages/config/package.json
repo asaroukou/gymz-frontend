@@ -6,7 +6,8 @@
   "exports": {
     "./typescript/base.json": "./typescript/base.json",
     "./typescript/nextjs.json": "./typescript/nextjs.json",
-    "./eslint/next": "./eslint/next.mjs"
+    "./eslint/next": "./eslint/next.mjs",
+    "./eslint/base": "./eslint/base.mjs"
   },
   "dependencies": {
     "@next/eslint-plugin-next": "^15.3.0",
