@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { AuthClient } from './cognito';
-import { AuthProvider, useRole, useSession } from './provider';
+import { AuthProvider, useAuth, useRole, useSession } from './provider';
 
 function fakeJwt(payload: Record<string, unknown>): string {
   const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -31,6 +31,17 @@ function Probe() {
   );
 }
 
+function RefreshProbe() {
+  const { session, refresh } = useAuth();
+  if (session.status === 'loading') return <p>loading</p>;
+  return (
+    <div>
+      <p>{session.status === 'signed-in' ? `${session.claims.email} / signed-in` : 'signed-out'}</p>
+      <button onClick={() => void refresh()}>refresh</button>
+    </div>
+  );
+}
+
 describe('AuthProvider', () => {
   it('exposes signed-in claims from a valid session', async () => {
     const token = fakeJwt({
@@ -56,5 +67,29 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
     await waitFor(() => expect(screen.getByText('signed-out')).toBeTruthy());
+  });
+
+  it('re-syncs the session when refresh() is called after a challenge completes', async () => {
+    const client = stubClient(null);
+    render(
+      <AuthProvider client={client}>
+        <RefreshProbe />
+      </AuthProvider>,
+    );
+    await waitFor(() => expect(screen.getByText('signed-out')).toBeTruthy());
+
+    const token = fakeJwt({
+      sub: 'u2',
+      email: 'staff@x.com',
+      org_id: 'org1',
+      role: 'trainer',
+      permissions: '[]',
+      exp: 9999999999,
+    });
+    vi.mocked(client.getIdToken).mockResolvedValue(token);
+
+    screen.getByRole('button', { name: 'refresh' }).click();
+
+    await waitFor(() => expect(screen.getByText('staff@x.com / signed-in')).toBeTruthy());
   });
 });

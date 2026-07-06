@@ -23,6 +23,8 @@ export interface AuthContextValue {
   signOut: () => void;
   /** For packages/api configureApi({ getToken }) wiring (SP4). */
   getToken: () => Promise<string | null>;
+  /** Re-fetches the ID token and re-syncs session state (e.g. after a new-password challenge). */
+  refresh: () => Promise<void>;
   client: AuthClient;
 }
 
@@ -51,6 +53,7 @@ export function AuthProvider({ client, children }: { client: AuthClient; childre
       session,
       client,
       getToken: () => client.getIdToken(),
+      refresh,
       signIn: async (email, password) => {
         const result = await client.signIn(email, password);
         if (result.kind === 'success') {
