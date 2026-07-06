@@ -1,7 +1,7 @@
 'use client';
 
 import { Menu } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useState, type AnchorHTMLAttributes, type ComponentType, type ReactNode } from 'react';
 
 import { Button } from '@iziwellpass/ui/components/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@iziwellpass/ui/components/sheet';
@@ -21,16 +21,39 @@ export interface AppShellProps {
   actions?: ReactNode;
   /** Current pathname for active-item highlighting (pass from usePathname()). */
   currentPath?: string;
+  /**
+   * Component used to render nav links (e.g. pass next/link's Link).
+   * Defaults to a plain <a>, which causes full page reloads — fine for
+   * static shells, pass a client-side Link for SPA navigation.
+   */
+  linkComponent?: ComponentType<AnchorHTMLAttributes<HTMLAnchorElement>>;
+  /** Called after any nav link is clicked (AppShell also closes the mobile drawer). */
+  onNavigate?: () => void;
   children: ReactNode;
 }
 
-function NavLinks({ nav, currentPath }: { nav: NavItem[]; currentPath?: string }) {
+function DefaultLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return <a {...props} />;
+}
+
+function NavLinks({
+  nav,
+  currentPath,
+  linkComponent: LinkComponent = DefaultLink,
+  onNavigate,
+}: {
+  nav: NavItem[];
+  currentPath?: string;
+  linkComponent?: ComponentType<AnchorHTMLAttributes<HTMLAnchorElement>>;
+  onNavigate?: () => void;
+}) {
   return (
     <nav className="flex flex-col gap-1 p-2">
       {nav.map((item) => (
-        <a
+        <LinkComponent
           key={item.href}
           href={item.href}
+          onClick={onNavigate}
           className={cn(
             'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
             currentPath === item.href
@@ -40,21 +63,39 @@ function NavLinks({ nav, currentPath }: { nav: NavItem[]; currentPath?: string }
         >
           {item.icon}
           {item.title}
-        </a>
+        </LinkComponent>
       ))}
     </nav>
   );
 }
 
-export function AppShell({ title, nav, actions, currentPath, children }: AppShellProps) {
+export function AppShell({
+  title,
+  nav,
+  actions,
+  currentPath,
+  linkComponent,
+  onNavigate,
+  children,
+}: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleNavigate = () => {
+    setMobileOpen(false);
+    onNavigate?.();
+  };
 
   return (
     <div className="flex min-h-screen">
       {/* Desktop sidebar */}
       <aside className="hidden w-60 shrink-0 border-r bg-card md:block">
         <div className="flex h-14 items-center border-b px-4 text-sm font-semibold">{title}</div>
-        <NavLinks nav={nav} currentPath={currentPath} />
+        <NavLinks
+          nav={nav}
+          currentPath={currentPath}
+          linkComponent={linkComponent}
+          onNavigate={handleNavigate}
+        />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -66,11 +107,16 @@ export function AppShell({ title, nav, actions, currentPath, children }: AppShel
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-60 p-0">
+            <SheetContent side="left" className="w-60 p-0" aria-describedby={undefined}>
               <SheetTitle className="flex h-14 items-center border-b px-4 text-sm font-semibold">
                 {title}
               </SheetTitle>
-              <NavLinks nav={nav} currentPath={currentPath} />
+              <NavLinks
+                nav={nav}
+                currentPath={currentPath}
+                linkComponent={linkComponent}
+                onNavigate={handleNavigate}
+              />
             </SheetContent>
           </Sheet>
           <div className="ml-auto flex items-center gap-2">{actions}</div>

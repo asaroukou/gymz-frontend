@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import type { AnchorHTMLAttributes } from 'react';
 import { AppShell, type NavItem } from './app-shell';
 
 const nav: NavItem[] = [
@@ -33,5 +34,28 @@ describe('AppShell', () => {
       </AppShell>,
     );
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy();
+  });
+
+  it('renders links through a custom linkComponent when provided', () => {
+    function FakeLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
+      return <a data-testid="custom-link" {...props} />;
+    }
+    render(
+      <AppShell nav={nav} title="IziWellPass" linkComponent={FakeLink}>
+        <p>x</p>
+      </AppShell>,
+    );
+    expect(screen.getAllByTestId('custom-link').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('calls onNavigate when a nav link is clicked', () => {
+    const onNavigate = vi.fn();
+    render(
+      <AppShell nav={nav} title="IziWellPass" onNavigate={onNavigate}>
+        <p>x</p>
+      </AppShell>,
+    );
+    screen.getAllByRole('link', { name: 'Members' })[0]?.click();
+    expect(onNavigate).toHaveBeenCalled();
   });
 });
