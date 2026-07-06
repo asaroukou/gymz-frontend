@@ -8,13 +8,6 @@ import { useAuth, useSession } from '@iziwellpass/auth/provider';
 import { AppShell } from '@iziwellpass/ui/app-shell';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@iziwellpass/ui/components/card';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -61,32 +54,6 @@ function UserMenu() {
   );
 }
 
-function NoAccessNotice() {
-  const router = useRouter();
-  const { signOut } = useAuth();
-
-  const handleSignOut = () => {
-    signOut();
-    router.replace('/login');
-  };
-
-  return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>No access</CardTitle>
-          <CardDescription>Your account has no venue-staff role.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" className="w-full" onClick={handleSignOut}>
-            Sign out
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
 function LoadingShell() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -103,12 +70,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const session = useSession();
+  const nav = session.status === 'signed-in' ? navForRole(session.claims.role) : [];
 
   useEffect(() => {
     if (session.status === 'signed-out') {
       router.replace('/login');
+      return;
     }
-  }, [session.status, router]);
+    if (session.status === 'signed-in' && nav.length === 0) {
+      // Signed in but no venue-staff role yet — send them to create one
+      // instead of stranding them on a dead-end "no access" screen.
+      router.replace('/onboarding');
+    }
+  }, [session.status, nav.length, router]);
 
   if (session.status === 'loading') {
     return <LoadingShell />;
@@ -120,10 +94,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return null;
   }
 
-  const nav = navForRole(session.claims.role);
-
   if (nav.length === 0) {
-    return <NoAccessNotice />;
+    // The effect above is redirecting to /onboarding; render nothing while
+    // that navigation completes.
+    return null;
   }
 
   return (

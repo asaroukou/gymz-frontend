@@ -128,6 +128,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = sanitizeNext(searchParams.get('next'));
+  const onboarded = searchParams.get('onboarded') === '1';
   const { signIn, refresh } = useAuth();
   const [challenge, setChallenge] = useState<{
     complete: (newPassword: string) => Promise<{ idToken: string }>;
@@ -169,6 +170,11 @@ function LoginForm() {
   return (
     <Form {...form}>
       <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+        {onboarded ? (
+          <p className="rounded-md bg-primary/10 p-3 text-sm text-primary">
+            Your venue is ready — sign in to continue.
+          </p>
+        ) : null}
         <FormField
           control={form.control}
           name="email"
