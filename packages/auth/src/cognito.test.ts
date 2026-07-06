@@ -153,4 +153,58 @@ describe('forceRefreshSession', () => {
     );
     await expect(client.forceRefreshSession()).resolves.toBeNull();
   });
+
+  it('dedupes concurrent calls into a single SDK refresh', async () => {
+    getCurrentUser.mockReturnValue({ getSession, refreshSession });
+    const fakeOldSession = {
+      isValid: () => true,
+      getRefreshToken: () => ({ token: 'refresh-1' }),
+    };
+    getSession.mockImplementation((cb: (err: Error | null, session: unknown) => void) =>
+      cb(null, fakeOldSession),
+    );
+    let capturedCallback: ((err: unknown, session: unknown) => void) | undefined;
+    refreshSession.mockImplementation(
+      (_refreshToken: unknown, cb: (err: unknown, session: unknown) => void) => {
+        capturedCallback = cb;
+      },
+    );
+    const fakeNewSession = {
+      getIdToken: () => ({ getJwtToken: () => 'shared-token' }),
+    };
+
+    const first = client.forceRefreshSession();
+    const second = client.forceRefreshSession();
+
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+
+    capturedCallback?.(null, fakeNewSession);
+
+    await expect(first).resolves.toBe('shared-token');
+    await expect(second).resolves.toBe('shared-token');
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('triggers a fresh SDK refresh on a later sequential call', async () => {
+    getCurrentUser.mockReturnValue({ getSession, refreshSession });
+    const fakeOldSession = {
+      isValid: () => true,
+      getRefreshToken: () => ({ token: 'refresh-1' }),
+    };
+    getSession.mockImplementation((cb: (err: Error | null, session: unknown) => void) =>
+      cb(null, fakeOldSession),
+    );
+    const fakeNewSession = {
+      getIdToken: () => ({ getJwtToken: () => 'new-id-token' }),
+    };
+    refreshSession.mockImplementation(
+      (_refreshToken: unknown, cb: (err: unknown, session: unknown) => void) =>
+        cb(null, fakeNewSession),
+    );
+
+    await expect(client.forceRefreshSession()).resolves.toBe('new-id-token');
+    await expect(client.forceRefreshSession()).resolves.toBe('new-id-token');
+
+    expect(refreshSession).toHaveBeenCalledTimes(2);
+  });
 });

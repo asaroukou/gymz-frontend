@@ -49,6 +49,15 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
 
   const user = (email: string) => new CognitoUser({ Username: email, Pool: pool });
 
+  // Dedupes concurrent forceRefreshSession() calls: when several queries on a
+  // page hit 401 at once, each would otherwise trigger its own Cognito
+  // refresh. Under refresh-token rotation, a second concurrent refresh with
+  // the now-stale token can fail (invalid-refresh-token), causing a spurious
+  // clearSessionCookie()/sign-out race. Sharing one in-flight promise across
+  // concurrent callers avoids that; the slot clears once settled so a later,
+  // non-concurrent call still refreshes anew.
+  let inflightRefresh: Promise<string | null> | null = null;
+
   return {
     signUp(email, password) {
       return new Promise((resolve, reject) => {
@@ -123,7 +132,10 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
     },
 
     forceRefreshSession() {
-      return new Promise((resolve) => {
+      if (inflightRefresh) {
+        return inflightRefresh;
+      }
+      const refresh = new Promise<string | null>((resolve) => {
         const current = pool.getCurrentUser();
         if (!current) {
           resolve(null);
@@ -151,6 +163,10 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
           }) as Parameters<CognitoUser['refreshSession']>[1]);
         }) as Parameters<CognitoUser['getSession']>[0]);
       });
+      inflightRefresh = refresh.finally(() => {
+        inflightRefresh = null;
+      });
+      return inflightRefresh;
     },
   };
 }
