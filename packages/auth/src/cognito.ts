@@ -25,10 +25,20 @@ export type SignInResult =
 export interface AuthClient {
   signUp(email: string, password: string): Promise<void>;
   confirmSignUp(email: string, code: string): Promise<void>;
+  /** Re-sends the sign-up confirmation code (e.g. after the first email is lost/expired). */
+  resendConfirmationCode(email: string): Promise<void>;
   signIn(email: string, password: string): Promise<SignInResult>;
   signOut(): void;
   /** Current user's valid ID token, auto-refreshed by the SDK; null if signed out. */
   getIdToken(): Promise<string | null>;
+  /**
+   * Forces a new token mint via the refresh token (bypassing the SDK's cached,
+   * still-valid ID token) so freshly-changed claims (e.g. right after
+   * onboarding creates an org) show up immediately. Resolves the new ID token,
+   * or null when there is no signed-in user or the refresh fails — never
+   * throws for the signed-out case.
+   */
+  forceRefreshSession(): Promise<string | null>;
 }
 
 export function createAuthClient(config: AuthClientConfig): AuthClient {
@@ -49,6 +59,12 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
     confirmSignUp(email, code) {
       return new Promise((resolve, reject) => {
         user(email).confirmRegistration(code, true, (err) => (err ? reject(err) : resolve()));
+      });
+    },
+
+    resendConfirmationCode(email) {
+      return new Promise((resolve, reject) => {
+        user(email).resendConfirmationCode((err) => (err ? reject(err) : resolve()));
       });
     },
 
@@ -102,6 +118,37 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
             return;
           }
           resolve(session.getIdToken().getJwtToken());
+        }) as Parameters<CognitoUser['getSession']>[0]);
+      });
+    },
+
+    forceRefreshSession() {
+      return new Promise((resolve) => {
+        const current = pool.getCurrentUser();
+        if (!current) {
+          resolve(null);
+          return;
+        }
+        // Same overloaded-callback shape as getIdToken above.
+        current.getSession(((err: Error | null, session: CognitoUserSession | null) => {
+          if (err || !session) {
+            resolve(null);
+            return;
+          }
+          // The SDK types refreshSession's callback as NodeCallback<any, any>
+          // ((err, result) => void)) rather than the CognitoUserSession-specific
+          // shape used elsewhere; we widen locally instead of using `any` at
+          // the call site.
+          current.refreshSession(session.getRefreshToken(), ((
+            refreshErr: unknown,
+            newSession: CognitoUserSession | null,
+          ) => {
+            if (refreshErr || !newSession) {
+              resolve(null);
+              return;
+            }
+            resolve(newSession.getIdToken().getJwtToken());
+          }) as Parameters<CognitoUser['refreshSession']>[1]);
         }) as Parameters<CognitoUser['getSession']>[0]);
       });
     },

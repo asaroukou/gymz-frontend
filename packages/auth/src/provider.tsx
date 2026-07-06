@@ -23,8 +23,14 @@ export interface AuthContextValue {
   signOut: () => void;
   /** For packages/api configureApi({ getToken }) wiring (SP4). */
   getToken: () => Promise<string | null>;
-  /** Re-fetches the ID token and re-syncs session state (e.g. after a new-password challenge). */
-  refresh: () => Promise<void>;
+  /**
+   * Re-fetches the ID token and re-syncs session state (e.g. after a
+   * new-password challenge). Pass `{ force: true }` to mint a brand-new token
+   * via the refresh token — bypassing the SDK's cached, still-valid ID token —
+   * so freshly-changed claims (e.g. right after onboarding creates an org)
+   * show up immediately instead of waiting for natural token expiry.
+   */
+  refresh: (opts?: { force?: boolean }) => Promise<void>;
   client: AuthClient;
 }
 
@@ -33,18 +39,27 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ client, children }: { client: AuthClient; children: ReactNode }) {
   const [session, setSession] = useState<SessionState>({ status: 'loading' });
 
-  const refresh = useCallback(async () => {
-    const token = await client.getIdToken();
-    if (!token) {
-      clearSessionCookie();
-      setSession({ status: 'signed-out' });
-      return;
-    }
-    setSessionCookie();
-    setSession({ status: 'signed-in', claims: parseClaims(token) });
-  }, [client]);
+  const refresh = useCallback(
+    async (opts?: { force?: boolean }) => {
+      const token = opts?.force
+        ? ((await client.forceRefreshSession()) ?? (await client.getIdToken()))
+        : await client.getIdToken();
+      if (!token) {
+        clearSessionCookie();
+        setSession({ status: 'signed-out' });
+        return;
+      }
+      setSessionCookie();
+      setSession({ status: 'signed-in', claims: parseClaims(token) });
+    },
+    [client],
+  );
 
   useEffect(() => {
+    // Mount-time refresh must never force: forceRefreshSession() always
+    // triggers a refresh-token network round trip, which we don't want on
+    // every page load — only when a caller explicitly asks for one (e.g.
+    // right after onboarding mints new claims).
     void refresh();
   }, [refresh]);
 

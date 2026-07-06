@@ -21,9 +21,11 @@ function noopAuthClient(): AuthClient {
   return {
     signUp: () => Promise.reject(new Error('Auth client not configured')),
     confirmSignUp: () => Promise.reject(new Error('Auth client not configured')),
+    resendConfirmationCode: () => Promise.reject(new Error('Auth client not configured')),
     signIn: () => Promise.reject(new Error('Auth client not configured')),
     signOut: () => undefined,
     getIdToken: () => Promise.resolve(null),
+    forceRefreshSession: () => Promise.resolve(null),
   };
 }
 

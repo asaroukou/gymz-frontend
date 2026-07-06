@@ -13,9 +13,11 @@ function stubClient(idToken: string | null): AuthClient {
   return {
     signUp: vi.fn(),
     confirmSignUp: vi.fn(),
+    resendConfirmationCode: vi.fn(),
     signIn: vi.fn(),
     signOut: vi.fn(),
     getIdToken: vi.fn().mockResolvedValue(idToken),
+    forceRefreshSession: vi.fn().mockResolvedValue(null),
   };
 }
 
@@ -38,6 +40,21 @@ function RefreshProbe() {
     <div>
       <p>{session.status === 'signed-in' ? `${session.claims.email} / signed-in` : 'signed-out'}</p>
       <button onClick={() => void refresh()}>refresh</button>
+    </div>
+  );
+}
+
+function ForceRefreshProbe() {
+  const { session, refresh } = useAuth();
+  if (session.status === 'loading') return <p>loading</p>;
+  return (
+    <div>
+      <p>
+        {session.status === 'signed-in'
+          ? `${session.claims.email} / ${session.claims.role}`
+          : 'signed-out'}
+      </p>
+      <button onClick={() => void refresh({ force: true })}>force-refresh</button>
     </div>
   );
 }
@@ -91,5 +108,38 @@ describe('AuthProvider', () => {
     screen.getByRole('button', { name: 'refresh' }).click();
 
     await waitFor(() => expect(screen.getByText('staff@x.com / signed-in')).toBeTruthy());
+  });
+
+  it('carries the new role after refresh({ force: true }) mints an owner-claims token', async () => {
+    const staffToken = fakeJwt({
+      sub: 'u3',
+      email: 'new-owner@x.com',
+      org_id: null,
+      role: null,
+      permissions: '[]',
+      exp: 9999999999,
+    });
+    const client = stubClient(staffToken);
+    render(
+      <AuthProvider client={client}>
+        <ForceRefreshProbe />
+      </AuthProvider>,
+    );
+    await waitFor(() => expect(screen.getByText('new-owner@x.com / null')).toBeTruthy());
+
+    const ownerToken = fakeJwt({
+      sub: 'u3',
+      email: 'new-owner@x.com',
+      org_id: 'org2',
+      role: 'owner',
+      permissions: '[]',
+      exp: 9999999999,
+    });
+    vi.mocked(client.forceRefreshSession).mockResolvedValue(ownerToken);
+
+    screen.getByRole('button', { name: 'force-refresh' }).click();
+
+    await waitFor(() => expect(screen.getByText('new-owner@x.com / owner')).toBeTruthy());
+    expect(client.forceRefreshSession).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,17 +3,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const authenticateUser = vi.fn();
 const signUpMock = vi.fn();
 const confirmRegistration = vi.fn();
+const resendConfirmationCode = vi.fn();
+const refreshSession = vi.fn();
+const getSession = vi.fn();
+const getCurrentUser = vi.fn();
 
 vi.mock('amazon-cognito-identity-js', () => {
   class CognitoUserPool {
     signUp = signUpMock;
+    getCurrentUser = getCurrentUser;
   }
   class CognitoUser {
     authenticateUser = authenticateUser;
     confirmRegistration = confirmRegistration;
     completeNewPasswordChallenge = vi.fn();
     signOut = vi.fn();
-    getSession = vi.fn();
+    getSession = getSession;
+    resendConfirmationCode = resendConfirmationCode;
+    refreshSession = refreshSession;
   }
   class AuthenticationDetails {}
   return { CognitoUserPool, CognitoUser, AuthenticationDetails };
@@ -73,5 +80,77 @@ describe('signUp / confirmSignUp', () => {
   it('rejects when the SDK reports an error', async () => {
     signUpMock.mockImplementation((_e, _p, _a, _v, cb) => cb(new Error('exists')));
     await expect(client.signUp('a@b.c', 'pw')).rejects.toThrow('exists');
+  });
+});
+
+describe('resendConfirmationCode', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('resolves when the SDK reports success', async () => {
+    resendConfirmationCode.mockImplementation((cb) => cb(undefined, {}));
+    await expect(client.resendConfirmationCode('a@b.c')).resolves.toBeUndefined();
+  });
+
+  it('rejects when the SDK reports an error', async () => {
+    resendConfirmationCode.mockImplementation((cb) => cb(new Error('LimitExceededException')));
+    await expect(client.resendConfirmationCode('a@b.c')).rejects.toThrow('LimitExceededException');
+  });
+});
+
+describe('forceRefreshSession', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('resolves the new id token via refreshSession when a current user and session exist', async () => {
+    getCurrentUser.mockReturnValue({
+      getSession,
+      refreshSession,
+    });
+    const fakeRefreshToken = { token: 'refresh-1' };
+    const fakeOldSession = {
+      isValid: () => true,
+      getRefreshToken: () => fakeRefreshToken,
+    };
+    getSession.mockImplementation((cb: (err: Error | null, session: unknown) => void) =>
+      cb(null, fakeOldSession),
+    );
+    const fakeNewSession = {
+      getIdToken: () => ({ getJwtToken: () => 'new-id-token' }),
+    };
+    refreshSession.mockImplementation(
+      (_refreshToken: unknown, cb: (err: unknown, session: unknown) => void) =>
+        cb(null, fakeNewSession),
+    );
+
+    await expect(client.forceRefreshSession()).resolves.toBe('new-id-token');
+    expect(refreshSession).toHaveBeenCalledWith(fakeRefreshToken, expect.any(Function));
+  });
+
+  it('resolves null when there is no current user', async () => {
+    getCurrentUser.mockReturnValue(null);
+    await expect(client.forceRefreshSession()).resolves.toBeNull();
+  });
+
+  it('resolves null when getSession errors', async () => {
+    getCurrentUser.mockReturnValue({ getSession, refreshSession });
+    getSession.mockImplementation((cb: (err: Error | null, session: unknown) => void) =>
+      cb(new Error('no session'), null),
+    );
+    await expect(client.forceRefreshSession()).resolves.toBeNull();
+  });
+
+  it('resolves null when refreshSession errors', async () => {
+    getCurrentUser.mockReturnValue({ getSession, refreshSession });
+    const fakeOldSession = {
+      isValid: () => true,
+      getRefreshToken: () => ({ token: 'refresh-1' }),
+    };
+    getSession.mockImplementation((cb: (err: Error | null, session: unknown) => void) =>
+      cb(null, fakeOldSession),
+    );
+    refreshSession.mockImplementation(
+      (_refreshToken: unknown, cb: (err: unknown, session: unknown) => void) =>
+        cb(new Error('NotAuthorizedException'), null),
+    );
+    await expect(client.forceRefreshSession()).resolves.toBeNull();
   });
 });
