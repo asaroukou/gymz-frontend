@@ -63,6 +63,40 @@ describe('customFetch', () => {
     expect((err as ApiError).code).toBe('UNKNOWN');
     expect((err as ApiError).status).toBe(504);
   });
+
+  it('sends no content-type header for a bodyless GET', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(200, { data: [], request_id: 'r' }));
+    await customFetch('/gms/v1/venues', { method: 'GET' });
+    const headers = new Headers(vi.mocked(fetch).mock.calls[0]?.[1]?.headers);
+    expect(headers.get('content-type')).toBeNull();
+  });
+
+  it('merges configureApi partially, preserving prior fields not passed again', async () => {
+    configureApi({ baseUrl: 'https://api.test/v1', getToken: () => Promise.resolve('tok-A') });
+    configureApi({ baseUrl: 'https://other.test' });
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(200, { data: [], request_id: 'r' }));
+    await customFetch('/gms/v1/staff', { method: 'GET' });
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('https://other.test/gms/v1/staff');
+    const headers = new Headers(vi.mocked(fetch).mock.calls[0]?.[1]?.headers);
+    expect(headers.get('authorization')).toBe('Bearer tok-A');
+  });
+
+  it('preserves an explicit content-type header instead of overwriting it', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(200, { data: null, request_id: 'r' }));
+    await customFetch('/x', {
+      method: 'POST',
+      body: 'raw',
+      headers: { 'content-type': 'text/plain' },
+    });
+    const headers = new Headers(vi.mocked(fetch).mock.calls[0]?.[1]?.headers);
+    expect(headers.get('content-type')).toBe('text/plain');
+  });
+
+  it('resolves undefined on a 204 No Content response', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }));
+    const res = await customFetch('/gms/v1/staff/1', { method: 'DELETE' });
+    expect(res).toBeUndefined();
+  });
 });
 
 describe('unwrap', () => {

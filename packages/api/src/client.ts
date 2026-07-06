@@ -31,6 +31,9 @@ interface ApiConfig {
   getToken: TokenGetter;
 }
 
+// Process-wide mutable state: call configureApi() from CLIENT code only.
+// Never import/call this from Server Components, Route Handlers, or Server Actions —
+// during SSR the module is shared across requests and the token getter would be wrong/empty.
 let config: ApiConfig = {
   baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? '',
   getToken: () => Promise.resolve(null),
@@ -52,6 +55,8 @@ export async function customFetch<T>(url: string, options: RequestInit): Promise
     headers.set('content-type', 'application/json');
   }
 
+  // Network-level failures (offline/DNS) intentionally pass through as raw TypeError —
+  // callers distinguish transport errors (not ApiError) from API errors (ApiError).
   const response = await fetch(`${config.baseUrl}${url}`, { ...options, headers });
 
   if (!response.ok) {
