@@ -1,0 +1,33 @@
+{
+  "name": "@iziwellpass/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": "./src/client.ts",
+    "./provider": "./src/provider.tsx",
+    "./generated": "./src/generated/endpoints.ts",
+    "./schemas": "./src/generated/endpoints.schemas.ts"
+  },
+  "scripts": {
+    "generate": "orval --config orval.config.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run && node scripts/check-freshness.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.80.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@iziwellpass/config": "workspace:*",
+    "@types/react": "^19.0.0",
+    "eslint": "^9.25.0",
+    "orval": "^7.13.0",
+    "react": "^19.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
