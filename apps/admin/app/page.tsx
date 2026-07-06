@@ -1,3 +1,5 @@
+// Deferred shell: the platform-admin product has no backend endpoints yet.
+// Do not add real UI here until the admin API exists (see web-frontend design doc).
 export default function HomePage() {
   return (
     <main>

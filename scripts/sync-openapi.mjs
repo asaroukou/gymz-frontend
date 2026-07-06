@@ -6,7 +6,7 @@
 //   gymz-v1/gymz/docs/openapi.json  ->  gymz-v1/web/openapi.json
 // Override with: OPENAPI_SRC=/path/to/openapi.json pnpm sync:openapi
 
-import { copyFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -19,5 +19,15 @@ if (!existsSync(src)) {
   process.exit(1);
 }
 
-copyFileSync(src, dest);
-console.log(`sync:openapi: ${src} -> ${dest}`);
+const raw = readFileSync(src, 'utf8');
+try {
+  JSON.parse(raw);
+} catch (err) {
+  console.error(`sync:openapi: source is not valid JSON: ${src}`);
+  console.error(err.message);
+  process.exit(1);
+}
+
+const unchanged = existsSync(dest) && readFileSync(dest, 'utf8') === raw;
+writeFileSync(dest, raw);
+console.log(`sync:openapi: ${src} -> ${dest}${unchanged ? ' (unchanged)' : ' (updated)'}`);
