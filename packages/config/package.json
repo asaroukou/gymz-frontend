@@ -1,0 +1,15 @@
+{
+  "name": "@iziwellpass/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./typescript/base.json": "./typescript/base.json",
+    "./typescript/nextjs.json": "./typescript/nextjs.json",
+    "./eslint/next": "./eslint/next.mjs"
+  },
+  "dependencies": {
+    "@next/eslint-plugin-next": "^15.3.0",
+    "typescript-eslint": "^8.30.0"
+  }
+}
