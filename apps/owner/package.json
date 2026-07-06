@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@iziwellpass/api": "workspace:*",
+    "@iziwellpass/auth": "workspace:*",
     "@iziwellpass/ui": "workspace:*",
     "next": "^15.3.0",
     "react": "^19.0.0",
