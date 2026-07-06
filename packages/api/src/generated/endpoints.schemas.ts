@@ -1228,6 +1228,7 @@ export type BookingId = string;
  */
 export type BookingMode = (typeof BookingMode)[keyof typeof BookingMode];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const BookingMode = {
   class: 'class',
   appointment: 'appointment',
@@ -1240,6 +1241,7 @@ export const BookingMode = {
  */
 export type BookingSource = (typeof BookingSource)[keyof typeof BookingSource];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const BookingSource = {
   direct: 'direct',
   iziwellpass: 'iziwellpass',
@@ -1251,6 +1253,7 @@ export const BookingSource = {
  */
 export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const BookingStatus = {
   confirmed: 'confirmed',
   checked_in: 'checked_in',
@@ -1311,6 +1314,7 @@ export type CheckInId = string;
  */
 export type CheckInMethod = (typeof CheckInMethod)[keyof typeof CheckInMethod];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const CheckInMethod = {
   qr: 'qr',
   manual: 'manual',
@@ -1558,6 +1562,7 @@ export type MemberId = string;
  */
 export type MembershipStatus = (typeof MembershipStatus)[keyof typeof MembershipStatus];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const MembershipStatus = {
   active: 'active',
   expired: 'expired',
@@ -1570,6 +1575,7 @@ export const MembershipStatus = {
  */
 export type MembershipType = (typeof MembershipType)[keyof typeof MembershipType];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const MembershipType = {
   monthly: 'monthly',
   annual: 'annual',
@@ -1733,6 +1739,7 @@ export interface PassBookingResult {
  */
 export type PassBookingStatus = (typeof PassBookingStatus)[keyof typeof PassBookingStatus];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const PassBookingStatus = {
   confirmed: 'confirmed',
   checked_in: 'checked_in',
@@ -1784,6 +1791,7 @@ export type PassHolderId = string;
  */
 export type PassHolderStatus = (typeof PassHolderStatus)[keyof typeof PassHolderStatus];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const PassHolderStatus = {
   active: 'active',
   suspended: 'suspended',
@@ -1798,6 +1806,7 @@ counts from business doc §7.4 Tier Structure Sensitivity Table.
  */
 export type PassPlan = (typeof PassPlan)[keyof typeof PassPlan];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const PassPlan = {
   starter: 'starter',
   active: 'active',
@@ -1898,6 +1907,7 @@ Matches LLD section 4.5. Used in JWT claims and TenantContext.
  */
 export type Role = (typeof Role)[keyof typeof Role];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const Role = {
   platform_admin: 'platform_admin',
   owner: 'owner',
@@ -1975,6 +1985,7 @@ export type SlotId = string;
  */
 export type SlotStatus = (typeof SlotStatus)[keyof typeof SlotStatus];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const SlotStatus = {
   available: 'available',
   full: 'full',
@@ -2263,6 +2274,7 @@ export interface VenueSettings {
  */
 export type VenueType = (typeof VenueType)[keyof typeof VenueType];
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const VenueType = {
   gym: 'gym',
   yoga_studio: 'yoga_studio',
