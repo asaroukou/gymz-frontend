@@ -81,6 +81,7 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 
+import { formatDateHeading, formatTime, venueDateKey } from '@/lib/datetime';
 import { useVenueSelection } from '@/lib/use-venue-selection';
 import {
   parseRecurrenceRule,
@@ -712,7 +713,15 @@ function SchedulesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
                   <TableCell>{humanizeRecurrenceRule(schedule.recurrence_rule)}</TableCell>
                   <TableCell>{resourceById.get(schedule.resource_id)?.name ?? 'Unknown'}</TableCell>
                   <TableCell>
-                    {schedule.start_time}–{schedule.end_time}
+                    {/*
+                      `Schedule.start_time`/`end_time` are `NaiveTime` clock
+                      strings ("09:00:00", OpenAPI `type: string` with no
+                      `date-time` format) — the recurring template's daily
+                      window, already venue-local with no UTC instant to
+                      convert. Rendered as-is (trimmed to "HH:MM"); do not
+                      run through the venue-timezone Intl formatters.
+                    */}
+                    {schedule.start_time.slice(0, 5)}–{schedule.end_time.slice(0, 5)}
                   </TableCell>
                   {canEdit ? (
                     <TableCell>
@@ -1050,11 +1059,13 @@ function slotStatusBadgeVariant(
 function CancelSlotDialog({
   slot,
   venueId,
+  timeZone,
   open,
   onOpenChange,
 }: {
   slot: ScheduleSlot;
   venueId: string;
+  timeZone: string | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -1083,7 +1094,8 @@ function CancelSlotDialog({
         <DialogHeader>
           <DialogTitle>Cancel slot</DialogTitle>
           <DialogDescription>
-            This will cancel this slot on {slot.date} ({slot.start_time}–{slot.end_time}). Existing
+            This will cancel this slot on {formatDateHeading(slot.start_time, timeZone)} (
+            {formatTime(slot.start_time, timeZone)}–{formatTime(slot.end_time, timeZone)}). Existing
             bookings will need to be handled separately. This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
@@ -1103,6 +1115,7 @@ function CancelSlotDialog({
 function SlotRow({
   slot,
   venueId,
+  timeZone,
   resourceById,
   members,
   canManageSlots,
@@ -1110,6 +1123,7 @@ function SlotRow({
 }: {
   slot: ScheduleSlot;
   venueId: string;
+  timeZone: string | undefined;
   resourceById: Map<string, Resource>;
   members: Member[];
   canManageSlots: boolean;
@@ -1122,7 +1136,7 @@ function SlotRow({
     <>
       <TableRow className="cursor-pointer" onClick={() => setExpanded((v) => !v)}>
         <TableCell className="font-medium">
-          {slot.start_time}–{slot.end_time}
+          {formatTime(slot.start_time, timeZone)}–{formatTime(slot.end_time, timeZone)}
         </TableCell>
         <TableCell>{resourceById.get(slot.resource_id)?.name ?? 'Unknown'}</TableCell>
         <TableCell>
@@ -1169,6 +1183,7 @@ function SlotRow({
         <CancelSlotDialog
           slot={slot}
           venueId={venueId}
+          timeZone={timeZone}
           open={cancelling}
           onOpenChange={setCancelling}
         />
@@ -1179,10 +1194,12 @@ function SlotRow({
 
 function SlotsSection({
   venueId,
+  timeZone,
   canManageSlots,
   canManageBookings,
 }: {
   venueId: string;
+  timeZone: string | undefined;
   canManageSlots: boolean;
   canManageBookings: boolean;
 }) {
@@ -1198,12 +1215,17 @@ function SlotsSection({
     const slots = slotsQuery.data ?? [];
     const groups = new Map<string, ScheduleSlot[]>();
     for (const slot of slots) {
-      const list = groups.get(slot.date) ?? [];
+      // Group by the venue-local calendar date derived from the slot's
+      // (real UTC) `start_time`, not the raw `date` field — `date` is the
+      // slot's UTC calendar date and can disagree with the venue's local
+      // date near midnight for non-UTC venues.
+      const key = venueDateKey(slot.start_time, timeZone);
+      const list = groups.get(key) ?? [];
       list.push(slot);
-      groups.set(slot.date, list);
+      groups.set(key, list);
     }
     return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [slotsQuery.data]);
+  }, [slotsQuery.data, timeZone]);
 
   return (
     <Card>
@@ -1226,35 +1248,39 @@ function SlotsSection({
           </p>
         ) : (
           <div className="space-y-6">
-            {slotsByDate.map(([date, slots]) => (
-              <div key={date} className="space-y-2">
-                <p className="text-sm font-semibold">{date}</p>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Resource</TableHead>
-                      <TableHead>Booked / Capacity</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {slots.map((slot) => (
-                      <SlotRow
-                        key={slot.id}
-                        slot={slot}
-                        venueId={venueId}
-                        resourceById={resourceById}
-                        members={members}
-                        canManageSlots={canManageSlots}
-                        canManageBookings={canManageBookings}
-                      />
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ))}
+            {slotsByDate.map(([dateKey, slots]) => {
+              const heading = slots[0] ? formatDateHeading(slots[0].start_time, timeZone) : dateKey;
+              return (
+                <div key={dateKey} className="space-y-2">
+                  <p className="text-sm font-semibold">{heading}</p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Resource</TableHead>
+                        <TableHead>Booked / Capacity</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {slots.map((slot) => (
+                        <SlotRow
+                          key={slot.id}
+                          slot={slot}
+                          venueId={venueId}
+                          timeZone={timeZone}
+                          resourceById={resourceById}
+                          members={members}
+                          canManageSlots={canManageSlots}
+                          canManageBookings={canManageBookings}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              );
+            })}
           </div>
         )}
       </CardContent>
@@ -1271,7 +1297,7 @@ export default function SchedulesPage() {
   const canManageSchedules = role === 'owner' || role === 'admin';
   const canManageBookings = role === 'owner' || role === 'admin' || role === 'receptionist';
 
-  const { venues, isLoading, isError, error, selectedVenueId } = useVenueSelection();
+  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = useVenueSelection();
 
   return (
     <div className="space-y-6">
@@ -1307,6 +1333,7 @@ export default function SchedulesPage() {
           <SchedulesSection venueId={selectedVenueId} canEdit={canManageSchedules} />
           <SlotsSection
             venueId={selectedVenueId}
+            timeZone={selectedVenue?.timezone}
             canManageSlots={canManageSchedules}
             canManageBookings={canManageBookings}
           />

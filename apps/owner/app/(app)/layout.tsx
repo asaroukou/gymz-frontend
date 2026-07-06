@@ -74,7 +74,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (session.status === 'signed-out') {
-      router.replace('/login');
+      router.replace('/login?next=' + encodeURIComponent(pathname));
       return;
     }
     if (session.status === 'signed-in' && nav.length === 0) {
@@ -82,7 +82,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       // instead of stranding them on a dead-end "no access" screen.
       router.replace('/onboarding');
     }
-  }, [session.status, nav.length, router]);
+  }, [session.status, nav.length, router, pathname]);
 
   if (session.status === 'loading') {
     return <LoadingShell />;

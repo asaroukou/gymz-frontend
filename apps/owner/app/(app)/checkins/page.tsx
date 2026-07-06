@@ -49,6 +49,7 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 
+import { formatDateTime } from '@/lib/datetime';
 import { useVenueSelection } from '@/lib/use-venue-selection';
 
 function apiErrorMessage(err: unknown, fallback: string): string {
@@ -382,7 +383,13 @@ function checkedInByLabel(checkIn: CheckIn, staffByUserId: Map<string, Staff>): 
   return staff ? staffName(staff) : checkIn.checked_in_by;
 }
 
-function RecentCheckInsSection({ venueId }: { venueId: string }) {
+function RecentCheckInsSection({
+  venueId,
+  timeZone,
+}: {
+  venueId: string;
+  timeZone: string | undefined;
+}) {
   const checkInsQuery = useListCheckIns(venueId, { query: { select: unwrap } });
   const membersQuery = useListMembers({ query: { select: unwrap } });
   const staffQuery = useListStaff({ query: { select: unwrap } });
@@ -437,7 +444,7 @@ function RecentCheckInsSection({ venueId }: { venueId: string }) {
                       </Badge>
                     </TableCell>
                     <TableCell>{checkedInByLabel(checkIn, staffByUserId)}</TableCell>
-                    <TableCell>{new Date(checkIn.checked_in_at).toLocaleString()}</TableCell>
+                    <TableCell>{formatDateTime(checkIn.checked_in_at, timeZone)}</TableCell>
                   </TableRow>
                 );
               })}
@@ -454,7 +461,7 @@ function RecentCheckInsSection({ venueId }: { venueId: string }) {
 // ---------------------------------------------------------------------------
 
 export default function CheckinsPage() {
-  const { venues, isLoading, isError, error, selectedVenueId } = useVenueSelection();
+  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = useVenueSelection();
 
   return (
     <div className="space-y-6">
@@ -489,7 +496,7 @@ export default function CheckinsPage() {
         <>
           <AttendanceStatsSection venueId={selectedVenueId} />
           <NewCheckinCard venueId={selectedVenueId} />
-          <RecentCheckInsSection venueId={selectedVenueId} />
+          <RecentCheckInsSection venueId={selectedVenueId} timeZone={selectedVenue?.timezone} />
         </>
       )}
     </div>
