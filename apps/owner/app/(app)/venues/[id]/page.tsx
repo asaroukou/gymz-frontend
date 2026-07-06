@@ -84,14 +84,18 @@ function venueTypeLabel(venueType: string): string {
 // Profile section
 // ---------------------------------------------------------------------------
 
+const IS_ACTIVE_VALUES = ['active', 'inactive'] as const;
+
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   venue_type: z.enum(VENUE_TYPE_VALUES),
   description: z.string(),
   address_line: z.string(),
+  city: z.string(),
+  country: z.string(),
   phone: z.string(),
-  email: z.email('Enter a valid email address').or(z.literal('')),
   timezone: z.string().min(1, 'Timezone is required'),
+  is_active: z.enum(IS_ACTIVE_VALUES),
 });
 
 type ProfileValues = z.infer<typeof profileSchema>;
@@ -102,9 +106,11 @@ function venueToDefaults(venue: Venue): ProfileValues {
     venue_type: venue.venue_type,
     description: venue.description ?? '',
     address_line: venue.address_line ?? '',
+    city: venue.city,
+    country: venue.country,
     phone: venue.phone ?? '',
-    email: venue.email ?? '',
     timezone: venue.timezone,
+    is_active: venue.is_active ? 'active' : 'inactive',
   };
 }
 
@@ -132,8 +138,11 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
           venue_type: values.venue_type,
           description: values.description || null,
           address_line: values.address_line || null,
+          city: values.city || null,
+          country: values.country || null,
           phone: values.phone || null,
           timezone: values.timezone,
+          is_active: values.is_active === 'active',
         },
       },
       {
@@ -225,6 +234,32 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
             />
             <FormField
               control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={!canEdit} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={!canEdit} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="phone"
               render={({ field }) => (
                 <FormItem>
@@ -236,19 +271,18 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" {...field} disabled={!canEdit} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/*
+              Email is read-only here: `UpdateVenueRequest` has no `email`
+              field, so there is no API contract to persist an edited value
+              against (see packages/api/src/generated/endpoints.schemas.ts).
+              Rendering it as an editable input would silently discard edits.
+            */}
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" value={venue.email ?? ''} disabled readOnly />
+              </FormControl>
+            </FormItem>
             <FormField
               control={form.control}
               name="timezone"
@@ -258,6 +292,33 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
                   <FormControl>
                     <Input {...field} disabled={!canEdit} placeholder="Africa/Lome" />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/*
+              `VenueSettings` (locale, timezone_override) is a nested object on
+              `Venue` but is not part of `UpdateVenueRequest` — settings are
+              read-only in the current API contract, so no editor is rendered
+              here.
+            */}
+            <FormField
+              control={form.control}
+              name="is_active"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
