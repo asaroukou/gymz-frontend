@@ -22,7 +22,7 @@ function NoAccessNotice() {
   const t = useTranslations('system.noAccess');
 
   return (
-    <Card className="rounded-2xl">
+    <Card className="mx-auto max-w-md rounded-2xl">
       <Empty>
         <EmptyMedia>
           <LockIcon />

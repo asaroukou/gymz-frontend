@@ -301,8 +301,8 @@ function ChangeRoleDialog({
     defaultValues: { role: assignableRoleOrFallback(staff.role) },
   });
 
-  // Re-sync the form when the target staff changes, mirroring EditResourceDialog
-  // (a single dialog instance can be reused across rows).
+  // Re-sync the form when the row's staff data refetches (e.g. the role
+  // changes underneath an open dialog), mirroring EditResourceDialog.
   useEffect(() => {
     form.reset({ role: assignableRoleOrFallback(staff.role) });
   }, [staff.role, form]);
