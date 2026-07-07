@@ -36,6 +36,28 @@ function DefaultLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return <a {...props} />;
 }
 
+/** Active when the path exactly matches `/`, or is a prefix match for any other href. */
+function isActivePath(href: string, currentPath?: string): boolean {
+  if (!currentPath) {
+    return false;
+  }
+  if (href === '/') {
+    return currentPath === '/';
+  }
+  return currentPath === href || currentPath.startsWith(`${href}/`);
+}
+
+function Wordmark({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-2.5 px-2">
+      <span className="grid size-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+        iW
+      </span>
+      <span className="text-base font-semibold tracking-[-0.3px]">{title}</span>
+    </div>
+  );
+}
+
 function NavLinks({
   nav,
   currentPath,
@@ -49,22 +71,27 @@ function NavLinks({
 }) {
   return (
     <nav className="flex flex-col gap-1 p-2">
-      {nav.map((item) => (
-        <LinkComponent
-          key={item.href}
-          href={item.href}
-          onClick={onNavigate}
-          className={cn(
-            'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
-            currentPath === item.href
-              ? 'bg-accent text-accent-foreground'
-              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-          )}
-        >
-          {item.icon}
-          {item.title}
-        </LinkComponent>
-      ))}
+      {nav.map((item) => {
+        const active = isActivePath(item.href, currentPath);
+        return (
+          <LinkComponent
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            data-active={active || undefined}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+              'flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors',
+              active
+                ? 'bg-primary text-primary-foreground shadow-xs'
+                : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5',
+            )}
+          >
+            {item.icon}
+            {item.title}
+          </LinkComponent>
+        );
+      })}
     </nav>
   );
 }
@@ -86,10 +113,12 @@ export function AppShell({
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 border-r bg-card md:block">
-        <div className="flex h-14 items-center border-b px-4 text-sm font-semibold">{title}</div>
+    <div className="flex min-h-screen bg-backdrop">
+      {/* Desktop sidebar (transparent on the desk) */}
+      <aside className="hidden w-[248px] shrink-0 flex-col md:flex">
+        <div className="flex h-[72px] items-center">
+          <Wordmark title={title} />
+        </div>
         <NavLinks
           nav={nav}
           currentPath={currentPath}
@@ -98,31 +127,40 @@ export function AppShell({
         />
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Topbar */}
-        <header className="flex h-14 items-center gap-2 border-b px-4">
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
-                <Menu className="size-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-60 p-0" aria-describedby={undefined}>
-              <SheetTitle className="flex h-14 items-center border-b px-4 text-sm font-semibold">
-                {title}
-              </SheetTitle>
-              <NavLinks
-                nav={nav}
-                currentPath={currentPath}
-                linkComponent={linkComponent}
-                onNavigate={handleNavigate}
-              />
-            </SheetContent>
-          </Sheet>
-          <div className="ml-auto flex items-center gap-2">{actions}</div>
-        </header>
+      {/* Content column */}
+      <div className="flex min-w-0 flex-1 flex-col p-3 pl-0 max-md:pl-3">
+        <div className="flex min-h-full flex-1 flex-col overflow-hidden rounded-2xl border bg-background shadow-xs">
+          {/* Topbar */}
+          <header className="flex h-[60px] shrink-0 items-center gap-3 border-b px-6">
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                  <Menu className="size-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="w-[248px] bg-backdrop p-0"
+                aria-describedby={undefined}
+              >
+                <SheetTitle asChild>
+                  <div className="flex h-[72px] items-center">
+                    <Wordmark title={title} />
+                  </div>
+                </SheetTitle>
+                <NavLinks
+                  nav={nav}
+                  currentPath={currentPath}
+                  linkComponent={linkComponent}
+                  onNavigate={handleNavigate}
+                />
+              </SheetContent>
+            </Sheet>
+            <div className="ml-auto flex items-center gap-3">{actions}</div>
+          </header>
 
-        <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 p-6">{children}</main>
+        </div>
       </div>
     </div>
   );

@@ -3,14 +3,20 @@
 import { useEffect, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
 
 import { useAuth, useSession } from '@iziwellpass/auth/provider';
-import { AppShell } from '@iziwellpass/ui/app-shell';
+import { AppShell, type NavItem } from '@iziwellpass/ui/app-shell';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@iziwellpass/ui/components/dropdown-menu';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
@@ -33,6 +39,8 @@ function UserMenu() {
   const router = useRouter();
   const { signOut } = useAuth();
   const session = useSession();
+  const t = useTranslations('shell');
+  const { theme, setTheme } = useTheme();
   const email = session.status === 'signed-in' ? session.claims.email : null;
 
   const handleSignOut = () => {
@@ -44,11 +52,18 @@ function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm">
-          {email ?? 'Account'}
+          {email ?? t('account')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={handleSignOut}>Sign out</DropdownMenuItem>
+        <DropdownMenuLabel>{t('theme')}</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
+          <DropdownMenuRadioItem value="light">{t('themeLight')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">{t('themeDark')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="system">{t('themeSystem')}</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={handleSignOut}>{t('signOut')}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -70,7 +85,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const session = useSession();
-  const nav = session.status === 'signed-in' ? navForRole(session.claims.role) : [];
+  const tNav = useTranslations('nav');
+  const navItems = session.status === 'signed-in' ? navForRole(session.claims.role) : [];
+  const nav: NavItem[] = navItems.map((item) => ({
+    title: tNav(item.labelKey),
+    href: item.href,
+  }));
 
   useEffect(() => {
     if (session.status === 'signed-out') {

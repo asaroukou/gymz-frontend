@@ -1,7 +1,10 @@
 import type { Role } from '@iziwellpass/auth/claims';
 
+/** Key into the `nav` i18n namespace; the app resolves it to a display label. */
+export type NavLabelKey = 'dashboard' | 'frontdesk' | 'members' | 'planning' | 'venues' | 'staff';
+
 export interface OwnerNavItem {
-  title: string;
+  labelKey: NavLabelKey;
   href: string;
   roles: readonly Role[];
 }
@@ -9,23 +12,23 @@ export interface OwnerNavItem {
 const STAFF_ROLES = ['owner', 'admin', 'trainer', 'receptionist'] as const;
 
 export const NAV_ITEMS: readonly OwnerNavItem[] = [
-  { title: 'Dashboard', href: '/', roles: STAFF_ROLES },
-  { title: 'Venues', href: '/venues', roles: ['owner', 'admin'] },
-  { title: 'Members', href: '/members', roles: ['owner', 'admin', 'receptionist'] },
-  { title: 'Schedules', href: '/schedules', roles: STAFF_ROLES },
-  { title: 'Staff', href: '/staff', roles: ['owner', 'admin'] },
-  { title: 'Check-ins', href: '/checkins', roles: STAFF_ROLES },
+  { labelKey: 'dashboard', href: '/', roles: STAFF_ROLES },
+  { labelKey: 'frontdesk', href: '/checkins', roles: STAFF_ROLES },
+  { labelKey: 'members', href: '/members', roles: ['owner', 'admin', 'receptionist'] },
+  { labelKey: 'planning', href: '/schedules', roles: STAFF_ROLES },
+  { labelKey: 'venues', href: '/venues', roles: ['owner', 'admin'] },
+  { labelKey: 'staff', href: '/staff', roles: ['owner', 'admin'] },
 ];
 
-export function navForRole(role: Role | null): { title: string; href: string }[] {
+export function navForRole(role: Role | null): { labelKey: NavLabelKey; href: string }[] {
   if (role === 'platform_admin') {
-    return NAV_ITEMS.map(({ title, href }) => ({ title, href }));
+    return NAV_ITEMS.map(({ labelKey, href }) => ({ labelKey, href }));
   }
   if (!role) {
     return [];
   }
-  return NAV_ITEMS.filter((i) => i.roles.includes(role)).map(({ title, href }) => ({
-    title,
+  return NAV_ITEMS.filter((i) => i.roles.includes(role)).map(({ labelKey, href }) => ({
+    labelKey,
     href,
   }));
 }
