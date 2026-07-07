@@ -105,6 +105,8 @@
     "city": "City",
     "country": "Country",
     "timezone": "Timezone",
+    "countryPlaceholder": "TG",
+    "timezonePlaceholder": "Africa/Lome",
     "address": "Address (optional)",
     "phone": "Phone (optional)",
     "submit": "Create my venue",
@@ -593,7 +595,6 @@
       },
       "resources": {
         "title": "Resources",
-        "subtitle": "The bookable units within this venue.",
         "add": "Add resource",
         "loadError": "Could not load resources",
         "unknownType": "Unknown type",
@@ -633,6 +634,7 @@
         },
         "editDialog": {
           "title": "Edit resource",
+          "description": "Update this bookable resource.",
           "save": "Save",
           "saving": "Saving…",
           "success": "Resource updated",
@@ -694,8 +696,7 @@
     },
     "empty": {
       "title": "No team members",
-      "body": "Invite your team to give them access to this workspace.",
-      "cta": "Invite"
+      "body": "Invite your team to give them access to this workspace."
     },
     "noResults": {
       "title": "No results",
@@ -740,6 +741,25 @@
       "confirming": "Removing…",
       "success": "Member removed",
       "error": "Could not remove this member"
+    }
+  },
+  "system": {
+    "error": {
+      "title": "Something went wrong",
+      "body": "An unexpected error occurred while loading this page.",
+      "ref": "Reference: {digest}",
+      "retry": "Try again",
+      "home": "Back to home"
+    },
+    "notFound": {
+      "title": "Page not found",
+      "body": "The page you're looking for doesn't exist or has moved.",
+      "home": "Back to home"
+    },
+    "noAccess": {
+      "title": "You don't have access to this page",
+      "body": "Your role isn't allowed to view this page.",
+      "home": "Back to home"
     }
   }
 }

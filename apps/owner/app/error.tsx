@@ -1,16 +1,23 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
+import { TriangleAlertIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@iziwellpass/ui/components/button';
+import { Card } from '@iziwellpass/ui/components/card';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@iziwellpass/ui/components/card';
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyMedia,
+  EmptyTitle,
+} from '@iziwellpass/ui/components/empty';
 
+// A route-segment error boundary: it renders inside the root layout, so the
+// next-intl provider and app fonts are available here (unlike `global-error`,
+// which replaces the root layout).
 export default function Error({
   error,
   reset,
@@ -18,23 +25,33 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations('system.error');
+
   useEffect(() => {
     console.error(error);
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="max-w-sm">
-        <CardHeader>
-          <CardTitle>Something went wrong</CardTitle>
-          <CardDescription>An unexpected error occurred while loading this page.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <div className="flex min-h-screen items-center justify-center bg-backdrop p-4">
+      <Card className="w-full max-w-md rounded-2xl">
+        <Empty>
+          <EmptyMedia>
+            <TriangleAlertIcon />
+          </EmptyMedia>
+          <EmptyTitle>{t('title')}</EmptyTitle>
+          <EmptyDescription>{t('body')}</EmptyDescription>
           {error.digest ? (
-            <p className="text-xs text-muted-foreground">Error ref: {error.digest}</p>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
+              {t('ref', { digest: error.digest })}
+            </p>
           ) : null}
-          <Button onClick={reset}>Try again</Button>
-        </CardContent>
+          <EmptyContent className="mt-4">
+            <Button onClick={reset}>{t('retry')}</Button>
+            <Button asChild variant="outline">
+              <Link href="/">{t('home')}</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       </Card>
     </div>
   );

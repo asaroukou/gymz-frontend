@@ -2,30 +2,39 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { LockIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { useRole } from '@iziwellpass/auth/provider';
+import { Button } from '@iziwellpass/ui/components/button';
+import { Card } from '@iziwellpass/ui/components/card';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@iziwellpass/ui/components/card';
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyMedia,
+  EmptyTitle,
+} from '@iziwellpass/ui/components/empty';
 
 import { canAccessPath } from '@/lib/nav';
 
 function NoAccessNotice() {
+  const t = useTranslations('system.noAccess');
+
   return (
-    <Card className="max-w-sm">
-      <CardHeader>
-        <CardTitle>No access</CardTitle>
-        <CardDescription>Your role doesn&apos;t have access to this page.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Link href="/" className="text-sm text-primary underline underline-offset-4">
-          Back to dashboard
-        </Link>
-      </CardContent>
+    <Card className="rounded-2xl">
+      <Empty>
+        <EmptyMedia>
+          <LockIcon />
+        </EmptyMedia>
+        <EmptyTitle>{t('title')}</EmptyTitle>
+        <EmptyDescription>{t('body')}</EmptyDescription>
+        <EmptyContent>
+          <Button asChild variant="outline">
+            <Link href="/">{t('home')}</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
     </Card>
   );
 }

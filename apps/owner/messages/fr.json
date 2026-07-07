@@ -105,6 +105,8 @@
     "city": "Ville",
     "country": "Pays",
     "timezone": "Fuseau horaire",
+    "countryPlaceholder": "TG",
+    "timezonePlaceholder": "Africa/Lome",
     "address": "Adresse (facultatif)",
     "phone": "Téléphone (facultatif)",
     "submit": "Créer mon établissement",
@@ -593,7 +595,6 @@
       },
       "resources": {
         "title": "Ressources",
-        "subtitle": "Les unités réservables de cet établissement.",
         "add": "Ajouter une ressource",
         "loadError": "Impossible de charger les ressources",
         "unknownType": "Type inconnu",
@@ -633,6 +634,7 @@
         },
         "editDialog": {
           "title": "Modifier la ressource",
+          "description": "Mettez à jour cette ressource réservable.",
           "save": "Enregistrer",
           "saving": "Enregistrement…",
           "success": "Ressource mise à jour",
@@ -694,8 +696,7 @@
     },
     "empty": {
       "title": "Aucun membre d'équipe",
-      "body": "Invitez votre équipe pour lui donner accès à cet espace.",
-      "cta": "Inviter"
+      "body": "Invitez votre équipe pour lui donner accès à cet espace."
     },
     "noResults": {
       "title": "Aucun résultat",
@@ -740,6 +741,25 @@
       "confirming": "Retrait…",
       "success": "Membre retiré",
       "error": "Impossible de retirer ce membre"
+    }
+  },
+  "system": {
+    "error": {
+      "title": "Une erreur est survenue",
+      "body": "Une erreur inattendue s'est produite lors du chargement de cette page.",
+      "ref": "Référence : {digest}",
+      "retry": "Réessayer",
+      "home": "Retour à l'accueil"
+    },
+    "notFound": {
+      "title": "Page introuvable",
+      "body": "La page que vous recherchez n'existe pas ou a été déplacée.",
+      "home": "Retour à l'accueil"
+    },
+    "noAccess": {
+      "title": "Vous n'avez pas accès à cette page",
+      "body": "Votre rôle ne permet pas de consulter cette page.",
+      "home": "Retour à l'accueil"
     }
   }
 }

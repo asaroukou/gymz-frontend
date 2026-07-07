@@ -2,9 +2,15 @@
 
 import { useEffect } from 'react';
 
-// Rendered when an error escapes the root layout itself, so it cannot rely
-// on the layout's <html>/<body> or on Tailwind having loaded — hence its own
-// document shell and inline styles only.
+/**
+ * Rendered when an error escapes the root layout itself. It replaces the root
+ * layout, so it cannot rely on the layout's <html>/<body>, on the next-intl
+ * provider (no `useTranslations` available here), or on the app fonts / Tailwind
+ * being present — hence its own document shell, hardcoded French copy, and
+ * inline styles only. Colors mirror the v2 tokens (greige desk `--backdrop`,
+ * warm ink primary) so the fallback still reads as IziWellPass. Keep this file
+ * self-contained: importing app modules risks re-triggering the same failure.
+ */
 export default function GlobalError({
   error,
   reset,
@@ -17,7 +23,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html lang="en">
+    <html lang="fr">
       <body
         style={{
           margin: 0,
@@ -28,46 +34,86 @@ export default function GlobalError({
           padding: '1rem',
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-          backgroundColor: '#f8f8f8',
-          color: '#111',
+          backgroundColor: '#d6d2cc',
+          color: '#1c1917',
         }}
       >
         <div
           style={{
-            maxWidth: '24rem',
+            maxWidth: '28rem',
             width: '100%',
-            border: '1px solid #e2e2e2',
-            borderRadius: '0.5rem',
-            padding: '1.5rem',
-            backgroundColor: '#fff',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #e7e5e4',
+            borderRadius: '16px',
+            padding: '1.75rem',
+            backgroundColor: '#ffffff',
+            boxShadow: '0 1px 2px 0 rgba(28,25,23,0.05)',
+            textAlign: 'center',
           }}
         >
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Something went wrong</h1>
-          <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-            An unexpected error occurred. Please try again.
+          <h1 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>
+            Une erreur est survenue
+          </h1>
+          <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#78716c' }}>
+            Une erreur inattendue s'est produite. Veuillez réessayer.
           </p>
           {error.digest ? (
-            <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#999' }}>
-              Error ref: {error.digest}
+            <p
+              style={{
+                marginTop: '0.75rem',
+                fontSize: '0.75rem',
+                color: '#a8a29e',
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+              }}
+            >
+              Référence : {error.digest}
             </p>
           ) : null}
-          <button
-            onClick={reset}
+          <div
             style={{
-              marginTop: '1rem',
-              padding: '0.5rem 1rem',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#fff',
-              backgroundColor: '#111',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
+              marginTop: '1.25rem',
+              display: 'flex',
+              gap: '0.5rem',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
             }}
           >
-            Try again
-          </button>
+            <button
+              onClick={reset}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: '#fafaf9',
+                backgroundColor: '#1c1917',
+                border: 'none',
+                borderRadius: '9999px',
+                cursor: 'pointer',
+              }}
+            >
+              Réessayer
+            </button>
+            {/*
+              A plain <a> (not next/link) is intentional here: after a root-level
+              crash we want a full-document navigation that reloads the app and
+              resets state, not a client-side transition through the broken tree.
+            */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a
+              href="/"
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: '#1c1917',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e7e5e4',
+                borderRadius: '9999px',
+                textDecoration: 'none',
+              }}
+            >
+              Retour à l'accueil
+            </a>
+          </div>
         </div>
       </body>
     </html>

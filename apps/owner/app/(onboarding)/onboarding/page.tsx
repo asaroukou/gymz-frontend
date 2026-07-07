@@ -17,7 +17,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useForm } from 'react-hook-form';
+import { useForm, type ControllerRenderProps } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -41,6 +41,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  useFormField,
 } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
@@ -90,6 +91,65 @@ function LoadingShell() {
         <Skeleton className="h-10 w-full" />
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Radio-card group for the venue type. Extracted so it can call `useFormField`
+ * (only valid inside a `FormItem`) and wire the fieldset itself to the field's
+ * error state — `aria-invalid` + `aria-describedby` pointing at the shared
+ * `FormMessage`, since the visual control is a custom card grid, not an input.
+ */
+function VenueTypeFieldset({
+  field,
+}: {
+  field: ControllerRenderProps<OnboardingValues, 'venue_type'>;
+}) {
+  const t = useTranslations('onboarding');
+  const { error, formMessageId } = useFormField();
+
+  return (
+    <fieldset
+      className="grid gap-2"
+      aria-invalid={error ? true : undefined}
+      aria-describedby={error ? formMessageId : undefined}
+    >
+      <legend className="mb-2 text-sm font-medium">{t('venueType')}</legend>
+      <div className="grid grid-cols-3 gap-2">
+        {VENUE_TYPE_VALUES.map((type) => {
+          const Icon = VENUE_TYPE_ICONS[type];
+          const selected = field.value === type;
+          return (
+            <label
+              key={type}
+              className={cn(
+                'relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border bg-card p-3 text-center shadow-xs transition-colors',
+                'has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/15',
+                selected ? 'border-primary' : 'border-input hover:bg-accent',
+              )}
+            >
+              <input
+                type="radio"
+                name={field.name}
+                value={type}
+                checked={selected}
+                onChange={() => field.onChange(type)}
+                onBlur={field.onBlur}
+                className="sr-only"
+              />
+              {selected ? (
+                <CheckIcon aria-hidden className="absolute top-1.5 right-1.5 size-4 text-primary" />
+              ) : null}
+              <Icon
+                aria-hidden
+                className={cn('size-5', selected ? 'text-foreground' : 'text-muted-foreground')}
+              />
+              <span className="text-xs leading-tight font-medium">{t(`types.${type}`)}</span>
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 
@@ -200,51 +260,7 @@ function OnboardingForm() {
           name="venue_type"
           render={({ field }) => (
             <FormItem className="sm:col-span-2">
-              <fieldset className="grid gap-2">
-                <legend className="mb-2 text-sm font-medium">{t('venueType')}</legend>
-                <div className="grid grid-cols-3 gap-2">
-                  {VENUE_TYPE_VALUES.map((type) => {
-                    const Icon = VENUE_TYPE_ICONS[type];
-                    const selected = field.value === type;
-                    return (
-                      <label
-                        key={type}
-                        className={cn(
-                          'relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border bg-card p-3 text-center shadow-xs transition-colors',
-                          'has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/15',
-                          selected ? 'border-primary' : 'border-input hover:bg-accent',
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name={field.name}
-                          value={type}
-                          checked={selected}
-                          onChange={() => field.onChange(type)}
-                          onBlur={field.onBlur}
-                          className="sr-only"
-                        />
-                        {selected ? (
-                          <CheckIcon
-                            aria-hidden
-                            className="absolute top-1.5 right-1.5 size-4 text-primary"
-                          />
-                        ) : null}
-                        <Icon
-                          aria-hidden
-                          className={cn(
-                            'size-5',
-                            selected ? 'text-foreground' : 'text-muted-foreground',
-                          )}
-                        />
-                        <span className="text-xs leading-tight font-medium">
-                          {t(`types.${type}`)}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
+              <VenueTypeFieldset field={field} />
               <FormMessage />
             </FormItem>
           )}
@@ -269,7 +285,7 @@ function OnboardingForm() {
             <FormItem>
               <FormLabel>{t('country')}</FormLabel>
               <FormControl>
-                <Input placeholder="TG" {...field} />
+                <Input placeholder={t('countryPlaceholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -282,7 +298,7 @@ function OnboardingForm() {
             <FormItem>
               <FormLabel>{t('timezone')}</FormLabel>
               <FormControl>
-                <Input placeholder="Africa/Lome" {...field} />
+                <Input placeholder={t('timezonePlaceholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -300,6 +300,12 @@ function ChangeRoleDialog({
     resolver: zodResolver(schema),
     defaultValues: { role: assignableRoleOrFallback(staff.role) },
   });
+
+  // Re-sync the form when the target staff changes, mirroring EditResourceDialog
+  // (a single dialog instance can be reused across rows).
+  useEffect(() => {
+    form.reset({ role: assignableRoleOrFallback(staff.role) });
+  }, [staff.role, form]);
 
   const onSubmit = (values: ChangeRoleValues) => {
     changeRole.mutate(

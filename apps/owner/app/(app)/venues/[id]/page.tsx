@@ -613,7 +613,9 @@ function ResourceFormFields({
             <div className="flex items-center justify-between gap-2">
               <FormLabel>{t('detail.resources.form.type')}</FormLabel>
               <NewResourceTypeDialog
-                onCreated={(resourceType) => form.setValue('resource_type_id', resourceType.id)}
+                onCreated={(resourceType) =>
+                  form.setValue('resource_type_id', resourceType.id, { shouldValidate: true })
+                }
               />
             </div>
             <Select value={field.value} onValueChange={field.onChange}>
@@ -825,6 +827,7 @@ function EditResourceDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('detail.resources.editDialog.title')}</DialogTitle>
+          <DialogDescription>{t('detail.resources.editDialog.description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
