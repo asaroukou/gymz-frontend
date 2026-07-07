@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "frontdesk": "Front desk",
+    "members": "Members",
+    "planning": "Planning",
+    "venues": "Venues",
+    "staff": "Staff"
+  },
+  "shell": {
+    "openMenu": "Open menu",
+    "account": "Account",
+    "signOut": "Sign out",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "common": {
+    "add": "Add",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "loading": "Loading…"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "frontdesk": "Accueil",
+    "members": "Membres",
+    "planning": "Planning",
+    "venues": "Établissements",
+    "staff": "Équipe"
+  },
+  "shell": {
+    "openMenu": "Ouvrir le menu",
+    "account": "Compte",
+    "signOut": "Se déconnecter",
+    "theme": "Thème",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "themeSystem": "Système"
+  },
+  "common": {
+    "add": "Ajouter",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "search": "Rechercher",
+    "loading": "Chargement…"
+  }
+}
