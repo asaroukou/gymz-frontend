@@ -51,28 +51,6 @@ export function formatTime(iso: string, timeZone: string | undefined): string {
   return formatWith(iso, timeZone, { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-/** e.g. "6 Jul 2026, 08:00" */
-export function formatDateTime(iso: string, timeZone: string | undefined): string {
-  return formatWith(iso, timeZone, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-}
-
-/** e.g. "Mon 6 Jul 2026" */
-export function formatDateHeading(iso: string, timeZone: string | undefined): string {
-  return formatWith(iso, timeZone, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
 /**
  * Formats a date-only calendar string (`YYYY-MM-DD`, no time or zone — e.g.
  * `Member.membership_start` / `membership_end`) in the given locale, e.g.

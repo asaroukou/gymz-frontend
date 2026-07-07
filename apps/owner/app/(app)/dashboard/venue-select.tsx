@@ -24,7 +24,7 @@ export function VenueSelect({ selection }: { selection: UseVenueSelectionResult 
   const { venues, isLoading, selectedVenueId, setSelectedVenueId } = selection;
 
   if (isLoading) {
-    return <Skeleton className="h-9 w-56" />;
+    return <Skeleton className="h-9 w-56 rounded-full" />;
   }
 
   // One (or zero) venue: nothing to switch between — keep the header clean.
