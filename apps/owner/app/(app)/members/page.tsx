@@ -96,7 +96,7 @@ const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
 /** Number of days before the membership end date we flag it "expiring soon". */
 const EXPIRING_SOON_DAYS = 7;
 
-type StatusFilter = 'all' | 'active' | 'expired' | 'suspended';
+type StatusFilter = 'all' | 'active' | 'expired' | 'suspended' | 'cancelled';
 
 function memberName(member: Member): string {
   return `${member.first_name} ${member.last_name}`.trim();
@@ -123,7 +123,10 @@ function isExpiringSoon(member: Member): boolean {
 }
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  // Local calendar date (not `toISOString`, which is UTC) so the pre-filled
+  // membership_start matches the user's day near midnight in non-UTC zones.
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -512,6 +515,7 @@ function MembersDirectory({ members, canManage }: { members: Member[]; canManage
     { value: 'active', label: t('filters.active') },
     { value: 'expired', label: t('filters.expired') },
     { value: 'suspended', label: t('filters.suspended') },
+    { value: 'cancelled', label: t('filters.cancelled') },
   ];
 
   return (

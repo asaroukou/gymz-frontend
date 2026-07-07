@@ -124,6 +124,14 @@ function IdentityCard({ member }: { member: Member }) {
             </dd>
           </div>
           <div className="text-xs text-muted-foreground">
+            {/*
+              `created_at` is a date-time instant, but members are org-scoped
+              with no single venue timezone to convert against, and the
+              instant formatters in lib/datetime.ts are locale-fixed to en-GB.
+              We format the leading calendar date in the active (fr) locale —
+              a deliberate simplification that can be off by a day right at
+              UTC midnight; acceptable for a "member since" line.
+            */}
             {t('detail.memberSince', { date: formatCalendarDate(member.created_at, locale) })}
           </div>
         </dl>

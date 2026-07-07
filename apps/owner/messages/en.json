@@ -185,7 +185,8 @@
       "all": "All",
       "active": "Active",
       "expired": "Expired",
-      "suspended": "Suspended"
+      "suspended": "Suspended",
+      "cancelled": "Cancelled"
     },
     "columns": {
       "member": "Member",
