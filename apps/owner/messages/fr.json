@@ -173,5 +173,127 @@
       "checkins": "Impossible de charger les passages",
       "loadTitle": "Une erreur est survenue"
     }
+  },
+  "members": {
+    "title": "Membres",
+    "subtitle": "{count, plural, =0 {Aucun membre} one {# membre} other {# membres}}",
+    "search": "Rechercher par nom ou e-mail",
+    "add": "Ajouter un membre",
+    "errorTitle": "Une erreur est survenue",
+    "loadError": "Impossible de charger les membres",
+    "filters": {
+      "all": "Tous",
+      "active": "Actifs",
+      "expired": "Expirés",
+      "suspended": "Suspendus"
+    },
+    "columns": {
+      "member": "Membre",
+      "contact": "Contact",
+      "type": "Type",
+      "status": "Statut",
+      "end": "Fin d'abonnement",
+      "actions": "Actions"
+    },
+    "type": {
+      "monthly": "Mensuel",
+      "annual": "Annuel",
+      "drop_in": "À la séance",
+      "trial": "Essai"
+    },
+    "status": {
+      "active": "Actif",
+      "expired": "Expiré",
+      "suspended": "Suspendu",
+      "cancelled": "Annulé"
+    },
+    "expiringSoon": "Expire bientôt",
+    "noEnd": "Sans échéance",
+    "row": {
+      "menu": "Actions du membre",
+      "view": "Voir la fiche",
+      "edit": "Modifier",
+      "suspend": "Suspendre"
+    },
+    "empty": {
+      "title": "Aucun membre",
+      "body": "Enregistrez votre premier membre pour commencer à gérer les abonnements.",
+      "cta": "Ajouter un membre"
+    },
+    "noResults": {
+      "title": "Aucun résultat",
+      "body": "Aucun membre ne correspond à votre recherche ou à ce filtre."
+    },
+    "addDialog": {
+      "title": "Ajouter un membre",
+      "description": "Enregistrez un nouveau membre dans cet établissement.",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "type": "Type d'abonnement",
+      "start": "Début d'abonnement",
+      "notes": "Notes",
+      "submit": "Ajouter le membre",
+      "submitting": "Ajout…",
+      "success": "Membre ajouté",
+      "error": "Impossible d'ajouter le membre"
+    },
+    "validation": {
+      "firstNameRequired": "Le prénom est requis",
+      "lastNameRequired": "Le nom est requis",
+      "emailInvalid": "Saisissez une adresse e-mail valide",
+      "startRequired": "La date de début est requise"
+    },
+    "detail": {
+      "back": "Retour aux membres",
+      "notFound": "Membre introuvable",
+      "loadError": "Impossible de charger le membre",
+      "noEmail": "Aucun e-mail",
+      "noPhone": "Aucun téléphone",
+      "memberSince": "Membre depuis le {date}",
+      "subscription": {
+        "title": "Abonnement",
+        "type": "Type",
+        "start": "Début",
+        "end": "Fin",
+        "status": "Statut",
+        "notes": "Notes",
+        "noNotes": "Aucune note"
+      },
+      "edit": {
+        "title": "Modifier le membre",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "email": "E-mail",
+        "phone": "Téléphone",
+        "type": "Type d'abonnement",
+        "end": "Fin d'abonnement",
+        "active": "Statut du compte",
+        "activeOption": "Actif",
+        "inactiveOption": "Inactif",
+        "notes": "Notes",
+        "save": "Enregistrer",
+        "saving": "Enregistrement…",
+        "success": "Membre mis à jour",
+        "error": "Impossible de mettre à jour le membre"
+      },
+      "danger": {
+        "title": "Zone sensible",
+        "description": "Ces actions modifient l'accès du membre. À utiliser avec précaution.",
+        "suspend": "Suspendre le membre",
+        "suspended": "Membre suspendu",
+        "reactivate": "Réactiver",
+        "reactivateSoon": "Bientôt disponible"
+      },
+      "suspendDialog": {
+        "title": "Suspendre le membre",
+        "description": "Cela suspendra l'abonnement de {name}. Le membre ne pourra plus accéder ni réserver jusqu'à sa réactivation.",
+        "confirm": "Suspendre",
+        "confirming": "Suspension…",
+        "success": "Membre suspendu",
+        "error": "Impossible de suspendre le membre"
+      }
+    }
   }
 }

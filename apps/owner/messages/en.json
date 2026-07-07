@@ -173,5 +173,127 @@
       "checkins": "Could not load check-ins",
       "loadTitle": "Something went wrong"
     }
+  },
+  "members": {
+    "title": "Members",
+    "subtitle": "{count, plural, =0 {No members} one {# member} other {# members}}",
+    "search": "Search by name or email",
+    "add": "Add member",
+    "errorTitle": "Something went wrong",
+    "loadError": "Could not load members",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "expired": "Expired",
+      "suspended": "Suspended"
+    },
+    "columns": {
+      "member": "Member",
+      "contact": "Contact",
+      "type": "Type",
+      "status": "Status",
+      "end": "Membership end",
+      "actions": "Actions"
+    },
+    "type": {
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "drop_in": "Drop-in",
+      "trial": "Trial"
+    },
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "suspended": "Suspended",
+      "cancelled": "Cancelled"
+    },
+    "expiringSoon": "Expires soon",
+    "noEnd": "No end date",
+    "row": {
+      "menu": "Member actions",
+      "view": "View profile",
+      "edit": "Edit",
+      "suspend": "Suspend"
+    },
+    "empty": {
+      "title": "No members",
+      "body": "Enroll your first member to start managing subscriptions.",
+      "cta": "Add member"
+    },
+    "noResults": {
+      "title": "No results",
+      "body": "No members match your search or filter."
+    },
+    "addDialog": {
+      "title": "Add member",
+      "description": "Enroll a new member at this venue.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "type": "Membership type",
+      "start": "Membership start",
+      "notes": "Notes",
+      "submit": "Add member",
+      "submitting": "Adding…",
+      "success": "Member added",
+      "error": "Could not add member"
+    },
+    "validation": {
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "emailInvalid": "Enter a valid email address",
+      "startRequired": "Start date is required"
+    },
+    "detail": {
+      "back": "Back to members",
+      "notFound": "Member not found",
+      "loadError": "Could not load member",
+      "noEmail": "No email",
+      "noPhone": "No phone",
+      "memberSince": "Member since {date}",
+      "subscription": {
+        "title": "Subscription",
+        "type": "Type",
+        "start": "Start",
+        "end": "End",
+        "status": "Status",
+        "notes": "Notes",
+        "noNotes": "No notes"
+      },
+      "edit": {
+        "title": "Edit member",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "phone": "Phone",
+        "type": "Membership type",
+        "end": "Membership end",
+        "active": "Account status",
+        "activeOption": "Active",
+        "inactiveOption": "Inactive",
+        "notes": "Notes",
+        "save": "Save changes",
+        "saving": "Saving…",
+        "success": "Member updated",
+        "error": "Could not update member"
+      },
+      "danger": {
+        "title": "Danger zone",
+        "description": "These actions change the member's access. Use with care.",
+        "suspend": "Suspend member",
+        "suspended": "Member suspended",
+        "reactivate": "Reactivate",
+        "reactivateSoon": "Coming soon"
+      },
+      "suspendDialog": {
+        "title": "Suspend member",
+        "description": "This will suspend {name}'s membership. They will not be able to check in or book until reactivated.",
+        "confirm": "Suspend",
+        "confirming": "Suspending…",
+        "success": "Member suspended",
+        "error": "Could not suspend member"
+      }
+    }
   }
 }
