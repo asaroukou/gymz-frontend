@@ -5,53 +5,86 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   IziWellPass — v2 monochrome token layer
+   Warm near-black ink primary, greige warm-neutral surfaces,
+   greige desk backdrop, fully-rounded pill controls.
+   ============================================================ */
+
 :root {
+  --neutral-50: #fafaf9;
+  --neutral-100: #f5f5f4;
+  --neutral-200: #e7e5e4;
+  --neutral-300: #d6d3d1;
+  --neutral-400: #a8a29e;
+  --neutral-500: #78716c;
+  --neutral-600: #57534e;
+  --neutral-700: #44403c;
+  --neutral-800: #292524;
+  --neutral-900: #1c1917;
+  --neutral-950: #0c0a09;
+
+  --backdrop: #d6d2cc;
   --background: #ffffff;
-  --foreground: #0a0a0a;
+  --foreground: var(--neutral-900);
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: var(--neutral-900);
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  /* Brand: blue anchor #2563EB (decision 2026-07-06) */
-  --primary: #2563eb;
-  --primary-foreground: #eff6ff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #eff6ff;
-  --accent-foreground: #1d4ed8;
+  --popover-foreground: var(--neutral-900);
+  --primary: #1c1917;
+  --primary-foreground: #fafaf9;
+  --primary-hover: #292524;
+  --secondary: var(--neutral-100);
+  --secondary-foreground: var(--neutral-900);
+  --muted: var(--neutral-100);
+  --muted-foreground: var(--neutral-500);
+  --accent: var(--neutral-100);
+  --accent-foreground: var(--neutral-900);
   --destructive: #dc2626;
-  --destructive-foreground: #fef2f2;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #2563eb;
-  --radius: 0.5rem;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --info: #2563eb;
+  --border: var(--neutral-200);
+  --input: var(--neutral-200);
+  --ring: var(--neutral-900);
+  --radius: 10px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
+  --shadow-xs: 0 1px 2px 0 rgba(28, 25, 23, 0.05);
+  --shadow-popover: 0 8px 24px -6px rgba(28, 25, 23, 0.16), 0 2px 8px -3px rgba(28, 25, 23, 0.08);
+  --shadow-lg: 0 12px 28px -6px rgba(28, 25, 23, 0.16), 0 4px 10px -4px rgba(28, 25, 23, 0.1);
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #f8fafc;
-  --card: #111827;
-  --card-foreground: #f8fafc;
-  --popover: #111827;
-  --popover-foreground: #f8fafc;
-  --primary: #2f6fe0;
-  --primary-foreground: #ffffff;
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #1e3a8a;
-  --accent-foreground: #dbeafe;
-  --destructive: #ef4444;
-  --destructive-foreground: #fef2f2;
-  --border: #1e293b;
-  --input: #1e293b;
-  --ring: #3b82f6;
+  --backdrop: #0c0a09;
+  --background: var(--neutral-950);
+  --foreground: var(--neutral-50);
+  --card: var(--neutral-900);
+  --card-foreground: var(--neutral-50);
+  --popover: var(--neutral-800);
+  --popover-foreground: var(--neutral-50);
+  --primary: #fafaf9;
+  --primary-foreground: var(--neutral-900);
+  --primary-hover: #e7e5e4;
+  --secondary: var(--neutral-800);
+  --secondary-foreground: var(--neutral-50);
+  --muted: var(--neutral-800);
+  --muted-foreground: var(--neutral-400);
+  --accent: var(--neutral-700);
+  --accent-foreground: var(--neutral-50);
+  --destructive: #f87171;
+  --destructive-foreground: var(--neutral-950);
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --info: #60a5fa;
+  --border: var(--neutral-700);
+  --input: var(--neutral-800);
+  --ring: var(--neutral-300);
 }
 
 @theme inline {
+  --color-backdrop: var(--backdrop);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -68,19 +101,34 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: var(--radius-xl);
+  --radius-pill: var(--radius-pill);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-popover: var(--shadow-popover);
+  --shadow-lg: var(--shadow-lg);
+
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+  /* Focus convention: rings are
+     focus-visible:ring-[3px] focus-visible:ring-ring/15 focus-visible:border-ring */
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
