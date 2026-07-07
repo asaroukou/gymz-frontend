@@ -1,9 +1,7 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
-import { unwrap } from '@iziwellpass/api/client';
-import { useListMembers, useListSchedules } from '@iziwellpass/api/generated';
 import { useSession } from '@iziwellpass/auth/provider';
 import { Card, CardContent, CardHeader } from '@iziwellpass/ui/components/card';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
@@ -15,14 +13,16 @@ import { RecentCheckins } from './dashboard/recent-checkins';
 import { SectionError } from './dashboard/section-error';
 import { Starter } from './dashboard/starter';
 import { TodaySchedule } from './dashboard/today-schedule';
+import { useDashboardData } from './dashboard/use-dashboard-data';
 import { VenueSelect } from './dashboard/venue-select';
 
 /**
- * Today's date in French, formatted in the venue's timezone (falls back to
- * the runtime zone if the venue tz is missing/invalid). First letter is
- * capitalised for the header — French weekday names are otherwise lowercase.
+ * Today's date formatted in the active next-intl locale and the venue's
+ * timezone (falls back to the runtime zone if the venue tz is
+ * missing/invalid). First letter is capitalised for the header — French
+ * weekday names are otherwise lowercase.
  */
-function frenchToday(timeZone: string | undefined): string {
+function todayLabel(locale: string, timeZone: string | undefined): string {
   const options: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     day: 'numeric',
@@ -30,12 +30,12 @@ function frenchToday(timeZone: string | undefined): string {
   };
   let text: string;
   try {
-    text = new Intl.DateTimeFormat('fr-FR', {
+    text = new Intl.DateTimeFormat(locale, {
       ...options,
       timeZone: timeZone && timeZone.trim().length > 0 ? timeZone : undefined,
     }).format(new Date());
   } catch {
-    text = new Intl.DateTimeFormat('fr-FR', options).format(new Date());
+    text = new Intl.DateTimeFormat(locale, options).format(new Date());
   }
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
@@ -79,21 +79,22 @@ function LoadingGrid() {
 }
 
 /**
- * The body once a venue is selected. Decides between the first-week starter
- * (venue has no schedules AND no members) and the normal KPI + schedule +
- * check-ins grid. The schedules/members queries here are shared (react-query
- * dedupes) with the KPI row and today's schedule below.
+ * The body once a venue is selected. `useDashboardData` initiates every
+ * venue-scoped query up front so they fan out in parallel — the KPI /
+ * schedule / check-ins sections render optimistically from that shared data.
+ * Only the starter-vs-grid decision waits, gated on the schedules + members
+ * `isLoading` (so the first-week starter never flashes over the grid).
  */
 function DashboardBody({ venueId, timeZone }: { venueId: string; timeZone: string | undefined }) {
-  const schedulesQuery = useListSchedules(venueId, { query: { select: unwrap } });
-  const membersQuery = useListMembers({ query: { select: unwrap } });
+  const data = useDashboardData(venueId);
+  const { attendance, members, slots, schedules, resources, checkIns } = data;
 
-  if (schedulesQuery.isLoading || membersQuery.isLoading) {
+  if (schedules.isLoading || members.isLoading) {
     return <LoadingGrid />;
   }
 
-  const hasNoSchedules = !schedulesQuery.isError && (schedulesQuery.data ?? []).length === 0;
-  const hasNoMembers = !membersQuery.isError && (membersQuery.data ?? []).length === 0;
+  const hasNoSchedules = !schedules.isError && (schedules.data ?? []).length === 0;
+  const hasNoMembers = !members.isError && (members.data ?? []).length === 0;
 
   if (hasNoSchedules && hasNoMembers) {
     return <Starter />;
@@ -101,12 +102,17 @@ function DashboardBody({ venueId, timeZone }: { venueId: string; timeZone: strin
 
   return (
     <div className="space-y-6">
-      <KpiRow venueId={venueId} />
+      <KpiRow attendance={attendance} members={members} />
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <TodaySchedule venueId={venueId} timeZone={timeZone} />
+          <TodaySchedule
+            slots={slots}
+            schedules={schedules}
+            resources={resources}
+            timeZone={timeZone}
+          />
         </div>
-        <RecentCheckins venueId={venueId} timeZone={timeZone} />
+        <RecentCheckins checkIns={checkIns} members={members} timeZone={timeZone} />
       </div>
     </div>
   );
@@ -114,6 +120,7 @@ function DashboardBody({ venueId, timeZone }: { venueId: string; timeZone: strin
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
+  const locale = useLocale();
   const session = useSession();
   const selection = useVenueSelection();
 
@@ -129,7 +136,7 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">{greeting}</h1>
-          <p className="text-sm text-muted-foreground">{frenchToday(timeZone)}</p>
+          <p className="text-sm text-muted-foreground">{todayLabel(locale, timeZone)}</p>
         </div>
         <VenueSelect selection={selection} />
       </div>

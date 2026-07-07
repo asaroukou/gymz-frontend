@@ -136,7 +136,6 @@
     "venuePlaceholder": "Choisir un établissement",
     "venueNone": "Aucun établissement pour le moment.",
     "venuePrompt": "Sélectionnez un établissement pour voir son tableau de bord.",
-    "noData": "—",
     "kpi": {
       "checkins": "Passages aujourd'hui",
       "uniqueMembers": "Membres uniques",
@@ -154,7 +153,6 @@
     },
     "checkins": {
       "title": "Derniers passages",
-      "subtitle": "Récents",
       "empty": "Aucun passage pour le moment.",
       "methodQr": "QR",
       "methodManual": "Manuel"
@@ -167,13 +165,10 @@
       "step2Title": "Ajouter un membre",
       "step2Body": "Enregistrez vos premiers adhérents.",
       "step3Title": "Premier passage",
-      "step3Body": "Enregistrez une entrée à l'accueil.",
-      "start": "Commencer"
+      "step3Body": "Enregistrez une entrée à l'accueil."
     },
     "errors": {
       "venues": "Impossible de charger les établissements",
-      "attendance": "Impossible de charger les statistiques",
-      "members": "Impossible de charger les membres",
       "slots": "Impossible de charger les créneaux",
       "checkins": "Impossible de charger les passages",
       "loadTitle": "Une erreur est survenue"

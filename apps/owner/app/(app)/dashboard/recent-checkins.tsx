@@ -3,8 +3,6 @@
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { unwrap } from '@iziwellpass/api/client';
-import { useListCheckIns, useListMembers } from '@iziwellpass/api/generated';
 import type { CheckIn, Member } from '@iziwellpass/api/schemas';
 import { CheckInMethod } from '@iziwellpass/api/schemas';
 import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
@@ -15,6 +13,7 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { formatTime } from '@/lib/datetime';
 
 import { SectionError } from './section-error';
+import type { QueryLike } from './use-dashboard-data';
 
 const MAX_ROWS = 6;
 
@@ -59,27 +58,27 @@ function CheckInRow({
 }
 
 export function RecentCheckins({
-  venueId,
+  checkIns,
+  members,
   timeZone,
 }: {
-  venueId: string;
+  checkIns: QueryLike<CheckIn[]>;
+  members: QueryLike<Member[]>;
   timeZone: string | undefined;
 }) {
   const t = useTranslations('dashboard');
-  const checkInsQuery = useListCheckIns(venueId, { query: { select: unwrap } });
-  const membersQuery = useListMembers({ query: { select: unwrap } });
 
   const memberById = useMemo(
-    () => new Map((membersQuery.data ?? []).map((m) => [m.id, m])),
-    [membersQuery.data],
+    () => new Map((members.data ?? []).map((m) => [m.id, m])),
+    [members.data],
   );
 
   const recent = useMemo(
     () =>
-      [...(checkInsQuery.data ?? [])]
+      [...(checkIns.data ?? [])]
         .sort((a, b) => b.checked_in_at.localeCompare(a.checked_in_at))
         .slice(0, MAX_ROWS),
-    [checkInsQuery.data],
+    [checkIns.data],
   );
 
   return (
@@ -88,14 +87,14 @@ export function RecentCheckins({
         <CardTitle>{t('checkins.title')}</CardTitle>
       </CardHeader>
       <CardContent>
-        {checkInsQuery.isLoading ? (
+        {checkIns.isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-9 w-full" />
             <Skeleton className="h-9 w-full" />
             <Skeleton className="h-9 w-full" />
           </div>
-        ) : checkInsQuery.isError ? (
-          <SectionError error={checkInsQuery.error} fallback={t('errors.checkins')} />
+        ) : checkIns.isError ? (
+          <SectionError error={checkIns.error} fallback={t('errors.checkins')} />
         ) : recent.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">{t('checkins.empty')}</p>
         ) : (

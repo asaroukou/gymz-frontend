@@ -136,7 +136,6 @@
     "venuePlaceholder": "Choose a venue",
     "venueNone": "No venues yet.",
     "venuePrompt": "Select a venue to view its dashboard.",
-    "noData": "—",
     "kpi": {
       "checkins": "Check-ins today",
       "uniqueMembers": "Unique members",
@@ -154,7 +153,6 @@
     },
     "checkins": {
       "title": "Recent check-ins",
-      "subtitle": "Recent",
       "empty": "No check-ins yet.",
       "methodQr": "QR",
       "methodManual": "Manual"
@@ -167,13 +165,10 @@
       "step2Title": "Add a member",
       "step2Body": "Enroll your first members.",
       "step3Title": "First check-in",
-      "step3Body": "Record an entry at the front desk.",
-      "start": "Start"
+      "step3Body": "Record an entry at the front desk."
     },
     "errors": {
       "venues": "Could not load venues",
-      "attendance": "Could not load statistics",
-      "members": "Could not load members",
       "slots": "Could not load slots",
       "checkins": "Could not load check-ins",
       "loadTitle": "Something went wrong"

@@ -4,11 +4,12 @@ import type { ReactNode } from 'react';
 import { GaugeIcon, ScanLineIcon, UserCheckIcon, UsersIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import { unwrap } from '@iziwellpass/api/client';
-import { useGetAttendance, useListMembers } from '@iziwellpass/api/generated';
+import type { AttendanceStats, Member } from '@iziwellpass/api/schemas';
 import { MembershipStatus } from '@iziwellpass/api/schemas';
 import { Card, CardContent } from '@iziwellpass/ui/components/card';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+
+import type { QueryLike } from './use-dashboard-data';
 
 function KpiCard({
   label,
@@ -49,19 +50,24 @@ function KpiCard({
  * KPI strip, scoped to the selected venue. Three metrics come from the
  * venue attendance endpoint (`getAttendance` — today's check-ins, unique
  * members, occupancy %); "active members" is derived from the org member
- * list (`listMembers`, counting `membership_status === active`). The API has
- * no cross-venue aggregation, so this reflects exactly the selected venue.
+ * list (`listMembers`, counting `membership_status === active`). Both queries
+ * are lifted to `useDashboardData` so they run in parallel with the rest of
+ * the dashboard; the API has no cross-venue aggregation, so this reflects
+ * exactly the selected venue.
  */
-export function KpiRow({ venueId }: { venueId: string }) {
+export function KpiRow({
+  attendance,
+  members,
+}: {
+  attendance: QueryLike<AttendanceStats>;
+  members: QueryLike<Member[]>;
+}) {
   const t = useTranslations('dashboard');
-  const attendanceQuery = useGetAttendance(venueId, { query: { select: unwrap } });
-  const membersQuery = useListMembers({ query: { select: unwrap } });
 
-  const stats = attendanceQuery.isError ? undefined : attendanceQuery.data;
-  const activeCount = membersQuery.isError
+  const stats = attendance.isError ? undefined : attendance.data;
+  const activeCount = members.isError
     ? null
-    : (membersQuery.data ?? []).filter((m) => m.membership_status === MembershipStatus.active)
-        .length;
+    : (members.data ?? []).filter((m) => m.membership_status === MembershipStatus.active).length;
 
   const iconClass = 'size-[18px]';
 
@@ -70,25 +76,25 @@ export function KpiRow({ venueId }: { venueId: string }) {
       <KpiCard
         label={t('kpi.checkins')}
         icon={<ScanLineIcon className={iconClass} />}
-        isLoading={attendanceQuery.isLoading}
+        isLoading={attendance.isLoading}
         value={stats ? String(stats.total_check_ins) : null}
       />
       <KpiCard
         label={t('kpi.uniqueMembers')}
         icon={<UsersIcon className={iconClass} />}
-        isLoading={attendanceQuery.isLoading}
+        isLoading={attendance.isLoading}
         value={stats ? String(stats.unique_members) : null}
       />
       <KpiCard
         label={t('kpi.occupancy')}
         icon={<GaugeIcon className={iconClass} />}
-        isLoading={attendanceQuery.isLoading}
+        isLoading={attendance.isLoading}
         value={stats ? `${Math.round(stats.occupancy_pct)} %` : null}
       />
       <KpiCard
         label={t('kpi.activeMembers')}
         icon={<UserCheckIcon className={iconClass} />}
-        isLoading={membersQuery.isLoading}
+        isLoading={members.isLoading}
         value={activeCount === null ? null : String(activeCount)}
       />
     </div>

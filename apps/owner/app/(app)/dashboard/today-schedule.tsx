@@ -5,9 +5,7 @@ import Link from 'next/link';
 import { CalendarPlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import { unwrap } from '@iziwellpass/api/client';
-import { useListResources, useListSchedules, useListSlots } from '@iziwellpass/api/generated';
-import type { ScheduleSlot } from '@iziwellpass/api/schemas';
+import type { Resource, Schedule, ScheduleSlot } from '@iziwellpass/api/schemas';
 import { useRole } from '@iziwellpass/auth/provider';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
@@ -26,6 +24,7 @@ import { canAccessPath } from '@/lib/nav';
 import { formatTime, venueDateKey } from '@/lib/datetime';
 
 import { SectionError } from './section-error';
+import type { QueryLike } from './use-dashboard-data';
 
 /**
  * Capacity bar colour: full/over → destructive, tight (>85%) → warning,
@@ -88,35 +87,35 @@ function SlotRow({
 }
 
 export function TodaySchedule({
-  venueId,
+  slots,
+  schedules,
+  resources,
   timeZone,
 }: {
-  venueId: string;
+  slots: QueryLike<ScheduleSlot[]>;
+  schedules: QueryLike<Schedule[]>;
+  resources: QueryLike<Resource[]>;
   timeZone: string | undefined;
 }) {
   const t = useTranslations('dashboard');
   const role = useRole();
   const canCreateSchedule = role === 'owner' || role === 'admin';
 
-  const slotsQuery = useListSlots(venueId, { query: { select: unwrap } });
-  const schedulesQuery = useListSchedules(venueId, { query: { select: unwrap } });
-  const resourcesQuery = useListResources(venueId, { query: { select: unwrap } });
-
   const scheduleTitleById = useMemo(
-    () => new Map((schedulesQuery.data ?? []).map((s) => [s.id, s.title])),
-    [schedulesQuery.data],
+    () => new Map((schedules.data ?? []).map((s) => [s.id, s.title])),
+    [schedules.data],
   );
   const resourceNameById = useMemo(
-    () => new Map((resourcesQuery.data ?? []).map((r) => [r.id, r.name])),
-    [resourcesQuery.data],
+    () => new Map((resources.data ?? []).map((r) => [r.id, r.name])),
+    [resources.data],
   );
 
   const todaySlots = useMemo(() => {
     const todayKey = venueDateKey(new Date().toISOString(), timeZone);
-    return (slotsQuery.data ?? [])
+    return (slots.data ?? [])
       .filter((slot) => venueDateKey(slot.start_time, timeZone) === todayKey)
       .sort((a, b) => a.start_time.localeCompare(b.start_time));
-  }, [slotsQuery.data, timeZone]);
+  }, [slots.data, timeZone]);
 
   return (
     <Card>
@@ -124,14 +123,14 @@ export function TodaySchedule({
         <CardTitle>{t('schedule.title')}</CardTitle>
       </CardHeader>
       <CardContent>
-        {slotsQuery.isLoading ? (
+        {slots.isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
-        ) : slotsQuery.isError ? (
-          <SectionError error={slotsQuery.error} fallback={t('errors.slots')} />
+        ) : slots.isError ? (
+          <SectionError error={slots.error} fallback={t('errors.slots')} />
         ) : todaySlots.length === 0 ? (
           <Empty>
             <EmptyMedia>
