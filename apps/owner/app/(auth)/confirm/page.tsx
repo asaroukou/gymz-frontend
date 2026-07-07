@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { z } from 'zod';
 
 import { useAuth } from '@iziwellpass/auth/provider';
@@ -119,6 +120,7 @@ function ConfirmForm() {
               <FormControl>
                 <InputOTP
                   maxLength={6}
+                  pattern={REGEXP_ONLY_DIGITS}
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   value={field.value}

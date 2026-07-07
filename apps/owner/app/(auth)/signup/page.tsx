@@ -45,9 +45,9 @@ export default function SignupPage() {
         .object({
           email: z.email(t('errors.emailInvalid')),
           password: makePasswordSchema({
-            min: t('errors.passwordMin'),
-            lowercase: t('errors.passwordLowercase'),
+            length: t('errors.passwordMin'),
             uppercase: t('errors.passwordUppercase'),
+            lowercase: t('errors.passwordLowercase'),
             digit: t('errors.passwordDigit'),
           }),
           confirmPassword: z.string().min(1, t('errors.confirmRequired')),
