@@ -174,6 +174,64 @@
       "loadTitle": "Something went wrong"
     }
   },
+  "frontdesk": {
+    "title": "Front desk",
+    "subtitle": "Record entries and track today's attendance.",
+    "venuePlaceholder": "Choose a venue",
+    "venueNone": "No venues yet.",
+    "venuePrompt": "Select a venue to record check-ins.",
+    "venuesError": "Could not load venues",
+    "errorTitle": "Something went wrong",
+    "stats": {
+      "checkins": "Check-ins",
+      "uniqueMembers": "Unique members",
+      "occupancy": "Occupancy"
+    },
+    "register": {
+      "title": "Record a check-in",
+      "tabsLabel": "Check-in mode",
+      "tabQr": "QR / code",
+      "tabManual": "Manual"
+    },
+    "qr": {
+      "label": "QR code or token",
+      "placeholder": "Scan or enter the code",
+      "hint": "Present the QR to the reader, or enter the token, then validate.",
+      "submit": "Validate",
+      "submitting": "Validating…"
+    },
+    "manual": {
+      "member": "Member",
+      "memberPlaceholder": "Choose a member",
+      "memberSearch": "Search a member",
+      "noMembers": "No members",
+      "memberHint": "Look up the member to find their booking.",
+      "booking": "Booking ID",
+      "bookingPlaceholder": "Today's booking ID",
+      "bookingHint": "Today's confirmed booking, copied from planning.",
+      "submit": "Check in",
+      "submitting": "Checking in…",
+      "membersError": "Could not load members"
+    },
+    "feed": {
+      "title": "Recent check-ins",
+      "methodQr": "QR",
+      "methodManual": "Manual",
+      "self": "Self (QR)",
+      "byLabel": "by {name}",
+      "emptyTitle": "No check-ins yet",
+      "emptyBody": "Recorded entries will appear here live.",
+      "loadError": "Could not load check-ins"
+    },
+    "validation": {
+      "qrRequired": "Scan or enter the code",
+      "memberRequired": "Choose a member",
+      "bookingRequired": "Booking ID is required"
+    },
+    "success": "Check-in recorded — {name}",
+    "successNoName": "Check-in recorded",
+    "error": "Could not record the check-in"
+  },
   "members": {
     "title": "Members",
     "subtitle": "{count, plural, =0 {No members} one {# member} other {# members}}",

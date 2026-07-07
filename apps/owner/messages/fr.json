@@ -174,6 +174,64 @@
       "loadTitle": "Une erreur est survenue"
     }
   },
+  "frontdesk": {
+    "title": "Accueil",
+    "subtitle": "Enregistrez les entrées et suivez la fréquentation du jour.",
+    "venuePlaceholder": "Choisir un établissement",
+    "venueNone": "Aucun établissement pour le moment.",
+    "venuePrompt": "Sélectionnez un établissement pour enregistrer les passages.",
+    "venuesError": "Impossible de charger les établissements",
+    "errorTitle": "Une erreur est survenue",
+    "stats": {
+      "checkins": "Passages",
+      "uniqueMembers": "Membres uniques",
+      "occupancy": "Occupation"
+    },
+    "register": {
+      "title": "Enregistrer un passage",
+      "tabsLabel": "Mode d'enregistrement",
+      "tabQr": "QR / code",
+      "tabManual": "Manuel"
+    },
+    "qr": {
+      "label": "Code QR ou jeton",
+      "placeholder": "Scannez ou saisissez le code",
+      "hint": "Présentez le QR au lecteur, ou saisissez le jeton, puis validez.",
+      "submit": "Valider",
+      "submitting": "Validation…"
+    },
+    "manual": {
+      "member": "Membre",
+      "memberPlaceholder": "Choisir un membre",
+      "memberSearch": "Rechercher un membre",
+      "noMembers": "Aucun membre",
+      "memberHint": "Recherchez le membre pour retrouver sa réservation.",
+      "booking": "Identifiant de réservation",
+      "bookingPlaceholder": "ID de la réservation du jour",
+      "bookingHint": "Réservation confirmée du jour, copiée depuis le planning.",
+      "submit": "Enregistrer",
+      "submitting": "Enregistrement…",
+      "membersError": "Impossible de charger les membres"
+    },
+    "feed": {
+      "title": "Derniers passages",
+      "methodQr": "QR",
+      "methodManual": "Manuel",
+      "self": "Auto (QR)",
+      "byLabel": "par {name}",
+      "emptyTitle": "Aucun passage pour le moment",
+      "emptyBody": "Les entrées enregistrées apparaîtront ici en direct.",
+      "loadError": "Impossible de charger les passages"
+    },
+    "validation": {
+      "qrRequired": "Scannez ou saisissez le code",
+      "memberRequired": "Choisissez un membre",
+      "bookingRequired": "L'identifiant de réservation est requis"
+    },
+    "success": "Passage enregistré — {name}",
+    "successNoName": "Passage enregistré",
+    "error": "Impossible d'enregistrer le passage"
+  },
   "members": {
     "title": "Membres",
     "subtitle": "{count, plural, =0 {Aucun membre} one {# membre} other {# membres}}",
