@@ -3,6 +3,14 @@
 import { useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  MoreHorizontalIcon,
+  SearchIcon,
+  Trash2Icon,
+  UserCogIcon,
+  UsersRoundIcon,
+} from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -18,8 +26,11 @@ import {
 import type { Staff } from '@iziwellpass/api/schemas';
 import { Role } from '@iziwellpass/api/schemas';
 import { useSession } from '@iziwellpass/auth/provider';
+import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
+import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
+import { Card } from '@iziwellpass/ui/components/card';
 import {
   Dialog,
   DialogContent,
@@ -33,8 +44,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@iziwellpass/ui/components/dropdown-menu';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyMedia,
+  EmptyTitle,
+} from '@iziwellpass/ui/components/empty';
 import {
   Form,
   FormControl,
@@ -77,17 +96,21 @@ import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
  */
 const ASSIGNABLE_ROLES = [Role.admin, Role.trainer, Role.receptionist] as const;
 
-function labelize(value: string): string {
-  return value.replace(/_/g, ' ');
-}
-
 function staffName(staff: Staff): string {
   return `${staff.first_name} ${staff.last_name}`.trim();
 }
 
-function roleBadgeVariant(role: Staff['role']): 'default' | 'secondary' | 'outline' {
-  if (role === 'owner' || role === 'admin') return 'default';
-  return 'outline';
+function initials(staff: Staff): string {
+  const first = staff.first_name.charAt(0);
+  const last = staff.last_name.charAt(0);
+  return `${first}${last}`.toUpperCase() || '?';
+}
+
+/** Role badge color: owner = ink, admin = info, coach/reception = secondary. */
+function roleBadgeVariant(role: Staff['role']): 'default' | 'info' | 'secondary' {
+  if (role === Role.owner) return 'default';
+  if (role === Role.admin) return 'info';
+  return 'secondary';
 }
 
 /**
@@ -105,28 +128,35 @@ function assignableRoleOrFallback(role: Staff['role']): (typeof ASSIGNABLE_ROLES
 // Invite staff dialog
 // ---------------------------------------------------------------------------
 
-const inviteStaffSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  email: z.email('Enter a valid email address'),
-  role: z.enum(ASSIGNABLE_ROLES),
-});
-
-type InviteStaffValues = z.infer<typeof inviteStaffSchema>;
-
 function InviteStaffDialog() {
+  const t = useTranslations('staff');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const inviteStaff = useInviteStaff();
 
+  const schema = useMemo(
+    () =>
+      z.object({
+        first_name: z.string().min(1, t('inviteDialog.firstNameRequired')),
+        last_name: z.string().min(1, t('inviteDialog.lastNameRequired')),
+        email: z.email(t('inviteDialog.emailInvalid')),
+        role: z.enum(ASSIGNABLE_ROLES),
+      }),
+    [t],
+  );
+
+  type InviteStaffValues = z.infer<typeof schema>;
+
+  const defaults: InviteStaffValues = {
+    first_name: '',
+    last_name: '',
+    email: '',
+    role: Role.trainer,
+  };
+
   const form = useForm<InviteStaffValues>({
-    resolver: zodResolver(inviteStaffSchema),
-    defaultValues: {
-      first_name: '',
-      last_name: '',
-      email: '',
-      role: Role.trainer,
-    },
+    resolver: zodResolver(schema),
+    defaultValues: defaults,
   });
 
   const onSubmit = (values: InviteStaffValues) => {
@@ -134,14 +164,14 @@ function InviteStaffDialog() {
       { data: values },
       {
         onSuccess: () => {
-          toast.success('Staff member invited');
+          toast.success(t('inviteDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListStaffQueryKey() });
-          form.reset({ first_name: '', last_name: '', email: '', role: Role.trainer });
+          form.reset(defaults);
           setOpen(false);
         },
         onError: (err) => {
           if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, 'Failed to invite staff member'));
+            toast.error(apiErrorMessage(err, t('inviteDialog.error')));
           }
         },
       },
@@ -154,19 +184,17 @@ function InviteStaffDialog() {
       onOpenChange={(next) => {
         setOpen(next);
         if (!next) {
-          form.reset();
+          form.reset(defaults);
         }
       }}
     >
       <DialogTrigger asChild>
-        <Button>Invite staff</Button>
+        <Button>{t('invite')}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Invite staff</DialogTitle>
-          <DialogDescription>
-            Send an invitation to join your tenant as a staff member.
-          </DialogDescription>
+          <DialogTitle>{t('inviteDialog.title')}</DialogTitle>
+          <DialogDescription>{t('inviteDialog.description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
@@ -176,7 +204,7 @@ function InviteStaffDialog() {
                 name="first_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First name</FormLabel>
+                    <FormLabel>{t('inviteDialog.firstName')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -189,7 +217,7 @@ function InviteStaffDialog() {
                 name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last name</FormLabel>
+                    <FormLabel>{t('inviteDialog.lastName')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -203,7 +231,7 @@ function InviteStaffDialog() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('inviteDialog.email')}</FormLabel>
                   <FormControl>
                     <Input type="email" {...field} />
                   </FormControl>
@@ -216,7 +244,7 @@ function InviteStaffDialog() {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>{t('inviteDialog.role')}</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -225,8 +253,8 @@ function InviteStaffDialog() {
                     </FormControl>
                     <SelectContent>
                       {ASSIGNABLE_ROLES.map((role) => (
-                        <SelectItem key={role} value={role} className="capitalize">
-                          {labelize(role)}
+                        <SelectItem key={role} value={role}>
+                          {t(`role.${role}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -235,9 +263,10 @@ function InviteStaffDialog() {
                 </FormItem>
               )}
             />
+            <p className="text-sm text-muted-foreground">{t('inviteDialog.expectation')}</p>
             <DialogFooter>
               <Button type="submit" disabled={inviteStaff.isPending}>
-                {inviteStaff.isPending ? 'Inviting…' : 'Invite staff'}
+                {inviteStaff.isPending ? t('inviteDialog.submitting') : t('inviteDialog.submit')}
               </Button>
             </DialogFooter>
           </form>
@@ -251,12 +280,6 @@ function InviteStaffDialog() {
 // Change role dialog
 // ---------------------------------------------------------------------------
 
-const changeRoleSchema = z.object({
-  role: z.enum(ASSIGNABLE_ROLES),
-});
-
-type ChangeRoleValues = z.infer<typeof changeRoleSchema>;
-
 function ChangeRoleDialog({
   staff,
   open,
@@ -266,11 +289,15 @@ function ChangeRoleDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations('staff');
   const queryClient = useQueryClient();
   const changeRole = useChangeRole();
 
+  const schema = useMemo(() => z.object({ role: z.enum(ASSIGNABLE_ROLES) }), []);
+  type ChangeRoleValues = z.infer<typeof schema>;
+
   const form = useForm<ChangeRoleValues>({
-    resolver: zodResolver(changeRoleSchema),
+    resolver: zodResolver(schema),
     defaultValues: { role: assignableRoleOrFallback(staff.role) },
   });
 
@@ -279,13 +306,13 @@ function ChangeRoleDialog({
       { sid: staff.id, data: values },
       {
         onSuccess: () => {
-          toast.success('Role updated');
+          toast.success(t('roleDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListStaffQueryKey() });
           onOpenChange(false);
         },
         onError: (err) => {
           if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, 'Failed to change role'));
+            toast.error(apiErrorMessage(err, t('roleDialog.error')));
           }
         },
       },
@@ -304,9 +331,9 @@ function ChangeRoleDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Change role</DialogTitle>
+          <DialogTitle>{t('roleDialog.title')}</DialogTitle>
           <DialogDescription>
-            Update &quot;{staffName(staff)}&quot;&apos;s role at this tenant.
+            {t('roleDialog.description', { name: staffName(staff) })}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -316,7 +343,7 @@ function ChangeRoleDialog({
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>{t('roleDialog.role')}</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -325,8 +352,8 @@ function ChangeRoleDialog({
                     </FormControl>
                     <SelectContent>
                       {ASSIGNABLE_ROLES.map((role) => (
-                        <SelectItem key={role} value={role} className="capitalize">
-                          {labelize(role)}
+                        <SelectItem key={role} value={role}>
+                          {t(`role.${role}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -335,9 +362,10 @@ function ChangeRoleDialog({
                 </FormItem>
               )}
             />
+            <p className="text-sm text-muted-foreground">{t('roleDialog.hint')}</p>
             <DialogFooter>
               <Button type="submit" disabled={changeRole.isPending}>
-                {changeRole.isPending ? 'Saving…' : 'Save changes'}
+                {changeRole.isPending ? t('roleDialog.saving') : t('roleDialog.save')}
               </Button>
             </DialogFooter>
           </form>
@@ -360,6 +388,8 @@ function RemoveStaffDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations('staff');
+  const tCommon = useTranslations('common');
   const queryClient = useQueryClient();
   const removeStaff = useRemoveStaff();
 
@@ -368,12 +398,12 @@ function RemoveStaffDialog({
       { sid: staff.id },
       {
         onSuccess: () => {
-          toast.success('Staff member removed');
+          toast.success(t('removeDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListStaffQueryKey() });
           onOpenChange(false);
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to remove staff member'));
+          toast.error(apiErrorMessage(err, t('removeDialog.error')));
         },
       },
     );
@@ -383,18 +413,17 @@ function RemoveStaffDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Remove staff member</DialogTitle>
+          <DialogTitle>{t('removeDialog.title')}</DialogTitle>
           <DialogDescription>
-            This will remove &quot;{staffName(staff)}&quot; from your tenant and disable their
-            account. This cannot be undone.
+            {t('removeDialog.description', { name: staffName(staff) })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {tCommon('cancel')}
           </Button>
           <Button variant="destructive" onClick={handleRemove} disabled={removeStaff.isPending}>
-            {removeStaff.isPending ? 'Removing…' : 'Remove'}
+            {removeStaff.isPending ? t('removeDialog.confirming') : t('removeDialog.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -407,6 +436,7 @@ function RemoveStaffDialog({
 // ---------------------------------------------------------------------------
 
 function StaffRowActions({ staff, isSelf }: { staff: Staff; isSelf: boolean }) {
+  const t = useTranslations('staff');
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
 
@@ -414,12 +444,16 @@ function StaffRowActions({ staff, isSelf }: { staff: Staff; isSelf: boolean }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm">
-            Actions
+          <Button variant="ghost" size="icon-sm" aria-label={t('row.menu')}>
+            <MoreHorizontalIcon />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setChangeRoleOpen(true)}>Change role</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setChangeRoleOpen(true)}>
+            <UserCogIcon />
+            {t('row.changeRole')}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
             disabled={isSelf}
@@ -428,12 +462,11 @@ function StaffRowActions({ staff, isSelf }: { staff: Staff; isSelf: boolean }) {
               setRemoveOpen(true);
             }}
           >
-            Remove
+            <Trash2Icon />
+            {t('row.remove')}
           </DropdownMenuItem>
           {isSelf ? (
-            <p className="px-2 pb-1.5 pt-1 text-xs text-muted-foreground">
-              You can&apos;t remove your own staff account.
-            </p>
+            <p className="px-2 pt-1 pb-1.5 text-xs text-muted-foreground">{t('row.selfHint')}</p>
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -448,38 +481,50 @@ function StaffRowActions({ staff, isSelf }: { staff: Staff; isSelf: boolean }) {
 // ---------------------------------------------------------------------------
 
 function StaffTable({ staff, selfUserId }: { staff: Staff[]; selfUserId: string | null }) {
-  const [filter, setFilter] = useState('');
+  const t = useTranslations('staff');
+  const [query, setQuery] = useState('');
 
   const filtered = useMemo(() => {
-    const query = filter.trim().toLowerCase();
-    if (!query) return staff;
+    const q = query.trim().toLowerCase();
+    if (!q) return staff;
     return staff.filter((member) => {
       const name = staffName(member).toLowerCase();
       const email = member.email.toLowerCase();
-      return name.includes(query) || email.includes(query);
+      return name.includes(q) || email.includes(q);
     });
-  }, [staff, filter]);
+  }, [staff, query]);
 
   return (
-    <div className="space-y-4">
-      <Input
-        placeholder="Filter by name or email…"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        className="max-w-sm"
-      />
+    <Card className="gap-0 overflow-hidden py-0">
+      <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:w-64">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('search')}
+            aria-label={t('search')}
+            className="pl-9"
+          />
+        </div>
+        <InviteStaffDialog />
+      </div>
+
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          No staff match &quot;{filter}&quot;.
-        </p>
+        <Empty>
+          <EmptyTitle>{t('noResults.title')}</EmptyTitle>
+          <EmptyDescription>{t('noResults.body')}</EmptyDescription>
+        </Empty>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead className="w-0" />
+              <TableHead>{t('columns.member')}</TableHead>
+              <TableHead>{t('columns.email')}</TableHead>
+              <TableHead>{t('columns.role')}</TableHead>
+              <TableHead className="text-right">
+                <span className="sr-only">{t('columns.actions')}</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -487,11 +532,18 @@ function StaffTable({ staff, selfUserId }: { staff: Staff[]; selfUserId: string 
               const isSelf = selfUserId !== null && member.user_id === selfUserId;
               return (
                 <TableRow key={member.id}>
-                  <TableCell className="font-medium">{staffName(member)}</TableCell>
-                  <TableCell>{member.email}</TableCell>
                   <TableCell>
-                    <Badge variant={roleBadgeVariant(member.role)} className="capitalize">
-                      {labelize(member.role)}
+                    <div className="flex items-center gap-3">
+                      <Avatar size="sm">
+                        <AvatarFallback aria-hidden>{initials(member)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{staffName(member)}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{member.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={roleBadgeVariant(member.role)}>
+                      {t(`role.${member.role}`)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -503,65 +555,72 @@ function StaffTable({ staff, selfUserId }: { staff: Staff[]; selfUserId: string 
           </TableBody>
         </Table>
       )}
-    </div>
+    </Card>
   );
-}
-
-function StaffSection({ selfUserId }: { selfUserId: string | null }) {
-  const staffQuery = useListStaff({ query: { select: unwrap } });
-
-  if (staffQuery.isLoading) {
-    return (
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    );
-  }
-
-  if (staffQuery.isError) {
-    return (
-      <p className="text-sm text-destructive">
-        {apiErrorMessage(staffQuery.error, 'Failed to load staff')}
-      </p>
-    );
-  }
-
-  const staff = staffQuery.data ?? [];
-
-  if (staff.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <p className="text-sm text-muted-foreground">No staff yet — Invite staff</p>
-        <InviteStaffDialog />
-      </div>
-    );
-  }
-
-  return <StaffTable staff={staff} selfUserId={selfUserId} />;
 }
 
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
+function StaffTableSkeleton() {
+  return (
+    <Card className="gap-0 overflow-hidden py-0">
+      <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
+        <Skeleton className="h-9 w-64 rounded-full" />
+        <Skeleton className="h-9 w-24 rounded-full" />
+      </div>
+      <div className="space-y-3 p-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 function StaffContent() {
+  const t = useTranslations('staff');
   const session = useSession();
   const selfUserId = session.status === 'signed-in' ? session.claims.sub : null;
 
+  const staffQuery = useListStaff({ query: { select: unwrap } });
+  const staff = staffQuery.data ?? [];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Staff</h1>
-          <p className="text-sm text-muted-foreground">
-            Staff members at your tenant and their roles.
-          </p>
-        </div>
-        <InviteStaffDialog />
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        {staffQuery.isLoading ? (
+          <Skeleton className="h-4 w-28" />
+        ) : staffQuery.isError ? null : (
+          <p className="text-sm text-muted-foreground">{t('subtitle', { count: staff.length })}</p>
+        )}
       </div>
-      <StaffSection selfUserId={selfUserId} />
+
+      {staffQuery.isLoading ? (
+        <StaffTableSkeleton />
+      ) : staffQuery.isError ? (
+        <Alert variant="destructive">
+          <AlertTitle>{t('errorTitle')}</AlertTitle>
+          <AlertDescription>{apiErrorMessage(staffQuery.error, t('loadError'))}</AlertDescription>
+        </Alert>
+      ) : staff.length === 0 ? (
+        <Card>
+          <Empty>
+            <EmptyMedia>
+              <UsersRoundIcon />
+            </EmptyMedia>
+            <EmptyTitle>{t('empty.title')}</EmptyTitle>
+            <EmptyDescription>{t('empty.body')}</EmptyDescription>
+            <EmptyContent>
+              <InviteStaffDialog />
+            </EmptyContent>
+          </Empty>
+        </Card>
+      ) : (
+        <StaffTable staff={staff} selfUserId={selfUserId} />
+      )}
     </div>
   );
 }

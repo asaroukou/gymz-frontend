@@ -539,5 +539,207 @@
       "success": "Booking cancelled",
       "error": "Could not cancel booking"
     }
+  },
+  "venues": {
+    "title": "Venues",
+    "subtitle": "{count, plural, =0 {No venues} one {# venue} other {# venues}}",
+    "errorTitle": "Something went wrong",
+    "loadError": "Could not load venues",
+    "noAddress": "No address on file",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "type": {
+      "gym": "Gym",
+      "yoga_studio": "Yoga studio",
+      "spa": "Spa",
+      "tennis_club": "Tennis club",
+      "cross_fit": "CrossFit",
+      "swimming_pool": "Swimming pool",
+      "martial_arts": "Martial arts",
+      "dance": "Dance",
+      "other": "Other"
+    },
+    "empty": {
+      "title": "No venues",
+      "body": "Venues are created during initial setup. Contact IziWellPass support to add one."
+    },
+    "detail": {
+      "back": "Back to venues",
+      "notFound": "Venue not found",
+      "loadError": "Could not load venue",
+      "profile": {
+        "title": "Profile",
+        "name": "Name",
+        "type": "Venue type",
+        "description": "Description",
+        "address": "Address",
+        "city": "City",
+        "country": "Country",
+        "phone": "Phone",
+        "email": "Email",
+        "emailReadOnly": "Editable soon",
+        "timezone": "Timezone",
+        "timezonePlaceholder": "Africa/Lome",
+        "active": "Venue active",
+        "activeHint": "An inactive venue no longer accepts bookings.",
+        "save": "Save",
+        "saving": "Saving…",
+        "success": "Profile updated",
+        "error": "Could not update venue",
+        "nameRequired": "Name is required",
+        "timezoneRequired": "Timezone is required"
+      },
+      "resources": {
+        "title": "Resources",
+        "subtitle": "The bookable units within this venue.",
+        "add": "Add resource",
+        "loadError": "Could not load resources",
+        "unknownType": "Unknown type",
+        "columns": {
+          "name": "Name",
+          "type": "Type",
+          "capacity": "Capacity",
+          "actions": "Actions"
+        },
+        "row": {
+          "menu": "Resource actions",
+          "edit": "Edit",
+          "delete": "Delete"
+        },
+        "empty": {
+          "title": "No resources",
+          "body": "Add a first bookable resource to this venue."
+        },
+        "form": {
+          "name": "Name",
+          "type": "Resource type",
+          "typePlaceholder": "Select a resource type",
+          "capacity": "Capacity",
+          "description": "Description",
+          "nameRequired": "Name is required",
+          "typeRequired": "Resource type is required",
+          "number": "Must be a number",
+          "min": "At least 1"
+        },
+        "addDialog": {
+          "title": "Add resource",
+          "description": "A bookable unit within this venue.",
+          "submit": "Add resource",
+          "submitting": "Adding…",
+          "success": "Resource added",
+          "error": "Could not add resource"
+        },
+        "editDialog": {
+          "title": "Edit resource",
+          "save": "Save",
+          "saving": "Saving…",
+          "success": "Resource updated",
+          "error": "Could not update resource"
+        },
+        "deleteDialog": {
+          "title": "Delete resource",
+          "description": "This will permanently delete “{name}”. This action cannot be undone.",
+          "confirm": "Delete",
+          "confirming": "Deleting…",
+          "success": "Resource deleted",
+          "error": "Could not delete resource"
+        },
+        "typeDialog": {
+          "add": "New type",
+          "title": "New resource type",
+          "description": "Categories like “Yoga Room” or “Tennis Court”, shared across your organization.",
+          "name": "Name",
+          "bookingMode": "Booking mode",
+          "defaultCapacity": "Default capacity",
+          "defaultDuration": "Default duration (minutes)",
+          "submit": "Create type",
+          "submitting": "Creating…",
+          "success": "Resource type created",
+          "error": "Could not create resource type",
+          "nameRequired": "Name is required",
+          "number": "Must be a number",
+          "min": "At least 1",
+          "mode": {
+            "class": "Class",
+            "appointment": "Appointment",
+            "court_booking": "Court booking",
+            "open_access": "Open access"
+          }
+        }
+      }
+    }
+  },
+  "staff": {
+    "title": "Team",
+    "subtitle": "{count, plural, =0 {No members} one {# member} other {# members}}",
+    "errorTitle": "Something went wrong",
+    "loadError": "Could not load team",
+    "search": "Search by name or email",
+    "invite": "Invite",
+    "columns": {
+      "member": "Member",
+      "email": "Email",
+      "role": "Role",
+      "actions": "Actions"
+    },
+    "role": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "trainer": "Coach",
+      "receptionist": "Receptionist",
+      "platform_admin": "Platform admin",
+      "consumer": "Consumer"
+    },
+    "empty": {
+      "title": "No team members",
+      "body": "Invite your team to give them access to this workspace.",
+      "cta": "Invite"
+    },
+    "noResults": {
+      "title": "No results",
+      "body": "No member matches your search."
+    },
+    "row": {
+      "menu": "Member actions",
+      "changeRole": "Change role",
+      "remove": "Remove",
+      "selfHint": "You can't remove your own account."
+    },
+    "inviteDialog": {
+      "title": "Invite a member",
+      "description": "Add someone to your team.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "role": "Role",
+      "expectation": "This person will receive an email with a temporary password.",
+      "submit": "Send invitation",
+      "submitting": "Sending…",
+      "success": "Invitation sent",
+      "error": "Could not invite this member",
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "emailInvalid": "Enter a valid email address"
+    },
+    "roleDialog": {
+      "title": "Change role",
+      "description": "Update {name}'s role on your team.",
+      "role": "Role",
+      "hint": "The change takes effect on the person's next sign-in.",
+      "save": "Save",
+      "saving": "Saving…",
+      "success": "Role updated",
+      "error": "Could not change role"
+    },
+    "removeDialog": {
+      "title": "Remove member",
+      "description": "This will remove {name} from your team and disable their account. This action cannot be undone.",
+      "confirm": "Remove",
+      "confirming": "Removing…",
+      "success": "Member removed",
+      "error": "Could not remove this member"
+    }
   }
 }

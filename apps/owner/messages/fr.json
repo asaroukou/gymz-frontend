@@ -539,5 +539,207 @@
       "success": "Réservation annulée",
       "error": "Impossible d'annuler la réservation"
     }
+  },
+  "venues": {
+    "title": "Établissements",
+    "subtitle": "{count, plural, =0 {Aucun établissement} one {# établissement} other {# établissements}}",
+    "errorTitle": "Une erreur est survenue",
+    "loadError": "Impossible de charger les établissements",
+    "noAddress": "Aucune adresse renseignée",
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "type": {
+      "gym": "Salle de sport",
+      "yoga_studio": "Studio de yoga",
+      "spa": "Spa",
+      "tennis_club": "Club de tennis",
+      "cross_fit": "CrossFit",
+      "swimming_pool": "Piscine",
+      "martial_arts": "Arts martiaux",
+      "dance": "Danse",
+      "other": "Autre"
+    },
+    "empty": {
+      "title": "Aucun établissement",
+      "body": "Les établissements sont créés lors de la configuration initiale. Contactez le support IziWellPass pour en ajouter un."
+    },
+    "detail": {
+      "back": "Retour aux établissements",
+      "notFound": "Établissement introuvable",
+      "loadError": "Impossible de charger l'établissement",
+      "profile": {
+        "title": "Profil",
+        "name": "Nom",
+        "type": "Type d'établissement",
+        "description": "Description",
+        "address": "Adresse",
+        "city": "Ville",
+        "country": "Pays",
+        "phone": "Téléphone",
+        "email": "E-mail",
+        "emailReadOnly": "Modifiable prochainement",
+        "timezone": "Fuseau horaire",
+        "timezonePlaceholder": "Africa/Lome",
+        "active": "Établissement actif",
+        "activeHint": "Un établissement inactif n'accepte plus de réservations.",
+        "save": "Enregistrer",
+        "saving": "Enregistrement…",
+        "success": "Profil mis à jour",
+        "error": "Impossible de mettre à jour l'établissement",
+        "nameRequired": "Le nom est requis",
+        "timezoneRequired": "Le fuseau horaire est requis"
+      },
+      "resources": {
+        "title": "Ressources",
+        "subtitle": "Les unités réservables de cet établissement.",
+        "add": "Ajouter une ressource",
+        "loadError": "Impossible de charger les ressources",
+        "unknownType": "Type inconnu",
+        "columns": {
+          "name": "Nom",
+          "type": "Type",
+          "capacity": "Capacité",
+          "actions": "Actions"
+        },
+        "row": {
+          "menu": "Actions de la ressource",
+          "edit": "Modifier",
+          "delete": "Supprimer"
+        },
+        "empty": {
+          "title": "Aucune ressource",
+          "body": "Ajoutez une première ressource réservable à cet établissement."
+        },
+        "form": {
+          "name": "Nom",
+          "type": "Type de ressource",
+          "typePlaceholder": "Sélectionnez un type de ressource",
+          "capacity": "Capacité",
+          "description": "Description",
+          "nameRequired": "Le nom est requis",
+          "typeRequired": "Le type de ressource est requis",
+          "number": "Doit être un nombre",
+          "min": "Au moins 1"
+        },
+        "addDialog": {
+          "title": "Ajouter une ressource",
+          "description": "Une unité réservable au sein de cet établissement.",
+          "submit": "Ajouter la ressource",
+          "submitting": "Ajout…",
+          "success": "Ressource ajoutée",
+          "error": "Impossible d'ajouter la ressource"
+        },
+        "editDialog": {
+          "title": "Modifier la ressource",
+          "save": "Enregistrer",
+          "saving": "Enregistrement…",
+          "success": "Ressource mise à jour",
+          "error": "Impossible de mettre à jour la ressource"
+        },
+        "deleteDialog": {
+          "title": "Supprimer la ressource",
+          "description": "Cela supprimera définitivement « {name} ». Cette action est irréversible.",
+          "confirm": "Supprimer",
+          "confirming": "Suppression…",
+          "success": "Ressource supprimée",
+          "error": "Impossible de supprimer la ressource"
+        },
+        "typeDialog": {
+          "add": "Nouveau type",
+          "title": "Nouveau type de ressource",
+          "description": "Des catégories comme « Salle de yoga » ou « Terrain de tennis », partagées dans votre organisation.",
+          "name": "Nom",
+          "bookingMode": "Mode de réservation",
+          "defaultCapacity": "Capacité par défaut",
+          "defaultDuration": "Durée par défaut (minutes)",
+          "submit": "Créer le type",
+          "submitting": "Création…",
+          "success": "Type de ressource créé",
+          "error": "Impossible de créer le type de ressource",
+          "nameRequired": "Le nom est requis",
+          "number": "Doit être un nombre",
+          "min": "Au moins 1",
+          "mode": {
+            "class": "Cours",
+            "appointment": "Rendez-vous",
+            "court_booking": "Réservation de terrain",
+            "open_access": "Accès libre"
+          }
+        }
+      }
+    }
+  },
+  "staff": {
+    "title": "Équipe",
+    "subtitle": "{count, plural, =0 {Aucun membre} one {# membre} other {# membres}}",
+    "errorTitle": "Une erreur est survenue",
+    "loadError": "Impossible de charger l'équipe",
+    "search": "Rechercher par nom ou e-mail",
+    "invite": "Inviter",
+    "columns": {
+      "member": "Membre",
+      "email": "E-mail",
+      "role": "Rôle",
+      "actions": "Actions"
+    },
+    "role": {
+      "owner": "Propriétaire",
+      "admin": "Admin",
+      "trainer": "Coach",
+      "receptionist": "Réceptionniste",
+      "platform_admin": "Admin plateforme",
+      "consumer": "Client"
+    },
+    "empty": {
+      "title": "Aucun membre d'équipe",
+      "body": "Invitez votre équipe pour lui donner accès à cet espace.",
+      "cta": "Inviter"
+    },
+    "noResults": {
+      "title": "Aucun résultat",
+      "body": "Aucun membre ne correspond à votre recherche."
+    },
+    "row": {
+      "menu": "Actions du membre",
+      "changeRole": "Modifier le rôle",
+      "remove": "Retirer",
+      "selfHint": "Vous ne pouvez pas retirer votre propre compte."
+    },
+    "inviteDialog": {
+      "title": "Inviter un membre",
+      "description": "Ajoutez une personne à votre équipe.",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "E-mail",
+      "role": "Rôle",
+      "expectation": "Cette personne recevra un e-mail avec un mot de passe temporaire.",
+      "submit": "Envoyer l'invitation",
+      "submitting": "Envoi…",
+      "success": "Invitation envoyée",
+      "error": "Impossible d'inviter ce membre",
+      "firstNameRequired": "Le prénom est requis",
+      "lastNameRequired": "Le nom est requis",
+      "emailInvalid": "Saisissez une adresse e-mail valide"
+    },
+    "roleDialog": {
+      "title": "Modifier le rôle",
+      "description": "Mettez à jour le rôle de {name} dans votre équipe.",
+      "role": "Rôle",
+      "hint": "Le changement prend effet à la prochaine connexion de la personne.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "success": "Rôle mis à jour",
+      "error": "Impossible de modifier le rôle"
+    },
+    "removeDialog": {
+      "title": "Retirer le membre",
+      "description": "Cela retirera {name} de votre équipe et désactivera son compte. Cette action est irréversible.",
+      "confirm": "Retirer",
+      "confirming": "Retrait…",
+      "success": "Membre retiré",
+      "error": "Impossible de retirer ce membre"
+    }
   }
 }

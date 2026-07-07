@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeftIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -23,9 +26,10 @@ import {
   useUpdateResource,
   useUpdateVenue,
 } from '@iziwellpass/api/generated';
-import type { Resource, ResourceType, Venue } from '@iziwellpass/api/schemas';
+import type { BookingMode, Resource, ResourceType, Venue } from '@iziwellpass/api/schemas';
 import { VenueType } from '@iziwellpass/api/schemas';
 import { useRole } from '@iziwellpass/auth/provider';
+import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/components/card';
@@ -45,6 +49,12 @@ import {
   DropdownMenuTrigger,
 } from '@iziwellpass/ui/components/dropdown-menu';
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyTitle,
+} from '@iziwellpass/ui/components/empty';
+import {
   Form,
   FormControl,
   FormField,
@@ -61,6 +71,7 @@ import {
   SelectValue,
 } from '@iziwellpass/ui/components/select';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+import { Switch } from '@iziwellpass/ui/components/switch';
 import {
   Table,
   TableBody,
@@ -69,66 +80,74 @@ import {
   TableHeader,
   TableRow,
 } from '@iziwellpass/ui/components/table';
+import { Textarea } from '@iziwellpass/ui/components/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/components/tooltip';
 
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 
 const VENUE_TYPE_VALUES = Object.values(VenueType) as [VenueType, ...VenueType[]];
-
-function venueTypeLabel(venueType: string): string {
-  return venueType.replace(/_/g, ' ');
-}
+const BOOKING_MODE_VALUES = [
+  'class',
+  'appointment',
+  'court_booking',
+  'open_access',
+] as const satisfies readonly BookingMode[];
 
 // ---------------------------------------------------------------------------
 // Profile section
 // ---------------------------------------------------------------------------
 
-const IS_ACTIVE_VALUES = ['active', 'inactive'] as const;
-
-const profileSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  venue_type: z.enum(VENUE_TYPE_VALUES),
-  description: z.string(),
-  address_line: z.string(),
-  city: z.string(),
-  country: z.string(),
-  phone: z.string(),
-  timezone: z.string().min(1, 'Timezone is required'),
-  is_active: z.enum(IS_ACTIVE_VALUES),
-});
-
-type ProfileValues = z.infer<typeof profileSchema>;
-
-function venueToDefaults(venue: Venue): ProfileValues {
-  return {
-    name: venue.name,
-    venue_type: venue.venue_type,
-    description: venue.description ?? '',
-    address_line: venue.address_line ?? '',
-    city: venue.city,
-    country: venue.country,
-    phone: venue.phone ?? '',
-    timezone: venue.timezone,
-    is_active: venue.is_active ? 'active' : 'inactive',
-  };
-}
-
 function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) {
+  const t = useTranslations('venues');
   const queryClient = useQueryClient();
   const updateVenue = useUpdateVenue();
 
+  const schema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, t('detail.profile.nameRequired')),
+        venue_type: z.enum(VENUE_TYPE_VALUES),
+        description: z.string(),
+        address_line: z.string(),
+        city: z.string(),
+        country: z.string(),
+        phone: z.string(),
+        timezone: z.string().min(1, t('detail.profile.timezoneRequired')),
+        is_active: z.boolean(),
+      }),
+    [t],
+  );
+
+  type ProfileValues = z.infer<typeof schema>;
+
+  const toDefaults = (v: Venue): ProfileValues => ({
+    name: v.name,
+    venue_type: v.venue_type,
+    description: v.description ?? '',
+    address_line: v.address_line ?? '',
+    city: v.city,
+    country: v.country,
+    phone: v.phone ?? '',
+    timezone: v.timezone,
+    is_active: v.is_active,
+  });
+
   const form = useForm<ProfileValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: venueToDefaults(venue),
+    resolver: zodResolver(schema),
+    defaultValues: toDefaults(venue),
   });
 
   // Re-sync the form when the underlying venue data changes (e.g. after a
   // successful save re-fetches getVenue).
   useEffect(() => {
-    form.reset(venueToDefaults(venue));
+    form.reset(toDefaults(venue));
   }, [venue, form]);
 
   const onSubmit = (values: ProfileValues) => {
+    // `UpdateVenueRequest` accepts only these fields — `email` and `settings`
+    // (locale/timezone_override) are read-only in the contract and are
+    // deliberately not sent here.
     updateVenue.mutate(
       {
         id: venue.id,
@@ -141,18 +160,18 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
           country: values.country || null,
           phone: values.phone || null,
           timezone: values.timezone,
-          is_active: values.is_active === 'active',
+          is_active: values.is_active,
         },
       },
       {
         onSuccess: () => {
-          toast.success('Venue profile updated');
+          toast.success(t('detail.profile.success'));
           void queryClient.invalidateQueries({ queryKey: getGetVenueQueryKey(venue.id) });
           void queryClient.invalidateQueries({ queryKey: getListVenuesQueryKey() });
         },
         onError: (err) => {
           if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, 'Failed to update venue'));
+            toast.error(apiErrorMessage(err, t('detail.profile.error')));
           }
         },
       },
@@ -160,9 +179,9 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
   };
 
   return (
-    <Card>
+    <Card className="rounded-2xl">
       <CardHeader>
-        <CardTitle>Profile</CardTitle>
+        <CardTitle>{t('detail.profile.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -175,7 +194,7 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>{t('detail.profile.name')}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled={!canEdit} />
                   </FormControl>
@@ -188,7 +207,7 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
               name="venue_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Venue type</FormLabel>
+                  <FormLabel>{t('detail.profile.type')}</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -197,8 +216,8 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
                     </FormControl>
                     <SelectContent>
                       {VENUE_TYPE_VALUES.map((type) => (
-                        <SelectItem key={type} value={type} className="capitalize">
-                          {venueTypeLabel(type)}
+                        <SelectItem key={type} value={type}>
+                          {t(`type.${type}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -212,9 +231,9 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
               name="description"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t('detail.profile.description')}</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={!canEdit} />
+                    <Textarea {...field} disabled={!canEdit} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -225,7 +244,7 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
               name="address_line"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>{t('detail.profile.address')}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled={!canEdit} />
                   </FormControl>
@@ -238,7 +257,7 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
               name="city"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>City</FormLabel>
+                  <FormLabel>{t('detail.profile.city')}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled={!canEdit} />
                   </FormControl>
@@ -251,7 +270,7 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
               name="country"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Country</FormLabel>
+                  <FormLabel>{t('detail.profile.country')}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled={!canEdit} />
                   </FormControl>
@@ -264,34 +283,50 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel>{t('detail.profile.phone')}</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={!canEdit} />
+                    <Input inputMode="tel" {...field} disabled={!canEdit} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             {/*
-              Email is read-only here: `UpdateVenueRequest` has no `email`
-              field, so there is no API contract to persist an edited value
-              against (see packages/api/src/generated/endpoints.schemas.ts).
-              Rendering it as an editable input would silently discard edits.
+              Email is read-only: `UpdateVenueRequest` has no `email` field, so
+              there is no contract to persist an edited value against. Rendered
+              disabled with a "editable soon" tooltip rather than an editable
+              input that would silently discard edits.
             */}
             <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" value={venue.email ?? ''} disabled readOnly />
-              </FormControl>
+              <FormLabel>{t('detail.profile.email')}</FormLabel>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0} className="block">
+                    <Input
+                      type="email"
+                      value={venue.email ?? ''}
+                      disabled
+                      readOnly
+                      className="pointer-events-none"
+                      aria-label={t('detail.profile.email')}
+                    />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{t('detail.profile.emailReadOnly')}</TooltipContent>
+              </Tooltip>
             </FormItem>
             <FormField
               control={form.control}
               name="timezone"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Timezone</FormLabel>
+                <FormItem className="sm:col-span-2">
+                  <FormLabel>{t('detail.profile.timezone')}</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={!canEdit} placeholder="Africa/Lome" />
+                    <Input
+                      {...field}
+                      disabled={!canEdit}
+                      placeholder={t('detail.profile.timezonePlaceholder')}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -300,34 +335,34 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
             {/*
               `VenueSettings` (locale, timezone_override) is a nested object on
               `Venue` but is not part of `UpdateVenueRequest` — settings are
-              read-only in the current API contract, so no editor is rendered
-              here.
+              read-only in the current contract, so no editor is rendered here.
             */}
             <FormField
               control={form.control}
               name="is_active"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
+                <FormItem className="flex flex-row items-center justify-between gap-4 rounded-xl border p-4 sm:col-span-2">
+                  <div className="space-y-0.5">
+                    <FormLabel>{t('detail.profile.active')}</FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      {t('detail.profile.activeHint')}
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={!canEdit}
+                      aria-label={t('detail.profile.active')}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
             {canEdit ? (
               <div className="sm:col-span-2">
                 <Button type="submit" disabled={updateVenue.isPending}>
-                  {updateVenue.isPending ? 'Saving…' : 'Save changes'}
+                  {updateVenue.isPending ? t('detail.profile.saving') : t('detail.profile.save')}
                 </Button>
               </div>
             ) : null}
@@ -342,28 +377,41 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
 // Resource type inline creation
 // ---------------------------------------------------------------------------
 
-const resourceTypeSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  booking_mode: z.enum(['class', 'appointment', 'court_booking', 'open_access']),
-  default_capacity: z.number('Must be a number').int().min(1, 'Must be at least 1'),
-  default_duration_minutes: z.number('Must be a number').int().min(1, 'Must be at least 1'),
-});
-
-type ResourceTypeValues = z.infer<typeof resourceTypeSchema>;
-
 function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: ResourceType) => void }) {
+  const t = useTranslations('venues');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const createResourceType = useCreateResourceType();
 
+  const schema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, t('detail.resources.typeDialog.nameRequired')),
+        booking_mode: z.enum(BOOKING_MODE_VALUES),
+        default_capacity: z
+          .number(t('detail.resources.typeDialog.number'))
+          .int()
+          .min(1, t('detail.resources.typeDialog.min')),
+        default_duration_minutes: z
+          .number(t('detail.resources.typeDialog.number'))
+          .int()
+          .min(1, t('detail.resources.typeDialog.min')),
+      }),
+    [t],
+  );
+
+  type ResourceTypeValues = z.infer<typeof schema>;
+
+  const defaults: ResourceTypeValues = {
+    name: '',
+    booking_mode: 'class',
+    default_capacity: 1,
+    default_duration_minutes: 60,
+  };
+
   const form = useForm<ResourceTypeValues>({
-    resolver: zodResolver(resourceTypeSchema),
-    defaultValues: {
-      name: '',
-      booking_mode: 'class',
-      default_capacity: 1,
-      default_duration_minutes: 60,
-    },
+    resolver: zodResolver(schema),
+    defaultValues: defaults,
   });
 
   const onSubmit = (values: ResourceTypeValues) => {
@@ -372,15 +420,15 @@ function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: Resour
       {
         onSuccess: (response) => {
           const resourceType = unwrap(response);
-          toast.success('Resource type created');
+          toast.success(t('detail.resources.typeDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListResourceTypesQueryKey() });
           onCreated(resourceType);
-          form.reset();
+          form.reset(defaults);
           setOpen(false);
         },
         onError: (err) => {
           if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, 'Failed to create resource type'));
+            toast.error(apiErrorMessage(err, t('detail.resources.typeDialog.error')));
           }
         },
       },
@@ -393,22 +441,19 @@ function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: Resour
       onOpenChange={(next) => {
         setOpen(next);
         if (!next) {
-          form.reset();
+          form.reset(defaults);
         }
       }}
     >
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm">
-          New type
+          {t('detail.resources.typeDialog.add')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New resource type</DialogTitle>
-          <DialogDescription>
-            Categories like &quot;Yoga Room&quot; or &quot;Tennis Court&quot; used across your
-            tenant.
-          </DialogDescription>
+          <DialogTitle>{t('detail.resources.typeDialog.title')}</DialogTitle>
+          <DialogDescription>{t('detail.resources.typeDialog.description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
@@ -417,7 +462,7 @@ function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: Resour
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>{t('detail.resources.typeDialog.name')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -430,7 +475,7 @@ function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: Resour
               name="booking_mode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Booking mode</FormLabel>
+                  <FormLabel>{t('detail.resources.typeDialog.bookingMode')}</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -438,61 +483,68 @@ function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: Resour
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="class">Class</SelectItem>
-                      <SelectItem value="appointment">Appointment</SelectItem>
-                      <SelectItem value="court_booking">Court booking</SelectItem>
-                      <SelectItem value="open_access">Open access</SelectItem>
+                      {BOOKING_MODE_VALUES.map((mode) => (
+                        <SelectItem key={mode} value={mode}>
+                          {t(`detail.resources.typeDialog.mode.${mode}`)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="default_capacity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Default capacity</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      name={field.name}
-                      ref={field.ref}
-                      onBlur={field.onBlur}
-                      value={Number.isNaN(field.value) ? '' : field.value}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="default_duration_minutes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Default duration (minutes)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      name={field.name}
-                      ref={field.ref}
-                      onBlur={field.onBlur}
-                      value={Number.isNaN(field.value) ? '' : field.value}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="default_capacity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('detail.resources.typeDialog.defaultCapacity')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        className="font-mono"
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        value={Number.isNaN(field.value) ? '' : field.value}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="default_duration_minutes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('detail.resources.typeDialog.defaultDuration')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        className="font-mono"
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        value={Number.isNaN(field.value) ? '' : field.value}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <DialogFooter>
               <Button type="submit" disabled={createResourceType.isPending}>
-                {createResourceType.isPending ? 'Creating…' : 'Create type'}
+                {createResourceType.isPending
+                  ? t('detail.resources.typeDialog.submitting')
+                  : t('detail.resources.typeDialog.submit')}
               </Button>
             </DialogFooter>
           </form>
@@ -503,17 +555,32 @@ function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: Resour
 }
 
 // ---------------------------------------------------------------------------
-// Add / edit resource dialog
+// Add / edit resource dialogs
 // ---------------------------------------------------------------------------
 
-const resourceSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  resource_type_id: z.string().min(1, 'Resource type is required'),
-  capacity: z.number('Must be a number').int().min(1, 'Must be at least 1'),
-  description: z.string(),
-});
+function useResourceSchema() {
+  const t = useTranslations('venues');
+  return useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, t('detail.resources.form.nameRequired')),
+        resource_type_id: z.string().min(1, t('detail.resources.form.typeRequired')),
+        capacity: z
+          .number(t('detail.resources.form.number'))
+          .int()
+          .min(1, t('detail.resources.form.min')),
+        description: z.string(),
+      }),
+    [t],
+  );
+}
 
-type ResourceValues = z.infer<typeof resourceSchema>;
+type ResourceValues = {
+  name: string;
+  resource_type_id: string;
+  capacity: number;
+  description: string;
+};
 
 function ResourceFormFields({
   form,
@@ -522,6 +589,7 @@ function ResourceFormFields({
   form: UseFormReturn<ResourceValues>;
   resourceTypes: ResourceType[];
 }) {
+  const t = useTranslations('venues');
   return (
     <>
       <FormField
@@ -529,7 +597,7 @@ function ResourceFormFields({
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Name</FormLabel>
+            <FormLabel>{t('detail.resources.form.name')}</FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
@@ -542,8 +610,8 @@ function ResourceFormFields({
         name="resource_type_id"
         render={({ field }) => (
           <FormItem>
-            <div className="flex items-center justify-between">
-              <FormLabel>Resource type</FormLabel>
+            <div className="flex items-center justify-between gap-2">
+              <FormLabel>{t('detail.resources.form.type')}</FormLabel>
               <NewResourceTypeDialog
                 onCreated={(resourceType) => form.setValue('resource_type_id', resourceType.id)}
               />
@@ -551,7 +619,7 @@ function ResourceFormFields({
             <Select value={field.value} onValueChange={field.onChange}>
               <FormControl>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a resource type" />
+                  <SelectValue placeholder={t('detail.resources.form.typePlaceholder')} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -571,11 +639,12 @@ function ResourceFormFields({
         name="capacity"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Capacity</FormLabel>
+            <FormLabel>{t('detail.resources.form.capacity')}</FormLabel>
             <FormControl>
               <Input
                 type="number"
                 min={1}
+                className="font-mono"
                 name={field.name}
                 ref={field.ref}
                 onBlur={field.onBlur}
@@ -592,9 +661,9 @@ function ResourceFormFields({
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Description</FormLabel>
+            <FormLabel>{t('detail.resources.form.description')}</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Textarea {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -611,13 +680,17 @@ function AddResourceDialog({
   venueId: string;
   resourceTypes: ResourceType[];
 }) {
+  const t = useTranslations('venues');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const createResource = useCreateResource();
+  const schema = useResourceSchema();
+
+  const defaults: ResourceValues = { name: '', resource_type_id: '', capacity: 1, description: '' };
 
   const form = useForm<ResourceValues>({
-    resolver: zodResolver(resourceSchema),
-    defaultValues: { name: '', resource_type_id: '', capacity: 1, description: '' },
+    resolver: zodResolver(schema),
+    defaultValues: defaults,
   });
 
   const onSubmit = (values: ResourceValues) => {
@@ -634,14 +707,14 @@ function AddResourceDialog({
       },
       {
         onSuccess: () => {
-          toast.success('Resource added');
+          toast.success(t('detail.resources.addDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListResourcesQueryKey(venueId) });
-          form.reset();
+          form.reset(defaults);
           setOpen(false);
         },
         onError: (err) => {
           if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, 'Failed to add resource'));
+            toast.error(apiErrorMessage(err, t('detail.resources.addDialog.error')));
           }
         },
       },
@@ -654,24 +727,29 @@ function AddResourceDialog({
       onOpenChange={(next) => {
         setOpen(next);
         if (!next) {
-          form.reset();
+          form.reset(defaults);
         }
       }}
     >
       <DialogTrigger asChild>
-        <Button>Add resource</Button>
+        <Button>
+          <PlusIcon />
+          {t('detail.resources.add')}
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add resource</DialogTitle>
-          <DialogDescription>A bookable unit within this venue.</DialogDescription>
+          <DialogTitle>{t('detail.resources.addDialog.title')}</DialogTitle>
+          <DialogDescription>{t('detail.resources.addDialog.description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
             <ResourceFormFields form={form} resourceTypes={resourceTypes} />
             <DialogFooter>
               <Button type="submit" disabled={createResource.isPending}>
-                {createResource.isPending ? 'Adding…' : 'Add resource'}
+                {createResource.isPending
+                  ? t('detail.resources.addDialog.submitting')
+                  : t('detail.resources.addDialog.submit')}
               </Button>
             </DialogFooter>
           </form>
@@ -694,26 +772,25 @@ function EditResourceDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations('venues');
   const queryClient = useQueryClient();
   const updateResource = useUpdateResource();
+  const schema = useResourceSchema();
+
+  const toDefaults = (r: Resource): ResourceValues => ({
+    name: r.name,
+    resource_type_id: r.resource_type_id,
+    capacity: r.capacity,
+    description: r.description ?? '',
+  });
 
   const form = useForm<ResourceValues>({
-    resolver: zodResolver(resourceSchema),
-    defaultValues: {
-      name: resource.name,
-      resource_type_id: resource.resource_type_id,
-      capacity: resource.capacity,
-      description: resource.description ?? '',
-    },
+    resolver: zodResolver(schema),
+    defaultValues: toDefaults(resource),
   });
 
   useEffect(() => {
-    form.reset({
-      name: resource.name,
-      resource_type_id: resource.resource_type_id,
-      capacity: resource.capacity,
-      description: resource.description ?? '',
-    });
+    form.reset(toDefaults(resource));
   }, [resource, form]);
 
   const onSubmit = (values: ResourceValues) => {
@@ -730,13 +807,13 @@ function EditResourceDialog({
       },
       {
         onSuccess: () => {
-          toast.success('Resource updated');
+          toast.success(t('detail.resources.editDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListResourcesQueryKey(venueId) });
           onOpenChange(false);
         },
         onError: (err) => {
           if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, 'Failed to update resource'));
+            toast.error(apiErrorMessage(err, t('detail.resources.editDialog.error')));
           }
         },
       },
@@ -747,14 +824,16 @@ function EditResourceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit resource</DialogTitle>
+          <DialogTitle>{t('detail.resources.editDialog.title')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
             <ResourceFormFields form={form} resourceTypes={resourceTypes} />
             <DialogFooter>
               <Button type="submit" disabled={updateResource.isPending}>
-                {updateResource.isPending ? 'Saving…' : 'Save changes'}
+                {updateResource.isPending
+                  ? t('detail.resources.editDialog.saving')
+                  : t('detail.resources.editDialog.save')}
               </Button>
             </DialogFooter>
           </form>
@@ -775,6 +854,8 @@ function DeleteResourceDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations('venues');
+  const tCommon = useTranslations('common');
   const queryClient = useQueryClient();
   const deleteResource = useDeleteResource();
 
@@ -783,12 +864,12 @@ function DeleteResourceDialog({
       { vid: venueId, rid: resource.id },
       {
         onSuccess: () => {
-          toast.success('Resource deleted');
+          toast.success(t('detail.resources.deleteDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListResourcesQueryKey(venueId) });
           onOpenChange(false);
         },
         onError: (err) => {
-          toast.error(apiErrorMessage(err, 'Failed to delete resource'));
+          toast.error(apiErrorMessage(err, t('detail.resources.deleteDialog.error')));
         },
       },
     );
@@ -798,17 +879,19 @@ function DeleteResourceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete resource</DialogTitle>
+          <DialogTitle>{t('detail.resources.deleteDialog.title')}</DialogTitle>
           <DialogDescription>
-            This will permanently delete &quot;{resource.name}&quot;. This action cannot be undone.
+            {t('detail.resources.deleteDialog.description', { name: resource.name })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {tCommon('cancel')}
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={deleteResource.isPending}>
-            {deleteResource.isPending ? 'Deleting…' : 'Delete'}
+            {deleteResource.isPending
+              ? t('detail.resources.deleteDialog.confirming')
+              : t('detail.resources.deleteDialog.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -821,6 +904,7 @@ function DeleteResourceDialog({
 // ---------------------------------------------------------------------------
 
 function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: boolean }) {
+  const t = useTranslations('venues');
   const resourcesQuery = useListResources(venueId, { query: { select: unwrap } });
   const resourceTypesQuery = useListResourceTypes({ query: { select: unwrap } });
   const resourceTypes = useMemo(() => resourceTypesQuery.data ?? [], [resourceTypesQuery.data]);
@@ -828,15 +912,18 @@ function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
     () => new Map(resourceTypes.map((type) => [type.id, type])),
     [resourceTypes],
   );
+  const resources = resourcesQuery.data ?? [];
 
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Resources</CardTitle>
-        {canEdit ? <AddResourceDialog venueId={venueId} resourceTypes={resourceTypes} /> : null}
+    <Card className="rounded-2xl">
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <CardTitle>{t('detail.resources.title')}</CardTitle>
+        {canEdit && resources.length > 0 ? (
+          <AddResourceDialog venueId={venueId} resourceTypes={resourceTypes} />
+        ) : null}
       </CardHeader>
       <CardContent>
         {resourcesQuery.isLoading ? (
@@ -845,49 +932,67 @@ function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
             <Skeleton className="h-10 w-full" />
           </div>
         ) : resourcesQuery.isError ? (
-          <p className="text-sm text-destructive">
-            {apiErrorMessage(resourcesQuery.error, 'Failed to load resources')}
-          </p>
-        ) : (resourcesQuery.data ?? []).length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <p className="text-sm text-muted-foreground">No resources yet.</p>
-            {canEdit ? <AddResourceDialog venueId={venueId} resourceTypes={resourceTypes} /> : null}
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>
+              {apiErrorMessage(resourcesQuery.error, t('detail.resources.loadError'))}
+            </AlertDescription>
+          </Alert>
+        ) : resources.length === 0 ? (
+          <Empty>
+            <EmptyTitle>{t('detail.resources.empty.title')}</EmptyTitle>
+            <EmptyDescription>{t('detail.resources.empty.body')}</EmptyDescription>
+            {canEdit ? (
+              <EmptyContent>
+                <AddResourceDialog venueId={venueId} resourceTypes={resourceTypes} />
+              </EmptyContent>
+            ) : null}
+          </Empty>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Capacity</TableHead>
-                {canEdit ? <TableHead className="w-px">Actions</TableHead> : null}
+                <TableHead>{t('detail.resources.columns.name')}</TableHead>
+                <TableHead>{t('detail.resources.columns.type')}</TableHead>
+                <TableHead>{t('detail.resources.columns.capacity')}</TableHead>
+                {canEdit ? (
+                  <TableHead className="w-0 text-right">
+                    <span className="sr-only">{t('detail.resources.columns.actions')}</span>
+                  </TableHead>
+                ) : null}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(resourcesQuery.data ?? []).map((resource) => (
+              {resources.map((resource) => (
                 <TableRow key={resource.id}>
                   <TableCell className="font-medium">{resource.name}</TableCell>
-                  <TableCell>
-                    {resourceTypeById.get(resource.resource_type_id)?.name ?? 'Unknown'}
+                  <TableCell className="text-muted-foreground">
+                    {resourceTypeById.get(resource.resource_type_id)?.name ??
+                      t('detail.resources.unknownType')}
                   </TableCell>
-                  <TableCell>{resource.capacity}</TableCell>
+                  <TableCell className="font-mono">{resource.capacity}</TableCell>
                   {canEdit ? (
-                    <TableCell>
+                    <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            Actions
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={t('detail.resources.row.menu')}
+                          >
+                            <MoreHorizontalIcon />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onSelect={() => setEditingResource(resource)}>
-                            Edit
+                            <PencilIcon />
+                            {t('detail.resources.row.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             variant="destructive"
                             onSelect={() => setDeletingResource(resource)}
                           >
-                            Delete
+                            <Trash2Icon />
+                            {t('detail.resources.row.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -904,11 +1009,9 @@ function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
           venueId={venueId}
           resource={editingResource}
           resourceTypes={resourceTypes}
-          open={!!editingResource}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditingResource(null);
-            }
+          open={editingResource !== null}
+          onOpenChange={(next) => {
+            if (!next) setEditingResource(null);
           }}
         />
       ) : null}
@@ -916,11 +1019,9 @@ function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
         <DeleteResourceDialog
           venueId={venueId}
           resource={deletingResource}
-          open={!!deletingResource}
-          onOpenChange={(open) => {
-            if (!open) {
-              setDeletingResource(null);
-            }
+          open={deletingResource !== null}
+          onOpenChange={(next) => {
+            if (!next) setDeletingResource(null);
           }}
         />
       ) : null}
@@ -933,6 +1034,7 @@ function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
 // ---------------------------------------------------------------------------
 
 function VenueDetailContent() {
+  const t = useTranslations('venues');
   const params = useParams<{ id: string }>();
   const venueId = params.id;
   const role = useRole();
@@ -940,34 +1042,58 @@ function VenueDetailContent() {
 
   const venueQuery = useGetVenue(venueId, { query: { select: unwrap } });
 
+  const backLink = (
+    <Link
+      href="/venues"
+      className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+    >
+      <ArrowLeftIcon className="size-4" />
+      {t('detail.back')}
+    </Link>
+  );
+
   if (venueQuery.isLoading) {
     return (
       <div className="space-y-6">
+        {backLink}
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-96 w-full rounded-2xl" />
       </div>
     );
   }
 
   if (venueQuery.isError) {
     return (
-      <p className="text-sm text-destructive">
-        {apiErrorMessage(venueQuery.error, 'Failed to load venue')}
-      </p>
+      <div className="space-y-6">
+        {backLink}
+        <Alert variant="destructive">
+          <AlertTitle>{t('errorTitle')}</AlertTitle>
+          <AlertDescription>
+            {apiErrorMessage(venueQuery.error, t('detail.loadError'))}
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   const venue = venueQuery.data;
   if (!venue) {
-    return <p className="text-sm text-muted-foreground">Venue not found.</p>;
+    return (
+      <div className="space-y-6">
+        {backLink}
+        <p className="text-sm text-muted-foreground">{t('detail.notFound')}</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-semibold">{venue.name}</h1>
-        <Badge variant="outline" className="capitalize">
-          {venueTypeLabel(venue.venue_type)}
+      {backLink}
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">{venue.name}</h1>
+        <Badge variant="outline">{t(`type.${venue.venue_type}`)}</Badge>
+        <Badge variant={venue.is_active ? 'success' : 'secondary'}>
+          {venue.is_active ? t('status.active') : t('status.inactive')}
         </Badge>
       </div>
       <ProfileSection venue={venue} canEdit={canEdit} />
