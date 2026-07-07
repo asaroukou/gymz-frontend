@@ -296,5 +296,187 @@
         "error": "Impossible de suspendre le membre"
       }
     }
+  },
+  "planning": {
+    "title": "Planning",
+    "subtitle": "Cours récurrents, séances générées et participants.",
+    "tabsLabel": "Vue du planning",
+    "errorTitle": "Une erreur est survenue",
+    "venuesError": "Impossible de charger les établissements",
+    "venueNone": "Aucun établissement pour le moment.",
+    "venuePrompt": "Sélectionnez un établissement pour voir son planning.",
+    "venuePlaceholder": "Choisir un établissement",
+    "addCourse": "Ajouter un cours",
+    "tabs": {
+      "courses": "Cours récurrents",
+      "slots": "Séances"
+    },
+    "weekday": {
+      "MO": "Lun",
+      "TU": "Mar",
+      "WE": "Mer",
+      "TH": "Jeu",
+      "FR": "Ven",
+      "SA": "Sam",
+      "SU": "Dim"
+    },
+    "weekdayShort": {
+      "MO": "L",
+      "TU": "M",
+      "WE": "M",
+      "TH": "J",
+      "FR": "V",
+      "SA": "S",
+      "SU": "D"
+    },
+    "weekdayLong": {
+      "MO": "Lundi",
+      "TU": "Mardi",
+      "WE": "Mercredi",
+      "TH": "Jeudi",
+      "FR": "Vendredi",
+      "SA": "Samedi",
+      "SU": "Dimanche"
+    },
+    "recurrence": {
+      "once": "Ponctuel",
+      "daily": "Tous les jours",
+      "dailyEvery": "Tous les {interval} jours",
+      "allDays": "tous les jours",
+      "weekly": "Toutes les semaines",
+      "weeklyEvery": "Toutes les {interval} semaines · {days}"
+    },
+    "slotStatus": {
+      "available": "Disponible",
+      "full": "Complet",
+      "cancelled": "Annulée"
+    },
+    "bookingStatus": {
+      "confirmed": "Confirmé",
+      "checked_in": "Enregistré",
+      "no_show": "Absent",
+      "cancelled": "Annulé"
+    },
+    "bookingSource": {
+      "direct": "Direct",
+      "iziwellpass": "IziWellPass",
+      "walk_in": "Sur place"
+    },
+    "form": {
+      "repeats": "Répétition",
+      "repeatNone": "Ponctuel",
+      "repeatDaily": "Quotidien",
+      "repeatWeekly": "Hebdomadaire",
+      "onDays": "Les jours",
+      "intervalDays": "Intervalle (jours)",
+      "intervalWeeks": "Intervalle (semaines)",
+      "title": "Titre",
+      "titlePlaceholder": "Yoga du matin",
+      "resource": "Salle",
+      "resourcePlaceholder": "Choisir une salle",
+      "instructor": "Intervenant",
+      "noInstructor": "Aucun intervenant",
+      "startTime": "Heure de début",
+      "endTime": "Heure de fin",
+      "effectiveFrom": "À partir du",
+      "effectiveUntil": "Jusqu'au (facultatif)",
+      "description": "Description"
+    },
+    "validation": {
+      "titleRequired": "Le titre est requis",
+      "resourceRequired": "La salle est requise",
+      "startTimeRequired": "L'heure de début est requise",
+      "endTimeRequired": "L'heure de fin est requise",
+      "startDateRequired": "La date de début est requise"
+    },
+    "scheduleDialog": {
+      "addTitle": "Ajouter un cours",
+      "addDescription": "Un créneau récurrent (ou ponctuel) pour une salle.",
+      "create": "Créer le cours",
+      "creating": "Création…",
+      "createSuccess": "Cours créé",
+      "createError": "Impossible de créer le cours",
+      "editTitle": "Modifier le cours",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "updateSuccess": "Cours mis à jour",
+      "updateError": "Impossible de mettre à jour le cours"
+    },
+    "deleteCourse": {
+      "title": "Annuler ce cours",
+      "description": "Cela supprimera « {title} » et arrêtera la génération de nouvelles séances. Cette action est irréversible.",
+      "confirm": "Annuler le cours",
+      "confirming": "Suppression…",
+      "success": "Cours supprimé",
+      "error": "Impossible de supprimer le cours"
+    },
+    "courses": {
+      "columns": {
+        "course": "Cours",
+        "recurrence": "Récurrence",
+        "resource": "Salle",
+        "instructor": "Intervenant",
+        "period": "Période",
+        "actions": "Actions"
+      },
+      "noInstructor": "Aucun",
+      "unknownResource": "Salle inconnue",
+      "dateRange": "du {from} au {until}",
+      "dateFrom": "à partir du {from}",
+      "rowMenu": "Actions du cours",
+      "edit": "Modifier",
+      "delete": "Annuler ce cours",
+      "loadError": "Impossible de charger les cours",
+      "emptyTitle": "Aucun cours",
+      "emptyBody": "Créez un cours pour générer automatiquement les séances."
+    },
+    "slots": {
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "participants": "Participants",
+      "rowMenu": "Actions de la séance",
+      "cancel": "Annuler la séance",
+      "capacityLabel": "Capacité {booked}/{cap}",
+      "untitled": "Cours",
+      "unknownResource": "Salle inconnue",
+      "loadError": "Impossible de charger les séances",
+      "emptyTitle": "Aucune séance à venir",
+      "emptyBody": "Les séances sont générées automatiquement à partir des cours récurrents."
+    },
+    "cancelSlot": {
+      "title": "Annuler la séance",
+      "description": "Cela annulera la séance de {start}–{end}. Les participants devront être gérés séparément. Cette action est irréversible.",
+      "confirm": "Annuler la séance",
+      "confirming": "Annulation…",
+      "success": "Séance annulée",
+      "error": "Impossible d'annuler la séance"
+    },
+    "bookings": {
+      "subtitle": "{start}–{end} · {booked}/{cap} inscrits",
+      "loadError": "Impossible de charger les participants",
+      "emptyTitle": "Aucun participant",
+      "emptyBody": "Ajoutez un participant pour réserver une place.",
+      "cancel": "Annuler"
+    },
+    "addBooking": {
+      "label": "Ajouter un participant",
+      "placeholder": "Choisir un membre",
+      "search": "Rechercher un membre",
+      "noMembers": "Aucun membre",
+      "add": "Ajouter",
+      "adding": "Ajout…",
+      "success": "Participant ajouté",
+      "error": "Impossible d'ajouter le participant"
+    },
+    "cancelBooking": {
+      "title": "Annuler la réservation",
+      "description": "Cela annulera la réservation de ce membre pour cette séance.",
+      "reason": "Motif (facultatif)",
+      "reasonPlaceholder": "Ex. : indisponible",
+      "confirm": "Annuler la réservation",
+      "confirming": "Annulation…",
+      "success": "Réservation annulée",
+      "error": "Impossible d'annuler la réservation"
+    }
   }
 }

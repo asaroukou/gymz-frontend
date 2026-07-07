@@ -1,0 +1,528 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { PlusIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+
+import {
+  getListSchedulesQueryKey,
+  getListSlotsQueryKey,
+  useCancelSchedule,
+  useCreateSchedule,
+  useUpdateSchedule,
+} from '@iziwellpass/api/generated';
+import type { Resource, Schedule, Staff } from '@iziwellpass/api/schemas';
+import { Button } from '@iziwellpass/ui/components/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@iziwellpass/ui/components/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@iziwellpass/ui/components/form';
+import { Input } from '@iziwellpass/ui/components/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@iziwellpass/ui/components/select';
+import { Textarea } from '@iziwellpass/ui/components/textarea';
+
+import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import {
+  parseRecurrenceRule,
+  serializeRecurrenceRule,
+  type RecurrenceEditorState,
+} from '@/lib/recurrence';
+
+import { RecurrenceEditor } from './recurrence-editor';
+
+const NO_INSTRUCTOR = '__none__';
+
+function useScheduleSchema() {
+  const t = useTranslations('planning');
+  return useMemo(
+    () =>
+      z.object({
+        title: z.string().min(1, t('validation.titleRequired')),
+        resource_id: z.string().min(1, t('validation.resourceRequired')),
+        instructor_staff_id: z.string(),
+        start_time: z.string().min(1, t('validation.startTimeRequired')),
+        end_time: z.string().min(1, t('validation.endTimeRequired')),
+        effective_from: z.string().min(1, t('validation.startDateRequired')),
+        effective_until: z.string(),
+        description: z.string(),
+      }),
+    [t],
+  );
+}
+
+type ScheduleValues = z.infer<ReturnType<typeof useScheduleSchema>>;
+
+function todayIsoDate(): string {
+  // Local calendar date (not toISOString, which is UTC) so the default start
+  // date matches the user's day near midnight in non-UTC zones.
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function scheduleToDefaults(schedule: Schedule): ScheduleValues {
+  return {
+    title: schedule.title,
+    resource_id: schedule.resource_id,
+    instructor_staff_id: schedule.instructor_staff_id ?? NO_INSTRUCTOR,
+    start_time: schedule.start_time.slice(0, 5),
+    end_time: schedule.end_time.slice(0, 5),
+    effective_from: schedule.effective_from,
+    effective_until: schedule.effective_until ?? '',
+    description: schedule.description ?? '',
+  };
+}
+
+function emptyScheduleDefaults(): ScheduleValues {
+  return {
+    title: '',
+    resource_id: '',
+    instructor_staff_id: NO_INSTRUCTOR,
+    start_time: '09:00',
+    end_time: '10:00',
+    effective_from: todayIsoDate(),
+    effective_until: '',
+    description: '',
+  };
+}
+
+function ScheduleFormFields({
+  form,
+  resources,
+  staff,
+  recurrence,
+  onRecurrenceChange,
+}: {
+  form: ReturnType<typeof useForm<ScheduleValues>>;
+  resources: Resource[];
+  staff: Staff[];
+  recurrence: RecurrenceEditorState;
+  onRecurrenceChange: (next: RecurrenceEditorState) => void;
+}) {
+  const t = useTranslations('planning');
+
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t('form.title')}</FormLabel>
+            <FormControl>
+              <Input {...field} placeholder={t('form.titlePlaceholder')} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="resource_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t('form.resource')}</FormLabel>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <FormControl>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t('form.resourcePlaceholder')} />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {resources.map((resource) => (
+                  <SelectItem key={resource.id} value={resource.id}>
+                    {resource.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="instructor_staff_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t('form.instructor')}</FormLabel>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <FormControl>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value={NO_INSTRUCTOR}>{t('form.noInstructor')}</SelectItem>
+                {staff.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.first_name} {member.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField
+          control={form.control}
+          name="start_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('form.startTime')}</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="end_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('form.endTime')}</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField
+          control={form.control}
+          name="effective_from"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('form.effectiveFrom')}</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="effective_until"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('form.effectiveUntil')}</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <RecurrenceEditor value={recurrence} onChange={onRecurrenceChange} />
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t('form.description')}</FormLabel>
+            <FormControl>
+              <Textarea {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Add
+// ---------------------------------------------------------------------------
+
+export function AddScheduleDialog({
+  venueId,
+  resources,
+  staff,
+  variant = 'default',
+}: {
+  venueId: string;
+  resources: Resource[];
+  staff: Staff[];
+  variant?: 'default' | 'outline';
+}) {
+  const t = useTranslations('planning');
+  const schema = useScheduleSchema();
+  const [open, setOpen] = useState(false);
+  const [recurrence, setRecurrence] = useState<RecurrenceEditorState>(() =>
+    parseRecurrenceRule(null),
+  );
+  const queryClient = useQueryClient();
+  const createSchedule = useCreateSchedule();
+
+  const form = useForm<ScheduleValues>({
+    resolver: zodResolver(schema),
+    defaultValues: emptyScheduleDefaults(),
+  });
+
+  const resetAll = () => {
+    form.reset(emptyScheduleDefaults());
+    setRecurrence(parseRecurrenceRule(null));
+  };
+
+  const onSubmit = (values: ScheduleValues) => {
+    createSchedule.mutate(
+      {
+        vid: venueId,
+        data: {
+          venue_id: venueId,
+          resource_id: values.resource_id,
+          title: values.title,
+          description: values.description || null,
+          instructor_staff_id:
+            values.instructor_staff_id === NO_INSTRUCTOR ? null : values.instructor_staff_id,
+          start_time: values.start_time,
+          end_time: values.end_time,
+          effective_from: values.effective_from,
+          effective_until: values.effective_until || null,
+          recurrence_rule: serializeRecurrenceRule(recurrence),
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success(t('scheduleDialog.createSuccess'));
+          void queryClient.invalidateQueries({ queryKey: getListSchedulesQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
+          resetAll();
+          setOpen(false);
+        },
+        onError: (err) => {
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, t('scheduleDialog.createError')));
+          }
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) resetAll();
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button variant={variant}>
+          <PlusIcon />
+          {t('addCourse')}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t('scheduleDialog.addTitle')}</DialogTitle>
+          <DialogDescription>{t('scheduleDialog.addDescription')}</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+            <ScheduleFormFields
+              form={form}
+              resources={resources}
+              staff={staff}
+              recurrence={recurrence}
+              onRecurrenceChange={setRecurrence}
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={createSchedule.isPending}>
+                {createSchedule.isPending
+                  ? t('scheduleDialog.creating')
+                  : t('scheduleDialog.create')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Edit
+// ---------------------------------------------------------------------------
+
+export function EditScheduleDialog({
+  venueId,
+  schedule,
+  resources,
+  staff,
+  open,
+  onOpenChange,
+}: {
+  venueId: string;
+  schedule: Schedule;
+  resources: Resource[];
+  staff: Staff[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useTranslations('planning');
+  const schema = useScheduleSchema();
+  const queryClient = useQueryClient();
+  const updateSchedule = useUpdateSchedule();
+  const [recurrence, setRecurrence] = useState<RecurrenceEditorState>(() =>
+    parseRecurrenceRule(schedule.recurrence_rule),
+  );
+
+  const form = useForm<ScheduleValues>({
+    resolver: zodResolver(schema),
+    defaultValues: scheduleToDefaults(schedule),
+  });
+
+  useEffect(() => {
+    form.reset(scheduleToDefaults(schedule));
+    setRecurrence(parseRecurrenceRule(schedule.recurrence_rule));
+  }, [schedule, form]);
+
+  const onSubmit = (values: ScheduleValues) => {
+    updateSchedule.mutate(
+      {
+        sid: schedule.id,
+        data: {
+          title: values.title,
+          description: values.description || null,
+          instructor_staff_id:
+            values.instructor_staff_id === NO_INSTRUCTOR ? null : values.instructor_staff_id,
+          start_time: values.start_time,
+          end_time: values.end_time,
+          effective_until: values.effective_until || null,
+          recurrence_rule: serializeRecurrenceRule(recurrence),
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success(t('scheduleDialog.updateSuccess'));
+          void queryClient.invalidateQueries({ queryKey: getListSchedulesQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
+          onOpenChange(false);
+        },
+        onError: (err) => {
+          if (!applyFieldErrors(form, err)) {
+            toast.error(apiErrorMessage(err, t('scheduleDialog.updateError')));
+          }
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t('scheduleDialog.editTitle')}</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+            <ScheduleFormFields
+              form={form}
+              resources={resources}
+              staff={staff}
+              recurrence={recurrence}
+              onRecurrenceChange={setRecurrence}
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={updateSchedule.isPending}>
+                {updateSchedule.isPending ? t('scheduleDialog.saving') : t('scheduleDialog.save')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Delete (cancel course)
+// ---------------------------------------------------------------------------
+
+export function DeleteScheduleDialog({
+  venueId,
+  schedule,
+  open,
+  onOpenChange,
+}: {
+  venueId: string;
+  schedule: Schedule;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useTranslations('planning');
+  const tCommon = useTranslations('common');
+  const queryClient = useQueryClient();
+  const cancelSchedule = useCancelSchedule();
+
+  const handleDelete = () => {
+    cancelSchedule.mutate(
+      { sid: schedule.id },
+      {
+        onSuccess: () => {
+          toast.success(t('deleteCourse.success'));
+          void queryClient.invalidateQueries({ queryKey: getListSchedulesQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
+          onOpenChange(false);
+        },
+        onError: (err) => {
+          toast.error(apiErrorMessage(err, t('deleteCourse.error')));
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('deleteCourse.title')}</DialogTitle>
+          <DialogDescription>
+            {t('deleteCourse.description', { title: schedule.title })}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {tCommon('cancel')}
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={cancelSchedule.isPending}>
+            {cancelSchedule.isPending ? t('deleteCourse.confirming') : t('deleteCourse.confirm')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

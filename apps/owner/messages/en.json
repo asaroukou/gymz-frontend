@@ -296,5 +296,187 @@
         "error": "Could not suspend member"
       }
     }
+  },
+  "planning": {
+    "title": "Planning",
+    "subtitle": "Recurring courses, generated sessions, and participants.",
+    "tabsLabel": "Planning view",
+    "errorTitle": "Something went wrong",
+    "venuesError": "Could not load venues",
+    "venueNone": "No venues yet.",
+    "venuePrompt": "Select a venue to view its planning.",
+    "venuePlaceholder": "Choose a venue",
+    "addCourse": "Add course",
+    "tabs": {
+      "courses": "Recurring courses",
+      "slots": "Sessions"
+    },
+    "weekday": {
+      "MO": "Mon",
+      "TU": "Tue",
+      "WE": "Wed",
+      "TH": "Thu",
+      "FR": "Fri",
+      "SA": "Sat",
+      "SU": "Sun"
+    },
+    "weekdayShort": {
+      "MO": "M",
+      "TU": "T",
+      "WE": "W",
+      "TH": "T",
+      "FR": "F",
+      "SA": "S",
+      "SU": "S"
+    },
+    "weekdayLong": {
+      "MO": "Monday",
+      "TU": "Tuesday",
+      "WE": "Wednesday",
+      "TH": "Thursday",
+      "FR": "Friday",
+      "SA": "Saturday",
+      "SU": "Sunday"
+    },
+    "recurrence": {
+      "once": "One-off",
+      "daily": "Every day",
+      "dailyEvery": "Every {interval} days",
+      "allDays": "every day",
+      "weekly": "Every week",
+      "weeklyEvery": "Every {interval} weeks · {days}"
+    },
+    "slotStatus": {
+      "available": "Available",
+      "full": "Full",
+      "cancelled": "Cancelled"
+    },
+    "bookingStatus": {
+      "confirmed": "Confirmed",
+      "checked_in": "Checked in",
+      "no_show": "No-show",
+      "cancelled": "Cancelled"
+    },
+    "bookingSource": {
+      "direct": "Direct",
+      "iziwellpass": "IziWellPass",
+      "walk_in": "Walk-in"
+    },
+    "form": {
+      "repeats": "Repeats",
+      "repeatNone": "One-off",
+      "repeatDaily": "Daily",
+      "repeatWeekly": "Weekly",
+      "onDays": "On days",
+      "intervalDays": "Interval (days)",
+      "intervalWeeks": "Interval (weeks)",
+      "title": "Title",
+      "titlePlaceholder": "Morning yoga",
+      "resource": "Resource",
+      "resourcePlaceholder": "Choose a resource",
+      "instructor": "Instructor",
+      "noInstructor": "No instructor",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "effectiveFrom": "Effective from",
+      "effectiveUntil": "Effective until (optional)",
+      "description": "Description"
+    },
+    "validation": {
+      "titleRequired": "Title is required",
+      "resourceRequired": "Resource is required",
+      "startTimeRequired": "Start time is required",
+      "endTimeRequired": "End time is required",
+      "startDateRequired": "Start date is required"
+    },
+    "scheduleDialog": {
+      "addTitle": "Add course",
+      "addDescription": "A recurring (or one-off) time definition for a resource.",
+      "create": "Create course",
+      "creating": "Creating…",
+      "createSuccess": "Course created",
+      "createError": "Could not create course",
+      "editTitle": "Edit course",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "updateSuccess": "Course updated",
+      "updateError": "Could not update course"
+    },
+    "deleteCourse": {
+      "title": "Cancel this course",
+      "description": "This will delete \"{title}\" and stop generating new sessions. This action cannot be undone.",
+      "confirm": "Cancel course",
+      "confirming": "Deleting…",
+      "success": "Course deleted",
+      "error": "Could not delete course"
+    },
+    "courses": {
+      "columns": {
+        "course": "Course",
+        "recurrence": "Recurrence",
+        "resource": "Resource",
+        "instructor": "Instructor",
+        "period": "Period",
+        "actions": "Actions"
+      },
+      "noInstructor": "None",
+      "unknownResource": "Unknown resource",
+      "dateRange": "from {from} to {until}",
+      "dateFrom": "from {from}",
+      "rowMenu": "Course actions",
+      "edit": "Edit",
+      "delete": "Cancel this course",
+      "loadError": "Could not load courses",
+      "emptyTitle": "No courses",
+      "emptyBody": "Create a course to generate sessions automatically."
+    },
+    "slots": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "participants": "Participants",
+      "rowMenu": "Session actions",
+      "cancel": "Cancel session",
+      "capacityLabel": "Capacity {booked}/{cap}",
+      "untitled": "Course",
+      "unknownResource": "Unknown resource",
+      "loadError": "Could not load sessions",
+      "emptyTitle": "No upcoming sessions",
+      "emptyBody": "Sessions are generated automatically from recurring courses."
+    },
+    "cancelSlot": {
+      "title": "Cancel session",
+      "description": "This will cancel the {start}–{end} session. Participants will need to be handled separately. This action cannot be undone.",
+      "confirm": "Cancel session",
+      "confirming": "Cancelling…",
+      "success": "Session cancelled",
+      "error": "Could not cancel session"
+    },
+    "bookings": {
+      "subtitle": "{start}–{end} · {booked}/{cap} booked",
+      "loadError": "Could not load participants",
+      "emptyTitle": "No participants",
+      "emptyBody": "Add a participant to book a spot.",
+      "cancel": "Cancel"
+    },
+    "addBooking": {
+      "label": "Add participant",
+      "placeholder": "Choose a member",
+      "search": "Search a member",
+      "noMembers": "No members",
+      "add": "Add",
+      "adding": "Adding…",
+      "success": "Participant added",
+      "error": "Could not add participant"
+    },
+    "cancelBooking": {
+      "title": "Cancel booking",
+      "description": "This will cancel this member's booking for this session.",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "e.g. unavailable",
+      "confirm": "Cancel booking",
+      "confirming": "Cancelling…",
+      "success": "Booking cancelled",
+      "error": "Could not cancel booking"
+    }
   }
 }

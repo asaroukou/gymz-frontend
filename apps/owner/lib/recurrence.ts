@@ -19,20 +19,6 @@
 export const WEEKDAYS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 
-const WEEKDAY_LABELS: Record<Weekday, string> = {
-  MO: 'Mon',
-  TU: 'Tue',
-  WE: 'Wed',
-  TH: 'Thu',
-  FR: 'Fri',
-  SA: 'Sat',
-  SU: 'Sun',
-};
-
-export function weekdayLabel(day: Weekday): string {
-  return WEEKDAY_LABELS[day];
-}
-
 export type RecurrenceFrequency = 'none' | 'daily' | 'weekly';
 
 export interface RecurrenceEditorState {
@@ -105,15 +91,26 @@ export function serializeRecurrenceRule(state: RecurrenceEditorState): string | 
   return `FREQ=WEEKLY${byDay}${interval}`;
 }
 
-/** Human-readable one-line summary of a recurrence rule for table display. */
-export function humanizeRecurrenceRule(rule: string | null | undefined): string {
+/**
+ * A structured, language-agnostic summary of a recurrence rule. The UI layer
+ * turns this into a localized string via `useTranslations` (weekday
+ * abbreviations, "Toutes les N semaines", …) — this file no longer hardcodes
+ * any human language, keeping humanization i18n-driven while the encoded
+ * RRULE string produced by `serializeRecurrenceRule` stays byte-identical.
+ */
+export type RecurrenceSummary =
+  | { kind: 'none' }
+  | { kind: 'daily'; interval: number }
+  | { kind: 'weekly'; interval: number; days: Weekday[] };
+
+/** Parse an RRULE string into a structured, i18n-ready summary. */
+export function summarizeRecurrenceRule(rule: string | null | undefined): RecurrenceSummary {
   const state = parseRecurrenceRule(rule);
-  if (state.frequency === 'none') {
-    return 'Does not repeat';
-  }
   if (state.frequency === 'daily') {
-    return state.interval > 1 ? `Every ${state.interval} days` : 'Daily';
+    return { kind: 'daily', interval: state.interval };
   }
-  const days = state.byDay.length > 0 ? state.byDay.map(weekdayLabel).join(', ') : 'every day';
-  return state.interval > 1 ? `Every ${state.interval} weeks on ${days}` : `Weekly on ${days}`;
+  if (state.frequency === 'weekly') {
+    return { kind: 'weekly', interval: state.interval, days: state.byDay };
+  }
+  return { kind: 'none' };
 }
