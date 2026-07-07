@@ -45,16 +45,18 @@ function CheckInRow({
   timeZone: string | undefined;
 }) {
   const t = useTranslations('frontdesk');
-  const name = member ? memberName(member) : checkIn.member_id;
+  // Never surface a raw UUID: fall back to a generic label when the member
+  // isn't in the loaded list (e.g. a stale/partial cache).
+  const name = member ? memberName(member) : t('feed.unknownMember');
   const isQr = checkIn.method === CheckInMethod.qr;
 
   // `checked_in_by` is a staff user_id for manual entries and null for QR
-  // self-check-in — resolve the staff name, fall back to the raw id, or show
-  // the "self" label.
+  // self-check-in — resolve the staff name, fall back to a generic staff label
+  // (never the raw id), or show the "self" label.
   let recordedBy: string;
   if (checkIn.checked_in_by) {
     const staff = staffByUserId.get(checkIn.checked_in_by);
-    recordedBy = staff ? staffName(staff) : checkIn.checked_in_by;
+    recordedBy = staff ? staffName(staff) : t('feed.unknownStaff');
   } else {
     recordedBy = t('feed.self');
   }

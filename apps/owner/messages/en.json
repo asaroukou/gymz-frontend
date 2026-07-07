@@ -218,6 +218,8 @@
       "methodQr": "QR",
       "methodManual": "Manual",
       "self": "Self (QR)",
+      "unknownMember": "Member",
+      "unknownStaff": "staff",
       "byLabel": "by {name}",
       "emptyTitle": "No check-ins yet",
       "emptyBody": "Recorded entries will appear here live.",

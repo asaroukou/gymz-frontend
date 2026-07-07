@@ -218,6 +218,8 @@
       "methodQr": "QR",
       "methodManual": "Manuel",
       "self": "Auto (QR)",
+      "unknownMember": "Membre",
+      "unknownStaff": "l'équipe",
       "byLabel": "par {name}",
       "emptyTitle": "Aucun passage pour le moment",
       "emptyBody": "Les entrées enregistrées apparaîtront ici en direct.",

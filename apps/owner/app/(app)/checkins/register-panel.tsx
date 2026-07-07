@@ -77,6 +77,11 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
   });
 
   const onSubmit = (values: QrValues) => {
+    // Guard the rapid-Enter loop: native Enter bypasses the disabled button, so
+    // a fast second Enter (or a wedge-scanner double-fire) would otherwise
+    // re-submit the still-visible token during the in-flight window and trip a
+    // spurious "already checked in" error right after the success.
+    if (checkInViaQr.isPending) return;
     // Payload kept byte-identical to the pre-redesign page: { qr_token, venue_id }.
     checkInViaQr.mutate(
       { data: { qr_token: values.qr_token, venue_id: venueId } },
@@ -93,6 +98,9 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
           if (!applyFieldErrors(form, err)) {
             toast.error(apiErrorMessage(err, t('error')));
           }
+          // Keep the token visible, but refocus so continued scanning doesn't
+          // stall if a field error moved focus.
+          inputRef.current?.focus();
         },
       },
     );
@@ -125,6 +133,7 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}
+                    disabled={checkInViaQr.isPending}
                     placeholder={t('qr.placeholder')}
                     className="h-11 pl-12"
                   />
@@ -193,6 +202,9 @@ function ManualForm({
   );
 
   const onSubmit = (values: ManualValues) => {
+    // Guard against a double-submit during the in-flight window (native Enter
+    // bypasses the disabled button).
+    if (checkInManual.isPending) return;
     // Payload kept byte-identical to the pre-redesign page: { booking_id, venue_id }.
     checkInManual.mutate(
       { data: { booking_id: values.booking_id, venue_id: venueId } },
@@ -229,6 +241,7 @@ function ManualForm({
                   placeholder={t('manual.memberPlaceholder')}
                   searchPlaceholder={t('manual.memberSearch')}
                   emptyText={t('manual.noMembers')}
+                  disabled={checkInManual.isPending}
                   className="h-11"
                 />
               </FormControl>
@@ -251,6 +264,7 @@ function ManualForm({
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
+                  disabled={checkInManual.isPending}
                   placeholder={t('manual.bookingPlaceholder')}
                   className="h-11"
                 />
