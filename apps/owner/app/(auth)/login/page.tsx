@@ -1,9 +1,10 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -21,7 +22,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,26 +29,15 @@ import {
 } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
 
-import { passwordSchema, PASSWORD_REQUIREMENTS_TEXT } from '@/lib/password';
+import { PasswordChecklist } from '@/components/password-checklist';
+import { makePasswordSchema } from '@/lib/password';
 
-const credentialsSchema = z.object({
-  email: z.email('Enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
-});
+type CredentialsValues = { email: string; password: string };
+type NewPasswordValues = { newPassword: string; confirmPassword: string };
 
-type CredentialsValues = z.infer<typeof credentialsSchema>;
-
-const newPasswordSchema = z
-  .object({
-    newPassword: passwordSchema,
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
-
-type NewPasswordValues = z.infer<typeof newPasswordSchema>;
+type Challenge = {
+  complete: (newPassword: string) => Promise<{ idToken: string }>;
+};
 
 /** Only allow same-origin, non-protocol-relative paths as a post-login redirect target. */
 function sanitizeNext(next: string | null): string {
@@ -58,84 +47,126 @@ function sanitizeNext(next: string | null): string {
   return next;
 }
 
-function NewPasswordForm({
+function NewPasswordCard({
   onComplete,
   onBack,
 }: {
   onComplete: (newPassword: string) => Promise<void>;
   onBack: () => void;
 }) {
+  const t = useTranslations('auth');
+
+  const schema = useMemo(
+    () =>
+      z
+        .object({
+          newPassword: makePasswordSchema({
+            min: t('errors.passwordMin'),
+            lowercase: t('errors.passwordLowercase'),
+            uppercase: t('errors.passwordUppercase'),
+            digit: t('errors.passwordDigit'),
+          }),
+          confirmPassword: z.string().min(1, t('errors.confirmRequired')),
+        })
+        .refine((data) => data.newPassword === data.confirmPassword, {
+          message: t('errors.passwordsMismatch'),
+          path: ['confirmPassword'],
+        }),
+    [t],
+  );
+
   const form = useForm<NewPasswordValues>({
-    resolver: zodResolver(newPasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: { newPassword: '', confirmPassword: '' },
   });
+  const passwordValue = form.watch('newPassword');
 
   const onSubmit = async (values: NewPasswordValues) => {
     try {
       await onComplete(values.newPassword);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not set new password';
+      const message = err instanceof Error ? err.message : t('newPassword.error');
       form.setError('root', { message });
       toast.error(message);
     }
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
-        <FormField
-          control={form.control}
-          name="newPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>New password</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
-              </FormControl>
-              <FormDescription>{PASSWORD_REQUIREMENTS_TEXT}</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm password</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {form.formState.errors.root ? (
-          <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
-        ) : null}
-        <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-          {form.formState.isSubmitting ? 'Setting password…' : 'Set new password'}
-        </Button>
-        <Button type="button" variant="ghost" className="w-full" onClick={onBack}>
-          Back to sign in
-        </Button>
-      </form>
-    </Form>
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('newPassword.title')}</CardTitle>
+        <CardDescription>{t('newPassword.subtitle')}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('newPassword.newPassword')}</FormLabel>
+                  <FormControl>
+                    <Input type="password" autoComplete="new-password" {...field} />
+                  </FormControl>
+                  <PasswordChecklist value={passwordValue} />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('newPassword.confirmPassword')}</FormLabel>
+                  <FormControl>
+                    <Input type="password" autoComplete="new-password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {form.formState.errors.root ? (
+              <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+            ) : null}
+            <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+              {form.formState.isSubmitting ? t('newPassword.submitting') : t('newPassword.submit')}
+            </Button>
+            <Button type="button" variant="ghost" className="w-full" onClick={onBack}>
+              {t('newPassword.back')}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }
 
-function LoginForm() {
+function CredentialsCard({
+  next,
+  onboarded,
+  onChallenge,
+}: {
+  next: string;
+  onboarded: boolean;
+  onChallenge: (challenge: Challenge) => void;
+}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const next = sanitizeNext(searchParams.get('next'));
-  const onboarded = searchParams.get('onboarded') === '1';
-  const { signIn, refresh } = useAuth();
-  const [challenge, setChallenge] = useState<{
-    complete: (newPassword: string) => Promise<{ idToken: string }>;
-  } | null>(null);
+  const { signIn } = useAuth();
+  const t = useTranslations('auth');
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.email(t('errors.emailInvalid')),
+        password: z.string().min(1, t('errors.passwordRequired')),
+      }),
+    [t],
+  );
 
   const form = useForm<CredentialsValues>({
-    resolver: zodResolver(credentialsSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: '', password: '' },
   });
 
@@ -146,17 +177,89 @@ function LoginForm() {
         router.replace(next);
         return;
       }
-      setChallenge({ complete: result.complete });
+      onChallenge({ complete: result.complete });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Invalid email or password';
+      const message = err instanceof Error ? err.message : t('login.error');
       form.setError('root', { message });
       toast.error(message);
     }
   };
 
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('login.title')}</CardTitle>
+        <CardDescription>{t('login.subtitle')}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+            {onboarded ? (
+              <p className="rounded-xl bg-secondary p-3 text-sm text-secondary-foreground">
+                {t('login.onboardedNotice')}
+              </p>
+            ) : null}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('login.email')}</FormLabel>
+                  <FormControl>
+                    <Input type="email" autoComplete="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('login.password')}</FormLabel>
+                  <FormControl>
+                    <Input type="password" autoComplete="current-password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {form.formState.errors.root ? (
+              <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+            ) : null}
+            <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+              {form.formState.isSubmitting ? t('login.submitting') : t('login.submit')}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+      <CardFooter className="justify-center">
+        <p className="text-sm text-muted-foreground">
+          {t('login.noAccount')}{' '}
+          <Link
+            href="/signup"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {t('login.createAccount')}
+          </Link>
+        </p>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function LoginView() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { refresh } = useAuth();
+  const next = sanitizeNext(searchParams.get('next'));
+  const onboarded = searchParams.get('onboarded') === '1';
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+
   if (challenge) {
     return (
-      <NewPasswordForm
+      <NewPasswordCard
         onBack={() => setChallenge(null)}
         onComplete={async (newPassword) => {
           await challenge.complete(newPassword);
@@ -167,71 +270,13 @@ function LoginForm() {
     );
   }
 
-  return (
-    <Form {...form}>
-      <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
-        {onboarded ? (
-          <p className="rounded-md bg-primary/10 p-3 text-sm text-primary">
-            Your venue is ready — sign in to continue.
-          </p>
-        ) : null}
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" autoComplete="email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="current-password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {form.formState.errors.root ? (
-          <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
-        ) : null}
-        <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-          {form.formState.isSubmitting ? 'Signing in…' : 'Sign in'}
-        </Button>
-      </form>
-    </Form>
-  );
+  return <CredentialsCard next={next} onboarded={onboarded} onChallenge={setChallenge} />;
 }
 
 export default function LoginPage() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-        <CardDescription>Enter your email and password to access your venue.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Suspense fallback={null}>
-          <LoginForm />
-        </Suspense>
-      </CardContent>
-      <CardFooter className="justify-center">
-        <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-primary underline-offset-4 hover:underline">
-            Create an account
-          </Link>
-        </p>
-      </CardFooter>
-    </Card>
+    <Suspense fallback={null}>
+      <LoginView />
+    </Suspense>
   );
 }

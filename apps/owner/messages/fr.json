@@ -25,5 +25,109 @@
     "delete": "Supprimer",
     "search": "Rechercher",
     "loading": "Chargement…"
+  },
+  "auth": {
+    "footer": "Besoin d'aide ? Contactez votre administrateur.",
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Connectez-vous pour accéder à votre établissement.",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "submitting": "Connexion…",
+      "onboardedNotice": "Votre établissement est prêt — connectez-vous pour continuer.",
+      "noAccount": "Pas encore de compte ?",
+      "createAccount": "Créer un compte",
+      "error": "E-mail ou mot de passe incorrect"
+    },
+    "newPassword": {
+      "title": "Choisissez un nouveau mot de passe",
+      "subtitle": "Votre compte nécessite un nouveau mot de passe pour continuer.",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmez le mot de passe",
+      "submit": "Enregistrer le mot de passe",
+      "submitting": "Enregistrement…",
+      "back": "Retour à la connexion",
+      "error": "Impossible de définir le nouveau mot de passe"
+    },
+    "signup": {
+      "title": "Créer un compte",
+      "subtitle": "Inscrivez-vous pour gérer votre établissement.",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmez le mot de passe",
+      "submit": "Créer un compte",
+      "submitting": "Création du compte…",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "signin": "Se connecter",
+      "error": "Impossible de créer le compte"
+    },
+    "confirm": {
+      "title": "Confirmez votre compte",
+      "subtitle": "Saisissez le code à 6 chiffres reçu par e-mail.",
+      "email": "E-mail",
+      "code": "Code de confirmation",
+      "submit": "Confirmer",
+      "submitting": "Confirmation…",
+      "resend": "Renvoyer le code",
+      "resendCooldown": "Renvoyer le code ({seconds}s)",
+      "resending": "Envoi…",
+      "success": "Compte confirmé — connectez-vous",
+      "codeSent": "Code envoyé",
+      "error": "Impossible de confirmer le compte",
+      "resendError": "Impossible de renvoyer le code",
+      "back": "Retour à la connexion"
+    },
+    "passwordChecklist": {
+      "label": "Exigences du mot de passe",
+      "length": "12 caractères minimum",
+      "uppercase": "Une majuscule",
+      "lowercase": "Une minuscule",
+      "digit": "Un chiffre"
+    },
+    "errors": {
+      "emailInvalid": "Saisissez une adresse e-mail valide",
+      "passwordRequired": "Le mot de passe est requis",
+      "confirmRequired": "Confirmez votre mot de passe",
+      "passwordsMismatch": "Les mots de passe ne correspondent pas",
+      "codeInvalid": "Saisissez le code à 6 chiffres reçu par e-mail",
+      "passwordMin": "12 caractères minimum",
+      "passwordLowercase": "Au moins une minuscule",
+      "passwordUppercase": "Au moins une majuscule",
+      "passwordDigit": "Au moins un chiffre"
+    }
+  },
+  "onboarding": {
+    "title": "Bienvenue sur IziWellPass",
+    "subtitle": "Créez votre établissement en une minute et commencez à gérer vos membres.",
+    "venueName": "Nom de l'établissement",
+    "venueType": "Type d'établissement",
+    "city": "Ville",
+    "country": "Pays",
+    "timezone": "Fuseau horaire",
+    "address": "Adresse (facultatif)",
+    "phone": "Téléphone (facultatif)",
+    "submit": "Créer mon établissement",
+    "submitting": "Création…",
+    "whatsNext": "Votre organisation et votre établissement sont créés instantanément.",
+    "success": "Bienvenue chez {name} !",
+    "error": "Impossible de créer votre établissement",
+    "types": {
+      "gym": "Salle de sport",
+      "yoga_studio": "Studio de yoga",
+      "spa": "Spa",
+      "tennis_club": "Club de tennis",
+      "cross_fit": "CrossFit",
+      "swimming_pool": "Piscine",
+      "martial_arts": "Arts martiaux",
+      "dance": "Danse",
+      "other": "Autre"
+    },
+    "errors": {
+      "venueNameMin": "2 caractères minimum",
+      "cityRequired": "La ville est requise",
+      "countryRequired": "Le pays est requis",
+      "countryTooLong": "Trop long"
+    }
   }
 }

@@ -1,9 +1,10 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -27,13 +28,9 @@ import {
   FormMessage,
 } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@iziwellpass/ui/components/input-otp';
 
-const confirmSchema = z.object({
-  email: z.email('Enter a valid email address'),
-  code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code from your email'),
-});
-
-type ConfirmValues = z.infer<typeof confirmSchema>;
+type ConfirmValues = { email: string; code: string };
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
@@ -41,11 +38,21 @@ function ConfirmForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { client } = useAuth();
+  const t = useTranslations('auth');
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.email(t('errors.emailInvalid')),
+        code: z.string().regex(/^\d{6}$/, t('errors.codeInvalid')),
+      }),
+    [t],
+  );
+
   const form = useForm<ConfirmValues>({
-    resolver: zodResolver(confirmSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: searchParams.get('email') ?? '', code: '' },
   });
 
@@ -58,10 +65,10 @@ function ConfirmForm() {
   const onSubmit = async (values: ConfirmValues) => {
     try {
       await client.confirmSignUp(values.email, values.code);
-      toast.success('Account confirmed — sign in');
+      toast.success(t('confirm.success'));
       router.push('/login');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not confirm account';
+      const message = err instanceof Error ? err.message : t('confirm.error');
       form.setError('root', { message });
       toast.error(message);
     }
@@ -71,16 +78,16 @@ function ConfirmForm() {
     const email = form.getValues('email');
     const parsed = z.email().safeParse(email);
     if (!parsed.success) {
-      form.setError('email', { message: 'Enter a valid email address' });
+      form.setError('email', { message: t('errors.emailInvalid') });
       return;
     }
     setResending(true);
     try {
       await client.resendConfirmationCode(email);
-      toast.success('Code sent');
+      toast.success(t('confirm.codeSent'));
       setCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not resend code';
+      const message = err instanceof Error ? err.message : t('confirm.resendError');
       toast.error(message);
     } finally {
       setResending(false);
@@ -95,7 +102,7 @@ function ConfirmForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t('confirm.email')}</FormLabel>
               <FormControl>
                 <Input type="email" autoComplete="email" {...field} />
               </FormControl>
@@ -108,15 +115,27 @@ function ConfirmForm() {
           name="code"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirmation code</FormLabel>
+              <FormLabel>{t('confirm.code')}</FormLabel>
               <FormControl>
-                <Input
+                <InputOTP
+                  maxLength={6}
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  maxLength={6}
-                  placeholder="123456"
-                  {...field}
-                />
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -126,16 +145,20 @@ function ConfirmForm() {
           <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
         ) : null}
         <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-          {form.formState.isSubmitting ? 'Confirming…' : 'Confirm account'}
+          {form.formState.isSubmitting ? t('confirm.submitting') : t('confirm.submit')}
         </Button>
         <Button
           type="button"
           variant="ghost"
-          className="w-full"
+          className="w-full tabular-nums"
           disabled={resending || cooldown > 0}
           onClick={() => void onResend()}
         >
-          {cooldown > 0 ? `Resend code (${cooldown}s)` : resending ? 'Sending…' : 'Resend code'}
+          {cooldown > 0
+            ? t('confirm.resendCooldown', { seconds: cooldown })
+            : resending
+              ? t('confirm.resending')
+              : t('confirm.resend')}
         </Button>
       </form>
     </Form>
@@ -143,11 +166,13 @@ function ConfirmForm() {
 }
 
 export default function ConfirmPage() {
+  const t = useTranslations('auth');
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Confirm your account</CardTitle>
-        <CardDescription>Enter the 6-digit code we emailed you.</CardDescription>
+        <CardTitle>{t('confirm.title')}</CardTitle>
+        <CardDescription>{t('confirm.subtitle')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Suspense fallback={null}>
@@ -156,8 +181,11 @@ export default function ConfirmPage() {
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
-          <Link href="/login" className="text-primary underline-offset-4 hover:underline">
-            Back to sign in
+          <Link
+            href="/login"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {t('confirm.back')}
           </Link>
         </p>
       </CardFooter>

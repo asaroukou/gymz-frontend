@@ -25,5 +25,109 @@
     "delete": "Delete",
     "search": "Search",
     "loading": "Loading…"
+  },
+  "auth": {
+    "footer": "Need help? Contact your administrator.",
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Sign in to access your venue.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "onboardedNotice": "Your venue is ready — sign in to continue.",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create an account",
+      "error": "Invalid email or password"
+    },
+    "newPassword": {
+      "title": "Choose a new password",
+      "subtitle": "Your account needs a new password to continue.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Save password",
+      "submitting": "Saving…",
+      "back": "Back to sign in",
+      "error": "Could not set new password"
+    },
+    "signup": {
+      "title": "Create an account",
+      "subtitle": "Sign up to manage your venue.",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "submit": "Create an account",
+      "submitting": "Creating account…",
+      "haveAccount": "Already have an account?",
+      "signin": "Sign in",
+      "error": "Could not create account"
+    },
+    "confirm": {
+      "title": "Confirm your account",
+      "subtitle": "Enter the 6-digit code we emailed you.",
+      "email": "Email",
+      "code": "Confirmation code",
+      "submit": "Confirm",
+      "submitting": "Confirming…",
+      "resend": "Resend code",
+      "resendCooldown": "Resend code ({seconds}s)",
+      "resending": "Sending…",
+      "success": "Account confirmed — sign in",
+      "codeSent": "Code sent",
+      "error": "Could not confirm account",
+      "resendError": "Could not resend code",
+      "back": "Back to sign in"
+    },
+    "passwordChecklist": {
+      "label": "Password requirements",
+      "length": "At least 12 characters",
+      "uppercase": "One uppercase letter",
+      "lowercase": "One lowercase letter",
+      "digit": "One digit"
+    },
+    "errors": {
+      "emailInvalid": "Enter a valid email address",
+      "passwordRequired": "Password is required",
+      "confirmRequired": "Please confirm your password",
+      "passwordsMismatch": "Passwords do not match",
+      "codeInvalid": "Enter the 6-digit code from your email",
+      "passwordMin": "At least 12 characters",
+      "passwordLowercase": "At least one lowercase letter",
+      "passwordUppercase": "At least one uppercase letter",
+      "passwordDigit": "At least one digit"
+    }
+  },
+  "onboarding": {
+    "title": "Welcome to IziWellPass",
+    "subtitle": "Create your venue in a minute and start managing your members.",
+    "venueName": "Venue name",
+    "venueType": "Venue type",
+    "city": "City",
+    "country": "Country",
+    "timezone": "Timezone",
+    "address": "Address (optional)",
+    "phone": "Phone (optional)",
+    "submit": "Create my venue",
+    "submitting": "Creating…",
+    "whatsNext": "Your organization and your venue are created instantly.",
+    "success": "Welcome to {name}!",
+    "error": "Could not create your venue",
+    "types": {
+      "gym": "Gym",
+      "yoga_studio": "Yoga studio",
+      "spa": "Spa",
+      "tennis_club": "Tennis club",
+      "cross_fit": "CrossFit",
+      "swimming_pool": "Swimming pool",
+      "martial_arts": "Martial arts",
+      "dance": "Dance",
+      "other": "Other"
+    },
+    "errors": {
+      "venueNameMin": "At least 2 characters",
+      "cityRequired": "City is required",
+      "countryRequired": "Country is required",
+      "countryTooLong": "Too long"
+    }
   }
 }

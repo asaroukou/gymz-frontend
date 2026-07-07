@@ -1,8 +1,10 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -20,7 +22,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -28,36 +29,48 @@ import {
 } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
 
-import { passwordSchema, PASSWORD_REQUIREMENTS_TEXT } from '@/lib/password';
+import { PasswordChecklist } from '@/components/password-checklist';
+import { makePasswordSchema } from '@/lib/password';
 
-const signupSchema = z
-  .object({
-    email: z.email('Enter a valid email address'),
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
-
-type SignupValues = z.infer<typeof signupSchema>;
+type SignupValues = { email: string; password: string; confirmPassword: string };
 
 export default function SignupPage() {
   const router = useRouter();
   const { client } = useAuth();
+  const t = useTranslations('auth');
+
+  const schema = useMemo(
+    () =>
+      z
+        .object({
+          email: z.email(t('errors.emailInvalid')),
+          password: makePasswordSchema({
+            min: t('errors.passwordMin'),
+            lowercase: t('errors.passwordLowercase'),
+            uppercase: t('errors.passwordUppercase'),
+            digit: t('errors.passwordDigit'),
+          }),
+          confirmPassword: z.string().min(1, t('errors.confirmRequired')),
+        })
+        .refine((data) => data.password === data.confirmPassword, {
+          message: t('errors.passwordsMismatch'),
+          path: ['confirmPassword'],
+        }),
+    [t],
+  );
 
   const form = useForm<SignupValues>({
-    resolver: zodResolver(signupSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: '', password: '', confirmPassword: '' },
   });
+  const passwordValue = form.watch('password');
 
   const onSubmit = async (values: SignupValues) => {
     try {
       await client.signUp(values.email, values.password);
       router.push(`/confirm?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not create account';
+      const message = err instanceof Error ? err.message : t('signup.error');
       form.setError('root', { message });
       toast.error(message);
     }
@@ -66,8 +79,8 @@ export default function SignupPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create an account</CardTitle>
-        <CardDescription>Sign up to start managing your venue.</CardDescription>
+        <CardTitle>{t('signup.title')}</CardTitle>
+        <CardDescription>{t('signup.subtitle')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -77,7 +90,7 @@ export default function SignupPage() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('signup.email')}</FormLabel>
                   <FormControl>
                     <Input type="email" autoComplete="email" {...field} />
                   </FormControl>
@@ -90,11 +103,11 @@ export default function SignupPage() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t('signup.password')}</FormLabel>
                   <FormControl>
                     <Input type="password" autoComplete="new-password" {...field} />
                   </FormControl>
-                  <FormDescription>{PASSWORD_REQUIREMENTS_TEXT}</FormDescription>
+                  <PasswordChecklist value={passwordValue} />
                   <FormMessage />
                 </FormItem>
               )}
@@ -104,7 +117,7 @@ export default function SignupPage() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm password</FormLabel>
+                  <FormLabel>{t('signup.confirmPassword')}</FormLabel>
                   <FormControl>
                     <Input type="password" autoComplete="new-password" {...field} />
                   </FormControl>
@@ -116,16 +129,19 @@ export default function SignupPage() {
               <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
             ) : null}
             <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-              {form.formState.isSubmitting ? 'Creating account…' : 'Create account'}
+              {form.formState.isSubmitting ? t('signup.submitting') : t('signup.submit')}
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
-          Already have an account?{' '}
-          <Link href="/login" className="text-primary underline-offset-4 hover:underline">
-            Sign in
+          {t('signup.haveAccount')}{' '}
+          <Link
+            href="/login"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {t('signup.signin')}
           </Link>
         </p>
       </CardFooter>
