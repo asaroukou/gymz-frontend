@@ -86,6 +86,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const session = useSession();
   const tNav = useTranslations('nav');
+  const tShell = useTranslations('shell');
   const navItems = session.status === 'signed-in' ? navForRole(session.claims.role) : [];
   const nav: NavItem[] = navItems.map((item) => ({
     title: tNav(item.labelKey),
@@ -126,6 +127,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       nav={nav}
       linkComponent={NavLink}
       currentPath={pathname}
+      openMenuLabel={tShell('openMenu')}
       actions={<UserMenu />}
     >
       {children}

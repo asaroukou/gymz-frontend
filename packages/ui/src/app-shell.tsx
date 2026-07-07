@@ -29,6 +29,8 @@ export interface AppShellProps {
   linkComponent?: ComponentType<AnchorHTMLAttributes<HTMLAnchorElement>>;
   /** Called after any nav link is clicked (AppShell also closes the mobile drawer). */
   onNavigate?: () => void;
+  /** Accessible label for the mobile menu trigger. Defaults to "Open menu". */
+  openMenuLabel?: string;
   children: ReactNode;
 }
 
@@ -50,7 +52,10 @@ function isActivePath(href: string, currentPath?: string): boolean {
 function Wordmark({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-2.5 px-2">
-      <span className="grid size-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+      <span
+        aria-hidden="true"
+        className="grid size-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+      >
         iW
       </span>
       <span className="text-base font-semibold tracking-[-0.3px]">{title}</span>
@@ -103,6 +108,7 @@ export function AppShell({
   currentPath,
   linkComponent,
   onNavigate,
+  openMenuLabel = 'Open menu',
   children,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -134,7 +140,12 @@ export function AppShell({
           <header className="flex h-[60px] shrink-0 items-center gap-3 border-b px-6">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  aria-label={openMenuLabel}
+                >
                   <Menu className="size-5" />
                 </Button>
               </SheetTrigger>
