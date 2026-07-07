@@ -139,7 +139,10 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
     return member ? `${member.first_name} ${member.last_name}`.trim() : '';
   };
 
-  if (schedulesQuery.isLoading) {
+  // Gate on the label-feeding queries too (resource names + instructor names)
+  // so rows never render fallback labels that then flash to real names once
+  // the secondary queries resolve. The schedules query stays the primary driver.
+  if (schedulesQuery.isLoading || resourcesQuery.isLoading || staffQuery.isLoading) {
     return (
       <Card className="gap-0 py-0">
         <div className="space-y-3 p-4">

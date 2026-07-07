@@ -283,7 +283,10 @@ export function SlotsTab({
       }));
   }, [slotsQuery.data, timeZone]);
 
-  if (slotsQuery.isLoading) {
+  // Gate on the label-feeding queries too (schedule titles + resource names)
+  // so rows never render fallback labels that then flash to real names once
+  // the secondary queries resolve. The slots query stays the primary driver.
+  if (slotsQuery.isLoading || schedulesQuery.isLoading || resourcesQuery.isLoading) {
     return (
       <div className="space-y-3">
         <Skeleton className="h-5 w-32" />

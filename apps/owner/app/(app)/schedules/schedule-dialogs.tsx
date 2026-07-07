@@ -331,6 +331,8 @@ export function AddScheduleDialog({
     );
   };
 
+  const weeklyNeedsDay = recurrence.frequency === 'weekly' && recurrence.byDay.length === 0;
+
   return (
     <Dialog
       open={open}
@@ -359,8 +361,11 @@ export function AddScheduleDialog({
               recurrence={recurrence}
               onRecurrenceChange={setRecurrence}
             />
-            <DialogFooter>
-              <Button type="submit" disabled={createSchedule.isPending}>
+            <DialogFooter className="items-center gap-2 sm:gap-3">
+              {weeklyNeedsDay ? (
+                <p className="text-sm text-muted-foreground">{t('form.weekdayRequired')}</p>
+              ) : null}
+              <Button type="submit" disabled={createSchedule.isPending || weeklyNeedsDay}>
                 {createSchedule.isPending
                   ? t('scheduleDialog.creating')
                   : t('scheduleDialog.create')}
@@ -441,6 +446,8 @@ export function EditScheduleDialog({
     );
   };
 
+  const weeklyNeedsDay = recurrence.frequency === 'weekly' && recurrence.byDay.length === 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
@@ -456,8 +463,11 @@ export function EditScheduleDialog({
               recurrence={recurrence}
               onRecurrenceChange={setRecurrence}
             />
-            <DialogFooter>
-              <Button type="submit" disabled={updateSchedule.isPending}>
+            <DialogFooter className="items-center gap-2 sm:gap-3">
+              {weeklyNeedsDay ? (
+                <p className="text-sm text-muted-foreground">{t('form.weekdayRequired')}</p>
+              ) : null}
+              <Button type="submit" disabled={updateSchedule.isPending || weeklyNeedsDay}>
                 {updateSchedule.isPending ? t('scheduleDialog.saving') : t('scheduleDialog.save')}
               </Button>
             </DialogFooter>

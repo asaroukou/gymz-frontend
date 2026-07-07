@@ -368,6 +368,7 @@
       "repeatDaily": "Quotidien",
       "repeatWeekly": "Hebdomadaire",
       "onDays": "Les jours",
+      "weekdayRequired": "Sélectionnez au moins un jour",
       "intervalDays": "Intervalle (jours)",
       "intervalWeeks": "Intervalle (semaines)",
       "title": "Titre",

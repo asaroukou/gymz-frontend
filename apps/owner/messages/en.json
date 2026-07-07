@@ -368,6 +368,7 @@
       "repeatDaily": "Daily",
       "repeatWeekly": "Weekly",
       "onDays": "On days",
+      "weekdayRequired": "Select at least one day",
       "intervalDays": "Interval (days)",
       "intervalWeeks": "Interval (weeks)",
       "title": "Title",

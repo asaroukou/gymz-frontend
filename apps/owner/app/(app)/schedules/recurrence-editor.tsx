@@ -99,8 +99,14 @@ export function RecurrenceEditor({
             id="recurrence-interval"
             type="number"
             min={1}
-            value={Number.isNaN(value.interval) ? '' : value.interval}
-            onChange={(e) => onChange({ ...value, interval: e.target.valueAsNumber || 1 })}
+            step={1}
+            value={value.interval}
+            onChange={(e) =>
+              onChange({
+                ...value,
+                interval: Math.max(1, Math.floor(e.target.valueAsNumber) || 1),
+              })
+            }
             className="w-24"
           />
         </div>
