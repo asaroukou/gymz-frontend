@@ -129,5 +129,54 @@
       "countryRequired": "Country is required",
       "countryTooLong": "Too long"
     }
+  },
+  "dashboard": {
+    "greeting": "Hello {name}",
+    "greetingNoName": "Hello",
+    "venuePlaceholder": "Choose a venue",
+    "venueNone": "No venues yet.",
+    "venuePrompt": "Select a venue to view its dashboard.",
+    "noData": "—",
+    "kpi": {
+      "checkins": "Check-ins today",
+      "uniqueMembers": "Unique members",
+      "occupancy": "Occupancy",
+      "activeMembers": "Active members"
+    },
+    "schedule": {
+      "title": "Today's schedule",
+      "capacityLabel": "Capacity {booked}/{cap}",
+      "full": "Full",
+      "cancelled": "Cancelled",
+      "emptyTitle": "No slots today",
+      "emptyBody": "Create a schedule to generate the day's slots.",
+      "emptyCta": "Create a schedule"
+    },
+    "checkins": {
+      "title": "Recent check-ins",
+      "subtitle": "Recent",
+      "empty": "No check-ins yet.",
+      "methodQr": "QR",
+      "methodManual": "Manual"
+    },
+    "starter": {
+      "title": "Let's set up your venue",
+      "body": "Three steps to get started with IziWellPass.",
+      "step1Title": "Create a schedule",
+      "step1Body": "Define your classes and time slots.",
+      "step2Title": "Add a member",
+      "step2Body": "Enroll your first members.",
+      "step3Title": "First check-in",
+      "step3Body": "Record an entry at the front desk.",
+      "start": "Start"
+    },
+    "errors": {
+      "venues": "Could not load venues",
+      "attendance": "Could not load statistics",
+      "members": "Could not load members",
+      "slots": "Could not load slots",
+      "checkins": "Could not load check-ins",
+      "loadTitle": "Something went wrong"
+    }
   }
 }

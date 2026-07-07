@@ -129,5 +129,54 @@
       "countryRequired": "Le pays est requis",
       "countryTooLong": "Trop long"
     }
+  },
+  "dashboard": {
+    "greeting": "Bonjour {name}",
+    "greetingNoName": "Bonjour",
+    "venuePlaceholder": "Choisir un établissement",
+    "venueNone": "Aucun établissement pour le moment.",
+    "venuePrompt": "Sélectionnez un établissement pour voir son tableau de bord.",
+    "noData": "—",
+    "kpi": {
+      "checkins": "Passages aujourd'hui",
+      "uniqueMembers": "Membres uniques",
+      "occupancy": "Occupation",
+      "activeMembers": "Membres actifs"
+    },
+    "schedule": {
+      "title": "Planning du jour",
+      "capacityLabel": "Capacité {booked}/{cap}",
+      "full": "Complet",
+      "cancelled": "Annulé",
+      "emptyTitle": "Aucun créneau aujourd'hui",
+      "emptyBody": "Créez un planning pour générer les créneaux de la journée.",
+      "emptyCta": "Créer un planning"
+    },
+    "checkins": {
+      "title": "Derniers passages",
+      "subtitle": "Récents",
+      "empty": "Aucun passage pour le moment.",
+      "methodQr": "QR",
+      "methodManual": "Manuel"
+    },
+    "starter": {
+      "title": "Configurons votre établissement",
+      "body": "Trois étapes pour démarrer avec IziWellPass.",
+      "step1Title": "Créer un planning",
+      "step1Body": "Définissez vos cours et vos créneaux.",
+      "step2Title": "Ajouter un membre",
+      "step2Body": "Enregistrez vos premiers adhérents.",
+      "step3Title": "Premier passage",
+      "step3Body": "Enregistrez une entrée à l'accueil.",
+      "start": "Commencer"
+    },
+    "errors": {
+      "venues": "Impossible de charger les établissements",
+      "attendance": "Impossible de charger les statistiques",
+      "members": "Impossible de charger les membres",
+      "slots": "Impossible de charger les créneaux",
+      "checkins": "Impossible de charger les passages",
+      "loadTitle": "Une erreur est survenue"
+    }
   }
 }
