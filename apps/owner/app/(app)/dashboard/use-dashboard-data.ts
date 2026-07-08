@@ -1,8 +1,9 @@
 'use client';
 
 import { unwrap } from '@iziwellpass/api/client';
-import { useListMembers, useListResources, useListSchedules } from '@iziwellpass/api/generated';
+import { useListResources, useListSchedules } from '@iziwellpass/api/generated';
 
+import { useAllMembers } from '@/lib/all-members';
 import { useAttendanceByDate, useCheckInsByDate, useSlotsByDate } from '@/lib/dated-api';
 import { venueToday } from '@/lib/datetime';
 
@@ -31,7 +32,7 @@ export function useDashboardData(venueId: string, timeZone: string | undefined) 
   const date = venueToday(timeZone);
 
   const attendance = useAttendanceByDate(venueId, date);
-  const members = useListMembers({ query: { select: unwrap } });
+  const members = useAllMembers();
   const slots = useSlotsByDate(venueId, date);
   const schedules = useListSchedules(venueId, { query: { select: unwrap } });
   const resources = useListResources(venueId, { query: { select: unwrap } });

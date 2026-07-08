@@ -1,8 +1,9 @@
 'use client';
 
 import { unwrap } from '@iziwellpass/api/client';
-import { useListMembers, useListStaff } from '@iziwellpass/api/generated';
+import { useListStaff } from '@iziwellpass/api/generated';
 
+import { useAllMembers } from '@/lib/all-members';
 import { useAttendanceByDate, useCheckInsByDate } from '@/lib/dated-api';
 import { venueToday } from '@/lib/datetime';
 
@@ -33,7 +34,7 @@ export function useFrontdeskData(venueId: string, timeZone: string | undefined) 
 
   const attendance = useAttendanceByDate(venueId, date);
   const checkIns = useCheckInsByDate(venueId, date);
-  const members = useListMembers({ query: { select: unwrap } });
+  const members = useAllMembers();
   const staff = useListStaff({ query: { select: unwrap } });
 
   return { attendance, checkIns, members, staff };

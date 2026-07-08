@@ -17,11 +17,9 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { unwrap } from '@iziwellpass/api/client';
 import {
   getGetMemberQueryKey,
   getListMembersQueryKey,
-  useListMembers,
   useRegisterMember,
   useSuspendMember,
 } from '@iziwellpass/api/generated';
@@ -85,6 +83,7 @@ import {
 import { Textarea } from '@iziwellpass/ui/components/textarea';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { useAllMembers } from '@/lib/all-members';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { daysUntilCalendarDate, formatCalendarDate } from '@/lib/datetime';
 
@@ -615,7 +614,7 @@ function MembersContent() {
   const role = useRole();
   const canManage = role === 'owner' || role === 'admin' || role === 'receptionist';
 
-  const membersQuery = useListMembers({ query: { select: unwrap } });
+  const membersQuery = useAllMembers();
   const members = membersQuery.data ?? [];
 
   return (

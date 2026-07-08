@@ -10,7 +10,6 @@ import { unwrap } from '@iziwellpass/api/client';
 import {
   getListSlotsQueryKey,
   useCancelSlot,
-  useListMembers,
   useListResources,
   useListSchedules,
 } from '@iziwellpass/api/generated';
@@ -37,6 +36,7 @@ import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from '@iziwellpass/ui
 import { Progress } from '@iziwellpass/ui/components/progress';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
+import { useAllMembers } from '@/lib/all-members';
 import { apiErrorMessage } from '@/lib/api-error';
 import { useSlotsByDate } from '@/lib/dated-api';
 import { formatTime, venueDateKey, venueToday } from '@/lib/datetime';
@@ -253,7 +253,7 @@ export function SlotsTab({
   const slotsQuery = useSlotsByDate(venueId, venueToday(timeZone));
   const schedulesQuery = useListSchedules(venueId, { query: { select: unwrap } });
   const resourcesQuery = useListResources(venueId, { query: { select: unwrap } });
-  const membersQuery = useListMembers({ query: { select: unwrap } });
+  const membersQuery = useAllMembers();
 
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
   const scheduleTitleById = useMemo(
