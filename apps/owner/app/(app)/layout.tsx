@@ -3,6 +3,15 @@
 import { useEffect, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import {
+  Building2,
+  CalendarDays,
+  DoorOpen,
+  LayoutDashboard,
+  UserCog,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 
@@ -21,7 +30,17 @@ import {
 } from '@iziwellpass/ui/components/dropdown-menu';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
-import { navForRole } from '@/lib/nav';
+import { navForRole, type NavLabelKey } from '@/lib/nav';
+
+/** Lucide icon per nav item, rendered at the start of each sidebar link. */
+const NAV_ICONS: Record<NavLabelKey, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  frontdesk: DoorOpen,
+  members: Users,
+  planning: CalendarDays,
+  venues: Building2,
+  staff: UserCog,
+};
 
 /**
  * AppShell's `linkComponent` prop is typed as
@@ -88,10 +107,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const tNav = useTranslations('nav');
   const tShell = useTranslations('shell');
   const navItems = session.status === 'signed-in' ? navForRole(session.claims.role) : [];
-  const nav: NavItem[] = navItems.map((item) => ({
-    title: tNav(item.labelKey),
-    href: item.href,
-  }));
+  const nav: NavItem[] = navItems.map((item) => {
+    const Icon = NAV_ICONS[item.labelKey];
+    return {
+      title: tNav(item.labelKey),
+      href: item.href,
+      icon: <Icon className="size-4 shrink-0" />,
+    };
+  });
 
   useEffect(() => {
     if (session.status === 'signed-out') {

@@ -44,10 +44,18 @@ import {
   useFormField,
 } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@iziwellpass/ui/components/select';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import { COUNTRIES, TIMEZONES, withCurrentValue } from '@/lib/locations';
 import { navForRole } from '@/lib/nav';
 
 const VENUE_TYPE_VALUES = Object.values(VenueType) as [VenueType, ...VenueType[]];
@@ -284,9 +292,20 @@ function OnboardingForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t('country')}</FormLabel>
-              <FormControl>
-                <Input placeholder={t('countryPlaceholder')} {...field} />
-              </FormControl>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('countryPlaceholder')} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {withCurrentValue(COUNTRIES, field.value).map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -297,9 +316,20 @@ function OnboardingForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t('timezone')}</FormLabel>
-              <FormControl>
-                <Input placeholder={t('timezonePlaceholder')} {...field} />
-              </FormControl>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('timezonePlaceholder')} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {withCurrentValue(TIMEZONES, field.value).map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

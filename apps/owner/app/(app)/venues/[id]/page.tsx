@@ -85,6 +85,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/compone
 
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import { COUNTRIES, TIMEZONES, withCurrentValue } from '@/lib/locations';
 
 const VENUE_TYPE_VALUES = Object.values(VenueType) as [VenueType, ...VenueType[]];
 const BOOKING_MODE_VALUES = [
@@ -271,9 +272,20 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('detail.profile.country')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} disabled={!canEdit} />
-                  </FormControl>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={t('detail.profile.countryPlaceholder')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {withCurrentValue(COUNTRIES, field.value).map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -321,13 +333,20 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
                   <FormLabel>{t('detail.profile.timezone')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      disabled={!canEdit}
-                      placeholder={t('detail.profile.timezonePlaceholder')}
-                    />
-                  </FormControl>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={t('detail.profile.timezonePlaceholder')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {withCurrentValue(TIMEZONES, field.value).map((tz) => (
+                        <SelectItem key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
