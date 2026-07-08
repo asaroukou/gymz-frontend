@@ -86,7 +86,7 @@ function LoadingGrid() {
  * `isLoading` (so the first-week starter never flashes over the grid).
  */
 function DashboardBody({ venueId, timeZone }: { venueId: string; timeZone: string | undefined }) {
-  const data = useDashboardData(venueId);
+  const data = useDashboardData(venueId, timeZone);
   const { attendance, members, slots, schedules, resources, checkIns } = data;
 
   if (schedules.isLoading || members.isLoading) {

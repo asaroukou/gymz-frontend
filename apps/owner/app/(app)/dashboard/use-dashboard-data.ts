@@ -1,14 +1,10 @@
 'use client';
 
 import { unwrap } from '@iziwellpass/api/client';
-import {
-  useGetAttendance,
-  useListCheckIns,
-  useListMembers,
-  useListResources,
-  useListSchedules,
-  useListSlots,
-} from '@iziwellpass/api/generated';
+import { useListMembers, useListResources, useListSchedules } from '@iziwellpass/api/generated';
+
+import { useAttendanceByDate, useCheckInsByDate, useSlotsByDate } from '@/lib/dated-api';
+import { venueToday } from '@/lib/datetime';
 
 /**
  * Structural subset of a react-query result that the dashboard sections
@@ -29,13 +25,17 @@ export interface QueryLike<T> {
  * down to the KPI / schedule / check-ins sections as props; the shared member
  * list is fetched once here and reused by both the KPI row and the feed.
  */
-export function useDashboardData(venueId: string) {
-  const attendance = useGetAttendance(venueId, { query: { select: unwrap } });
+export function useDashboardData(venueId: string, timeZone: string | undefined) {
+  // slots / attendance / checkins require a `date` param the generated client
+  // can't send — see lib/dated-api.ts. "Today" is the venue-local day.
+  const date = venueToday(timeZone);
+
+  const attendance = useAttendanceByDate(venueId, date);
   const members = useListMembers({ query: { select: unwrap } });
-  const slots = useListSlots(venueId, { query: { select: unwrap } });
+  const slots = useSlotsByDate(venueId, date);
   const schedules = useListSchedules(venueId, { query: { select: unwrap } });
   const resources = useListResources(venueId, { query: { select: unwrap } });
-  const checkIns = useListCheckIns(venueId, { query: { select: unwrap } });
+  const checkIns = useCheckInsByDate(venueId, date);
 
   return { attendance, members, slots, schedules, resources, checkIns };
 }

@@ -131,3 +131,13 @@ export function venueDateKey(iso: string, timeZone: string | undefined): string 
     return iso;
   }
 }
+
+/**
+ * Today's calendar date (`YYYY-MM-DD`) in the venue's timezone — the value the
+ * date-scoped GMS endpoints (slots / attendance / checkins) require as their
+ * `date` query parameter. See `lib/dated-api.ts` for why these calls are made
+ * outside the generated client.
+ */
+export function venueToday(timeZone: string | undefined): string {
+  return venueDateKey(new Date().toISOString(), timeZone);
+}

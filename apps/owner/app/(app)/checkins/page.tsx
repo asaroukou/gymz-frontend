@@ -45,7 +45,7 @@ function LoadingState() {
  * update live.
  */
 function FrontdeskBody({ venueId, timeZone }: { venueId: string; timeZone: string | undefined }) {
-  const { attendance, checkIns, members, staff } = useFrontdeskData(venueId);
+  const { attendance, checkIns, members, staff } = useFrontdeskData(venueId, timeZone);
 
   return (
     <div className="space-y-6">

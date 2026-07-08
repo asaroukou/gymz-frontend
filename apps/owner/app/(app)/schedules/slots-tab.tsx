@@ -13,7 +13,6 @@ import {
   useListMembers,
   useListResources,
   useListSchedules,
-  useListSlots,
 } from '@iziwellpass/api/generated';
 import type { Resource, Schedule, ScheduleSlot } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
@@ -39,7 +38,8 @@ import { Progress } from '@iziwellpass/ui/components/progress';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
 import { apiErrorMessage } from '@/lib/api-error';
-import { formatTime, venueDateKey } from '@/lib/datetime';
+import { useSlotsByDate } from '@/lib/dated-api';
+import { formatTime, venueDateKey, venueToday } from '@/lib/datetime';
 
 import { BookingsSheet } from './bookings-sheet';
 import { capacityIndicatorClass, usePlanningLabels } from './planning-utils';
@@ -246,7 +246,11 @@ export function SlotsTab({
   const t = useTranslations('planning');
   const dayHeading = useDayHeading(timeZone);
 
-  const slotsQuery = useListSlots(venueId, { query: { select: unwrap } });
+  // The slots endpoint requires a `date` param the generated client can't send
+  // (see lib/dated-api.ts) and returns ONE day of slots. Until the backend
+  // supports a range, the Séances tab shows the venue's current day; the
+  // group-by-day layout below therefore renders a single "Aujourd'hui" group.
+  const slotsQuery = useSlotsByDate(venueId, venueToday(timeZone));
   const schedulesQuery = useListSchedules(venueId, { query: { select: unwrap } });
   const resourcesQuery = useListResources(venueId, { query: { select: unwrap } });
   const membersQuery = useListMembers({ query: { select: unwrap } });

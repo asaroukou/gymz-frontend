@@ -1,12 +1,10 @@
 'use client';
 
 import { unwrap } from '@iziwellpass/api/client';
-import {
-  useGetAttendance,
-  useListCheckIns,
-  useListMembers,
-  useListStaff,
-} from '@iziwellpass/api/generated';
+import { useListMembers, useListStaff } from '@iziwellpass/api/generated';
+
+import { useAttendanceByDate, useCheckInsByDate } from '@/lib/dated-api';
+import { venueToday } from '@/lib/datetime';
 
 /**
  * Structural subset of a react-query result consumed by the front-desk
@@ -28,9 +26,13 @@ export interface QueryLike<T> {
  * threaded down as props; a successful check-in invalidates the check-in +
  * attendance query keys so the feed and stats refresh live.
  */
-export function useFrontdeskData(venueId: string) {
-  const attendance = useGetAttendance(venueId, { query: { select: unwrap } });
-  const checkIns = useListCheckIns(venueId, { query: { select: unwrap } });
+export function useFrontdeskData(venueId: string, timeZone: string | undefined) {
+  // attendance / checkins require a `date` param the generated client can't
+  // send — see lib/dated-api.ts. The front desk always shows the current day.
+  const date = venueToday(timeZone);
+
+  const attendance = useAttendanceByDate(venueId, date);
+  const checkIns = useCheckInsByDate(venueId, date);
   const members = useListMembers({ query: { select: unwrap } });
   const staff = useListStaff({ query: { select: unwrap } });
 
