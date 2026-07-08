@@ -92,7 +92,7 @@ During testing, transient **HTTP 500** responses were observed on otherwise-work
 
 ---
 
-## 6. 🟠 `GET /members` is paginated (default `limit=20`) but the spec doesn't declare it
+## 5. 🟠 `GET /members` is paginated (default `limit=20`) but the spec doesn't declare it
 
 The members list **defaults to `limit=20`** and returns a `meta` block, but the OpenAPI operation for `GET /gms/v1/members` declares **no query parameters** and the `ApiResponseVecMember` schema **does not model `meta`**. Observed live: with 33 members, `GET /members` returns 20; `GET /members?limit=100` returns all 33 (and `offset` works too — `?limit=100&offset=0`). Note `?page_size` / `?per_page` are ignored, so the accepted param is specifically `limit`/`offset`.
 
@@ -104,7 +104,7 @@ Because the generated `listMembers()` sends no `limit`, the owner app (which fil
 
 ---
 
-## 5. ℹ️ CORS for browser clients (already ticketed — IWP-066)
+## 6. ℹ️ CORS for browser clients (already ticketed — IWP-066)
 
 Reminder that the deployed web app can only call the gateway from `*.iziwellpass.com`; localhost/preview origins are blocked, and Lambda responses carry no CORS headers, so authorizer 401/403s surface as opaque CORS errors in the browser. The web app currently works around this with a same-origin Next.js dev proxy. Tracked in `gymz/issues/IWP-066-cors-browser-clients.md`; noting here so it stays on the radar for a real deployment.
 
