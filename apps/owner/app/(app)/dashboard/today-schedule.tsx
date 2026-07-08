@@ -64,6 +64,7 @@ function SlotRow({
         <p className="truncate text-sm font-medium">{title}</p>
         <p className="truncate text-xs text-muted-foreground">{resourceName}</p>
       </div>
+      {isFull && !isCancelled ? <Badge variant="destructive">{t('schedule.full')}</Badge> : null}
       {isCancelled ? (
         <Badge variant="outline">{t('schedule.cancelled')}</Badge>
       ) : (
@@ -81,7 +82,6 @@ function SlotRow({
           />
         </div>
       )}
-      {isFull && !isCancelled ? <Badge variant="destructive">{t('schedule.full')}</Badge> : null}
     </div>
   );
 }
