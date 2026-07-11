@@ -18,6 +18,7 @@ import {
 interface QrScannerDialogProps {
   onDetected: (token: string) => void;
   disabled?: boolean;
+  onClose?: () => void;
 }
 
 function parseToken(raw: string): string {
@@ -31,7 +32,7 @@ function parseToken(raw: string): string {
   return raw;
 }
 
-export function QrScannerDialog({ onDetected, disabled }: QrScannerDialogProps) {
+export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDialogProps) {
   const t = useTranslations('frontdesk');
   const [open, setOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -83,7 +84,10 @@ export function QrScannerDialog({ onDetected, disabled }: QrScannerDialogProps) 
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (!next) setCameraError(null);
+    if (!next) {
+      setCameraError(null);
+      onClose?.();
+    }
   }
 
   return (

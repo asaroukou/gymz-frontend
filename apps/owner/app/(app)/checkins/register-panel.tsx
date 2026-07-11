@@ -127,7 +127,7 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t('qr.label')}</FormLabel>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <QrCodeIcon
                     className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground"
@@ -153,8 +153,9 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
                 </div>
                 <QrScannerDialog
                   disabled={checkInViaQr.isPending}
+                  onClose={() => inputRef.current?.focus()}
                   onDetected={(token) => {
-                    form.setValue('qr_token', token);
+                    form.setValue('qr_token', token, { shouldDirty: true, shouldTouch: true });
                     void form.handleSubmit(onSubmit)();
                   }}
                 />
