@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-08T22:30:00Z",
+  "title": "Design System: IziWellPass Owner App",
+  "extensions": {
+    "colorMeta": {
+      "encre-chaude": {
+        "role": "primary",
+        "displayName": "Encre chaude",
+        "canonical": "#1c1917",
+        "tonalRamp": [
+          "#0c0a09",
+          "#1c1917",
+          "#292524",
+          "#44403c",
+          "#78716c",
+          "#a8a29e",
+          "#d6d3d1",
+          "#fafaf9"
+        ]
+      },
+      "grege": {
+        "role": "neutral",
+        "displayName": "Grège (the desk)",
+        "canonical": "#d6d2cc",
+        "tonalRamp": [
+          "#3d3a35",
+          "#57534e",
+          "#78716c",
+          "#a8a29e",
+          "#c4c0ba",
+          "#d6d2cc",
+          "#e7e4df",
+          "#f5f3f0"
+        ]
+      },
+      "pierre-200": {
+        "role": "neutral",
+        "displayName": "Pierre 200 (hairline)",
+        "canonical": "#e7e5e4",
+        "tonalRamp": [
+          "#0c0a09",
+          "#292524",
+          "#44403c",
+          "#78716c",
+          "#a8a29e",
+          "#d6d3d1",
+          "#e7e5e4",
+          "#fafaf9"
+        ]
+      },
+      "statut-succes": {
+        "role": "semantic",
+        "displayName": "Statut succès",
+        "canonical": "#16a34a",
+        "tonalRamp": [
+          "#052e16",
+          "#14532d",
+          "#166534",
+          "#15803d",
+          "#16a34a",
+          "#4ade80",
+          "#86efac",
+          "#dcfce7"
+        ]
+      },
+      "statut-attention": {
+        "role": "semantic",
+        "displayName": "Statut attention",
+        "canonical": "#f59e0b",
+        "tonalRamp": [
+          "#451a03",
+          "#78350f",
+          "#b45309",
+          "#d97706",
+          "#f59e0b",
+          "#fbbf24",
+          "#fcd34d",
+          "#fef3c7"
+        ]
+      },
+      "statut-erreur": {
+        "role": "semantic",
+        "displayName": "Statut erreur",
+        "canonical": "#dc2626",
+        "tonalRamp": [
+          "#450a0a",
+          "#7f1d1d",
+          "#991b1b",
+          "#b91c1c",
+          "#dc2626",
+          "#f87171",
+          "#fca5a5",
+          "#fee2e2"
+        ]
+      },
+      "statut-info": {
+        "role": "semantic",
+        "displayName": "Statut info (demoted blue)",
+        "canonical": "#2563eb",
+        "tonalRamp": [
+          "#172554",
+          "#1e3a8a",
+          "#1e40af",
+          "#1d4ed8",
+          "#2563eb",
+          "#60a5fa",
+          "#93c5fd",
+          "#dbeafe"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles only — one per screen, −0.6px tracking."
+      },
+      "title": { "displayName": "Title", "purpose": "Card and section headings." },
+      "body": {
+        "displayName": "Body",
+        "purpose": "The app-wide 14px default. Cap prose at 65–75ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, helper text, table headers. Sentence case, never uppercase."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Times, capacity, amounts, codes — always tabular-nums."
+      }
+    },
+    "shadows": [
+      {
+        "name": "whisper",
+        "value": "0 1px 2px 0 rgba(28,25,23,0.05)",
+        "purpose": "Cards, buttons, inputs at rest — barely separates the sheet from the desk."
+      },
+      {
+        "name": "popover",
+        "value": "0 8px 24px -6px rgba(28,25,23,0.16), 0 2px 8px -3px rgba(28,25,23,0.08)",
+        "purpose": "Menus, selects, popovers, tooltips."
+      },
+      {
+        "name": "raise",
+        "value": "0 12px 28px -6px rgba(28,25,23,0.16), 0 4px 10px -4px rgba(28,25,23,0.1)",
+        "purpose": "Dialogs, sheets, toasts — true overlays only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-change",
+        "value": "120ms ease-out",
+        "purpose": "Hover and toggle color/background/shadow shifts."
+      },
+      {
+        "name": "progress",
+        "value": "250ms ease-out",
+        "purpose": "Capacity-bar width and accordion chevrons."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bouton primaire",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one obvious action per screen — encre pill, papier text.",
+      "html": "<button class=\"ds-btn-primary\">Ajouter un membre</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 16px; border: none; border-radius: 9999px; background: var(--primary, #1c1917); color: var(--primary-foreground, #fafaf9); font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; box-shadow: 0 1px 2px 0 rgba(28,25,23,0.05); cursor: pointer; transition: background-color 120ms ease-out, box-shadow 120ms ease-out; } .ds-btn-primary:hover { background: var(--primary-hover, #292524); } .ds-btn-primary:focus-visible { outline: none; border: 1px solid var(--ring, #1c1917); box-shadow: 0 0 0 3px rgba(28,25,23,0.15); }"
+    },
+    {
+      "name": "Bouton contour",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action — surface fill, hairline, whisper shadow.",
+      "html": "<button class=\"ds-btn-outline\">Annuler</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 16px; border: 1px solid var(--border, #e7e5e4); border-radius: 9999px; background: var(--background, #ffffff); color: var(--foreground, #1c1917); font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; box-shadow: 0 1px 2px 0 rgba(28,25,23,0.05); cursor: pointer; transition: background-color 120ms ease-out; } .ds-btn-outline:hover { background: var(--accent, #f5f5f4); } .ds-btn-outline:focus-visible { outline: none; border-color: var(--ring, #1c1917); box-shadow: 0 0 0 3px rgba(28,25,23,0.15); }"
+    },
+    {
+      "name": "Champ de saisie",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Pill input — transparent fill, hairline stroke, blooming focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Rechercher par nom ou e-mail\" />",
+      "css": ".ds-input { height: 36px; width: 280px; padding: 4px 16px; border: 1px solid var(--input, #e7e5e4); border-radius: 9999px; background: transparent; color: var(--foreground, #1c1917); font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 14px; box-shadow: 0 1px 2px 0 rgba(28,25,23,0.05); transition: border-color 120ms ease-out, box-shadow 120ms ease-out; } .ds-input::placeholder { color: var(--muted-foreground, #78716c); } .ds-input:focus-visible { outline: none; border-color: var(--ring, #1c1917); box-shadow: 0 0 0 3px rgba(28,25,23,0.15); }"
+    },
+    {
+      "name": "Navigation (pilule active)",
+      "kind": "nav",
+      "refersTo": "nav-pill-active",
+      "description": "Sidebar items as pills on the greige desk — active is solid ink.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg>Tableau de bord</a><a class=\"ds-nav-item ds-nav-item-active\" href=\"#\" aria-current=\"page\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>Membres</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; width: 232px; padding: 8px; background: var(--backdrop, #d6d2cc); border-radius: 16px; } .ds-nav-item { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border-radius: 9999px; color: var(--muted-foreground, #78716c); font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; transition: background-color 120ms ease-out, color 120ms ease-out; } .ds-nav-item:hover { background: rgba(0,0,0,0.05); } .ds-nav-item-active { background: var(--primary, #1c1917); color: var(--primary-foreground, #fafaf9); box-shadow: 0 1px 2px 0 rgba(28,25,23,0.05); } .ds-nav-item-active:hover { background: var(--primary, #1c1917); }"
+    },
+    {
+      "name": "Badges de statut",
+      "kind": "chip",
+      "refersTo": "badge-status",
+      "description": "Soft status tints with a text label — color is never the only message.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-badge-succes\">Actif</span><span class=\"ds-badge ds-badge-attention\">Expire bientôt</span><span class=\"ds-badge ds-badge-erreur\">Complet</span><span class=\"ds-badge ds-badge-neutre\">Essai</span></div>",
+      "css": ".ds-badges { display: flex; gap: 8px; align-items: center; } .ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 500; white-space: nowrap; } .ds-badge-succes { background: rgba(22,163,74,0.15); color: #16a34a; } .ds-badge-attention { background: rgba(245,158,11,0.15); color: #b45309; } .ds-badge-erreur { background: var(--destructive, #dc2626); color: #ffffff; } .ds-badge-neutre { background: var(--secondary, #f5f5f4); color: var(--secondary-foreground, #1c1917); }"
+    },
+    {
+      "name": "Carte",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The white sheet on the desk — 16px corners, hairline, whisper shadow.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Planning du jour</h3><p class=\"ds-card-body\">8 séances aujourd'hui, 128 réservations.</p></div>",
+      "css": ".ds-card { width: 320px; padding: 24px; background: var(--card, #ffffff); border: 1px solid var(--border, #e7e5e4); border-radius: 16px; box-shadow: 0 1px 2px 0 rgba(28,25,23,0.05); font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; } .ds-card-title { margin: 0 0 8px; font-size: 16px; font-weight: 600; color: var(--card-foreground, #1c1917); } .ds-card-body { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted-foreground, #78716c); }"
+    },
+    {
+      "name": "Barre de capacité (signature)",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "The system's one expressive instrument: mono count + pill track, amber >85%, red when full.",
+      "html": "<div class=\"ds-capacity\"><div class=\"ds-capacity-row\"><span class=\"ds-capacity-count\">23/25</span><div class=\"ds-capacity-track\"><div class=\"ds-capacity-fill ds-capacity-warn\" style=\"width: 92%\"></div></div></div><div class=\"ds-capacity-row\"><span class=\"ds-capacity-count\">4/4</span><div class=\"ds-capacity-track\"><div class=\"ds-capacity-fill ds-capacity-full\" style=\"width: 100%\"></div></div></div></div>",
+      "css": ".ds-capacity { display: flex; flex-direction: column; gap: 12px; width: 220px; } .ds-capacity-row { display: flex; align-items: center; gap: 12px; } .ds-capacity-count { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted-foreground, #78716c); min-width: 44px; text-align: right; } .ds-capacity-track { flex: 1; height: 8px; border-radius: 9999px; background: var(--secondary, #f5f5f4); overflow: hidden; } .ds-capacity-fill { height: 100%; border-radius: 9999px; background: var(--primary, #1c1917); transition: width 250ms ease-out; } .ds-capacity-warn { background: #f59e0b; } .ds-capacity-full { background: #dc2626; }"
+    },
+    {
+      "name": "Onglets pilule",
+      "kind": "chip",
+      "refersTo": "tab-trigger-active",
+      "description": "Filter tabs — pierre-100 rail, active trigger is a white pill with whisper shadow.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab ds-tab-active\" role=\"tab\" aria-selected=\"true\">Tous</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Actifs</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Suspendus</button></div>",
+      "css": ".ds-tabs { display: inline-flex; gap: 2px; padding: 4px; background: var(--secondary, #f5f5f4); border-radius: 9999px; } .ds-tab { border: none; background: transparent; padding: 6px 14px; border-radius: 9999px; font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--muted-foreground, #78716c); cursor: pointer; transition: background-color 120ms ease-out, color 120ms ease-out; } .ds-tab:hover { color: var(--foreground, #1c1917); } .ds-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(28,25,23,0.15); } .ds-tab-active { background: var(--background, #ffffff); color: var(--foreground, #1c1917); box-shadow: 0 1px 2px 0 rgba(28,25,23,0.05); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le comptoir calme",
+    "overview": "The whole system behaves like a tidy counter at a well-run venue: everything the operator needs is at hand, nothing shouts, and the work in progress is always the loudest thing on the surface. Warm near-black ink writes on warm stone-grey paper; the app itself sits as a white sheet on a greige desk. Controls are fully rounded pills — smooth, finger-sized objects made to be tapped by someone standing at that counter with a member in front of them. The register is product: design serves the workflow and then recedes.",
+    "keyCharacteristics": [
+      "Monochrome warmth: a single near-black primary on a re-anchored warm \"stone\" neutral scale; no cool greys anywhere.",
+      "The desk-and-sheet layout: greige backdrop (#d6d2cc) behind a white, 16px-rounded app surface with a hairline border.",
+      "Pill-forward shape language: every control (button, input, tab, nav item, search) is fully rounded; surfaces are 16px.",
+      "Numerals are mono: times (06:30), capacity (4/4), amounts, codes, and references always render in Geist Mono with tabular figures.",
+      "French-first, sentence case, operational voice; meaning carried by Lucide icons and badge color, never emoji.",
+      "Full light/dark parity: dark mode inverts ink and paper (light ink on near-black) rather than introducing new hues."
+    ],
+    "rules": [
+      {
+        "name": "The One Ink Rule",
+        "body": "There is exactly one accent: encre chaude. If a screen needs a second \"brand\" color, the design is wrong, not the palette.",
+        "section": "colors"
+      },
+      {
+        "name": "The Meaning-Only Color Rule",
+        "body": "Green, amber, red, and blue may appear only to state a fact (status, capacity, method). Decorative color use is prohibited.",
+        "section": "colors"
+      },
+      {
+        "name": "The Warm Neutral Rule",
+        "body": "Every grey comes from the stone scale. Cool greys, #000, and #fff-with-blue-undertones are forbidden; even shadows are tinted with ink (rgba(28,25,23,…)).",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Numbers Rule",
+        "body": "Any value an operator compares, counts, or reads back — time, capacity, amount, code — renders in Geist Mono with tabular-nums. No exceptions.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "French sentence case everywhere: headings, buttons, labels, tabs. ALL-CAPS is forbidden outside mono reference codes.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline-First Rule",
+        "body": "If a boundary can be drawn with a 1px pierre-200 border, it must be. Shadows are never used to compensate for a missing border.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ink-Tint Rule",
+        "body": "Every shadow is tinted with encre (rgba(28,25,23,…)), never neutral black.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use encre chaude (#1c1917) as the only accent, on ≤10% of any screen — the active pill, the primary button, and little else.",
+      "Do draw every boundary with the 1px pierre-200 hairline first; reach for a shadow only at the three defined levels.",
+      "Do render every time, capacity, amount, and code in Geist Mono with tabular-nums (06:30, 14/18, FCFA 120 000).",
+      "Do write French, sentence case, operational: nouns for labels (\"Abonnement\"), imperatives for buttons (\"Ajouter\", \"Valider\").",
+      "Do give every list a designed empty state with one CTA, every region a skeleton matching its final layout, and every error a calm message with a mono support reference.",
+      "Do keep touch targets ≥44px on front-desk screens and ship AA contrast in both themes."
+    ],
+    "donts": [
+      "Don't build the \"generic SaaS dashboard\" PRODUCT.md forbids: no cream-and-blurple, no hero-metric cards, no identical icon+heading grids, no gradient accents — gradients are banned outright.",
+      "Don't drift toward the \"loud consumer fitness app\": no neon, no gamified badges, no aggressive motion, no hype copy.",
+      "Don't compress into the \"dense enterprise admin\": body text never drops below 14px, tables breathe with row hairlines, and screens must survive a 375px phone.",
+      "Don't add anything \"playful / gamified\": no mascots, no confetti, no emoji anywhere in the UI.",
+      "Don't use border-left/border-right thicker than 1px as a colored stripe, gradient text, glassmorphism, #000, #fff on cool greys, or ALL-CAPS labels.",
+      "Don't use blue as a brand color — statut info (#2563eb) states facts (a QR badge, a link) and nothing more.",
+      "Don't communicate status with color alone; the badge text is the message, the color is the echo."
+    ]
+  }
+}
