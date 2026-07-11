@@ -6,8 +6,7 @@
     "dev": "next dev --port 3011",
     "build": "next build",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "postinstall": "cp node_modules/qr-scanner/qr-scanner-worker.min.js public/"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

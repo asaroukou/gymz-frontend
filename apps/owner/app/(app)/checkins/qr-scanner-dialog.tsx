@@ -36,6 +36,7 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
   const t = useTranslations('frontdesk');
   const [open, setOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   // Hold latest callback in a ref so the scanner closure never goes stale
   const onDetectedRef = useRef(onDetected);
@@ -49,11 +50,10 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
     let scanner: QrScanner | null = null;
     let isMounted = true;
 
+    setLoading(true);
     import('qr-scanner')
       .then(({ default: QrScanner }) => {
         if (!isMounted) return; // dialog closed before import resolved
-        // Point to the worker we copied into public/
-        QrScanner.WORKER_PATH = '/qr-scanner-worker.min.js';
 
         scanner = new QrScanner(
           video,
@@ -65,11 +65,16 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
           { returnDetailedScanResult: true, highlightScanRegion: true, preferredCamera: 'environment' },
         );
 
-        scanner.start().catch(() => {
-          if (isMounted) setCameraError(t('qr.cameraError'));
-          scanner?.destroy();
-          scanner = null;
-        });
+        scanner
+          .start()
+          .then(() => {
+            if (isMounted) setLoading(false);
+          })
+          .catch(() => {
+            if (isMounted) setCameraError(t('qr.cameraError'));
+            scanner?.destroy();
+            scanner = null;
+          });
       })
       .catch(() => {
         if (isMounted) setCameraError(t('qr.cameraError'));
@@ -84,7 +89,10 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (!next) setCameraError(null);
+    if (!next) {
+      setCameraError(null);
+      setLoading(false);
+    }
   }
 
   return (
@@ -114,7 +122,13 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
         {cameraError ? (
           <p className="text-sm text-destructive">{cameraError}</p>
         ) : (
-          <video ref={videoRef} className="w-full rounded-lg" />
+          <>
+            {loading && <div className="aspect-video w-full animate-pulse rounded-lg bg-muted" />}
+            <video
+              ref={videoRef}
+              className={loading ? 'hidden' : 'w-full rounded-lg'}
+            />
+          </>
         )}
       </DialogContent>
     </Dialog>
