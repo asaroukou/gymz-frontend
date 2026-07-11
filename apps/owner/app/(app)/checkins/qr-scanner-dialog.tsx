@@ -65,7 +65,7 @@ export function QrScannerDialog({ onDetected, disabled }: QrScannerDialogProps) 
         );
 
         scanner.start().catch(() => {
-          setCameraError(t('qr.cameraError'));
+          if (isMounted) setCameraError(t('qr.cameraError'));
           scanner?.destroy();
           scanner = null;
         });
