@@ -216,7 +216,8 @@
       "submit": "Validate",
       "submitting": "Validating…",
       "scanButton": "Scan with camera",
-      "cameraError": "Camera access denied — use the text field instead."
+      "cameraError": "Camera access denied — use the text field instead.",
+      "dialogDescription": "Point the camera at the member's QR code."
     },
     "manual": {
       "member": "Member",
@@ -549,7 +550,13 @@
       "add": "Add",
       "adding": "Adding…",
       "success": "Participant added",
-      "error": "Could not add participant"
+      "error": "Could not add participant",
+      "ineligible": {
+        "inactive": "Inactive member",
+        "expired": "Membership expired",
+        "suspended": "Membership suspended",
+        "cancelled": "Membership cancelled"
+      }
     },
     "cancelBooking": {
       "title": "Cancel booking",

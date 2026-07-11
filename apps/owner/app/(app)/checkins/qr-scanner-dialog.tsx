@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { CameraIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import type QrScanner from 'qr-scanner';
 
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -43,28 +45,34 @@ export function QrScannerDialog({ onDetected, disabled }: QrScannerDialogProps) 
   useEffect(() => {
     if (!open || !videoRef.current) return;
     const video = videoRef.current;
-    let scanner: { start: () => Promise<void>; stop: () => void; destroy: () => void } | null = null;
+    let scanner: QrScanner | null = null;
     let isMounted = true;
 
-    import('qr-scanner').then(({ default: QrScanner }) => {
-      if (!isMounted) return; // dialog closed before import resolved
-      // Point to the worker we copied into public/
-      QrScanner.WORKER_PATH = '/qr-scanner-worker.min.js';
+    import('qr-scanner')
+      .then(({ default: QrScanner }) => {
+        if (!isMounted) return; // dialog closed before import resolved
+        // Point to the worker we copied into public/
+        QrScanner.WORKER_PATH = '/qr-scanner-worker.min.js';
 
-      scanner = new QrScanner(
-        video,
-        (result: { data: string }) => {
-          const token = parseToken(result.data);
-          setOpen(false);
-          onDetectedRef.current(token);
-        },
-        { returnDetailedScanResult: true, highlightScanRegion: true },
-      );
+        scanner = new QrScanner(
+          video,
+          (result: { data: string }) => {
+            const token = parseToken(result.data);
+            setOpen(false);
+            onDetectedRef.current(token);
+          },
+          { returnDetailedScanResult: true, highlightScanRegion: true, preferredCamera: 'environment' },
+        );
 
-      scanner.start().catch(() => {
-        setCameraError(t('qr.cameraError'));
+        scanner.start().catch(() => {
+          setCameraError(t('qr.cameraError'));
+          scanner?.destroy();
+          scanner = null;
+        });
+      })
+      .catch(() => {
+        if (isMounted) setCameraError(t('qr.cameraError'));
       });
-    });
 
     return () => {
       isMounted = false;
@@ -94,6 +102,7 @@ export function QrScannerDialog({ onDetected, disabled }: QrScannerDialogProps) 
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>{t('qr.scanButton')}</DialogTitle>
+          <DialogDescription>{t('qr.dialogDescription')}</DialogDescription>
         </DialogHeader>
         {cameraError ? (
           <p className="text-sm text-destructive">{cameraError}</p>

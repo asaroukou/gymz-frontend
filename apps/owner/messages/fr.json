@@ -216,7 +216,8 @@
       "submit": "Valider",
       "submitting": "Validation…",
       "scanButton": "Scanner avec la caméra",
-      "cameraError": "Accès à la caméra refusé — utilisez le champ de texte."
+      "cameraError": "Accès à la caméra refusé — utilisez le champ de texte.",
+      "dialogDescription": "Pointez la caméra vers le QR code du membre."
     },
     "manual": {
       "member": "Membre",
@@ -549,7 +550,13 @@
       "add": "Ajouter",
       "adding": "Ajout…",
       "success": "Participant ajouté",
-      "error": "Impossible d'ajouter le participant"
+      "error": "Impossible d'ajouter le participant",
+      "ineligible": {
+        "inactive": "Membre inactif",
+        "expired": "Abonnement expiré",
+        "suspended": "Abonnement suspendu",
+        "cancelled": "Abonnement annulé"
+      }
     },
     "cancelBooking": {
       "title": "Annuler la réservation",
