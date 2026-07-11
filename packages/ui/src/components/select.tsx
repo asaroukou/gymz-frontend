@@ -47,8 +47,13 @@ function SelectTrigger({
 function SelectContent({
   className,
   children,
-  position = 'item-aligned',
+  // `popper` (not Radix's `item-aligned` default): item-aligned positioning has
+  // a long-standing bug inside a Radix Dialog where dismissing the open Select
+  // leaks the outside-pointer event to the Dialog's dismissable layer and closes
+  // the whole modal. Popper positioning keeps the two layers independent.
+  position = 'popper',
   align = 'center',
+  sideOffset = 4,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
@@ -63,6 +68,7 @@ function SelectContent({
         )}
         position={position}
         align={align}
+        sideOffset={sideOffset}
         {...props}
       >
         <SelectScrollUpButton />

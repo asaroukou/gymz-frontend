@@ -5,6 +5,7 @@ import { XIcon } from 'lucide-react';
 import { Dialog as SheetPrimitive } from 'radix-ui';
 
 import { cn } from '@iziwellpass/ui/lib/utils';
+import { useOverlayDismissGuard } from '@iziwellpass/ui/lib/overlay';
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
@@ -43,16 +44,24 @@ function SheetContent({
   children,
   side = 'right',
   showCloseButton = true,
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: 'top' | 'right' | 'bottom' | 'left';
   showCloseButton?: boolean;
 }) {
+  const dismissGuard = useOverlayDismissGuard();
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
+        onInteractOutside={(event) => {
+          // Keep the sheet open when the outside interaction only meant to
+          // dismiss an open portalled dropdown (Select/Popover/Dropdown).
+          if (dismissGuard.current) event.preventDefault();
+          onInteractOutside?.(event);
+        }}
         className={cn(
           'fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
           side === 'right' &&
