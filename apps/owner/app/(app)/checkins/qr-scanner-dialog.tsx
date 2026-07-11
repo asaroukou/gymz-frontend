@@ -84,10 +84,7 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (!next) {
-      setCameraError(null);
-      onClose?.();
-    }
+    if (!next) setCameraError(null);
   }
 
   return (
@@ -103,7 +100,13 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
           <CameraIcon className="size-5" aria-hidden="true" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-sm">
+      <DialogContent
+        className="max-w-sm"
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          onClose?.();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t('qr.scanButton')}</DialogTitle>
           <DialogDescription>{t('qr.dialogDescription')}</DialogDescription>
