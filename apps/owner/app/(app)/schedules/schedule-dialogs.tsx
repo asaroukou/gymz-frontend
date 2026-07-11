@@ -126,77 +126,16 @@ function ScheduleFormFields({
 
   return (
     <>
-      <FormField
-        control={form.control}
-        name="title"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('form.title')}</FormLabel>
-            <FormControl>
-              <Input {...field} placeholder={t('form.titlePlaceholder')} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="resource_id"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('form.resource')}</FormLabel>
-            <Select value={field.value} onValueChange={field.onChange}>
-              <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('form.resourcePlaceholder')} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {resources.map((resource) => (
-                  <SelectItem key={resource.id} value={resource.id}>
-                    {resource.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="instructor_staff_id"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('form.instructor')}</FormLabel>
-            <Select value={field.value} onValueChange={field.onChange}>
-              <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value={NO_INSTRUCTOR}>{t('form.noInstructor')}</SelectItem>
-                {staff.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.first_name} {member.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-4">
+        <h3 className="text-sm font-medium">{t('form.sectionCourse')}</h3>
         <FormField
           control={form.control}
-          name="start_time"
+          name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('form.startTime')}</FormLabel>
+              <FormLabel>{t('form.title')}</FormLabel>
               <FormControl>
-                <Input type="time" {...field} />
+                <Input {...field} placeholder={t('form.titlePlaceholder')} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -204,60 +143,127 @@ function ScheduleFormFields({
         />
         <FormField
           control={form.control}
-          name="end_time"
+          name="resource_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('form.endTime')}</FormLabel>
-              <FormControl>
-                <Input type="time" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField
-          control={form.control}
-          name="effective_from"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('form.effectiveFrom')}</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
+              <FormLabel>{t('form.resource')}</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('form.resourcePlaceholder')} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {resources.map((resource) => (
+                    <SelectItem key={resource.id} value={resource.id}>
+                      {resource.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
           control={form.control}
-          name="effective_until"
+          name="instructor_staff_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('form.effectiveUntil')}</FormLabel>
+              <FormLabel>{t('form.instructor')}</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value={NO_INSTRUCTOR}>{t('form.noInstructor')}</SelectItem>
+                  {staff.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.first_name} {member.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('form.description')}</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <Textarea {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-      </div>
-      <RecurrenceEditor value={recurrence} onChange={onRecurrenceChange} />
-      <FormField
-        control={form.control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('form.description')}</FormLabel>
-            <FormControl>
-              <Textarea {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      </section>
+      <section className="grid gap-4 border-t pt-5">
+        <h3 className="text-sm font-medium">{t('form.sectionTiming')}</h3>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="start_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('form.startTime')}</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="end_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('form.endTime')}</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="effective_from"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('form.effectiveFrom')}</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="effective_until"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('form.effectiveUntil')}</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <RecurrenceEditor value={recurrence} onChange={onRecurrenceChange} />
+      </section>
     </>
   );
 }

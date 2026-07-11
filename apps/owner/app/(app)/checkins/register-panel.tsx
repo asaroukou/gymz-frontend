@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { QrCodeIcon } from 'lucide-react';
@@ -75,6 +75,16 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
     resolver: zodResolver(schema),
     defaultValues: { qr_token: '' },
   });
+
+  // Scan-ready on arrival: focus the token field on mount so the first scan at
+  // a 6:30 rush lands instead of silently no-opping. Radix unmounts inactive
+  // tab content, so switching back to the QR tab remounts this and refocuses
+  // too. The field is the whole point of this screen, so we don't gate by
+  // pointer type (a counter tablet with a wedge scanner needs it as much as a
+  // laptop).
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const onSubmit = (values: QrValues) => {
     // Guard the rapid-Enter loop: native Enter bypasses the disabled button, so

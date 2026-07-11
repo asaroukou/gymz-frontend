@@ -23,7 +23,7 @@ import {
   useRegisterMember,
   useSuspendMember,
 } from '@iziwellpass/api/generated';
-import type { Member, MembershipStatus } from '@iziwellpass/api/schemas';
+import type { Member } from '@iziwellpass/api/schemas';
 import { MembershipType } from '@iziwellpass/api/schemas';
 import { useRole } from '@iziwellpass/auth/provider';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
@@ -86,6 +86,7 @@ import { RequirePageAccess } from '@/components/page-access';
 import { useAllMembers } from '@/lib/all-members';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { daysUntilCalendarDate, formatCalendarDate } from '@/lib/datetime';
+import { memberStatusBadgeVariant } from '@/lib/member-status';
 
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
@@ -105,13 +106,6 @@ function initials(member: Member): string {
   const first = member.first_name.charAt(0);
   const last = member.last_name.charAt(0);
   return `${first}${last}`.toUpperCase() || '?';
-}
-
-function statusBadgeVariant(status: MembershipStatus): 'success' | 'destructive' | 'secondary' {
-  if (status === 'active') return 'success';
-  if (status === 'suspended') return 'destructive';
-  // expired + cancelled read as muted.
-  return 'secondary';
 }
 
 /** Active membership whose end date is within the next `EXPIRING_SOON_DAYS`. */
@@ -169,7 +163,10 @@ function AddMemberDialog() {
     defaultValues: defaults,
   });
 
-  const onSubmit = (values: CreateMemberValues) => {
+  // `addAnother` keeps the dialog open and resets the form after a successful
+  // save, so the front desk can enroll a queue of walk-ins without reopening
+  // the dialog each time (a rapid-repeat flow per PRODUCT.md).
+  const onSubmit = (values: CreateMemberValues, addAnother: boolean) => {
     registerMember.mutate(
       {
         data: {
@@ -187,7 +184,9 @@ function AddMemberDialog() {
           toast.success(t('addDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
           form.reset(defaults);
-          setOpen(false);
+          if (!addAnother) {
+            setOpen(false);
+          }
         },
         onError: (err) => {
           if (!applyFieldErrors(form, err)) {
@@ -217,7 +216,10 @@ function AddMemberDialog() {
           <DialogDescription>{t('addDialog.description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+          <form
+            onSubmit={(e) => void form.handleSubmit((v) => onSubmit(v, false))(e)}
+            className="grid gap-4"
+          >
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
@@ -325,6 +327,14 @@ function AddMemberDialog() {
               )}
             />
             <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={registerMember.isPending}
+                onClick={() => void form.handleSubmit((v) => onSubmit(v, true))()}
+              >
+                {t('addDialog.submitAndAnother')}
+              </Button>
               <Button type="submit" disabled={registerMember.isPending}>
                 {registerMember.isPending ? t('addDialog.submitting') : t('addDialog.submit')}
               </Button>
@@ -396,8 +406,106 @@ function SuspendMemberDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Directory (toolbar + table)
+// Directory (toolbar + table on desktop, cards on phone)
 // ---------------------------------------------------------------------------
+
+/** Row/card action menu (view, edit, suspend), shared by the table and cards. */
+function MemberActions({
+  member,
+  canManage,
+  onSuspend,
+  size = 'icon-sm',
+}: {
+  member: Member;
+  canManage: boolean;
+  onSuspend: (member: Member) => void;
+  size?: 'icon' | 'icon-sm';
+}) {
+  const t = useTranslations('members');
+  const canSuspend = canManage && member.membership_status !== 'suspended';
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size={size} aria-label={t('row.menu')}>
+          <MoreHorizontalIcon />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/members/${member.id}`}>
+            <EyeIcon />
+            {t('row.view')}
+          </Link>
+        </DropdownMenuItem>
+        {canManage ? (
+          <DropdownMenuItem asChild>
+            <Link href={`/members/${member.id}`}>
+              <PencilIcon />
+              {t('row.edit')}
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
+        {canSuspend ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onSelect={() => onSuspend(member)}>
+              <BanIcon />
+              {t('row.suspend')}
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/**
+ * Phone layout for a member: a tappable stacked card (name, contact, status +
+ * type badges), instead of the 6-column table which would force horizontal
+ * scroll at 375px. The action menu gets the 44px `icon` size for touch.
+ */
+function MemberCard({
+  member,
+  canManage,
+  onSuspend,
+}: {
+  member: Member;
+  canManage: boolean;
+  onSuspend: (member: Member) => void;
+}) {
+  const t = useTranslations('members');
+  const expiringSoon = isExpiringSoon(member);
+
+  return (
+    <div className="flex items-start gap-3 p-4">
+      <Link
+        href={`/members/${member.id}`}
+        className="flex min-w-0 flex-1 items-start gap-3 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15"
+      >
+        <Avatar size="sm">
+          <AvatarFallback aria-hidden>{initials(member)}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium">{memberName(member)}</p>
+          {member.email ? (
+            <p className="truncate text-xs text-muted-foreground">{member.email}</p>
+          ) : member.phone ? (
+            <p className="truncate font-mono text-xs text-muted-foreground">{member.phone}</p>
+          ) : null}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
+              {t(`status.${member.membership_status}`)}
+            </Badge>
+            <Badge variant="outline">{t(`type.${member.membership_type}`)}</Badge>
+            {expiringSoon ? <Badge variant="warning">{t('expiringSoon')}</Badge> : null}
+          </div>
+        </div>
+      </Link>
+      <MemberActions member={member} canManage={canManage} onSuspend={onSuspend} size="icon" />
+    </div>
+  );
+}
 
 function MemberRow({
   member,
@@ -411,7 +519,6 @@ function MemberRow({
   const t = useTranslations('members');
   const locale = useLocale();
   const expiringSoon = isExpiringSoon(member);
-  const canSuspend = canManage && member.membership_status !== 'suspended';
 
   return (
     <TableRow>
@@ -438,7 +545,7 @@ function MemberRow({
         <Badge variant="outline">{t(`type.${member.membership_type}`)}</Badge>
       </TableCell>
       <TableCell>
-        <Badge variant={statusBadgeVariant(member.membership_status)}>
+        <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
           {t(`status.${member.membership_status}`)}
         </Badge>
       </TableCell>
@@ -455,38 +562,7 @@ function MemberRow({
         </div>
       </TableCell>
       <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label={t('row.menu')}>
-              <MoreHorizontalIcon />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href={`/members/${member.id}`}>
-                <EyeIcon />
-                {t('row.view')}
-              </Link>
-            </DropdownMenuItem>
-            {canManage ? (
-              <DropdownMenuItem asChild>
-                <Link href={`/members/${member.id}`}>
-                  <PencilIcon />
-                  {t('row.edit')}
-                </Link>
-              </DropdownMenuItem>
-            ) : null}
-            {canSuspend ? (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onSelect={() => onSuspend(member)}>
-                  <BanIcon />
-                  {t('row.suspend')}
-                </DropdownMenuItem>
-              </>
-            ) : null}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <MemberActions member={member} canManage={canManage} onSuspend={onSuspend} size="icon-sm" />
       </TableCell>
     </TableRow>
   );
@@ -520,7 +596,11 @@ function MembersDirectory({ members, canManage }: { members: Member[]; canManage
   return (
     <Card className="gap-0 overflow-hidden py-0">
       <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={status} onValueChange={(value) => setStatus(value as StatusFilter)}>
+        <Tabs
+          value={status}
+          onValueChange={(value) => setStatus(value as StatusFilter)}
+          className="max-w-full overflow-x-auto"
+        >
           <TabsList aria-label={t('columns.status')}>
             {tabs.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
@@ -550,30 +630,46 @@ function MembersDirectory({ members, canManage }: { members: Member[]; canManage
           <EmptyDescription>{t('noResults.body')}</EmptyDescription>
         </Empty>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('columns.member')}</TableHead>
-              <TableHead>{t('columns.contact')}</TableHead>
-              <TableHead>{t('columns.type')}</TableHead>
-              <TableHead>{t('columns.status')}</TableHead>
-              <TableHead>{t('columns.end')}</TableHead>
-              <TableHead className="text-right">
-                <span className="sr-only">{t('columns.actions')}</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          {/* Phone: stacked cards. The table would force horizontal scroll at 375px. */}
+          <div className="divide-y md:hidden">
             {filtered.map((member) => (
-              <MemberRow
+              <MemberCard
                 key={member.id}
                 member={member}
                 canManage={canManage}
                 onSuspend={setSuspendTarget}
               />
             ))}
-          </TableBody>
-        </Table>
+          </div>
+          {/* Tablet/desktop: the full directory table. */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('columns.member')}</TableHead>
+                  <TableHead>{t('columns.contact')}</TableHead>
+                  <TableHead>{t('columns.type')}</TableHead>
+                  <TableHead>{t('columns.status')}</TableHead>
+                  <TableHead>{t('columns.end')}</TableHead>
+                  <TableHead className="text-right">
+                    <span className="sr-only">{t('columns.actions')}</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((member) => (
+                  <MemberRow
+                    key={member.id}
+                    member={member}
+                    canManage={canManage}
+                    onSuspend={setSuspendTarget}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {suspendTarget ? (
@@ -611,6 +707,7 @@ function DirectorySkeleton() {
 
 function MembersContent() {
   const t = useTranslations('members');
+  const tCommon = useTranslations('common');
   const role = useRole();
   const canManage = role === 'owner' || role === 'admin' || role === 'receptionist';
 
@@ -635,7 +732,17 @@ function MembersContent() {
       ) : membersQuery.isError ? (
         <Alert variant="destructive">
           <AlertTitle>{t('errorTitle')}</AlertTitle>
-          <AlertDescription>{apiErrorMessage(membersQuery.error, t('loadError'))}</AlertDescription>
+          <AlertDescription className="flex flex-col items-start gap-3">
+            <span>{apiErrorMessage(membersQuery.error, t('loadError'))}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void membersQuery.refetch()}
+              disabled={membersQuery.isFetching}
+            >
+              {tCommon('retry')}
+            </Button>
+          </AlertDescription>
         </Alert>
       ) : members.length === 0 ? (
         <Card>

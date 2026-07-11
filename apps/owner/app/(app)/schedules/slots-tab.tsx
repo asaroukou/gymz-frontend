@@ -33,7 +33,7 @@ import {
   DropdownMenuTrigger,
 } from '@iziwellpass/ui/components/dropdown-menu';
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from '@iziwellpass/ui/components/empty';
-import { Progress } from '@iziwellpass/ui/components/progress';
+import { Capacity } from '@iziwellpass/ui/components/capacity';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
 import { useAllMembers } from '@/lib/all-members';
@@ -42,7 +42,7 @@ import { useSlotsByDate } from '@/lib/dated-api';
 import { formatTime, venueDateKey, venueToday } from '@/lib/datetime';
 
 import { BookingsSheet } from './bookings-sheet';
-import { capacityIndicatorClass, usePlanningLabels } from './planning-utils';
+import { usePlanningLabels } from './planning-utils';
 
 /**
  * Friendly, venue-local day heading for a slot group: "Aujourd'hui" /
@@ -164,9 +164,6 @@ function SlotRow({
   const [cancelling, setCancelling] = useState(false);
 
   const isCancelled = slot.status === 'cancelled';
-  const isFull = slot.status === 'full' || slot.booked_count >= slot.capacity;
-  const pct = slot.capacity > 0 ? Math.min(100, (slot.booked_count / slot.capacity) * 100) : 0;
-  const capacityText = `${slot.booked_count}/${slot.capacity}`;
   const badge = slotStatusBadge(slot.status);
   const venueId = slot.venue_id;
 
@@ -180,34 +177,30 @@ function SlotRow({
         <p className="truncate text-xs text-muted-foreground">{resourceName}</p>
       </div>
       {isCancelled ? (
-        <div className="w-24 shrink-0" />
+        <div className="w-16 shrink-0 sm:w-24" />
       ) : (
-        <div className="hidden w-24 shrink-0 sm:block">
-          <p className="mb-1 text-right font-mono text-xs tabular-nums text-muted-foreground">
-            {capacityText}
-          </p>
-          <Progress
-            value={pct}
-            indicatorClassName={capacityIndicatorClass(slot.booked_count, slot.capacity, isFull)}
-            aria-label={t('slots.capacityLabel', {
-              booked: slot.booked_count,
-              cap: slot.capacity,
-            })}
-          />
-        </div>
+        <Capacity
+          booked={slot.booked_count}
+          capacity={slot.capacity}
+          className="w-16 shrink-0 sm:w-24"
+          label={t('slots.capacityLabel', {
+            booked: slot.booked_count,
+            cap: slot.capacity,
+          })}
+        />
       )}
       <Badge variant={badge.variant} className="shrink-0">
         {badge.label}
       </Badge>
       <div className="flex shrink-0 items-center gap-1">
-        <Button variant="outline" size="sm" onClick={() => onOpenParticipants(slot)}>
+        <Button variant="outline" onClick={() => onOpenParticipants(slot)}>
           <UsersIcon />
           <span className="hidden sm:inline">{t('slots.participants')}</span>
         </Button>
         {canManageSlots && !isCancelled ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={t('slots.rowMenu')}>
+              <Button variant="ghost" size="icon" aria-label={t('slots.rowMenu')}>
                 <MoreHorizontalIcon />
               </Button>
             </DropdownMenuTrigger>

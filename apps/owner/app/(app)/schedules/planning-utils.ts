@@ -52,21 +52,13 @@ export function resolveBookingActorLabel(
   return booking.pass_holder_id ?? '—';
 }
 
-/**
- * Capacity bar colour: full/over → destructive (red), tight (>85%) → warning
- * (amber), otherwise the default primary indicator. Mirrors the design
- * system's status colours (no gradients / tinted panels).
- */
-export function capacityIndicatorClass(booked: number, capacity: number, isFull: boolean): string {
-  if (isFull) return 'bg-destructive';
-  const pct = capacity > 0 ? (booked / capacity) * 100 : 0;
-  if (pct > 85) return 'bg-warning';
-  return '';
-}
-
+// Capacity bar colour now lives in the shared `Capacity` component
+// (`@iziwellpass/ui/components/capacity`), which co-decides the bar fill and
+// the badge level so they can't drift. A full slot reads as amber ("complet",
+// no more room) rather than red; red is reserved for genuine overbooking.
 const SLOT_STATUS_VARIANT: Record<SlotStatus, BadgeVariant> = {
   available: 'success',
-  full: 'secondary',
+  full: 'warning',
   cancelled: 'outline',
 };
 

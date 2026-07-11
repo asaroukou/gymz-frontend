@@ -20,7 +20,7 @@ import {
   useSuspendMember,
   useUpdateMember,
 } from '@iziwellpass/api/generated';
-import type { Member, MembershipStatus } from '@iziwellpass/api/schemas';
+import type { Member } from '@iziwellpass/api/schemas';
 import { MembershipType } from '@iziwellpass/api/schemas';
 import { useRole } from '@iziwellpass/auth/provider';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
@@ -66,6 +66,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/compone
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { formatCalendarDate } from '@/lib/datetime';
+import { memberStatusBadgeVariant } from '@/lib/member-status';
 
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
@@ -80,12 +81,6 @@ function initials(member: Member): string {
   const first = member.first_name.charAt(0);
   const last = member.last_name.charAt(0);
   return `${first}${last}`.toUpperCase() || '?';
-}
-
-function statusBadgeVariant(status: MembershipStatus): 'success' | 'destructive' | 'secondary' {
-  if (status === 'active') return 'success';
-  if (status === 'suspended') return 'destructive';
-  return 'secondary';
 }
 
 // ---------------------------------------------------------------------------
@@ -109,7 +104,7 @@ function IdentityCard({ member }: { member: Member }) {
             <h2 className="text-lg font-semibold">{memberName(member)}</h2>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{t(`type.${member.membership_type}`)}</Badge>
-              <Badge variant={statusBadgeVariant(member.membership_status)}>
+              <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
                 {t(`status.${member.membership_status}`)}
               </Badge>
             </div>
@@ -161,7 +156,7 @@ function SubscriptionCard({ member }: { member: Member }) {
     {
       label: t('detail.subscription.status'),
       value: (
-        <Badge variant={statusBadgeVariant(member.membership_status)}>
+        <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
           {t(`status.${member.membership_status}`)}
         </Badge>
       ),
@@ -397,6 +392,7 @@ function EditMemberForm({ member, canEdit }: { member: Member; canEdit: boolean 
                       <SelectItem value="inactive">{t('detail.edit.inactiveOption')}</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">{t('detail.edit.activeHint')}</p>
                   <FormMessage />
                 </FormItem>
               )}

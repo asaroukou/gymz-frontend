@@ -40,6 +40,95 @@ import { formatCalendarDate } from '@/lib/datetime';
 import { usePlanningLabels } from './planning-utils';
 import { AddScheduleDialog, DeleteScheduleDialog, EditScheduleDialog } from './schedule-dialogs';
 
+/** Edit/delete menu, shared by the desktop table row and the phone card. */
+function CourseActions({
+  schedule,
+  onEdit,
+  onDelete,
+  size = 'icon-sm',
+}: {
+  schedule: Schedule;
+  onEdit: (schedule: Schedule) => void;
+  onDelete: (schedule: Schedule) => void;
+  size?: 'icon' | 'icon-sm';
+}) {
+  const t = useTranslations('planning');
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size={size} aria-label={t('courses.rowMenu')}>
+          <MoreHorizontalIcon />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => onEdit(schedule)}>{t('courses.edit')}</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onSelect={() => onDelete(schedule)}>
+          {t('courses.delete')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** `Schedule.start_time`/`end_time` are `NaiveTime` clock strings ("09:00:00"),
+ * the recurring template's venue-local daily window. Trim to "HH:MM"; never run
+ * through the venue-timezone formatters. */
+function scheduleClock(schedule: Schedule): string {
+  return `${schedule.start_time.slice(0, 5)}–${schedule.end_time.slice(0, 5)}`;
+}
+
+/**
+ * Phone layout for a recurring course: a stacked card (title, recurrence +
+ * clock, resource · instructor, period) instead of the 6-column table, which
+ * would force horizontal scroll at 375px.
+ */
+function CourseCard({
+  schedule,
+  resourceName,
+  instructorName,
+  canManage,
+  onEdit,
+  onDelete,
+}: {
+  schedule: Schedule;
+  resourceName: string;
+  instructorName: string;
+  canManage: boolean;
+  onEdit: (schedule: Schedule) => void;
+  onDelete: (schedule: Schedule) => void;
+}) {
+  const t = useTranslations('planning');
+  const locale = useLocale();
+  const { formatRecurrence } = usePlanningLabels();
+  const dateRange = schedule.effective_until
+    ? t('courses.dateRange', {
+        from: formatCalendarDate(schedule.effective_from, locale),
+        until: formatCalendarDate(schedule.effective_until, locale),
+      })
+    : t('courses.dateFrom', { from: formatCalendarDate(schedule.effective_from, locale) });
+
+  return (
+    <div className="flex items-start gap-3 p-4">
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium">{schedule.title}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+          <span>{formatRecurrence(schedule.recurrence_rule)}</span>
+          <span className="font-mono tabular-nums">{scheduleClock(schedule)}</span>
+        </div>
+        <p className="mt-1 truncate text-xs text-muted-foreground">
+          {resourceName}
+          {instructorName ? ` · ${instructorName}` : ''}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{dateRange}</p>
+      </div>
+      {canManage ? (
+        <CourseActions schedule={schedule} onEdit={onEdit} onDelete={onDelete} size="icon" />
+      ) : null}
+    </div>
+  );
+}
+
 function CourseRow({
   schedule,
   resourceName,
@@ -59,11 +148,7 @@ function CourseRow({
   const locale = useLocale();
   const { formatRecurrence } = usePlanningLabels();
 
-  // `Schedule.start_time`/`end_time` are `NaiveTime` clock strings
-  // ("09:00:00") — the recurring template's daily window, already
-  // venue-local with no UTC instant to convert. Rendered as-is (trimmed to
-  // "HH:MM"); never run through the venue-timezone formatters.
-  const clock = `${schedule.start_time.slice(0, 5)}–${schedule.end_time.slice(0, 5)}`;
+  const clock = scheduleClock(schedule);
 
   const dateRange = schedule.effective_until
     ? t('courses.dateRange', {
@@ -91,22 +176,7 @@ function CourseRow({
       <TableCell className="text-muted-foreground">{dateRange}</TableCell>
       <TableCell className="text-right">
         {canManage ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={t('courses.rowMenu')}>
-                <MoreHorizontalIcon />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => onEdit(schedule)}>
-                {t('courses.edit')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onSelect={() => onDelete(schedule)}>
-                {t('courses.delete')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <CourseActions schedule={schedule} onEdit={onEdit} onDelete={onDelete} size="icon-sm" />
         ) : null}
       </TableCell>
     </TableRow>
@@ -193,35 +263,54 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
       ) : null}
 
       <Card className="gap-0 overflow-hidden py-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('courses.columns.course')}</TableHead>
-              <TableHead>{t('courses.columns.recurrence')}</TableHead>
-              <TableHead>{t('courses.columns.resource')}</TableHead>
-              <TableHead>{t('courses.columns.instructor')}</TableHead>
-              <TableHead>{t('courses.columns.period')}</TableHead>
-              <TableHead className="text-right">
-                <span className="sr-only">{t('courses.columns.actions')}</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {schedules.map((schedule: Schedule) => (
-              <CourseRow
-                key={schedule.id}
-                schedule={schedule}
-                resourceName={
-                  resourceById.get(schedule.resource_id)?.name ?? t('courses.unknownResource')
-                }
-                instructorName={instructorName(schedule)}
-                canManage={canManage}
-                onEdit={setEditing}
-                onDelete={setDeleting}
-              />
-            ))}
-          </TableBody>
-        </Table>
+        {/* Phone: stacked cards. The 6-column table would force horizontal scroll at 375px. */}
+        <div className="divide-y md:hidden">
+          {schedules.map((schedule: Schedule) => (
+            <CourseCard
+              key={schedule.id}
+              schedule={schedule}
+              resourceName={
+                resourceById.get(schedule.resource_id)?.name ?? t('courses.unknownResource')
+              }
+              instructorName={instructorName(schedule)}
+              canManage={canManage}
+              onEdit={setEditing}
+              onDelete={setDeleting}
+            />
+          ))}
+        </div>
+        {/* Tablet/desktop: the full table. */}
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('courses.columns.course')}</TableHead>
+                <TableHead>{t('courses.columns.recurrence')}</TableHead>
+                <TableHead>{t('courses.columns.resource')}</TableHead>
+                <TableHead>{t('courses.columns.instructor')}</TableHead>
+                <TableHead>{t('courses.columns.period')}</TableHead>
+                <TableHead className="text-right">
+                  <span className="sr-only">{t('courses.columns.actions')}</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {schedules.map((schedule: Schedule) => (
+                <CourseRow
+                  key={schedule.id}
+                  schedule={schedule}
+                  resourceName={
+                    resourceById.get(schedule.resource_id)?.name ?? t('courses.unknownResource')
+                  }
+                  instructorName={instructorName(schedule)}
+                  canManage={canManage}
+                  onEdit={setEditing}
+                  onDelete={setDeleting}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </Card>
 
       {editing ? (
