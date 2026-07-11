@@ -24,19 +24,24 @@
     "edit": "Edit",
     "delete": "Delete",
     "search": "Search",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "retry": "Retry"
   },
   "auth": {
-    "footer": "Need help? Contact your administrator.",
+    "footer": "Need help? Contact whoever gave you access.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "login": {
       "title": "Sign in",
-      "subtitle": "Sign in to access your venue.",
+      "subtitle": "Sign in to reach your workspace.",
       "email": "Email",
       "password": "Password",
       "submit": "Sign in",
       "submitting": "Signing in…",
       "onboardedNotice": "Your venue is ready — sign in to continue.",
-      "noAccount": "Don't have an account?",
+      "forgotPassword": "Forgot password?",
+      "forgotPasswordSoon": "Coming soon",
+      "noAccount": "Opening a new venue?",
       "createAccount": "Create an account",
       "error": "Invalid email or password"
     },
@@ -94,7 +99,16 @@
       "passwordMin": "At least 12 characters",
       "passwordLowercase": "At least one lowercase letter",
       "passwordUppercase": "At least one uppercase letter",
-      "passwordDigit": "At least one digit"
+      "passwordDigit": "At least one digit",
+      "invalidCredentials": "Invalid email or password.",
+      "userNotConfirmed": "Your account isn't confirmed yet.",
+      "tooManyAttempts": "Too many attempts. Wait a few minutes before trying again.",
+      "passwordResetRequired": "Your password must be reset. Contact whoever gave you access.",
+      "invalidPassword": "This password doesn't meet the security rules.",
+      "codeMismatch": "Incorrect code. Check the 6 digits from your email.",
+      "codeExpired": "This code has expired. Request a new one.",
+      "usernameExists": "An account already exists with this email.",
+      "network": "Can't connect. Check your connection and try again."
     }
   },
   "onboarding": {
@@ -298,6 +312,7 @@
       "start": "Membership start",
       "notes": "Notes",
       "submit": "Add member",
+      "submitAndAnother": "Add and continue",
       "submitting": "Adding…",
       "success": "Member added",
       "error": "Could not add member"
@@ -333,6 +348,7 @@
         "type": "Membership type",
         "end": "Membership end",
         "active": "Account status",
+        "activeHint": "Allows or blocks the member's access. Suspending the subscription is handled in the dedicated section below.",
         "activeOption": "Active",
         "inactiveOption": "Inactive",
         "notes": "Notes",
@@ -433,6 +449,8 @@
       "weekdayRequired": "Select at least one day",
       "intervalDays": "Interval (days)",
       "intervalWeeks": "Interval (weeks)",
+      "sectionCourse": "The class",
+      "sectionTiming": "Schedule",
       "title": "Title",
       "titlePlaceholder": "Morning yoga",
       "resource": "Resource",

@@ -24,19 +24,24 @@
     "edit": "Modifier",
     "delete": "Supprimer",
     "search": "Rechercher",
-    "loading": "Chargement…"
+    "loading": "Chargement…",
+    "retry": "Réessayer"
   },
   "auth": {
-    "footer": "Besoin d'aide ? Contactez votre administrateur.",
+    "footer": "Besoin d'aide ? Contactez la personne qui vous a donné accès.",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
     "login": {
       "title": "Connexion",
-      "subtitle": "Connectez-vous pour accéder à votre établissement.",
+      "subtitle": "Connectez-vous pour accéder à votre espace.",
       "email": "E-mail",
       "password": "Mot de passe",
       "submit": "Se connecter",
       "submitting": "Connexion…",
       "onboardedNotice": "Votre établissement est prêt — connectez-vous pour continuer.",
-      "noAccount": "Pas encore de compte ?",
+      "forgotPassword": "Mot de passe oublié ?",
+      "forgotPasswordSoon": "Bientôt disponible",
+      "noAccount": "Vous ouvrez un nouvel établissement ?",
       "createAccount": "Créer un compte",
       "error": "E-mail ou mot de passe incorrect"
     },
@@ -94,7 +99,16 @@
       "passwordMin": "12 caractères minimum",
       "passwordLowercase": "Au moins une minuscule",
       "passwordUppercase": "Au moins une majuscule",
-      "passwordDigit": "Au moins un chiffre"
+      "passwordDigit": "Au moins un chiffre",
+      "invalidCredentials": "E-mail ou mot de passe incorrect.",
+      "userNotConfirmed": "Votre compte n'est pas encore confirmé.",
+      "tooManyAttempts": "Trop de tentatives. Patientez quelques minutes avant de réessayer.",
+      "passwordResetRequired": "Votre mot de passe doit être réinitialisé. Contactez la personne qui vous a donné accès.",
+      "invalidPassword": "Ce mot de passe ne respecte pas les règles de sécurité.",
+      "codeMismatch": "Code incorrect. Vérifiez les 6 chiffres reçus par e-mail.",
+      "codeExpired": "Ce code a expiré. Renvoyez-en un nouveau.",
+      "usernameExists": "Un compte existe déjà avec cet e-mail.",
+      "network": "Connexion impossible. Vérifiez votre connexion et réessayez."
     }
   },
   "onboarding": {
@@ -298,6 +312,7 @@
       "start": "Début d'abonnement",
       "notes": "Notes",
       "submit": "Ajouter le membre",
+      "submitAndAnother": "Ajouter et enchaîner",
       "submitting": "Ajout…",
       "success": "Membre ajouté",
       "error": "Impossible d'ajouter le membre"
@@ -333,6 +348,7 @@
         "type": "Type d'abonnement",
         "end": "Fin d'abonnement",
         "active": "Statut du compte",
+        "activeHint": "Autorise ou bloque l'accès du membre. La suspension de l'abonnement se gère dans la zone dédiée, plus bas.",
         "activeOption": "Actif",
         "inactiveOption": "Inactif",
         "notes": "Notes",
@@ -433,6 +449,8 @@
       "weekdayRequired": "Sélectionnez au moins un jour",
       "intervalDays": "Intervalle (jours)",
       "intervalWeeks": "Intervalle (semaines)",
+      "sectionCourse": "Le cours",
+      "sectionTiming": "Horaire",
       "title": "Titre",
       "titlePlaceholder": "Yoga du matin",
       "resource": "Salle",
