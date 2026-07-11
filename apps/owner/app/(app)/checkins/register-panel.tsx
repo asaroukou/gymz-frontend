@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iziwellpass/ui/compon
 
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 
+import { QrScannerDialog } from './qr-scanner-dialog';
 import type { QueryLike } from './use-frontdesk-data';
 
 function memberName(member: Member): string {
@@ -126,28 +127,37 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t('qr.label')}</FormLabel>
-              <div className="relative">
-                <QrCodeIcon
-                  className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden="true"
-                />
-                <FormControl>
-                  <Input
-                    {...field}
-                    ref={(el) => {
-                      field.ref(el);
-                      inputRef.current = el;
-                    }}
-                    inputMode="text"
-                    autoComplete="off"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    disabled={checkInViaQr.isPending}
-                    placeholder={t('qr.placeholder')}
-                    className="h-11 pl-12"
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <QrCodeIcon
+                    className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
                   />
-                </FormControl>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      ref={(el) => {
+                        field.ref(el);
+                        inputRef.current = el;
+                      }}
+                      inputMode="text"
+                      autoComplete="off"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      disabled={checkInViaQr.isPending}
+                      placeholder={t('qr.placeholder')}
+                      className="h-11 pl-12"
+                    />
+                  </FormControl>
+                </div>
+                <QrScannerDialog
+                  disabled={checkInViaQr.isPending}
+                  onDetected={(token) => {
+                    form.setValue('qr_token', token);
+                    void form.handleSubmit(onSubmit)();
+                  }}
+                />
               </div>
               <FormMessage />
             </FormItem>
