@@ -53,12 +53,19 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
   );
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
+function TableHead({
+  className,
+  numeric,
+  ...props
+}: React.ComponentProps<'th'> & { numeric?: boolean }) {
   return (
     <th
       data-slot="table-head"
       className={cn(
         'h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+        // Numeric columns align right and use the mono tabular figures the
+        // Mono Numbers rule calls for, so digits line up across rows.
+        numeric && 'text-right',
         className,
       )}
       {...props}
@@ -66,12 +73,17 @@ function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
   );
 }
 
-function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
+function TableCell({
+  className,
+  numeric,
+  ...props
+}: React.ComponentProps<'td'> & { numeric?: boolean }) {
   return (
     <td
       data-slot="table-cell"
       className={cn(
         'p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+        numeric && 'text-right font-mono tabular-nums',
         className,
       )}
       {...props}

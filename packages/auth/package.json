@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./client": "./src/cognito.ts",
+    "./errors": "./src/errors.ts",
     "./claims": "./src/claims.ts",
     "./provider": "./src/provider.tsx",
     "./middleware": "./src/middleware.ts",

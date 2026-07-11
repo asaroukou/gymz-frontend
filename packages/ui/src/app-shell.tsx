@@ -86,10 +86,10 @@ function NavLinks({
             data-active={active || undefined}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors',
+              'flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15 lg:h-9',
               active
                 ? 'bg-primary text-primary-foreground shadow-xs'
-                : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5',
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
             )}
           >
             {item.icon}

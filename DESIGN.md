@@ -38,7 +38,7 @@ typography:
     lineHeight: 1.5
   label:
     fontFamily: 'Hanken Grotesk, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '12px'
+    fontSize: '14px'
     fontWeight: 500
     lineHeight: 1.3
   mono:

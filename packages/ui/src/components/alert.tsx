@@ -11,6 +11,9 @@ const alertVariants = cva(
         default: 'text-foreground',
         destructive:
           'border-destructive/50 bg-destructive/5 text-destructive [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90',
+        success: 'border-success/40 bg-success/5 text-success-foreground [&>svg]:text-current',
+        warning: 'border-warning/40 bg-warning/5 text-warning-foreground [&>svg]:text-current',
+        info: 'border-info/40 bg-info/5 text-info-foreground [&>svg]:text-current',
       },
     },
     defaultVariants: {
@@ -57,4 +60,19 @@ function AlertDescription({ className, ...props }: React.ComponentProps<'div'>) 
   );
 }
 
-export { Alert, AlertTitle, AlertDescription };
+/**
+ * Support reference line for error alerts (a request/trace id), set in Geist
+ * Mono per the DESIGN "calm error carries a mono support reference" rule so an
+ * operator can quote it. Renders in the description column, quiet.
+ */
+function AlertReference({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="alert-reference"
+      className={cn('col-start-2 mt-1 font-mono text-xs text-muted-foreground', className)}
+      {...props}
+    />
+  );
+}
+
+export { Alert, AlertTitle, AlertDescription, AlertReference };

@@ -25,6 +25,12 @@
   --neutral-950: #0c0a09;
 
   --backdrop: #d6d2cc;
+  /* Text on the greige desk. neutral-500 (muted-foreground, tuned for the
+     white surface) only reaches 3.2:1 here; neutral-600 clears AA (~4.9:1)
+     while staying quiet. */
+  --backdrop-foreground: var(--neutral-600);
+  /* Modal/sheet scrim: warm ink tint, never raw cool black. */
+  --overlay: rgba(28, 25, 23, 0.5);
   --background: #ffffff;
   --foreground: var(--neutral-900);
   --card: #ffffff;
@@ -45,6 +51,14 @@
   --success: #16a34a;
   --warning: #f59e0b;
   --info: #2563eb;
+  /* Darker text stops for status text on a /15 tint. The base status colors
+     (amber/green especially) fail AA as text on their own light tint; the tint
+     is near-white so 700 only reaches ~4.2:1, 800 clears 4.5 with margin
+     (green ~6:1, amber ~6.3:1). Blue-700 already clears it. Flip lighter in
+     dark mode, where the tint is dark. */
+  --success-foreground: #166534;
+  --warning-foreground: #92400e;
+  --info-foreground: #1d4ed8;
   --border: var(--neutral-200);
   --input: var(--neutral-200);
   --ring: var(--neutral-900);
@@ -58,6 +72,8 @@
 
 .dark {
   --backdrop: #0c0a09;
+  --backdrop-foreground: var(--neutral-400);
+  --overlay: rgba(12, 10, 9, 0.66);
   --background: var(--neutral-950);
   --foreground: var(--neutral-50);
   --card: var(--neutral-900);
@@ -78,6 +94,9 @@
   --success: #4ade80;
   --warning: #fbbf24;
   --info: #60a5fa;
+  --success-foreground: #4ade80;
+  --warning-foreground: #fbbf24;
+  --info-foreground: #60a5fa;
   --border: var(--neutral-700);
   --input: var(--neutral-800);
   --ring: var(--neutral-300);
@@ -85,6 +104,8 @@
 
 @theme inline {
   --color-backdrop: var(--backdrop);
+  --color-backdrop-foreground: var(--backdrop-foreground);
+  --color-overlay: var(--overlay);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -102,8 +123,11 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -130,5 +154,18 @@
      focus-visible:ring-[3px] focus-visible:ring-ring/15 focus-visible:border-ring */
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+  /* Motion is functional, never decorative (PRODUCT.md): honor the OS
+     preference app-wide. Near-zeroes transitions and stops looping animations
+     (e.g. skeleton pulse) without removing state changes entirely. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

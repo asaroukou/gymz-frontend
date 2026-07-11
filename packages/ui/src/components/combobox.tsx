@@ -28,9 +28,9 @@ function Combobox({
   options,
   value,
   onValueChange,
-  placeholder = 'Select…',
-  searchPlaceholder = 'Search…',
-  emptyText = 'No results.',
+  placeholder = 'Sélectionner…',
+  searchPlaceholder = 'Rechercher…',
+  emptyText = 'Aucun résultat.',
   disabled = false,
   className,
   contentClassName,
@@ -46,7 +46,7 @@ function Combobox({
         role="combobox"
         aria-expanded={open}
         className={cn(
-          'flex h-9 w-full items-center justify-between gap-2 rounded-full border border-input bg-transparent px-4 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/15 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30',
+          'flex h-11 w-full items-center justify-between gap-2 rounded-full border border-input bg-transparent px-4 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none hover:bg-accent focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/15 disabled:cursor-not-allowed disabled:opacity-50 lg:h-9 dark:bg-input/30 dark:hover:bg-input/50',
           !current && 'text-muted-foreground',
           className,
         )}
