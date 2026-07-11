@@ -12,7 +12,7 @@ export function Wordmark() {
       >
         iW
       </span>
-      <span className="text-lg font-semibold tracking-tight">IziWellPass</span>
+      <span className="text-base font-semibold tracking-tight">IziWellPass</span>
     </div>
   );
 }

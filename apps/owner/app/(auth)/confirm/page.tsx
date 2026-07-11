@@ -13,14 +13,6 @@ import { z } from 'zod';
 import { useAuth } from '@iziwellpass/auth/provider';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@iziwellpass/ui/components/card';
-import {
   Form,
   FormControl,
   FormField,
@@ -31,6 +23,10 @@ import {
 import { Input } from '@iziwellpass/ui/components/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@iziwellpass/ui/components/input-otp';
 
+import { AuthCard } from '@/components/auth-card';
+import { AuthFormSkeleton } from '@/components/auth-card-skeleton';
+import { useAuthError } from '@/lib/auth-errors';
+
 type ConfirmValues = { email: string; code: string };
 
 const RESEND_COOLDOWN_SECONDS = 30;
@@ -40,8 +36,11 @@ function ConfirmForm() {
   const searchParams = useSearchParams();
   const { client } = useAuth();
   const t = useTranslations('auth');
+  const resolveError = useAuthError();
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  // Hold the pending state across the redirect to /login on success.
+  const [redirecting, setRedirecting] = useState(false);
 
   const schema = useMemo(
     () =>
@@ -67,11 +66,11 @@ function ConfirmForm() {
     try {
       await client.confirmSignUp(values.email, values.code);
       toast.success(t('confirm.success'));
+      setRedirecting(true);
       router.push('/login');
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('confirm.error');
+      const { message } = resolveError(err, t('confirm.error'));
       form.setError('root', { message });
-      toast.error(message);
     }
   };
 
@@ -88,7 +87,7 @@ function ConfirmForm() {
       toast.success(t('confirm.codeSent'));
       setCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('confirm.resendError');
+      const { message } = resolveError(err, t('confirm.resendError'));
       toast.error(message);
     } finally {
       setResending(false);
@@ -105,7 +104,7 @@ function ConfirmForm() {
             <FormItem>
               <FormLabel>{t('confirm.email')}</FormLabel>
               <FormControl>
-                <Input type="email" autoComplete="email" {...field} />
+                <Input type="email" autoComplete="email" className="h-11" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -144,16 +143,24 @@ function ConfirmForm() {
           )}
         />
         {form.formState.errors.root ? (
-          <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+          <p role="alert" className="text-sm text-destructive">
+            {form.formState.errors.root.message}
+          </p>
         ) : null}
-        <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-          {form.formState.isSubmitting ? t('confirm.submitting') : t('confirm.submit')}
+        <Button
+          type="submit"
+          disabled={form.formState.isSubmitting || redirecting}
+          className="h-11 w-full"
+        >
+          {form.formState.isSubmitting || redirecting
+            ? t('confirm.submitting')
+            : t('confirm.submit')}
         </Button>
         <Button
           type="button"
           variant="ghost"
-          className="w-full tabular-nums"
-          disabled={resending || cooldown > 0}
+          className="h-11 w-full tabular-nums"
+          disabled={resending || cooldown > 0 || redirecting}
           onClick={() => void onResend()}
         >
           {cooldown > 0
@@ -171,17 +178,10 @@ export default function ConfirmPage() {
   const t = useTranslations('auth');
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('confirm.title')}</CardTitle>
-        <CardDescription>{t('confirm.subtitle')}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Suspense fallback={null}>
-          <ConfirmForm />
-        </Suspense>
-      </CardContent>
-      <CardFooter className="justify-center">
+    <AuthCard
+      title={t('confirm.title')}
+      subtitle={t('confirm.subtitle')}
+      footer={
         <p className="text-sm text-muted-foreground">
           <Link
             href="/login"
@@ -190,7 +190,11 @@ export default function ConfirmPage() {
             {t('confirm.back')}
           </Link>
         </p>
-      </CardFooter>
-    </Card>
+      }
+    >
+      <Suspense fallback={<AuthFormSkeleton />}>
+        <ConfirmForm />
+      </Suspense>
+    </AuthCard>
   );
 }
