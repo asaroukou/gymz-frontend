@@ -26,6 +26,8 @@ import { PasswordInput } from '@/components/password-input';
 import { useAuthError } from '@/lib/auth-errors';
 import { makePasswordSchema } from '@/lib/password';
 
+import { usePendingSignup } from '../pending-credentials';
+
 type SignupValues = { email: string; password: string; confirmPassword: string };
 
 export default function SignupPage() {
@@ -33,6 +35,7 @@ export default function SignupPage() {
   const { client } = useAuth();
   const t = useTranslations('auth');
   const resolveError = useAuthError();
+  const pendingSignup = usePendingSignup();
 
   const schema = useMemo(
     () =>
@@ -68,6 +71,7 @@ export default function SignupPage() {
   const onSubmit = async (values: SignupValues) => {
     try {
       await client.signUp(values.email, values.password);
+      pendingSignup.set(values.email, values.password);
       setRedirecting(true);
       router.push(`/confirm?email=${encodeURIComponent(values.email)}`);
     } catch (err) {

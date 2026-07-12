@@ -27,6 +27,8 @@ import { AuthCard } from '@/components/auth-card';
 import { AuthFormSkeleton } from '@/components/auth-card-skeleton';
 import { useAuthError } from '@/lib/auth-errors';
 
+import { usePendingSignup } from '../pending-credentials';
+
 type ConfirmValues = { email: string; code: string };
 
 const RESEND_COOLDOWN_SECONDS = 30;
@@ -34,12 +36,15 @@ const RESEND_COOLDOWN_SECONDS = 30;
 function ConfirmForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { client } = useAuth();
+  const { client, signIn } = useAuth();
   const t = useTranslations('auth');
   const resolveError = useAuthError();
+  const pendingSignup = usePendingSignup();
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  // Hold the pending state across the redirect to /login on success.
+  // Hold the pending state across the success redirect (to /onboarding, or
+  // /login as a fallback) so the button doesn't flash re-enabled before this
+  // page unmounts.
   const [redirecting, setRedirecting] = useState(false);
 
   const schema = useMemo(
@@ -65,13 +70,37 @@ function ConfirmForm() {
   const onSubmit = async (values: ConfirmValues) => {
     try {
       await client.confirmSignUp(values.email, values.code);
-      toast.success(t('confirm.success'));
-      setRedirecting(true);
-      router.push('/login');
     } catch (err) {
       const { message } = resolveError(err, t('confirm.error'));
       form.setError('root', { message });
+      return;
     }
+
+    // Try to auto-sign-in with the credentials captured at signup so the user
+    // goes straight to onboarding. If they're gone (page was refreshed, which
+    // wipes the in-memory ref) or the sign-in doesn't succeed, fall back to the
+    // manual login flow. Note: on a confirmSignUp *error* above we return
+    // before consuming, so a retry with the right code can still auto-sign-in.
+    const creds = pendingSignup.consume();
+    if (creds && creds.email === values.email) {
+      try {
+        const result = await signIn(creds.email, creds.password);
+        // Any non-success kind (e.g. a new-password challenge — only reachable
+        // for admin-invited staff, not self-signup) falls through to /login.
+        if (result.kind === 'success') {
+          toast.success(t('confirm.created'));
+          setRedirecting(true);
+          router.replace('/onboarding');
+          return;
+        }
+      } catch {
+        // fall through to the login fallback below
+      }
+    }
+
+    toast.success(t('confirm.success'));
+    setRedirecting(true);
+    router.push('/login?next=/onboarding');
   };
 
   const onResend = async () => {

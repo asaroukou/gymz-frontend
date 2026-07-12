@@ -78,6 +78,7 @@
       "resendCooldown": "Resend code ({seconds}s)",
       "resending": "Sending…",
       "success": "Account confirmed — sign in",
+      "created": "Account created — welcome!",
       "codeSent": "Code sent",
       "error": "Could not confirm account",
       "resendError": "Could not resend code",

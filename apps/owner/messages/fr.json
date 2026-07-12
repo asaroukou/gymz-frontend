@@ -78,6 +78,7 @@
       "resendCooldown": "Renvoyer le code ({seconds}s)",
       "resending": "Envoi…",
       "success": "Compte confirmé — connectez-vous",
+      "created": "Compte créé — bienvenue !",
       "codeSent": "Code envoyé",
       "error": "Impossible de confirmer le compte",
       "resendError": "Impossible de renvoyer le code",
