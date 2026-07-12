@@ -6,6 +6,20 @@
  * OpenAPI spec version: 0.1.0
  */
 /**
+ * Which venues a member is entitled to use.
+
+`ChainWide` = every venue in the tenant (current and future); no
+`member_venues` rows. `VenueScoped` = only the venues in `member_venues`.
+ */
+export type AccessScope = (typeof AccessScope)[keyof typeof AccessScope];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AccessScope = {
+  chain_wide: 'chain_wide',
+  venue_scoped: 'venue_scoped',
+} as const;
+
+/**
  * Closed platform catalog of activities. Adding one is a code change.
  */
 export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
@@ -218,6 +232,7 @@ export type ApiResponseMemberDataUserId = string | null;
  * A person enrolled at a venue with a membership.
  */
 export type ApiResponseMemberData = {
+  access_scope: AccessScope;
   created_at: string;
   email?: ApiResponseMemberDataEmail;
   first_name: string;
@@ -1378,6 +1393,8 @@ export type CreateMemberRequestPhone = string | null;
  * Request to enroll a new member at a venue.
  */
 export interface CreateMemberRequest {
+  /** How the member is scoped. Defaults to venue_scoped (requires venue_ids). */
+  access_scope?: AccessScope;
   email?: CreateMemberRequestEmail;
   first_name: string;
   last_name: string;
@@ -1386,6 +1403,8 @@ export interface CreateMemberRequest {
   membership_type: MembershipType;
   notes?: CreateMemberRequestNotes;
   phone?: CreateMemberRequestPhone;
+  /** Venues the member is entitled to. Required (non-empty) for venue_scoped. */
+  venue_ids?: VenueId[];
 }
 
 export type CreateResourceRequestDescription = string | null;
@@ -1596,6 +1615,7 @@ export type MemberUserId = string | null;
  * A person enrolled at a venue with a membership.
  */
 export interface Member {
+  access_scope: AccessScope;
   created_at: string;
   email?: MemberEmail;
   first_name: string;
@@ -1694,6 +1714,7 @@ export type PaginatedApiResponseVecMemberDataItemUserId = string | null;
  * A person enrolled at a venue with a membership.
  */
 export type PaginatedApiResponseVecMemberDataItem = {
+  access_scope: AccessScope;
   created_at: string;
   email?: PaginatedApiResponseVecMemberDataItemEmail;
   first_name: string;
@@ -2132,6 +2153,20 @@ export interface ScheduleSlot {
   status: SlotStatus;
   tenant_id: TenantId;
   venue_id: VenueId;
+}
+
+/**
+ * Flip a member's access scope.
+ */
+export interface SetMemberAccessRequest {
+  scope: AccessScope;
+}
+
+/**
+ * Replace a member's venue entitlements (implies access_scope=venue_scoped).
+ */
+export interface SetMemberVenuesRequest {
+  venue_ids: VenueId[];
 }
 
 /**

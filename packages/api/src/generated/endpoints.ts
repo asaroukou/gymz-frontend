@@ -78,6 +78,8 @@ import type {
   PaginatedApiResponseVecVenueCatalogEntry,
   QrCheckinRequest,
   RegisterPassHolderRequest,
+  SetMemberAccessRequest,
+  SetMemberVenuesRequest,
   SetStaffVenuesRequest,
   UpdateMemberRequest,
   UpdateResourceRequest,
@@ -469,6 +471,9 @@ export const useCheckInViaQr = <TError = ErrorResponse, TContext = unknown>(
  * Cursor pagination: pass `limit` (1-100, default 20); the response
 `meta.next_cursor` (when present) is the `cursor` for the next page. There
 is NO `offset`/`page` param. Optional case-insensitive filters: name/phone/email.
+
+For a venue-scoped staff caller the list is filtered to members entitled to
+at least one of the caller's venues (chain-wide members are always visible).
  * @summary List members in the current tenant (cursor-paginated, searchable).
  */
 export const getListMembersUrl = (params?: ListMembersParams) => {
@@ -602,6 +607,10 @@ export function useListMembers<
 }
 
 /**
+ * The request carries a venue entitlement: `access_scope` (`chain_wide` or
+`venue_scoped`, default `venue_scoped`) plus `venue_ids` (required non-empty
+for `venue_scoped`). A venue-scoped staff caller may only assign venues they
+have access to.
  * @summary Register a new member in the current tenant.
  */
 export const getRegisterMemberUrl = () => {
@@ -879,6 +888,96 @@ export const useUpdateMember = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
+ * Granting `chain_wide` is owner/admin only. Setting `venue_scoped` requires
+the member to already have venue entitlements (set via
+`PUT /gms/v1/members/{mid}/venues` first).
+ * @summary Flip a member's access scope (chain_wide vs venue_scoped).
+ */
+export const getSetMemberAccessUrl = (mid: string) => {
+  return `/gms/v1/members/${mid}/access`;
+};
+
+export const setMemberAccess = async (
+  mid: string,
+  setMemberAccessRequest: SetMemberAccessRequest,
+  options?: RequestInit,
+): Promise<ApiResponseMember> => {
+  return customFetch<ApiResponseMember>(getSetMemberAccessUrl(mid), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setMemberAccessRequest),
+  });
+};
+
+export const getSetMemberAccessMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setMemberAccess>>,
+    TError,
+    { mid: string; data: SetMemberAccessRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setMemberAccess>>,
+  TError,
+  { mid: string; data: SetMemberAccessRequest },
+  TContext
+> => {
+  const mutationKey = ['setMemberAccess'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setMemberAccess>>,
+    { mid: string; data: SetMemberAccessRequest }
+  > = (props) => {
+    const { mid, data } = props ?? {};
+
+    return setMemberAccess(mid, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetMemberAccessMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setMemberAccess>>
+>;
+export type SetMemberAccessMutationBody = SetMemberAccessRequest;
+export type SetMemberAccessMutationError = ErrorResponse;
+
+/**
+ * @summary Flip a member's access scope (chain_wide vs venue_scoped).
+ */
+export const useSetMemberAccess = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setMemberAccess>>,
+      TError,
+      { mid: string; data: SetMemberAccessRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setMemberAccess>>,
+  TError,
+  { mid: string; data: SetMemberAccessRequest },
+  TContext
+> => {
+  const mutationOptions = getSetMemberAccessMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
  * @summary Suspend a member.
  */
 export const getSuspendMemberUrl = (mid: string) => {
@@ -955,6 +1054,98 @@ export const useSuspendMember = <TError = ErrorResponse, TContext = unknown>(
   TContext
 > => {
   const mutationOptions = getSuspendMemberMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Down-scope guarded: narrowing access is rejected with 409 if the member still
+has future non-cancelled bookings at any venue not in the new set (this
+applies to chain-wide members being scoped down as well as to shrinking an
+existing set). A venue-scoped staff caller may only assign venues they have
+access to, and only for members already in their scope.
+ * @summary Replace a member's venue entitlements (implies access_scope=venue_scoped).
+ */
+export const getSetMemberVenuesUrl = (mid: string) => {
+  return `/gms/v1/members/${mid}/venues`;
+};
+
+export const setMemberVenues = async (
+  mid: string,
+  setMemberVenuesRequest: SetMemberVenuesRequest,
+  options?: RequestInit,
+): Promise<ApiResponseVecVenueId> => {
+  return customFetch<ApiResponseVecVenueId>(getSetMemberVenuesUrl(mid), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setMemberVenuesRequest),
+  });
+};
+
+export const getSetMemberVenuesMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setMemberVenues>>,
+    TError,
+    { mid: string; data: SetMemberVenuesRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setMemberVenues>>,
+  TError,
+  { mid: string; data: SetMemberVenuesRequest },
+  TContext
+> => {
+  const mutationKey = ['setMemberVenues'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setMemberVenues>>,
+    { mid: string; data: SetMemberVenuesRequest }
+  > = (props) => {
+    const { mid, data } = props ?? {};
+
+    return setMemberVenues(mid, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetMemberVenuesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setMemberVenues>>
+>;
+export type SetMemberVenuesMutationBody = SetMemberVenuesRequest;
+export type SetMemberVenuesMutationError = ErrorResponse;
+
+/**
+ * @summary Replace a member's venue entitlements (implies access_scope=venue_scoped).
+ */
+export const useSetMemberVenues = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setMemberVenues>>,
+      TError,
+      { mid: string; data: SetMemberVenuesRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setMemberVenues>>,
+  TError,
+  { mid: string; data: SetMemberVenuesRequest },
+  TContext
+> => {
+  const mutationOptions = getSetMemberVenuesMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
