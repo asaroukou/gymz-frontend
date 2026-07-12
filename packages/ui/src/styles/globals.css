@@ -9,59 +9,82 @@
    IziWellPass — v2 monochrome token layer
    Warm near-black ink primary, greige warm-neutral surfaces,
    greige desk backdrop, fully-rounded pill controls.
+
+   Color space: OKLCH throughout. The stone ramp and status
+   colors are the exact hex values round-tripped to OKLCH, so
+   the documented AA ratios still hold; OKLCH keeps chroma low
+   at the light/dark extremes and the whole neutral family warm.
    ============================================================ */
 
 :root {
-  --neutral-50: #fafaf9;
-  --neutral-100: #f5f5f4;
-  --neutral-200: #e7e5e4;
-  --neutral-300: #d6d3d1;
-  --neutral-400: #a8a29e;
-  --neutral-500: #78716c;
-  --neutral-600: #57534e;
-  --neutral-700: #44403c;
-  --neutral-800: #292524;
-  --neutral-900: #1c1917;
-  --neutral-950: #0c0a09;
+  /* Warm "stone" neutral ramp. The two lightest steps carry
+     imperceptible chroma; their hue is pinned to the warm family
+     (~75) so the ramp never drifts cool/green if chroma is raised. */
+  --neutral-50: oklch(0.9848 0.0013 75);
+  --neutral-100: oklch(0.9699 0.0013 75);
+  --neutral-200: oklch(0.9232 0.0026 49);
+  --neutral-300: oklch(0.8687 0.0043 56);
+  --neutral-400: oklch(0.7161 0.0091 56);
+  --neutral-500: oklch(0.5534 0.0116 58);
+  --neutral-600: oklch(0.4444 0.0096 74);
+  --neutral-700: oklch(0.3741 0.0087 68);
+  --neutral-800: oklch(0.2685 0.0063 34);
+  --neutral-900: oklch(0.2161 0.0061 56);
+  --neutral-950: oklch(0.1469 0.0041 49);
 
-  --backdrop: #d6d2cc;
+  --backdrop: oklch(0.8653 0.0093 78);
   /* Text on the greige desk. neutral-500 (muted-foreground, tuned for the
      white surface) only reaches 3.2:1 here; neutral-600 clears AA (~4.9:1)
      while staying quiet. */
   --backdrop-foreground: var(--neutral-600);
-  /* Modal/sheet scrim: warm ink tint, never raw cool black. */
-  --overlay: rgba(28, 25, 23, 0.5);
-  --background: #ffffff;
+  /* Modal/sheet scrim: warm ink tint (encre alpha), never raw cool black. */
+  --overlay: oklch(0.2161 0.0061 56 / 0.5);
+  /* The sheet of paper: a whisper-warm near-white, not raw #fff — keeps the
+     surface in the same warm family as the greige desk and papier ink. */
+  --background: oklch(0.9971 0.0018 78);
   --foreground: var(--neutral-900);
-  --card: #ffffff;
+  --card: oklch(0.9971 0.0018 78);
   --card-foreground: var(--neutral-900);
-  --popover: #ffffff;
+  --popover: oklch(0.9971 0.0018 78);
   --popover-foreground: var(--neutral-900);
-  --primary: #1c1917;
-  --primary-foreground: #fafaf9;
-  --primary-hover: #292524;
+  --primary: var(--neutral-900);
+  --primary-foreground: var(--neutral-50);
+  --primary-hover: var(--neutral-800);
   --secondary: var(--neutral-100);
   --secondary-foreground: var(--neutral-900);
   --muted: var(--neutral-100);
   --muted-foreground: var(--neutral-500);
   --accent: var(--neutral-100);
   --accent-foreground: var(--neutral-900);
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --success: #16a34a;
-  --warning: #f59e0b;
-  --info: #2563eb;
+  --destructive: oklch(0.5771 0.2152 27.33);
+  --destructive-foreground: oklch(0.9971 0.0018 78);
+  --success: oklch(0.6271 0.1699 149.21);
+  --warning: oklch(0.7686 0.1647 70.08);
+  --info: oklch(0.5461 0.2152 262.88);
   /* Darker text stops for status text on a /15 tint. The base status colors
      (amber/green especially) fail AA as text on their own light tint; the tint
      is near-white so 700 only reaches ~4.2:1, 800 clears 4.5 with margin
      (green ~6:1, amber ~6.3:1). Blue-700 already clears it. Flip lighter in
      dark mode, where the tint is dark. */
-  --success-foreground: #166534;
-  --warning-foreground: #92400e;
-  --info-foreground: #1d4ed8;
+  --success-foreground: oklch(0.4479 0.1083 151.33);
+  --warning-foreground: oklch(0.4732 0.1247 46.2);
+  --info-foreground: oklch(0.4882 0.2172 264.38);
   --border: var(--neutral-200);
   --input: var(--neutral-200);
   --ring: var(--neutral-900);
+
+  /* Data-viz. Single-series occupancy/attendance uses the ink-anchored
+     ramp (chart-1 → chart-2); categorical breakdowns (by status/method)
+     map to the statut-* colors. No decorative hues — this holds the
+     One Ink Rule and the Meaning-Only Color Rule. */
+  --chart-1: var(--primary); /* ink — the default single series */
+  --chart-2: var(--neutral-500); /* stone — comparison / second series */
+  --chart-3: var(--info);
+  --chart-4: var(--success);
+  --chart-5: var(--warning);
+  --chart-grid: var(--neutral-200); /* hairline gridlines / axes */
+  --chart-track: var(--neutral-100); /* unfilled bar/progress track */
+
   --radius: 10px;
   --radius-xl: 16px;
   --radius-pill: 9999px;
@@ -71,35 +94,42 @@
 }
 
 .dark {
-  --backdrop: #0c0a09;
+  --backdrop: var(--neutral-950);
   --backdrop-foreground: var(--neutral-400);
-  --overlay: rgba(12, 10, 9, 0.66);
+  --overlay: oklch(0.1469 0.0041 49 / 0.66);
   --background: var(--neutral-950);
   --foreground: var(--neutral-50);
   --card: var(--neutral-900);
   --card-foreground: var(--neutral-50);
   --popover: var(--neutral-800);
   --popover-foreground: var(--neutral-50);
-  --primary: #fafaf9;
+  --primary: var(--neutral-50);
   --primary-foreground: var(--neutral-900);
-  --primary-hover: #e7e5e4;
+  --primary-hover: var(--neutral-200);
   --secondary: var(--neutral-800);
   --secondary-foreground: var(--neutral-50);
   --muted: var(--neutral-800);
   --muted-foreground: var(--neutral-400);
   --accent: var(--neutral-700);
   --accent-foreground: var(--neutral-50);
-  --destructive: #f87171;
+  --destructive: oklch(0.7106 0.1661 22.22);
   --destructive-foreground: var(--neutral-950);
-  --success: #4ade80;
-  --warning: #fbbf24;
-  --info: #60a5fa;
-  --success-foreground: #4ade80;
-  --warning-foreground: #fbbf24;
-  --info-foreground: #60a5fa;
+  --success: oklch(0.8003 0.1821 151.71);
+  --warning: oklch(0.8369 0.1644 84.43);
+  --info: oklch(0.7137 0.1434 254.62);
+  --success-foreground: oklch(0.8003 0.1821 151.71);
+  --warning-foreground: oklch(0.8369 0.1644 84.43);
+  --info-foreground: oklch(0.7137 0.1434 254.62);
   --border: var(--neutral-700);
   --input: var(--neutral-800);
   --ring: var(--neutral-300);
+
+  /* chart-1 inverts to papier ink; chart-2 lifts to a mid stone that reads
+     on the dark card. Status series inherit the dark status colors above. */
+  --chart-1: var(--primary);
+  --chart-2: var(--neutral-400);
+  --chart-grid: var(--neutral-700);
+  --chart-track: var(--neutral-800);
 }
 
 @theme inline {
@@ -131,6 +161,14 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-track: var(--chart-track);
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);

@@ -1,24 +1,31 @@
 ---
 name: IziWellPass Owner App
 description: Warm ink on greige — the calm operating surface for wellness venues
+# Color space is OKLCH (the runtime token layer is OKLCH throughout). Values
+# round-trip to the documented hex, so the AA ratios below still hold. Hex
+# equivalents are named in prose for human reference.
 colors:
-  encre-chaude: '#1c1917'
-  encre-hover: '#292524'
-  papier: '#fafaf9'
-  surface: '#ffffff'
-  grege: '#d6d2cc'
-  pierre-100: '#f5f5f4'
-  pierre-200: '#e7e5e4'
-  pierre-300: '#d6d3d1'
-  pierre-400: '#a8a29e'
-  pierre-500: '#78716c'
-  pierre-700: '#44403c'
-  pierre-900: '#1c1917'
-  pierre-950: '#0c0a09'
-  statut-erreur: '#dc2626'
-  statut-succes: '#16a34a'
-  statut-attention: '#f59e0b'
-  statut-info: '#2563eb'
+  encre-chaude: 'oklch(0.2161 0.0061 56)'
+  encre-hover: 'oklch(0.2685 0.0063 34)'
+  papier: 'oklch(0.9848 0.0013 75)'
+  surface: 'oklch(0.9971 0.0018 78)'
+  grege: 'oklch(0.8653 0.0093 78)'
+  pierre-100: 'oklch(0.9699 0.0013 75)'
+  pierre-200: 'oklch(0.9232 0.0026 49)'
+  pierre-300: 'oklch(0.8687 0.0043 56)'
+  pierre-400: 'oklch(0.7161 0.0091 56)'
+  pierre-500: 'oklch(0.5534 0.0116 58)'
+  pierre-700: 'oklch(0.3741 0.0087 68)'
+  pierre-900: 'oklch(0.2161 0.0061 56)'
+  pierre-950: 'oklch(0.1469 0.0041 49)'
+  statut-erreur: 'oklch(0.5771 0.2152 27.33)'
+  statut-succes: 'oklch(0.6271 0.1699 149.21)'
+  statut-attention: 'oklch(0.7686 0.1647 70.08)'
+  statut-info: 'oklch(0.5461 0.2152 262.88)'
+  chart-ink: 'oklch(0.2161 0.0061 56)'
+  chart-stone: 'oklch(0.5534 0.0116 58)'
+  chart-grid: 'oklch(0.9232 0.0026 49)'
+  chart-track: 'oklch(0.9699 0.0013 75)'
 typography:
   display:
     fontFamily: 'Hanken Grotesk, ui-sans-serif, system-ui, sans-serif'
@@ -124,7 +131,7 @@ This system explicitly rejects the four lanes named in PRODUCT.md: the generic S
 
 ## 2. Colors
 
-A warm monochrome palette: one ink, one stone scale, and four semantic status colors used strictly for meaning.
+A warm monochrome palette: one ink, one stone scale, and four semantic status colors used strictly for meaning. The runtime color space is **OKLCH** throughout — it keeps chroma low at the light and dark extremes and holds the whole neutral family warm. Hex equivalents below are the human reference; the OKLCH values in the frontmatter are canonical.
 
 ### Primary
 
@@ -134,7 +141,7 @@ A warm monochrome palette: one ink, one stone scale, and four semantic status co
 ### Neutral
 
 - **Grège** (#d6d2cc): the desk. The backdrop behind the app surface and behind the auth/onboarding cards. It appears nowhere else.
-- **Surface** (#ffffff): the sheet of paper — app surface, cards, popovers. Dark mode: pierre-950/900.
+- **Surface** (`oklch(0.9971 0.0018 78)`, a whisper-warm near-white — never raw `#ffffff`): the sheet of paper — app surface, cards, popovers. The faint warmth keeps the sheet in the same family as the greige desk instead of reading as a cool card on a warm mat. Dark mode: pierre-950/900.
 - **Papier** (#fafaf9): text and icons sitting on ink (button labels, active nav text).
 - **Pierre 100** (#f5f5f4): secondary surfaces — tab rails, avatar chips, muted fills, hover washes.
 - **Pierre 200** (#e7e5e4): the workhorse hairline. Borders, row separators, input strokes.
@@ -232,6 +239,12 @@ Refined and restrained: controls are smooth pills, surfaces are soft rectangles,
 ### La barre de capacité (signature)
 
 The capacity bar is the system's one expressive instrument: a 8px-tall pill track in pierre-100 with an ink fill, preceded by mono `booked/capacity` text. The fill turns statut attention above 85% and statut erreur at full — where a "Complet" chip joins it, placed before the count. It appears identically on the dashboard, planning, and bookings surfaces.
+
+### Graphiques (data-viz)
+
+Occupancy and attendance charts stay inside the palette — no decorative hues. Four tokens carry them: `chart-ink` (encre, the default single series), `chart-stone` (pierre-500, a comparison or second series), `chart-grid` (pierre-200, gridlines and axes), and `chart-track` (pierre-100, the unfilled bar/progress track). Categorical breakdowns (by status or payment method) borrow the `statut-*` colors so a green segment always means the same thing it does on a badge. In dark mode `chart-ink` inverts to papier and `chart-stone` lifts to pierre-400 so lines read on the dark card. Gridlines are hairline-quiet; the data is the loudest thing on the chart, mono axis labels with `tabular-nums`.
+
+**The Monochrome Chart Rule.** A chart's default is ink-on-stone. Status color enters a chart only to encode the same fact it encodes everywhere else (succès/attention/erreur/info); a chart never invents a categorical palette for visual variety.
 
 ## 6. Do's and Don'ts
 

@@ -49,7 +49,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks booking:read, or is a venue-scoped staff member not assigned to the booking's venue",
+            "description": "Caller lacks booking:read",
             "content": {
               "application/json": {
                 "schema": {
@@ -136,7 +136,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks booking:write, or is a venue-scoped staff member not assigned to the booking's venue",
+            "description": "Caller lacks booking:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -212,7 +212,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks checkin:write, or is a venue-scoped staff member not assigned to the venue in the request body",
+            "description": "Caller lacks checkin:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -288,7 +288,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks checkin:write, or is a venue-scoped staff member not assigned to the venue in the request body",
+            "description": "Caller lacks checkin:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -320,64 +320,15 @@
         "tags": [
           "member"
         ],
-        "summary": "List members in the current tenant (cursor-paginated, searchable).",
-        "description": "Cursor pagination: pass `limit` (1-100, default 20); the response\n`meta.next_cursor` (when present) is the `cursor` for the next page. There\nis NO `offset`/`page` param. Optional case-insensitive filters: name/phone/email.",
+        "summary": "List members in the current tenant.",
         "operationId": "list_members",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Page size, 1-100 (default 20).",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "cursor",
-            "in": "query",
-            "description": "Opaque cursor from a prior response's meta.next_cursor.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "name",
-            "in": "query",
-            "description": "Filter by member name (partial match).",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "phone",
-            "in": "query",
-            "description": "Filter by phone.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "email",
-            "in": "query",
-            "description": "Filter by email.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
-            "description": "Paginated member list",
+            "description": "Member list",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedApiResponse_Vec_Member"
+                  "$ref": "#/components/schemas/ApiResponse_Vec_Member"
                 }
               }
             }
@@ -698,12 +649,11 @@
         "tags": [
           "venue"
         ],
-        "summary": "List resource types visible to the caller.",
-        "description": "Owner/Admin see every resource type in the tenant. Venue-scoped staff\n(Trainer/Receptionist) see tenant-global types (those with no `venue_id`)\nplus the types belonging to their assigned venues; venue-specific types for\nother venues are filtered out (not a 403).",
+        "summary": "List resource types in the current tenant.",
         "operationId": "list_resource_types",
         "responses": {
           "200": {
-            "description": "Resource type list (venue-scoped staff see tenant-global types + their assigned venues' types)",
+            "description": "Resource type list",
             "content": {
               "application/json": {
                 "schema": {
@@ -844,7 +794,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks schedule:read, or is a venue-scoped staff member not assigned to the schedule's venue",
+            "description": "Caller lacks schedule:read",
             "content": {
               "application/json": {
                 "schema": {
@@ -1054,17 +1004,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks booking:read, or is a venue-scoped staff member not assigned to the slot's venue",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Slot not found",
+            "description": "Caller lacks booking:read",
             "content": {
               "application/json": {
                 "schema": {
@@ -1139,7 +1079,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks booking:write, or is a venue-scoped staff member not assigned to the slot's venue",
+            "description": "Caller lacks booking:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -1567,114 +1507,16 @@
         ]
       }
     },
-    "/gms/v1/staff/{sid}/venues": {
-      "put": {
-        "tags": [
-          "staff"
-        ],
-        "summary": "Replace a staff member's venue assignments.",
-        "operationId": "set_staff_venues",
-        "parameters": [
-          {
-            "name": "sid",
-            "in": "path",
-            "description": "Staff id (UUID)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetStaffVenuesRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Updated venue assignments",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Vec_VenueId"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A venue does not belong to your org",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid ID token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Caller lacks staff:write",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Staff not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Staff instructs active schedules at a removed venue",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cognito_id_token": []
-          }
-        ]
-      }
-    },
     "/gms/v1/venues": {
       "get": {
         "tags": [
           "venue"
         ],
-        "summary": "List venues visible to the caller in the current tenant.",
-        "description": "Owner/Admin see every venue. Venue-scoped staff (Trainer/Receptionist) see\nonly the venues they are assigned to; the list is filtered, not a 403.",
+        "summary": "List all venues in the current tenant.",
         "operationId": "list_venues",
         "responses": {
           "200": {
-            "description": "Venue list (filtered to the caller's assigned venues for venue-scoped staff)",
+            "description": "Venue list",
             "content": {
               "application/json": {
                 "schema": {
@@ -1695,71 +1537,6 @@
           },
           "403": {
             "description": "Caller lacks venue:read",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cognito_id_token": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "venue"
-        ],
-        "summary": "Create an additional venue under the caller's existing tenant.",
-        "description": "The first venue + organization are created via onboarding; this endpoint\nlets an established owner/admin add more venues to the same org.",
-        "operationId": "create_venue",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateVenueRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Venue created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Venue"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid ID token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Caller lacks venue:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -1816,7 +1593,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks venue:read, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks venue:read",
             "content": {
               "application/json": {
                 "schema": {
@@ -1901,7 +1678,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks venue:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -1912,217 +1689,6 @@
           },
           "404": {
             "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cognito_id_token": []
-          }
-        ]
-      }
-    },
-    "/gms/v1/venues/{id}/activities": {
-      "get": {
-        "tags": [
-          "venue"
-        ],
-        "summary": "List the activities a venue offers.",
-        "operationId": "list_venue_activities",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Venue id (UUID)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Venue activity list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Vec_VenueActivity"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid ID token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Caller lacks venue:read, or is a venue-scoped staff member not assigned to this venue",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cognito_id_token": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "venue"
-        ],
-        "summary": "Add an activity to a venue (seeds default resource types).",
-        "operationId": "add_venue_activity",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Venue id (UUID)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddActivityRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Activity added",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_VenueActivity"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid ID token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cognito_id_token": []
-          }
-        ]
-      }
-    },
-    "/gms/v1/venues/{id}/activities/{activity}": {
-      "delete": {
-        "tags": [
-          "venue"
-        ],
-        "summary": "Remove an activity from a venue (deactivates its seeded resource types).",
-        "operationId": "remove_venue_activity",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Venue id (UUID)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "activity",
-            "in": "path",
-            "description": "Activity type (snake_case, e.g. 'padel')",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Removed"
-          },
-          "401": {
-            "description": "Missing/invalid ID token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue does not offer the activity",
             "content": {
               "application/json": {
                 "schema": {
@@ -2179,7 +1745,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks venue:read, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks venue:read",
             "content": {
               "application/json": {
                 "schema": {
@@ -2254,7 +1820,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks venue:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -2286,22 +1852,13 @@
         "tags": [
           "checkin"
         ],
-        "summary": "Get attendance statistics for a venue on a given day.",
+        "summary": "Get attendance statistics for a venue.",
         "operationId": "get_attendance",
         "parameters": [
           {
             "name": "vid",
             "in": "path",
             "description": "Venue id (UUID)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "description": "Calendar day to report on (YYYY-MM-DD, venue-local). Required.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2319,16 +1876,6 @@
               }
             }
           },
-          "400": {
-            "description": "Missing/invalid 'date' query parameter",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Missing/invalid ID token",
             "content": {
@@ -2340,7 +1887,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks checkin:read, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks checkin:read",
             "content": {
               "application/json": {
                 "schema": {
@@ -2362,22 +1909,13 @@
         "tags": [
           "checkin"
         ],
-        "summary": "List check-ins for a venue on a given day.",
+        "summary": "List check-ins for a venue.",
         "operationId": "list_check_ins",
         "parameters": [
           {
             "name": "vid",
             "in": "path",
             "description": "Venue id (UUID)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "description": "Calendar day to report on (YYYY-MM-DD, venue-local). Required.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2395,16 +1933,6 @@
               }
             }
           },
-          "400": {
-            "description": "Missing/invalid 'date' query parameter",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Missing/invalid ID token",
             "content": {
@@ -2416,7 +1944,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks checkin:read, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks checkin:read",
             "content": {
               "application/json": {
                 "schema": {
@@ -2502,7 +2030,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks venue:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -2569,7 +2097,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks venue:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -2636,7 +2164,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks schedule:read, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks schedule:read",
             "content": {
               "application/json": {
                 "schema": {
@@ -2711,7 +2239,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks schedule:write, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks schedule:write",
             "content": {
               "application/json": {
                 "schema": {
@@ -2744,7 +2272,6 @@
           "schedule"
         ],
         "summary": "List generated slots for a venue.",
-        "description": "Accepts EITHER a single day (`date`) OR an inclusive range (`from` + `to`,\nmax 62 days) for the multi-day planning timetable. If `from`/`to` are\nsupplied they take precedence over `date`. Optionally filter by `resource_id`.",
         "operationId": "list_slots",
         "parameters": [
           {
@@ -2752,42 +2279,6 @@
             "in": "path",
             "description": "Venue id (UUID)",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "description": "Single calendar day (YYYY-MM-DD, venue-local). Use this OR from+to.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "from",
-            "in": "query",
-            "description": "Inclusive range start (YYYY-MM-DD). Requires 'to'.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "description": "Inclusive range end (YYYY-MM-DD, max 62 days after 'from'). Requires 'from'.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "resource_id",
-            "in": "query",
-            "description": "Optional resource id (UUID) to filter slots.",
-            "required": false,
             "schema": {
               "type": "string"
             }
@@ -2804,16 +2295,6 @@
               }
             }
           },
-          "400": {
-            "description": "Missing/invalid date or range (no date, from>to, or span>62d)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Missing/invalid ID token",
             "content": {
@@ -2825,7 +2306,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks schedule:read, or is a venue-scoped staff member not assigned to this venue",
+            "description": "Caller lacks schedule:read",
             "content": {
               "application/json": {
                 "schema": {
@@ -2954,78 +2435,8 @@
         "tags": [
           "marketplace"
         ],
-        "summary": "Browse the venue catalog (cursor-paginated). Public — no authentication required.",
-        "description": "Cursor pagination: pass `limit` (1-100, default 20); the response `meta.next_cursor`\n(when present) is the `cursor` for the next page. Optional geo/text filters.",
+        "summary": "Browse the venue catalog (paginated). Public — no authentication required.",
         "operationId": "list_marketplace_venues",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Page size, 1-100 (default 20).",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "cursor",
-            "in": "query",
-            "description": "Opaque cursor from a prior response's meta.next_cursor.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "city",
-            "in": "query",
-            "description": "Filter by city.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "venue_type",
-            "in": "query",
-            "description": "Filter by activity type (e.g. gym, yoga, crossfit).",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "lat",
-            "in": "query",
-            "description": "Latitude for proximity search (with lng).",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "name": "lng",
-            "in": "query",
-            "description": "Longitude for proximity search (with lat).",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "name": "radius_km",
-            "in": "query",
-            "description": "Proximity radius in km (with lat/lng).",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Paginated venue catalog",
@@ -3087,22 +2498,13 @@
         "tags": [
           "marketplace"
         ],
-        "summary": "List available slots for a marketplace venue on a given day. Public — no auth.",
+        "summary": "List available slots for a marketplace venue. Public — no authentication required.",
         "operationId": "list_marketplace_slots",
         "parameters": [
           {
             "name": "vid",
             "in": "path",
             "description": "Venue id (UUID)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "description": "Calendar day (YYYY-MM-DD, venue-local). Required.",
             "required": true,
             "schema": {
               "type": "string"
@@ -3116,16 +2518,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse_Vec_MarketplaceSlot"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Missing/invalid 'date' query parameter",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3214,37 +2606,15 @@
         "tags": [
           "passholder"
         ],
-        "summary": "List the caller's pass bookings (cursor-paginated).",
-        "description": "Cursor pagination: pass `limit` (1-100, default 20); the response\n`meta.next_cursor` (when present) is the `cursor` for the next page.",
+        "summary": "List the caller's pass bookings.",
         "operationId": "list_pass_bookings",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Page size, 1-100 (default 20).",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "cursor",
-            "in": "query",
-            "description": "Opaque cursor from a prior response's meta.next_cursor.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
-            "description": "Paginated pass booking list",
+            "description": "Pass booking list",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedApiResponse_Vec_PassBooking"
+                  "$ref": "#/components/schemas/ApiResponse_Vec_PassBooking"
                 }
               }
             }
@@ -3581,47 +2951,6 @@
   },
   "components": {
     "schemas": {
-      "ActivityType": {
-        "type": "string",
-        "description": "Closed platform catalog of activities. Adding one is a code change.",
-        "enum": [
-          "gym",
-          "crossfit",
-          "hiit",
-          "bootcamp",
-          "cycling",
-          "boxing",
-          "martial_arts",
-          "dance",
-          "running",
-          "padel",
-          "tennis",
-          "squash",
-          "basketball",
-          "football",
-          "swimming",
-          "climbing",
-          "bouldering",
-          "yoga",
-          "pilates",
-          "stretch",
-          "spa",
-          "massage",
-          "beauty"
-        ]
-      },
-      "AddActivityRequest": {
-        "type": "object",
-        "description": "Request body for `POST /gms/v1/venues/{id}/activities`.\nThe venue is taken from the URL path; the body carries only the activity.",
-        "required": [
-          "activity_type"
-        ],
-        "properties": {
-          "activity_type": {
-            "$ref": "#/components/schemas/ActivityType"
-          }
-        }
-      },
       "ApiResponse_AttendanceStats": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -4306,17 +3635,6 @@
               "created_at"
             ],
             "properties": {
-              "activity_type": {
-                "oneOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/components/schemas/ActivityType",
-                    "description": "The activity this resource type serves (None for legacy/free-form types)."
-                  }
-                ]
-              },
               "booking_mode": {
                 "$ref": "#/components/schemas/BookingMode"
               },
@@ -4355,17 +3673,6 @@
               },
               "tenant_id": {
                 "$ref": "#/components/schemas/TenantId"
-              },
-              "venue_id": {
-                "oneOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/components/schemas/VenueId",
-                    "description": "The venue this resource type belongs to (None for legacy/free-form types)."
-                  }
-                ]
               }
             }
           },
@@ -4845,6 +4152,178 @@
           }
         }
       },
+      "ApiResponse_Vec_Member": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A person enrolled at a venue with a membership.",
+              "required": [
+                "id",
+                "tenant_id",
+                "first_name",
+                "last_name",
+                "membership_type",
+                "membership_status",
+                "membership_start",
+                "is_active",
+                "created_at",
+                "updated_at"
+              ],
+              "properties": {
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "first_name": {
+                  "type": "string"
+                },
+                "id": {
+                  "$ref": "#/components/schemas/MemberId"
+                },
+                "is_active": {
+                  "type": "boolean"
+                },
+                "last_name": {
+                  "type": "string"
+                },
+                "membership_end": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "membership_start": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "membership_status": {
+                  "$ref": "#/components/schemas/MembershipStatus"
+                },
+                "membership_type": {
+                  "$ref": "#/components/schemas/MembershipType"
+                },
+                "notes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "phone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tenant_id": {
+                  "$ref": "#/components/schemas/TenantId"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "user_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Auth user_id — None for walk-in members (no account)."
+                }
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_Vec_PassBooking": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A booking made by a pass holder at a venue they don't belong to.\n\nPlatform-level record linking consumer to venue's tenant.\nMaps to `pass_bookings` table (LLD §5.3.1).",
+              "required": [
+                "id",
+                "pass_holder_id",
+                "venue_tenant_id",
+                "credits_spent",
+                "status",
+                "session_date",
+                "created_at",
+                "updated_at"
+              ],
+              "properties": {
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "credits_spent": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Credits spent for this booking."
+                },
+                "id": {
+                  "$ref": "#/components/schemas/PassBookingId"
+                },
+                "pass_holder_id": {
+                  "$ref": "#/components/schemas/PassHolderId"
+                },
+                "session_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "status": {
+                  "$ref": "#/components/schemas/PassBookingStatus"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "venue_booking_id": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BookingId",
+                      "description": "The booking ID created in the venue's tenant `bookings` table."
+                    }
+                  ]
+                },
+                "venue_tenant_id": {
+                  "$ref": "#/components/schemas/TenantId",
+                  "description": "The venue's tenant ID (which tenant owns the venue)."
+                }
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_Vec_Resource": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -4945,17 +4424,6 @@
                 "created_at"
               ],
               "properties": {
-                "activity_type": {
-                  "oneOf": [
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "$ref": "#/components/schemas/ActivityType",
-                      "description": "The activity this resource type serves (None for legacy/free-form types)."
-                    }
-                  ]
-                },
                 "booking_mode": {
                   "$ref": "#/components/schemas/BookingMode"
                 },
@@ -4994,17 +4462,6 @@
                 },
                 "tenant_id": {
                   "$ref": "#/components/schemas/TenantId"
-                },
-                "venue_id": {
-                  "oneOf": [
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "$ref": "#/components/schemas/VenueId",
-                      "description": "The venue this resource type belongs to (None for legacy/free-form types)."
-                    }
-                  ]
                 }
               }
             }
@@ -5366,74 +4823,9 @@
                   "format": "date-time"
                 },
                 "venue_type": {
-                  "$ref": "#/components/schemas/ActivityType"
+                  "$ref": "#/components/schemas/VenueType"
                 }
               }
-            }
-          },
-          "request_id": {
-            "type": "string"
-          }
-        }
-      },
-      "ApiResponse_Vec_VenueActivity": {
-        "type": "object",
-        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
-        "required": [
-          "data",
-          "request_id"
-        ],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "id",
-                "tenant_id",
-                "venue_id",
-                "activity_type",
-                "created_at"
-              ],
-              "properties": {
-                "activity_type": {
-                  "$ref": "#/components/schemas/ActivityType"
-                },
-                "created_at": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "id": {
-                  "$ref": "#/components/schemas/VenueActivityId"
-                },
-                "tenant_id": {
-                  "$ref": "#/components/schemas/TenantId"
-                },
-                "venue_id": {
-                  "$ref": "#/components/schemas/VenueId"
-                }
-              }
-            }
-          },
-          "request_id": {
-            "type": "string"
-          }
-        }
-      },
-      "ApiResponse_Vec_VenueId": {
-        "type": "object",
-        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
-        "required": [
-          "data",
-          "request_id"
-        ],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid",
-              "description": "Unique identifier for a venue (physical location)."
             }
           },
           "request_id": {
@@ -5543,48 +4935,7 @@
                 "format": "date-time"
               },
               "venue_type": {
-                "$ref": "#/components/schemas/ActivityType"
-              }
-            }
-          },
-          "request_id": {
-            "type": "string"
-          }
-        }
-      },
-      "ApiResponse_VenueActivity": {
-        "type": "object",
-        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
-        "required": [
-          "data",
-          "request_id"
-        ],
-        "properties": {
-          "data": {
-            "type": "object",
-            "required": [
-              "id",
-              "tenant_id",
-              "venue_id",
-              "activity_type",
-              "created_at"
-            ],
-            "properties": {
-              "activity_type": {
-                "$ref": "#/components/schemas/ActivityType"
-              },
-              "created_at": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "id": {
-                "$ref": "#/components/schemas/VenueActivityId"
-              },
-              "tenant_id": {
-                "$ref": "#/components/schemas/TenantId"
-              },
-              "venue_id": {
-                "$ref": "#/components/schemas/VenueId"
+                "$ref": "#/components/schemas/VenueType"
               }
             }
           },
@@ -6023,17 +5374,6 @@
           "booking_mode"
         ],
         "properties": {
-          "activity_type": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/ActivityType",
-                "description": "Activity this resource type serves. Optional (free-form types omit it)."
-              }
-            ]
-          },
           "booking_mode": {
             "$ref": "#/components/schemas/BookingMode"
           },
@@ -6059,17 +5399,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "venue_id": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/VenueId",
-                "description": "Venue this resource type belongs to. Optional (free-form types omit it)."
-              }
-            ]
           }
         }
       },
@@ -6135,51 +5464,6 @@
           }
         }
       },
-      "CreateVenueRequest": {
-        "type": "object",
-        "description": "Request to create a new venue (onboarding or VenueService).",
-        "required": [
-          "name",
-          "venue_type",
-          "city",
-          "country"
-        ],
-        "properties": {
-          "address_line": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "city": {
-            "type": "string"
-          },
-          "country": {
-            "type": "string"
-          },
-          "description": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "name": {
-            "type": "string"
-          },
-          "phone": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "timezone": {
-            "type": "string"
-          },
-          "venue_type": {
-            "$ref": "#/components/schemas/ActivityType"
-          }
-        }
-      },
       "CreditBalance": {
         "type": "object",
         "description": "Represents a pass holder's current credit state.\n\nCredits expire monthly (no rollover). `debit()` enforces non-negative invariant.",
@@ -6204,14 +5488,17 @@
       },
       "DefaultResourceType": {
         "type": "object",
-        "description": "A default resource type seeded for the venue's primary activity.\nThe `id` is generated by the database, so it is not surfaced here; the\nresponse reflects the platform defaults for the venue's activity.",
         "required": [
+          "id",
           "name",
           "booking_mode"
         ],
         "properties": {
           "booking_mode": {
             "$ref": "#/components/schemas/BookingMode"
+          },
+          "id": {
+            "$ref": "#/components/schemas/ResourceTypeId"
           },
           "name": {
             "type": "string"
@@ -6321,13 +5608,6 @@
           },
           "role": {
             "$ref": "#/components/schemas/Role"
-          },
-          "venue_ids": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/VenueId"
-            },
-            "description": "Venues to assign the new staff member to. Ignored for owner/admin (all\nvenues). Empty for trainer/receptionist = no venue access until assigned."
           }
         }
       },
@@ -6549,7 +5829,7 @@
             "type": "string"
           },
           "venue_type": {
-            "$ref": "#/components/schemas/ActivityType"
+            "$ref": "#/components/schemas/VenueType"
           }
         }
       },
@@ -6591,186 +5871,6 @@
             "type": "string"
           },
           "slug": {
-            "type": "string"
-          }
-        }
-      },
-      "PaginatedApiResponse_Vec_Member": {
-        "type": "object",
-        "description": "Paginated response envelope with cursor metadata.\n\n```json\n{\n  \"data\": [...],\n  \"meta\": { \"next_cursor\": \"abc123\" },\n  \"request_id\": \"req_abc123\"\n}\n```",
-        "required": [
-          "data",
-          "meta",
-          "request_id"
-        ],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "description": "A person enrolled at a venue with a membership.",
-              "required": [
-                "id",
-                "tenant_id",
-                "first_name",
-                "last_name",
-                "membership_type",
-                "membership_status",
-                "membership_start",
-                "is_active",
-                "created_at",
-                "updated_at"
-              ],
-              "properties": {
-                "created_at": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "email": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "first_name": {
-                  "type": "string"
-                },
-                "id": {
-                  "$ref": "#/components/schemas/MemberId"
-                },
-                "is_active": {
-                  "type": "boolean"
-                },
-                "last_name": {
-                  "type": "string"
-                },
-                "membership_end": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date"
-                },
-                "membership_start": {
-                  "type": "string",
-                  "format": "date"
-                },
-                "membership_status": {
-                  "$ref": "#/components/schemas/MembershipStatus"
-                },
-                "membership_type": {
-                  "$ref": "#/components/schemas/MembershipType"
-                },
-                "notes": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "phone": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "tenant_id": {
-                  "$ref": "#/components/schemas/TenantId"
-                },
-                "updated_at": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "user_id": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Auth user_id — None for walk-in members (no account)."
-                }
-              }
-            }
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta"
-          },
-          "request_id": {
-            "type": "string"
-          }
-        }
-      },
-      "PaginatedApiResponse_Vec_PassBooking": {
-        "type": "object",
-        "description": "Paginated response envelope with cursor metadata.\n\n```json\n{\n  \"data\": [...],\n  \"meta\": { \"next_cursor\": \"abc123\" },\n  \"request_id\": \"req_abc123\"\n}\n```",
-        "required": [
-          "data",
-          "meta",
-          "request_id"
-        ],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "description": "A booking made by a pass holder at a venue they don't belong to.\n\nPlatform-level record linking consumer to venue's tenant.\nMaps to `pass_bookings` table (LLD §5.3.1).",
-              "required": [
-                "id",
-                "pass_holder_id",
-                "venue_tenant_id",
-                "credits_spent",
-                "status",
-                "session_date",
-                "created_at",
-                "updated_at"
-              ],
-              "properties": {
-                "created_at": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "credits_spent": {
-                  "type": "integer",
-                  "format": "int32",
-                  "description": "Credits spent for this booking."
-                },
-                "id": {
-                  "$ref": "#/components/schemas/PassBookingId"
-                },
-                "pass_holder_id": {
-                  "$ref": "#/components/schemas/PassHolderId"
-                },
-                "session_date": {
-                  "type": "string",
-                  "format": "date"
-                },
-                "status": {
-                  "$ref": "#/components/schemas/PassBookingStatus"
-                },
-                "updated_at": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "venue_booking_id": {
-                  "oneOf": [
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "$ref": "#/components/schemas/BookingId",
-                      "description": "The booking ID created in the venue's tenant `bookings` table."
-                    }
-                  ]
-                },
-                "venue_tenant_id": {
-                  "$ref": "#/components/schemas/TenantId",
-                  "description": "The venue's tenant ID (which tenant owns the venue)."
-                }
-              }
-            }
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta"
-          },
-          "request_id": {
             "type": "string"
           }
         }
@@ -7257,17 +6357,6 @@
           "created_at"
         ],
         "properties": {
-          "activity_type": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/ActivityType",
-                "description": "The activity this resource type serves (None for legacy/free-form types)."
-              }
-            ]
-          },
           "booking_mode": {
             "$ref": "#/components/schemas/BookingMode"
           },
@@ -7306,17 +6395,6 @@
           },
           "tenant_id": {
             "$ref": "#/components/schemas/TenantId"
-          },
-          "venue_id": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/VenueId",
-                "description": "The venue this resource type belongs to (None for legacy/free-form types)."
-              }
-            ]
           }
         }
       },
@@ -7489,22 +6567,6 @@
           },
           "venue_id": {
             "$ref": "#/components/schemas/VenueId"
-          }
-        }
-      },
-      "SetStaffVenuesRequest": {
-        "type": "object",
-        "description": "Request to replace a staff member's venue assignments.",
-        "required": [
-          "venue_ids"
-        ],
-        "properties": {
-          "venue_ids": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/VenueId"
-            },
-            "description": "Full set of venues the staff member should be assigned to. This\nreplaces the existing assignments (not additive)."
           }
         }
       },
@@ -7821,7 +6883,7 @@
                 "type": "null"
               },
               {
-                "$ref": "#/components/schemas/ActivityType"
+                "$ref": "#/components/schemas/VenueType"
               }
             ]
           }
@@ -7921,42 +6983,9 @@
             "format": "date-time"
           },
           "venue_type": {
-            "$ref": "#/components/schemas/ActivityType"
+            "$ref": "#/components/schemas/VenueType"
           }
         }
-      },
-      "VenueActivity": {
-        "type": "object",
-        "required": [
-          "id",
-          "tenant_id",
-          "venue_id",
-          "activity_type",
-          "created_at"
-        ],
-        "properties": {
-          "activity_type": {
-            "$ref": "#/components/schemas/ActivityType"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "id": {
-            "$ref": "#/components/schemas/VenueActivityId"
-          },
-          "tenant_id": {
-            "$ref": "#/components/schemas/TenantId"
-          },
-          "venue_id": {
-            "$ref": "#/components/schemas/VenueId"
-          }
-        }
-      },
-      "VenueActivityId": {
-        "type": "string",
-        "format": "uuid",
-        "description": "Unique identifier for a venue-activity link."
       },
       "VenueCatalogEntry": {
         "type": "object",
@@ -8125,6 +7154,21 @@
             "description": "IANA timezone (e.g., \"Africa/Lome\")"
           }
         }
+      },
+      "VenueType": {
+        "type": "string",
+        "description": "Type of wellness venue.",
+        "enum": [
+          "gym",
+          "yoga_studio",
+          "spa",
+          "tennis_club",
+          "cross_fit",
+          "swimming_pool",
+          "martial_arts",
+          "dance",
+          "other"
+        ]
       }
     },
     "securitySchemes": {

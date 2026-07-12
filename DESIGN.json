@@ -1,13 +1,13 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-08T22:30:00Z",
+  "generatedAt": "2026-07-12T00:00:00Z",
   "title": "Design System: IziWellPass Owner App",
   "extensions": {
     "colorMeta": {
       "encre-chaude": {
         "role": "primary",
         "displayName": "Encre chaude",
-        "canonical": "#1c1917",
+        "canonical": "oklch(0.2161 0.0061 56)",
         "tonalRamp": [
           "#0c0a09",
           "#1c1917",
@@ -22,7 +22,7 @@
       "grege": {
         "role": "neutral",
         "displayName": "Grège (the desk)",
-        "canonical": "#d6d2cc",
+        "canonical": "oklch(0.8653 0.0093 78)",
         "tonalRamp": [
           "#3d3a35",
           "#57534e",
@@ -37,7 +37,7 @@
       "pierre-200": {
         "role": "neutral",
         "displayName": "Pierre 200 (hairline)",
-        "canonical": "#e7e5e4",
+        "canonical": "oklch(0.9232 0.0026 49)",
         "tonalRamp": [
           "#0c0a09",
           "#292524",
@@ -52,7 +52,7 @@
       "statut-succes": {
         "role": "semantic",
         "displayName": "Statut succès",
-        "canonical": "#16a34a",
+        "canonical": "oklch(0.6271 0.1699 149.21)",
         "tonalRamp": [
           "#052e16",
           "#14532d",
@@ -67,7 +67,7 @@
       "statut-attention": {
         "role": "semantic",
         "displayName": "Statut attention",
-        "canonical": "#f59e0b",
+        "canonical": "oklch(0.7686 0.1647 70.08)",
         "tonalRamp": [
           "#451a03",
           "#78350f",
@@ -82,7 +82,7 @@
       "statut-erreur": {
         "role": "semantic",
         "displayName": "Statut erreur",
-        "canonical": "#dc2626",
+        "canonical": "oklch(0.5771 0.2152 27.33)",
         "tonalRamp": [
           "#450a0a",
           "#7f1d1d",
@@ -97,7 +97,7 @@
       "statut-info": {
         "role": "semantic",
         "displayName": "Statut info (demoted blue)",
-        "canonical": "#2563eb",
+        "canonical": "oklch(0.5461 0.2152 262.88)",
         "tonalRamp": [
           "#172554",
           "#1e3a8a",
@@ -107,6 +107,36 @@
           "#60a5fa",
           "#93c5fd",
           "#dbeafe"
+        ]
+      },
+      "chart-ink": {
+        "role": "chart",
+        "displayName": "Chart ink (single series)",
+        "canonical": "oklch(0.2161 0.0061 56)",
+        "tonalRamp": [
+          "#0c0a09",
+          "#1c1917",
+          "#292524",
+          "#44403c",
+          "#78716c",
+          "#a8a29e",
+          "#d6d3d1",
+          "#f5f5f4"
+        ]
+      },
+      "chart-stone": {
+        "role": "chart",
+        "displayName": "Chart stone (comparison series)",
+        "canonical": "oklch(0.5534 0.0116 58)",
+        "tonalRamp": [
+          "#292524",
+          "#44403c",
+          "#57534e",
+          "#78716c",
+          "#a8a29e",
+          "#c4c0ba",
+          "#e7e5e4",
+          "#f5f5f4"
         ]
       }
     },
@@ -227,6 +257,14 @@
       "description": "Filter tabs — pierre-100 rail, active trigger is a white pill with whisper shadow.",
       "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab ds-tab-active\" role=\"tab\" aria-selected=\"true\">Tous</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Actifs</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Suspendus</button></div>",
       "css": ".ds-tabs { display: inline-flex; gap: 2px; padding: 4px; background: var(--secondary, #f5f5f4); border-radius: 9999px; } .ds-tab { border: none; background: transparent; padding: 6px 14px; border-radius: 9999px; font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--muted-foreground, #78716c); cursor: pointer; transition: background-color 120ms ease-out, color 120ms ease-out; } .ds-tab:hover { color: var(--foreground, #1c1917); } .ds-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(28,25,23,0.15); } .ds-tab-active { background: var(--background, #ffffff); color: var(--foreground, #1c1917); box-shadow: 0 1px 2px 0 rgba(28,25,23,0.05); }"
+    },
+    {
+      "name": "Graphique d'occupation (data-viz)",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Weekly occupancy — ink bars on a pierre-100 track, hairline baseline, mono axis. Monochrome by default; status color only encodes a fact.",
+      "html": "<div class=\"ds-chart\"><div class=\"ds-chart-title\">Occupation cette semaine</div><div class=\"ds-chart-plot\"><div class=\"ds-bar\" style=\"--h: 54%\"><span class=\"ds-bar-fill\"></span></div><div class=\"ds-bar\" style=\"--h: 71%\"><span class=\"ds-bar-fill\"></span></div><div class=\"ds-bar\" style=\"--h: 48%\"><span class=\"ds-bar-fill\"></span></div><div class=\"ds-bar\" style=\"--h: 83%\"><span class=\"ds-bar-fill\"></span></div><div class=\"ds-bar\" style=\"--h: 96%\"><span class=\"ds-bar-fill ds-bar-full\"></span></div><div class=\"ds-bar\" style=\"--h: 62%\"><span class=\"ds-bar-fill\"></span></div><div class=\"ds-bar\" style=\"--h: 30%\"><span class=\"ds-bar-fill\"></span></div></div><div class=\"ds-chart-axis\"><span>lun</span><span>mar</span><span>mer</span><span>jeu</span><span>ven</span><span>sam</span><span>dim</span></div></div>",
+      "css": ".ds-chart { width: 280px; padding: 20px; background: var(--card, #ffffff); border: 1px solid var(--border, #e7e5e4); border-radius: 16px; box-shadow: 0 1px 2px 0 rgba(28,25,23,0.05); font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; } .ds-chart-title { font-size: 14px; font-weight: 500; color: var(--foreground, #1c1917); margin-bottom: 16px; } .ds-chart-plot { display: flex; align-items: flex-end; gap: 8px; height: 96px; border-bottom: 1px solid var(--chart-grid, #e7e5e4); } .ds-bar { flex: 1; height: 100%; display: flex; align-items: flex-end; background: var(--chart-track, #f5f5f4); border-radius: 4px 4px 0 0; overflow: hidden; } .ds-bar-fill { width: 100%; height: var(--h, 50%); background: var(--chart-ink, #1c1917); border-radius: 4px 4px 0 0; transition: height 250ms ease-out; } .ds-bar-full { background: var(--destructive, #dc2626); } .ds-chart-axis { display: flex; gap: 8px; margin-top: 8px; } .ds-chart-axis span { flex: 1; text-align: center; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted-foreground, #78716c); }"
     }
   ],
   "narrative": {
@@ -249,6 +287,11 @@
       {
         "name": "The Meaning-Only Color Rule",
         "body": "Green, amber, red, and blue may appear only to state a fact (status, capacity, method). Decorative color use is prohibited.",
+        "section": "colors"
+      },
+      {
+        "name": "The Monochrome Chart Rule",
+        "body": "A chart's default is ink-on-stone (chart-ink on chart-track, chart-grid gridlines). Status color enters a chart only to encode the same fact it encodes everywhere else; a chart never invents a categorical palette for visual variety.",
         "section": "colors"
       },
       {
