@@ -10,6 +10,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@iziwellpass/ui/compone
 export interface ComboboxOption {
   value: string;
   label: string;
+  /** When true, the option is shown but greyed out and cannot be selected. */
+  disabled?: boolean;
+  /** Short trailing note explaining the option (e.g. why it is disabled). */
+  hint?: string;
 }
 
 export interface ComboboxProps {
@@ -39,7 +43,11 @@ function Combobox({
   const current = options.find((o) => o.value === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // `modal`: inside a Dialog/Sheet the popover is portalled outside the modal's
+    // scroll-lock shard, so wheel/touch scrolling of the list is blocked. A modal
+    // popover gets its own scroll shard (like a Radix Select), restoring scroll,
+    // and stays compatible with the modal's dropdown-aware dismiss guard.
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger
         data-slot="combobox-trigger"
         disabled={disabled}
@@ -77,19 +85,25 @@ function Combobox({
               <CommandPrimitive.Item
                 key={option.value}
                 value={option.label}
+                disabled={option.disabled}
                 onSelect={() => {
+                  if (option.disabled) return;
                   onValueChange?.(option.value);
                   setOpen(false);
                 }}
-                className="flex cursor-default items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm outline-none select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                className="flex cursor-default items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm outline-none select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
               >
                 <span className="truncate">{option.label}</span>
-                <CheckIcon
-                  className={cn(
-                    'size-4 shrink-0',
-                    option.value === value ? 'opacity-100' : 'opacity-0',
-                  )}
-                />
+                {option.hint ? (
+                  <span className="shrink-0 text-xs text-muted-foreground">{option.hint}</span>
+                ) : (
+                  <CheckIcon
+                    className={cn(
+                      'size-4 shrink-0',
+                      option.value === value ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                )}
               </CommandPrimitive.Item>
             ))}
           </CommandPrimitive.List>

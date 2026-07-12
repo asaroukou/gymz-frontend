@@ -5,7 +5,39 @@
     "members": "Members",
     "planning": "Planning",
     "venues": "Venues",
-    "staff": "Staff"
+    "staff": "Staff",
+    "organizationGroup": "Organization"
+  },
+  "venueSwitcher": {
+    "label": "Current venue",
+    "placeholder": "Choose a venue",
+    "addVenue": "Add a venue",
+    "loadError": "Venues unavailable"
+  },
+  "activityType": {
+    "gym": "Gym",
+    "crossfit": "CrossFit",
+    "hiit": "HIIT",
+    "bootcamp": "Bootcamp",
+    "cycling": "Cycling",
+    "boxing": "Boxing",
+    "martial_arts": "Martial arts",
+    "dance": "Dance",
+    "running": "Running",
+    "padel": "Padel",
+    "tennis": "Tennis",
+    "squash": "Squash",
+    "basketball": "Basketball",
+    "football": "Football",
+    "swimming": "Swimming",
+    "climbing": "Climbing",
+    "bouldering": "Bouldering",
+    "yoga": "Yoga",
+    "pilates": "Pilates",
+    "stretch": "Stretching",
+    "spa": "Spa",
+    "massage": "Massage",
+    "beauty": "Beauty"
   },
   "shell": {
     "openMenu": "Open menu",
@@ -117,6 +149,8 @@
     "subtitle": "Create your venue in a minute and start managing your members.",
     "venueName": "Venue name",
     "venueType": "Venue type",
+    "venueTypePlaceholder": "Choose a type",
+    "venueTypeSearch": "Search a type",
     "city": "City",
     "country": "Country",
     "timezone": "Timezone",
@@ -129,17 +163,6 @@
     "whatsNext": "Your organization and your venue are created instantly.",
     "success": "Welcome to {name}!",
     "error": "Could not create your venue",
-    "types": {
-      "gym": "Gym",
-      "yoga_studio": "Yoga studio",
-      "spa": "Spa",
-      "tennis_club": "Tennis club",
-      "cross_fit": "CrossFit",
-      "swimming_pool": "Swimming pool",
-      "martial_arts": "Martial arts",
-      "dance": "Dance",
-      "other": "Other"
-    },
     "errors": {
       "venueNameMin": "At least 2 characters",
       "cityRequired": "City is required",
@@ -552,6 +575,7 @@
       "adding": "Adding…",
       "success": "Participant added",
       "error": "Could not add participant",
+      "slotFull": "Session full, no spots available.",
       "ineligible": {
         "inactive": "Inactive member",
         "expired": "Membership expired",
@@ -580,29 +604,48 @@
       "active": "Active",
       "inactive": "Inactive"
     },
-    "type": {
-      "gym": "Gym",
-      "yoga_studio": "Yoga studio",
-      "spa": "Spa",
-      "tennis_club": "Tennis club",
-      "cross_fit": "CrossFit",
-      "swimming_pool": "Swimming pool",
-      "martial_arts": "Martial arts",
-      "dance": "Dance",
-      "other": "Other"
-    },
     "empty": {
       "title": "No venues",
-      "body": "Venues are created during initial setup. Contact IziWellPass support to add one."
+      "body": "Add your first venue to start managing members and resources."
+    },
+    "create": {
+      "cta": "Add a venue",
+      "title": "New venue",
+      "formTitle": "Details",
+      "cityRequired": "City is required",
+      "countryRequired": "Country is required",
+      "submit": "Create venue",
+      "submitting": "Creating…",
+      "success": "Venue created",
+      "error": "Could not create the venue"
     },
     "detail": {
       "back": "Back to venues",
       "notFound": "Venue not found",
       "loadError": "Could not load venue",
+      "activities": {
+        "title": "Activities",
+        "subtitle": "The disciplines offered at this venue.",
+        "add": "Add an activity",
+        "searchPlaceholder": "Search an activity",
+        "empty": "No activities yet.",
+        "allAdded": "All activities are added.",
+        "loadError": "Could not load activities",
+        "addError": "Could not add the activity",
+        "removeConfirm": {
+          "title": "Remove activity",
+          "description": "Remove \"{activity}\" from this venue?",
+          "confirm": "Remove",
+          "confirming": "Removing…",
+          "error": "Could not remove the activity"
+        }
+      },
       "profile": {
         "title": "Profile",
         "name": "Name",
         "type": "Venue type",
+        "typePlaceholder": "Choose a type",
+        "typeSearch": "Search a type",
         "description": "Description",
         "address": "Address",
         "city": "City",

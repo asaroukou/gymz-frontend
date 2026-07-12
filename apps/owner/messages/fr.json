@@ -5,7 +5,39 @@
     "members": "Membres",
     "planning": "Planning",
     "venues": "Établissements",
-    "staff": "Équipe"
+    "staff": "Équipe",
+    "organizationGroup": "Organisation"
+  },
+  "venueSwitcher": {
+    "label": "Établissement actuel",
+    "placeholder": "Choisir un établissement",
+    "addVenue": "Ajouter un lieu",
+    "loadError": "Établissements indisponibles"
+  },
+  "activityType": {
+    "gym": "Salle de sport",
+    "crossfit": "CrossFit",
+    "hiit": "HIIT",
+    "bootcamp": "Bootcamp",
+    "cycling": "Cycling",
+    "boxing": "Boxe",
+    "martial_arts": "Arts martiaux",
+    "dance": "Danse",
+    "running": "Course à pied",
+    "padel": "Padel",
+    "tennis": "Tennis",
+    "squash": "Squash",
+    "basketball": "Basketball",
+    "football": "Football",
+    "swimming": "Natation",
+    "climbing": "Escalade",
+    "bouldering": "Bloc",
+    "yoga": "Yoga",
+    "pilates": "Pilates",
+    "stretch": "Stretching",
+    "spa": "Spa",
+    "massage": "Massage",
+    "beauty": "Beauté"
   },
   "shell": {
     "openMenu": "Ouvrir le menu",
@@ -117,6 +149,8 @@
     "subtitle": "Créez votre établissement en une minute et commencez à gérer vos membres.",
     "venueName": "Nom de l'établissement",
     "venueType": "Type d'établissement",
+    "venueTypePlaceholder": "Choisir un type",
+    "venueTypeSearch": "Rechercher un type",
     "city": "Ville",
     "country": "Pays",
     "timezone": "Fuseau horaire",
@@ -129,17 +163,6 @@
     "whatsNext": "Votre organisation et votre établissement sont créés instantanément.",
     "success": "Bienvenue chez {name} !",
     "error": "Impossible de créer votre établissement",
-    "types": {
-      "gym": "Salle de sport",
-      "yoga_studio": "Studio de yoga",
-      "spa": "Spa",
-      "tennis_club": "Club de tennis",
-      "cross_fit": "CrossFit",
-      "swimming_pool": "Piscine",
-      "martial_arts": "Arts martiaux",
-      "dance": "Danse",
-      "other": "Autre"
-    },
     "errors": {
       "venueNameMin": "2 caractères minimum",
       "cityRequired": "La ville est requise",
@@ -552,6 +575,7 @@
       "adding": "Ajout…",
       "success": "Participant ajouté",
       "error": "Impossible d'ajouter le participant",
+      "slotFull": "Séance complète, aucune place disponible.",
       "ineligible": {
         "inactive": "Membre inactif",
         "expired": "Abonnement expiré",
@@ -580,29 +604,48 @@
       "active": "Actif",
       "inactive": "Inactif"
     },
-    "type": {
-      "gym": "Salle de sport",
-      "yoga_studio": "Studio de yoga",
-      "spa": "Spa",
-      "tennis_club": "Club de tennis",
-      "cross_fit": "CrossFit",
-      "swimming_pool": "Piscine",
-      "martial_arts": "Arts martiaux",
-      "dance": "Danse",
-      "other": "Autre"
-    },
     "empty": {
       "title": "Aucun établissement",
-      "body": "Les établissements sont créés lors de la configuration initiale. Contactez le support IziWellPass pour en ajouter un."
+      "body": "Ajoutez votre premier établissement pour commencer à gérer vos membres et vos ressources."
+    },
+    "create": {
+      "cta": "Ajouter un lieu",
+      "title": "Nouvel établissement",
+      "formTitle": "Informations",
+      "cityRequired": "La ville est requise",
+      "countryRequired": "Le pays est requis",
+      "submit": "Créer l'établissement",
+      "submitting": "Création…",
+      "success": "Établissement créé",
+      "error": "Impossible de créer l'établissement"
     },
     "detail": {
       "back": "Retour aux établissements",
       "notFound": "Établissement introuvable",
       "loadError": "Impossible de charger l'établissement",
+      "activities": {
+        "title": "Activités",
+        "subtitle": "Les disciplines proposées dans cet établissement.",
+        "add": "Ajouter une activité",
+        "searchPlaceholder": "Rechercher une activité",
+        "empty": "Aucune activité pour le moment.",
+        "allAdded": "Toutes les activités sont ajoutées.",
+        "loadError": "Impossible de charger les activités",
+        "addError": "Impossible d'ajouter l'activité",
+        "removeConfirm": {
+          "title": "Retirer l'activité",
+          "description": "Retirer « {activity} » de cet établissement ?",
+          "confirm": "Retirer",
+          "confirming": "Retrait…",
+          "error": "Impossible de retirer l'activité"
+        }
+      },
       "profile": {
         "title": "Profil",
         "name": "Nom",
         "type": "Type d'établissement",
+        "typePlaceholder": "Choisir un type",
+        "typeSearch": "Rechercher un type",
         "description": "Description",
         "address": "Adresse",
         "city": "Ville",

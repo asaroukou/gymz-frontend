@@ -119,24 +119,53 @@ function AddParticipant({
   venueId,
   members,
   bookedMemberIds,
+  full,
 }: {
   slotId: string;
   venueId: string;
   members: Member[];
   bookedMemberIds: Set<string>;
+  full: boolean;
 }) {
   const t = useTranslations('planning');
   const queryClient = useQueryClient();
   const createBooking = useCreateBooking();
   const [memberId, setMemberId] = useState('');
 
-  const options = useMemo(
-    () =>
-      members
-        .filter((member) => !bookedMemberIds.has(member.id))
-        .map((member) => ({ value: member.id, label: memberName(member) })),
-    [members, bookedMemberIds],
-  );
+  // A member can only be booked while active with a live membership. Ineligible
+  // members stay in the list but are disabled with the reason, so front-desk
+  // staff can find the name and understand why they can't add it (rather than
+  // seeing an empty result), then go fix the membership.
+  const options = useMemo(() => {
+    const ineligibleReason = (member: Member): string | null => {
+      if (!member.is_active) return t('addBooking.ineligible.inactive');
+      switch (member.membership_status) {
+        case 'active':
+          return null;
+        case 'expired':
+          return t('addBooking.ineligible.expired');
+        case 'suspended':
+          return t('addBooking.ineligible.suspended');
+        case 'cancelled':
+          return t('addBooking.ineligible.cancelled');
+        default:
+          return null;
+      }
+    };
+
+    return members
+      .filter((member) => !bookedMemberIds.has(member.id))
+      .map((member) => {
+        const reason = ineligibleReason(member);
+        return {
+          value: member.id,
+          label: memberName(member),
+          disabled: reason !== null,
+          hint: reason ?? undefined,
+        };
+      })
+      .sort((a, b) => Number(a.disabled) - Number(b.disabled)); // eligible first
+  }, [members, bookedMemberIds, t]);
 
   const handleAdd = () => {
     if (!memberId) return;
@@ -172,12 +201,16 @@ function AddParticipant({
           placeholder={t('addBooking.placeholder')}
           searchPlaceholder={t('addBooking.search')}
           emptyText={t('addBooking.noMembers')}
+          disabled={full}
           className="flex-1"
         />
-        <Button onClick={handleAdd} disabled={!memberId || createBooking.isPending}>
+        <Button onClick={handleAdd} disabled={full || !memberId || createBooking.isPending}>
           {createBooking.isPending ? t('addBooking.adding') : t('addBooking.add')}
         </Button>
       </div>
+      {full ? (
+        <p className="text-xs text-muted-foreground">{t('addBooking.slotFull')}</p>
+      ) : null}
     </div>
   );
 }
@@ -219,6 +252,14 @@ export function BookingsSheet({
     return set;
   }, [bookings]);
 
+  // Block adding once the slot is full. Count live (non-cancelled) bookings once
+  // they've loaded — that reflects adds/cancels made in this sheet before the
+  // parent slot prop refetches; fall back to the slot's server count until then.
+  const bookedCount = bookingsQuery.data
+    ? bookings.filter((booking) => booking.status !== 'cancelled').length
+    : slot.booked_count;
+  const isFull = bookedCount >= slot.capacity;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full gap-0 sm:max-w-md">
@@ -241,6 +282,7 @@ export function BookingsSheet({
               venueId={venueId}
               members={members}
               bookedMemberIds={bookedMemberIds}
+              full={isFull}
             />
           ) : null}
 
