@@ -212,7 +212,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks checkin:write, or is a venue-scoped staff member not assigned to the venue in the request body",
+            "description": "Caller lacks checkin:write, or is a venue-scoped staff member not assigned to the venue in the request body, or the member is not entitled to this venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -288,7 +288,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks checkin:write, or is a venue-scoped staff member not assigned to the venue in the request body",
+            "description": "Caller lacks checkin:write, or is a venue-scoped staff member not assigned to the venue in the request body, or the member is not entitled to this venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -321,7 +321,7 @@
           "member"
         ],
         "summary": "List members in the current tenant (cursor-paginated, searchable).",
-        "description": "Cursor pagination: pass `limit` (1-100, default 20); the response\n`meta.next_cursor` (when present) is the `cursor` for the next page. There\nis NO `offset`/`page` param. Optional case-insensitive filters: name/phone/email.",
+        "description": "Cursor pagination: pass `limit` (1-100, default 20); the response\n`meta.next_cursor` (when present) is the `cursor` for the next page. There\nis NO `offset`/`page` param. Optional case-insensitive filters: name/phone/email.\n\nFor a venue-scoped staff caller the list is filtered to members entitled to\nat least one of the caller's venues (chain-wide members are always visible).",
         "operationId": "list_members",
         "parameters": [
           {
@@ -414,6 +414,7 @@
           "member"
         ],
         "summary": "Register a new member in the current tenant.",
+        "description": "The request carries a venue entitlement: `access_scope` (`chain_wide` or\n`venue_scoped`, default `venue_scoped`) plus `venue_ids` (required non-empty\nfor `venue_scoped`). A venue-scoped staff caller may only assign venues they\nhave access to.",
         "operationId": "register_member",
         "requestBody": {
           "content": {
@@ -437,7 +438,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Validation error (e.g. venue_ids required for venue_scoped)",
             "content": {
               "application/json": {
                 "schema": {
@@ -457,7 +458,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks member:write",
+            "description": "Caller lacks member:write, or is assigning a venue they do not have access to",
             "content": {
               "application/json": {
                 "schema": {
@@ -514,7 +515,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks member:read",
+            "description": "Caller lacks member:read, or is a venue-scoped staff member and the member is not entitled to any of the caller's venues",
             "content": {
               "application/json": {
                 "schema": {
@@ -599,7 +600,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks member:write",
+            "description": "Caller lacks member:write, or is a venue-scoped staff member and the target member is not entitled to any of the caller's venues",
             "content": {
               "application/json": {
                 "schema": {
@@ -610,6 +611,94 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/members/{mid}/access": {
+      "put": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Flip a member's access scope (chain_wide vs venue_scoped).",
+        "description": "Granting `chain_wide` is owner/admin only. Setting `venue_scoped` requires\nthe member to already have venue entitlements (set via\n`PUT /gms/v1/members/{mid}/venues` first).",
+        "operationId": "set_member_access",
+        "parameters": [
+          {
+            "name": "mid",
+            "in": "path",
+            "description": "Member id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMemberAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Access scope updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Member"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (venue_scoped requires existing venue entitlements)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks member:write, only owner/admin may grant chain-wide access, or is a venue-scoped staff member and the target member is not in their scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Member not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -666,7 +755,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks member:write",
+            "description": "Caller lacks member:write, or is a venue-scoped staff member and the target member is not entitled to any of the caller's venues",
             "content": {
               "application/json": {
                 "schema": {
@@ -677,6 +766,104 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/members/{mid}/venues": {
+      "put": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Replace a member's venue entitlements (implies access_scope=venue_scoped).",
+        "description": "Down-scope guarded: narrowing access is rejected with 409 if the member still\nhas future non-cancelled bookings at any venue not in the new set (this\napplies to chain-wide members being scoped down as well as to shrinking an\nexisting set). A venue-scoped staff caller may only assign venues they have\naccess to, and only for members already in their scope.",
+        "operationId": "set_member_venues",
+        "parameters": [
+          {
+            "name": "mid",
+            "in": "path",
+            "description": "Member id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMemberVenuesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated venue entitlements",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Vec_VenueId"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A venue does not belong to your tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks member:write, is assigning a venue they do not have access to, or is a venue-scoped staff member and the target member is not in their scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Member not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Member has future bookings at a venue not in the new set",
             "content": {
               "application/json": {
                 "schema": {
@@ -1139,7 +1326,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks booking:write, or is a venue-scoped staff member not assigned to the slot's venue",
+            "description": "Caller lacks booking:write, or is a venue-scoped staff member not assigned to the slot's venue, or the member is not entitled to this venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -3581,6 +3768,14 @@
   },
   "components": {
     "schemas": {
+      "AccessScope": {
+        "type": "string",
+        "description": "Which venues a member is entitled to use.\n\n`ChainWide` = every venue in the tenant (current and future); no\n`member_venues` rows. `VenueScoped` = only the venues in `member_venues`.",
+        "enum": [
+          "chain_wide",
+          "venue_scoped"
+        ]
+      },
       "ActivityType": {
         "type": "string",
         "description": "Closed platform catalog of activities. Adding one is a code change.",
@@ -3875,11 +4070,15 @@
               "membership_type",
               "membership_status",
               "membership_start",
+              "access_scope",
               "is_active",
               "created_at",
               "updated_at"
             ],
             "properties": {
+              "access_scope": {
+                "$ref": "#/components/schemas/AccessScope"
+              },
               "created_at": {
                 "type": "string",
                 "format": "date-time"
@@ -5939,6 +6138,10 @@
           "membership_start"
         ],
         "properties": {
+          "access_scope": {
+            "$ref": "#/components/schemas/AccessScope",
+            "description": "How the member is scoped. Defaults to venue_scoped (requires venue_ids)."
+          },
           "email": {
             "type": [
               "string",
@@ -5976,6 +6179,13 @@
               "string",
               "null"
             ]
+          },
+          "venue_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VenueId"
+            },
+            "description": "Venues the member is entitled to. Required (non-empty) for venue_scoped."
           }
         }
       },
@@ -6417,11 +6627,15 @@
           "membership_type",
           "membership_status",
           "membership_start",
+          "access_scope",
           "is_active",
           "created_at",
           "updated_at"
         ],
         "properties": {
+          "access_scope": {
+            "$ref": "#/components/schemas/AccessScope"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -6617,11 +6831,15 @@
                 "membership_type",
                 "membership_status",
                 "membership_start",
+                "access_scope",
                 "is_active",
                 "created_at",
                 "updated_at"
               ],
               "properties": {
+                "access_scope": {
+                  "$ref": "#/components/schemas/AccessScope"
+                },
                 "created_at": {
                   "type": "string",
                   "format": "date-time"
@@ -7489,6 +7707,33 @@
           },
           "venue_id": {
             "$ref": "#/components/schemas/VenueId"
+          }
+        }
+      },
+      "SetMemberAccessRequest": {
+        "type": "object",
+        "description": "Flip a member's access scope.",
+        "required": [
+          "scope"
+        ],
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/AccessScope"
+          }
+        }
+      },
+      "SetMemberVenuesRequest": {
+        "type": "object",
+        "description": "Replace a member's venue entitlements (implies access_scope=venue_scoped).",
+        "required": [
+          "venue_ids"
+        ],
+        "properties": {
+          "venue_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VenueId"
+            }
           }
         }
       },
