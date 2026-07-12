@@ -2,37 +2,54 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { customFetch, unwrap } from '@iziwellpass/api/client';
+import { customFetch } from '@iziwellpass/api/client';
 import { getListMembersQueryKey, getListMembersUrl } from '@iziwellpass/api/generated';
-import type { ApiResponseVecMember } from '@iziwellpass/api/schemas';
+import type { Member, PaginatedApiResponseVecMember } from '@iziwellpass/api/schemas';
 
 /**
- * WORKAROUND — backend pagination gap (tracked in `docs/backend-issues.md`).
+ * Materialize the FULL member list via cursor pagination.
  *
- * `GET /gms/v1/members` is paginated on the live API: it defaults to
- * `limit=20` and returns a `meta` block — but the OpenAPI spec declares NO
- * query parameters for the operation (and doesn't model `meta`), so the
- * Orval-generated `useListMembers` sends no `limit` and silently shows only
- * the first 20 members. The owner app filters/searches client-side and has no
- * pagination UI, so members beyond the 20th are invisible (and the dashboard
- * "Membres actifs" count is wrong).
+ * `GET /gms/v1/members` is paginated: it caps `limit` at 100 and returns a
+ * `meta.next_cursor`. Several consumers need the whole set rather than a page —
+ * the dashboard "active members" count and the check-in name maps — so this
+ * helper walks the cursor to completion and concatenates the pages.
  *
- * Until the backend documents pagination (`limit`/`offset` + `meta`) in its
- * OpenAPI, we fetch the full list through the shared `customFetch` mutator
- * with an explicit high `limit`. The query key reuses `getListMembersQueryKey`
- * as a prefix so register/suspend/update invalidations still match. When the
- * spec is fixed, delete this file and either pass `limit` via the generated
- * hook or add real pagination.
+ * The thin `useAllMembers` wrapper keeps every call site on one query-key prefix
+ * (`getListMembersQueryKey`) so register/suspend/edit invalidations still match.
+ *
+ * This is a candidate to replace with server-side search in a later WS6 phase
+ * (browse-page search + async pickers); until then, the full list backs the
+ * client-side filter and the aggregate consumers.
  */
-const MEMBERS_LIMIT = 1000;
+
+/** Endpoint maximum page size — fewest round-trips. */
+const PAGE_SIZE = 100;
+/** Hard cap so a malformed/looping cursor can never spin forever (5000 members). */
+const MAX_PAGES = 50;
+
+/** Fetch every member by following `meta.next_cursor` to exhaustion. */
+export async function fetchAllMembers(): Promise<Member[]> {
+  const all: Member[] = [];
+  let cursor: string | undefined;
+
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const response = await customFetch<PaginatedApiResponseVecMember>(
+      getListMembersUrl({ limit: PAGE_SIZE, cursor }),
+      { method: 'GET' },
+    );
+    all.push(...response.data);
+    const next = response.meta.next_cursor;
+    if (!next) return all;
+    cursor = next;
+  }
+
+  console.warn('[all-members] MAX_PAGES cap reached; returning a truncated member list');
+  return all;
+}
 
 export function useAllMembers() {
   return useQuery({
-    queryKey: [...getListMembersQueryKey(), { limit: MEMBERS_LIMIT }],
-    queryFn: () =>
-      customFetch<ApiResponseVecMember>(`${getListMembersUrl()}?limit=${MEMBERS_LIMIT}`, {
-        method: 'GET',
-      }),
-    select: unwrap,
+    queryKey: [...getListMembersQueryKey(), { scope: 'all' }],
+    queryFn: fetchAllMembers,
   });
 }
