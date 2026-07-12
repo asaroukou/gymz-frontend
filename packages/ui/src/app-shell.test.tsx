@@ -48,6 +48,16 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy();
   });
 
+  it('renders the leading slot in the topbar', () => {
+    render(
+      <AppShell nav={nav} title="IziWellPass" leading={<span>venue-switcher</span>}>
+        <p>content</p>
+      </AppShell>,
+    );
+    // getByText throws if the slot content is missing — that is the assertion.
+    expect(screen.getByText('venue-switcher')).toHaveProperty('tagName', 'SPAN');
+  });
+
   it('renders links through a custom linkComponent when provided', () => {
     function FakeLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
       return <a data-testid="custom-link" {...props} />;
@@ -85,5 +95,31 @@ describe('AppShell', () => {
     );
     screen.getAllByRole('link', { name: 'Members' })[0]?.click();
     expect(onNavigate).toHaveBeenCalled();
+  });
+
+  it('renders the navHeader slot in the sidebar', () => {
+    render(
+      <AppShell nav={nav} title="IziWellPass" navHeader={<span>venue-switcher</span>}>
+        <p>content</p>
+      </AppShell>,
+    );
+    expect(screen.getAllByText('venue-switcher').length).toBeGreaterThan(0);
+  });
+
+  it('renders grouped nav with a group label', () => {
+    render(
+      <AppShell
+        title="IziWellPass"
+        navGroups={[
+          { items: [{ title: 'Dashboard', href: '/' }] },
+          { label: 'Organisation', items: [{ title: 'Members', href: '/members' }] },
+        ]}
+      >
+        <p>content</p>
+      </AppShell>,
+    );
+    expect(screen.getAllByText('Organisation').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Dashboard' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Members' }).length).toBeGreaterThan(0);
   });
 });

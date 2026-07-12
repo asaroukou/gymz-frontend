@@ -13,12 +13,24 @@ export interface NavItem {
   icon?: ReactNode;
 }
 
+export interface NavGroup {
+  /** Optional section heading. Omit for the leading (venue) group headed by navHeader. */
+  label?: string;
+  items: NavItem[];
+}
+
 export interface AppShellProps {
   /** App name shown in the sidebar header and mobile topbar. */
   title: string;
-  nav: NavItem[];
+  nav?: NavItem[];
+  /** Grouped nav; takes precedence over `nav`. Groups render top-to-bottom with a hairline between them. */
+  navGroups?: NavGroup[];
+  /** Sidebar slot rendered below the wordmark, above the nav (e.g. the venue switcher). */
+  navHeader?: ReactNode;
   /** Right-hand topbar slot (e.g. user menu / sign-out). */
   actions?: ReactNode;
+  /** Left-hand topbar slot, before the actions group (e.g. a venue switcher). */
+  leading?: ReactNode;
   /** Current pathname for active-item highlighting (pass from usePathname()). */
   currentPath?: string;
   /**
@@ -63,48 +75,66 @@ function Wordmark({ title }: { title: string }) {
   );
 }
 
-function NavLinks({
-  nav,
+function NavGroupList({
+  groups,
   currentPath,
   linkComponent: LinkComponent = DefaultLink,
   onNavigate,
 }: {
-  nav: NavItem[];
+  groups: NavGroup[];
   currentPath?: string;
   linkComponent?: ComponentType<AnchorHTMLAttributes<HTMLAnchorElement>>;
   onNavigate?: () => void;
 }) {
   return (
-    <nav className="flex flex-col gap-1 p-2">
-      {nav.map((item) => {
-        const active = isActivePath(item.href, currentPath);
-        return (
-          <LinkComponent
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            data-active={active || undefined}
-            aria-current={active ? 'page' : undefined}
-            className={cn(
-              'flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15 lg:h-9',
-              active
-                ? 'bg-primary text-primary-foreground shadow-xs'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-            )}
-          >
-            {item.icon}
-            {item.title}
-          </LinkComponent>
-        );
-      })}
+    <nav className="flex flex-col px-2 py-2">
+      {groups.map((group, i) => (
+        <div
+          key={group.label ?? `group-${i}`}
+          className={cn('flex flex-col gap-1', i > 0 && 'mt-3 border-t border-border pt-3')}
+        >
+          {group.label ? (
+            <p className="px-4 pb-1 text-xs font-medium text-muted-foreground">{group.label}</p>
+          ) : null}
+          {group.items.map((item) => {
+            const active = isActivePath(item.href, currentPath);
+            return (
+              <LinkComponent
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                data-active={active || undefined}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15 lg:h-9',
+                  active
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                )}
+              >
+                {item.icon}
+                {item.title}
+              </LinkComponent>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
+}
+
+function toGroups(navGroups?: NavGroup[], nav?: NavItem[]): NavGroup[] {
+  if (navGroups && navGroups.length > 0) return navGroups;
+  return nav ? [{ items: nav }] : [];
 }
 
 export function AppShell({
   title,
   nav,
+  navGroups,
+  navHeader,
   actions,
+  leading,
   currentPath,
   linkComponent,
   onNavigate,
@@ -112,6 +142,7 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const groups = toGroups(navGroups, nav);
 
   const handleNavigate = () => {
     setMobileOpen(false);
@@ -125,8 +156,9 @@ export function AppShell({
         <div className="flex h-[72px] items-center">
           <Wordmark title={title} />
         </div>
-        <NavLinks
-          nav={nav}
+        {navHeader ? <div className="px-2 pb-2">{navHeader}</div> : null}
+        <NavGroupList
+          groups={groups}
           currentPath={currentPath}
           linkComponent={linkComponent}
           onNavigate={handleNavigate}
@@ -159,14 +191,16 @@ export function AppShell({
                     <Wordmark title={title} />
                   </div>
                 </SheetTitle>
-                <NavLinks
-                  nav={nav}
+                {navHeader ? <div className="px-2 pb-2">{navHeader}</div> : null}
+                <NavGroupList
+                  groups={groups}
                   currentPath={currentPath}
                   linkComponent={linkComponent}
                   onNavigate={handleNavigate}
                 />
               </SheetContent>
             </Sheet>
+            {leading}
             <div className="ml-auto flex items-center gap-3">{actions}</div>
           </header>
 

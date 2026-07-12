@@ -6,7 +6,7 @@ import { useSession } from '@iziwellpass/auth/provider';
 import { Card, CardContent, CardHeader } from '@iziwellpass/ui/components/card';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
-import { useVenueSelection } from '@/lib/use-venue-selection';
+import { useVenueContext } from '@/lib/venue-context';
 
 import { KpiRow } from './dashboard/kpi-row';
 import { RecentCheckins } from './dashboard/recent-checkins';
@@ -14,7 +14,6 @@ import { SectionError } from './dashboard/section-error';
 import { Starter } from './dashboard/starter';
 import { TodaySchedule } from './dashboard/today-schedule';
 import { useDashboardData } from './dashboard/use-dashboard-data';
-import { VenueSelect } from './dashboard/venue-select';
 
 /**
  * Today's date formatted in the active next-intl locale and the venue's
@@ -122,13 +121,13 @@ export default function DashboardPage() {
   const t = useTranslations('dashboard');
   const locale = useLocale();
   const session = useSession();
-  const selection = useVenueSelection();
 
   const email = session.status === 'signed-in' ? session.claims.email : null;
   const name = email ? (email.split('@')[0] ?? email) : null;
   const greeting = name ? t('greeting', { name }) : t('greetingNoName');
 
-  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = selection;
+  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } =
+    useVenueContext();
   const timeZone = selectedVenue?.timezone;
 
   return (
@@ -138,7 +137,6 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{greeting}</h1>
           <p className="text-sm text-muted-foreground">{todayLabel(locale, timeZone)}</p>
         </div>
-        <VenueSelect selection={selection} />
       </div>
 
       {isLoading ? (

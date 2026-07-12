@@ -16,7 +16,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 
 import { useAuth, useSession } from '@iziwellpass/auth/provider';
-import { AppShell, type NavItem } from '@iziwellpass/ui/app-shell';
+import { AppShell, type NavGroup } from '@iziwellpass/ui/app-shell';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   DropdownMenu,
@@ -30,7 +30,9 @@ import {
 } from '@iziwellpass/ui/components/dropdown-menu';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
-import { navForRole, type NavLabelKey } from '@/lib/nav';
+import { navGroupsForRole, type NavLabelKey } from '@/lib/nav';
+import { VenueProvider } from '@/lib/venue-context';
+import { VenueSwitcher } from '@/components/venue-switcher';
 
 /** Lucide icon per nav item, rendered at the start of each sidebar link. */
 const NAV_ICONS: Record<NavLabelKey, LucideIcon> = {
@@ -106,27 +108,31 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const session = useSession();
   const tNav = useTranslations('nav');
   const tShell = useTranslations('shell');
-  const navItems = session.status === 'signed-in' ? navForRole(session.claims.role) : [];
-  const nav: NavItem[] = navItems.map((item) => {
-    const Icon = NAV_ICONS[item.labelKey];
-    return {
-      title: tNav(item.labelKey),
-      href: item.href,
-      icon: <Icon className="size-4 shrink-0" />,
-    };
-  });
+  const groups = session.status === 'signed-in' ? navGroupsForRole(session.claims.role) : [];
+  const navItemCount = groups.reduce((count, group) => count + group.items.length, 0);
+  const navGroups: NavGroup[] = groups.map((group) => ({
+    label: group.scope === 'org' ? tNav('organizationGroup') : undefined,
+    items: group.items.map((item) => {
+      const Icon = NAV_ICONS[item.labelKey];
+      return {
+        title: tNav(item.labelKey),
+        href: item.href,
+        icon: <Icon className="size-4 shrink-0" />,
+      };
+    }),
+  }));
 
   useEffect(() => {
     if (session.status === 'signed-out') {
       router.replace('/login?next=' + encodeURIComponent(pathname));
       return;
     }
-    if (session.status === 'signed-in' && nav.length === 0) {
+    if (session.status === 'signed-in' && navItemCount === 0) {
       // Signed in but no venue-staff role yet — send them to create one
       // instead of stranding them on a dead-end "no access" screen.
       router.replace('/onboarding');
     }
-  }, [session.status, nav.length, router, pathname]);
+  }, [session.status, navItemCount, router, pathname]);
 
   if (session.status === 'loading') {
     return <LoadingShell />;
@@ -138,22 +144,26 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return null;
   }
 
-  if (nav.length === 0) {
+  if (navItemCount === 0) {
     // The effect above is redirecting to /onboarding; render nothing while
     // that navigation completes.
     return null;
   }
 
   return (
-    <AppShell
-      title="IziWellPass"
-      nav={nav}
-      linkComponent={NavLink}
-      currentPath={pathname}
-      openMenuLabel={tShell('openMenu')}
-      actions={<UserMenu />}
-    >
-      {children}
-    </AppShell>
+    <VenueProvider>
+      <AppShell
+        title="IziWellPass"
+        navGroups={navGroups}
+        navHeader={<VenueSwitcher className="w-full" />}
+        linkComponent={NavLink}
+        currentPath={pathname}
+        openMenuLabel={tShell('openMenu')}
+        leading={<VenueSwitcher className="max-w-[168px] md:hidden" />}
+        actions={<UserMenu />}
+      >
+        {children}
+      </AppShell>
+    </VenueProvider>
   );
 }

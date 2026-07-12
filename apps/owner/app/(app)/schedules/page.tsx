@@ -10,11 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iziwellpass/ui/compon
 
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage } from '@/lib/api-error';
-import { useVenueSelection } from '@/lib/use-venue-selection';
+import { useVenueContext } from '@/lib/venue-context';
 
 import { SchedulesTab } from './schedules-tab';
 import { SlotsTab } from './slots-tab';
-import { VenueSelect } from './venue-select';
 
 type PlanningTab = 'courses' | 'slots';
 
@@ -24,8 +23,8 @@ function PlanningContent() {
   const canManageSchedules = role === 'owner' || role === 'admin';
   const canManageBookings = role === 'owner' || role === 'admin' || role === 'receptionist';
 
-  const selection = useVenueSelection();
-  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = selection;
+  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } =
+    useVenueContext();
   const timeZone = selectedVenue?.timezone;
 
   const [tab, setTab] = useState<PlanningTab>('courses');
@@ -37,7 +36,6 @@ function PlanningContent() {
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
-        <VenueSelect selection={selection} />
       </div>
 
       {isLoading ? (

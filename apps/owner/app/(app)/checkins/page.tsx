@@ -8,13 +8,12 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage } from '@/lib/api-error';
-import { useVenueSelection } from '@/lib/use-venue-selection';
+import { useVenueContext } from '@/lib/venue-context';
 
 import { DayStats } from './day-stats';
 import { RecentCheckins } from './recent-checkins';
 import { RegisterPanel } from './register-panel';
 import { useFrontdeskData } from './use-frontdesk-data';
-import { VenueSelect } from './venue-select';
 
 function LoadingState() {
   return (
@@ -60,8 +59,8 @@ function FrontdeskBody({ venueId, timeZone }: { venueId: string; timeZone: strin
 
 function FrontdeskContent() {
   const t = useTranslations('frontdesk');
-  const selection = useVenueSelection();
-  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = selection;
+  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } =
+    useVenueContext();
   const timeZone = selectedVenue?.timezone;
 
   return (
@@ -71,7 +70,6 @@ function FrontdeskContent() {
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
-        <VenueSelect selection={selection} />
       </div>
 
       {isLoading ? (

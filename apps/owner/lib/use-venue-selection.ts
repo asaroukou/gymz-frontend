@@ -46,9 +46,10 @@ export interface UseVenueSelectionResult {
 }
 
 /**
- * Shared venue-context hook: lists venues for a `VenueSelect`, persists the
- * chosen venue id in localStorage, and auto-selects when only one venue
- * exists. Reused by SP5 (/venues), SP7 (/schedules), and SP9 (/checkins).
+ * Shared venue-selection logic: lists venues, persists the chosen venue id in
+ * localStorage, and always resolves a current venue while any exist (a valid
+ * stored selection, else the first venue). Wrapped once by `VenueProvider`
+ * (`lib/venue-context.tsx`) and consumed app-wide via `useVenueContext`.
  */
 export function useVenueSelection(): UseVenueSelectionResult {
   const venuesQuery = useListVenues({ query: { select: unwrap } });
@@ -63,30 +64,34 @@ export function useVenueSelection(): UseVenueSelectionResult {
     writeStoredVenueId(id);
   }, []);
 
-  // Auto-select when only one venue exists, or when the stored selection no
-  // longer matches an existing venue.
+  // Always resolve a current venue when any exist: keep a still-valid stored
+  // selection, otherwise fall back to the first venue. Clears only when the
+  // list has loaded and is genuinely empty.
+  //
+  // The `isLoading` guard is essential: while the venues query is in flight
+  // `venues` is `[]`, and without it the empty-list branch below would wipe the
+  // stored selection on every reload (before the list arrives), snapping the
+  // user back to the first venue. Wait for the list before resolving.
   useEffect(() => {
+    if (venuesQuery.isLoading) {
+      return;
+    }
     if (venues.length === 0) {
+      if (selectedVenueId !== null) {
+        setSelectedVenueIdState(null);
+        writeStoredVenueId(null);
+      }
       return;
     }
     const stillValid = selectedVenueId !== null && venues.some((v) => v.id === selectedVenueId);
     if (stillValid) {
       return;
     }
-    if (venues.length === 1) {
-      const only = venues[0];
-      if (only) {
-        setSelectedVenueId(only.id);
-      }
-      return;
+    const first = venues[0];
+    if (first) {
+      setSelectedVenueId(first.id);
     }
-    if (selectedVenueId === null) {
-      return;
-    }
-    // Stored id points at a venue that no longer exists — clear it.
-    setSelectedVenueIdState(null);
-    writeStoredVenueId(null);
-  }, [venues, selectedVenueId, setSelectedVenueId]);
+  }, [venuesQuery.isLoading, venues, selectedVenueId, setSelectedVenueId]);
 
   const selectedVenue = useMemo(
     () => venues.find((v) => v.id === selectedVenueId),
