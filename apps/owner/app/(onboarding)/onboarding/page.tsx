@@ -3,27 +3,13 @@
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  BoxIcon,
-  CheckIcon,
-  DumbbellIcon,
-  Flower2Icon,
-  MoreHorizontalIcon,
-  MusicIcon,
-  SparklesIcon,
-  SwordsIcon,
-  TrophyIcon,
-  WavesIcon,
-  type LucideIcon,
-} from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useForm, type ControllerRenderProps } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { unwrap } from '@iziwellpass/api/client';
 import { useOnboardVenue } from '@iziwellpass/api/generated';
-import { VenueType } from '@iziwellpass/api/schemas';
 import { parseClaims } from '@iziwellpass/auth/claims';
 import { useAuth, useSession } from '@iziwellpass/auth/provider';
 import { Button } from '@iziwellpass/ui/components/button';
@@ -34,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@iziwellpass/ui/components/card';
+import { Combobox } from '@iziwellpass/ui/components/combobox';
 import {
   Form,
   FormControl,
@@ -41,7 +28,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  useFormField,
 } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
 import {
@@ -52,29 +38,15 @@ import {
   SelectValue,
 } from '@iziwellpass/ui/components/select';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
-import { cn } from '@iziwellpass/ui/lib/utils';
 
+import { ACTIVITY_TYPE_VALUES, useActivityTypeOptions } from '@/lib/activity-type';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { COUNTRIES, TIMEZONES, withCurrentValue } from '@/lib/locations';
 import { navForRole } from '@/lib/nav';
 
-const VENUE_TYPE_VALUES = Object.values(VenueType) as [VenueType, ...VenueType[]];
-
-const VENUE_TYPE_ICONS: Record<VenueType, LucideIcon> = {
-  gym: DumbbellIcon,
-  yoga_studio: Flower2Icon,
-  spa: SparklesIcon,
-  tennis_club: TrophyIcon,
-  cross_fit: BoxIcon,
-  swimming_pool: WavesIcon,
-  martial_arts: SwordsIcon,
-  dance: MusicIcon,
-  other: MoreHorizontalIcon,
-};
-
 type OnboardingValues = {
   venue_name: string;
-  venue_type: VenueType;
+  venue_type: (typeof ACTIVITY_TYPE_VALUES)[number];
   city: string;
   country: string;
   address_line: string;
@@ -102,76 +74,18 @@ function LoadingShell() {
   );
 }
 
-/**
- * Radio-card group for the venue type. Extracted so it can call `useFormField`
- * (only valid inside a `FormItem`) and wire the fieldset itself to the field's
- * error state — `aria-invalid` + `aria-describedby` pointing at the shared
- * `FormMessage`, since the visual control is a custom card grid, not an input.
- */
-function VenueTypeFieldset({
-  field,
-}: {
-  field: ControllerRenderProps<OnboardingValues, 'venue_type'>;
-}) {
-  const t = useTranslations('onboarding');
-  const { error, formMessageId } = useFormField();
-
-  return (
-    <fieldset
-      className="grid gap-2"
-      aria-invalid={error ? true : undefined}
-      aria-describedby={error ? formMessageId : undefined}
-    >
-      <legend className="mb-2 text-sm font-medium">{t('venueType')}</legend>
-      <div className="grid grid-cols-3 gap-2">
-        {VENUE_TYPE_VALUES.map((type) => {
-          const Icon = VENUE_TYPE_ICONS[type];
-          const selected = field.value === type;
-          return (
-            <label
-              key={type}
-              className={cn(
-                'relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border bg-card p-3 text-center shadow-xs transition-colors',
-                'has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/15',
-                selected ? 'border-primary' : 'border-input hover:bg-accent',
-              )}
-            >
-              <input
-                type="radio"
-                name={field.name}
-                value={type}
-                checked={selected}
-                onChange={() => field.onChange(type)}
-                onBlur={field.onBlur}
-                className="sr-only"
-              />
-              {selected ? (
-                <CheckIcon aria-hidden className="absolute top-1.5 right-1.5 size-4 text-primary" />
-              ) : null}
-              <Icon
-                aria-hidden
-                className={cn('size-5', selected ? 'text-foreground' : 'text-muted-foreground')}
-              />
-              <span className="text-xs leading-tight font-medium">{t(`types.${type}`)}</span>
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-}
-
 function OnboardingForm() {
   const router = useRouter();
   const { client, refresh, signOut } = useAuth();
   const onboardVenue = useOnboardVenue();
   const t = useTranslations('onboarding');
+  const typeOptions = useActivityTypeOptions();
 
   const schema = useMemo(
     () =>
       z.object({
         venue_name: z.string().min(2, t('errors.venueNameMin')),
-        venue_type: z.enum(VENUE_TYPE_VALUES),
+        venue_type: z.enum(ACTIVITY_TYPE_VALUES),
         city: z.string().min(1, t('errors.cityRequired')),
         country: z.string().min(1, t('errors.countryRequired')).max(60, t('errors.countryTooLong')),
         address_line: z.string(),
@@ -268,7 +182,16 @@ function OnboardingForm() {
           name="venue_type"
           render={({ field }) => (
             <FormItem className="sm:col-span-2">
-              <VenueTypeFieldset field={field} />
+              <FormLabel>{t('venueType')}</FormLabel>
+              {/* No FormControl around Combobox: it's not a forwardRef DOM node, so
+                  FormControl's Radix Slot would warn on ref. */}
+              <Combobox
+                options={typeOptions}
+                value={field.value}
+                onValueChange={field.onChange}
+                placeholder={t('venueTypePlaceholder')}
+                searchPlaceholder={t('venueTypeSearch')}
+              />
               <FormMessage />
             </FormItem>
           )}

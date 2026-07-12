@@ -5,7 +5,14 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+  XIcon,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -16,23 +23,33 @@ import {
   getGetVenueQueryKey,
   getListResourcesQueryKey,
   getListResourceTypesQueryKey,
+  getListVenueActivitiesQueryKey,
   getListVenuesQueryKey,
+  useAddVenueActivity,
   useCreateResource,
   useCreateResourceType,
   useDeleteResource,
   useGetVenue,
   useListResources,
   useListResourceTypes,
+  useListVenueActivities,
+  useRemoveVenueActivity,
   useUpdateResource,
   useUpdateVenue,
 } from '@iziwellpass/api/generated';
-import type { BookingMode, Resource, ResourceType, Venue } from '@iziwellpass/api/schemas';
-import { VenueType } from '@iziwellpass/api/schemas';
+import type {
+  BookingMode,
+  Resource,
+  ResourceType,
+  Venue,
+  VenueActivity,
+} from '@iziwellpass/api/schemas';
 import { useRole } from '@iziwellpass/auth/provider';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/components/card';
+import { Combobox } from '@iziwellpass/ui/components/combobox';
 import {
   Dialog,
   DialogContent,
@@ -83,11 +100,16 @@ import {
 import { Textarea } from '@iziwellpass/ui/components/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/components/tooltip';
 
+import {
+  ACTIVITY_TYPE_VALUES,
+  useActivityTypeLabel,
+  useActivityTypeOptions,
+} from '@/lib/activity-type';
+import { VenueFormFields } from '@/components/venue-form-fields';
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
-import { COUNTRIES, TIMEZONES, withCurrentValue } from '@/lib/locations';
+import { useVenueContext } from '@/lib/venue-context';
 
-const VENUE_TYPE_VALUES = Object.values(VenueType) as [VenueType, ...VenueType[]];
 const BOOKING_MODE_VALUES = [
   'class',
   'appointment',
@@ -108,7 +130,7 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
     () =>
       z.object({
         name: z.string().min(1, t('detail.profile.nameRequired')),
-        venue_type: z.enum(VENUE_TYPE_VALUES),
+        venue_type: z.enum(ACTIVITY_TYPE_VALUES),
         description: z.string(),
         address_line: z.string(),
         city: z.string(),
@@ -190,119 +212,7 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
             onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
             className="grid gap-4 sm:grid-cols-2"
           >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('detail.profile.name')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} disabled={!canEdit} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="venue_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('detail.profile.type')}</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {VENUE_TYPE_VALUES.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {t(`type.${type}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-2">
-                  <FormLabel>{t('detail.profile.description')}</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} disabled={!canEdit} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="address_line"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-2">
-                  <FormLabel>{t('detail.profile.address')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} disabled={!canEdit} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('detail.profile.city')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} disabled={!canEdit} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('detail.profile.country')}</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={t('detail.profile.countryPlaceholder')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {withCurrentValue(COUNTRIES, field.value).map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('detail.profile.phone')}</FormLabel>
-                  <FormControl>
-                    <Input inputMode="tel" {...field} disabled={!canEdit} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <VenueFormFields form={form} disabled={!canEdit} />
             {/*
               Email is read-only: `UpdateVenueRequest` has no `email` field, so
               there is no contract to persist an edited value against. Rendered
@@ -327,30 +237,6 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
                 <TooltipContent>{t('detail.profile.emailReadOnly')}</TooltipContent>
               </Tooltip>
             </FormItem>
-            <FormField
-              control={form.control}
-              name="timezone"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-2">
-                  <FormLabel>{t('detail.profile.timezone')}</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={t('detail.profile.timezonePlaceholder')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {withCurrentValue(TIMEZONES, field.value).map((tz) => (
-                        <SelectItem key={tz.value} value={tz.value}>
-                          {tz.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             {/*
               `VenueSettings` (locale, timezone_override) is a nested object on
               `Venue` but is not part of `UpdateVenueRequest` — settings are
@@ -1052,15 +938,170 @@ function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
 }
 
 // ---------------------------------------------------------------------------
+// Activities section
+// ---------------------------------------------------------------------------
+
+function ActivitiesSection({ venueId, canEdit }: { venueId: string; canEdit: boolean }) {
+  const t = useTranslations('venues');
+  const tCommon = useTranslations('common');
+  const queryClient = useQueryClient();
+  const activityLabel = useActivityTypeLabel();
+  const allOptions = useActivityTypeOptions();
+
+  const activitiesQuery = useListVenueActivities(venueId, { query: { select: unwrap } });
+  const activities = useMemo(() => activitiesQuery.data ?? [], [activitiesQuery.data]);
+  const present = useMemo(
+    () => new Set(activities.map((a: VenueActivity) => a.activity_type)),
+    [activities],
+  );
+  const options = useMemo(
+    () => allOptions.filter((o) => !present.has(o.value as (typeof ACTIVITY_TYPE_VALUES)[number])),
+    [allOptions, present],
+  );
+
+  const addActivity = useAddVenueActivity();
+  const removeActivity = useRemoveVenueActivity();
+  const [removing, setRemoving] = useState<VenueActivity | null>(null);
+
+  // Adding/removing an activity seeds/deactivates resource types on the backend.
+  const invalidateAll = () => {
+    void queryClient.invalidateQueries({ queryKey: getListVenueActivitiesQueryKey(venueId) });
+    void queryClient.invalidateQueries({ queryKey: getListResourcesQueryKey(venueId) });
+    void queryClient.invalidateQueries({ queryKey: getListResourceTypesQueryKey() });
+  };
+
+  const handleAdd = (value: string) => {
+    addActivity.mutate(
+      { id: venueId, data: { activity_type: value as (typeof ACTIVITY_TYPE_VALUES)[number] } },
+      {
+        onSuccess: invalidateAll,
+        onError: (err) => toast.error(apiErrorMessage(err, t('detail.activities.addError'))),
+      },
+    );
+  };
+
+  const handleRemove = () => {
+    if (!removing) return;
+    removeActivity.mutate(
+      { id: venueId, activity: removing.activity_type },
+      {
+        onSuccess: () => {
+          invalidateAll();
+          setRemoving(null);
+        },
+        onError: (err) =>
+          toast.error(apiErrorMessage(err, t('detail.activities.removeConfirm.error'))),
+      },
+    );
+  };
+
+  return (
+    <Card className="rounded-2xl">
+      <CardHeader>
+        <CardTitle>{t('detail.activities.title')}</CardTitle>
+        <p className="text-sm text-muted-foreground">{t('detail.activities.subtitle')}</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {activitiesQuery.isLoading ? (
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-7 w-24 rounded-full" />
+            <Skeleton className="h-7 w-20 rounded-full" />
+          </div>
+        ) : activitiesQuery.isError ? (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {apiErrorMessage(activitiesQuery.error, t('detail.activities.loadError'))}
+            </AlertDescription>
+          </Alert>
+        ) : activities.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('detail.activities.empty')}</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {activities.map((activity: VenueActivity) => (
+              <Badge key={activity.id} variant="secondary" className="gap-1.5 py-1 pr-1 pl-3">
+                {activityLabel(activity.activity_type)}
+                {canEdit ? (
+                  <button
+                    type="button"
+                    aria-label={t('detail.activities.removeConfirm.title')}
+                    onClick={() => setRemoving(activity)}
+                    className="grid size-5 place-items-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground"
+                  >
+                    <XIcon className="size-3.5" aria-hidden />
+                  </button>
+                ) : null}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        {canEdit && !activitiesQuery.isLoading && !activitiesQuery.isError ? (
+          options.length > 0 ? (
+            <div className="max-w-xs">
+              <Combobox
+                options={options}
+                value=""
+                onValueChange={handleAdd}
+                placeholder={t('detail.activities.add')}
+                searchPlaceholder={t('detail.activities.searchPlaceholder')}
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t('detail.activities.allAdded')}</p>
+          )
+        ) : null}
+      </CardContent>
+
+      <Dialog open={removing !== null} onOpenChange={(next) => !next && setRemoving(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('detail.activities.removeConfirm.title')}</DialogTitle>
+            <DialogDescription>
+              {t('detail.activities.removeConfirm.description', {
+                activity: removing ? activityLabel(removing.activity_type) : '',
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemoving(null)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemove}
+              disabled={removeActivity.isPending}
+            >
+              {removeActivity.isPending
+                ? t('detail.activities.removeConfirm.confirming')
+                : t('detail.activities.removeConfirm.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
 function VenueDetailContent() {
   const t = useTranslations('venues');
+  const activityLabel = useActivityTypeLabel();
   const params = useParams<{ id: string }>();
   const venueId = params.id;
   const role = useRole();
   const canEdit = role === 'owner' || role === 'admin';
+  const { setSelectedVenueId } = useVenueContext();
+
+  // Unified venue context: opening a venue's detail page makes it the current
+  // venue, so the shell switcher reflects the route (route -> context).
+  useEffect(() => {
+    if (venueId) {
+      setSelectedVenueId(venueId);
+    }
+  }, [venueId, setSelectedVenueId]);
 
   const venueQuery = useGetVenue(venueId, { query: { select: unwrap } });
 
@@ -1113,12 +1154,13 @@ function VenueDetailContent() {
       {backLink}
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{venue.name}</h1>
-        <Badge variant="outline">{t(`type.${venue.venue_type}`)}</Badge>
+        <Badge variant="outline">{activityLabel(venue.venue_type)}</Badge>
         <Badge variant={venue.is_active ? 'success' : 'secondary'}>
           {venue.is_active ? t('status.active') : t('status.inactive')}
         </Badge>
       </div>
       <ProfileSection venue={venue} canEdit={canEdit} />
+      <ActivitiesSection venueId={venue.id} canEdit={canEdit} />
       <ResourcesSection venueId={venue.id} canEdit={canEdit} />
     </div>
   );

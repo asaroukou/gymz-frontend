@@ -1,23 +1,33 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2Icon, MapPinIcon } from 'lucide-react';
+import { Building2Icon, MapPinIcon, PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
 import { useListVenues } from '@iziwellpass/api/generated';
 import type { Venue } from '@iziwellpass/api/schemas';
+import { useRole } from '@iziwellpass/auth/provider';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
+import { Button } from '@iziwellpass/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/components/card';
-import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from '@iziwellpass/ui/components/empty';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyMedia,
+  EmptyTitle,
+} from '@iziwellpass/ui/components/empty';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { useActivityTypeLabel } from '@/lib/activity-type';
 import { apiErrorMessage } from '@/lib/api-error';
 
 function VenueCard({ venue }: { venue: Venue }) {
   const t = useTranslations('venues');
+  const activityLabel = useActivityTypeLabel();
 
   return (
     <Link
@@ -34,7 +44,7 @@ function VenueCard({ venue }: { venue: Venue }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Badge variant="outline">{t(`type.${venue.venue_type}`)}</Badge>
+          <Badge variant="outline">{activityLabel(venue.venue_type)}</Badge>
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <MapPinIcon className="size-4 shrink-0" aria-hidden />
             <span>{venue.city || t('noAddress')}</span>
@@ -57,18 +67,32 @@ function VenuesGridSkeleton() {
 
 function VenuesContent() {
   const t = useTranslations('venues');
+  const role = useRole();
+  const canManage = role === 'owner' || role === 'admin';
   const venuesQuery = useListVenues({ query: { select: unwrap } });
   const venues = venuesQuery.data ?? [];
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-        {venuesQuery.isLoading ? (
-          <Skeleton className="h-4 w-32" />
-        ) : venuesQuery.isError ? null : (
-          <p className="text-sm text-muted-foreground">{t('subtitle', { count: venues.length })}</p>
-        )}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          {venuesQuery.isLoading ? (
+            <Skeleton className="h-4 w-32" />
+          ) : venuesQuery.isError ? null : (
+            <p className="text-sm text-muted-foreground">
+              {t('subtitle', { count: venues.length })}
+            </p>
+          )}
+        </div>
+        {canManage ? (
+          <Button asChild>
+            <Link href="/venues/new">
+              <PlusIcon aria-hidden />
+              {t('create.cta')}
+            </Link>
+          </Button>
+        ) : null}
       </div>
 
       {venuesQuery.isLoading ? (
@@ -86,6 +110,16 @@ function VenuesContent() {
             </EmptyMedia>
             <EmptyTitle>{t('empty.title')}</EmptyTitle>
             <EmptyDescription>{t('empty.body')}</EmptyDescription>
+            {canManage ? (
+              <EmptyContent>
+                <Button asChild>
+                  <Link href="/venues/new">
+                    <PlusIcon aria-hidden />
+                    {t('create.cta')}
+                  </Link>
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         </Card>
       ) : (
