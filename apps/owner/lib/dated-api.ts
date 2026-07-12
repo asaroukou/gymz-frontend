@@ -18,34 +18,18 @@ import type {
 } from '@iziwellpass/api/schemas';
 
 /**
- * WORKAROUND — backend contract gap (tracked for the backend team in
- * `docs/backend-issues.md`).
+ * Venue-scoped GETs scoped to a single calendar day. The slots, attendance, and
+ * check-ins endpoints all take a `date=YYYY-MM-DD` query parameter, now modelled
+ * in the OpenAPI spec, so `date` is passed through the generated URL builders.
  *
- * The live GMS API REQUIRES a `date=YYYY-MM-DD` query parameter on three
- * venue-scoped GET endpoints:
- *   - GET /gms/v1/venues/{vid}/slots
- *   - GET /gms/v1/venues/{vid}/attendance
- *   - GET /gms/v1/venues/{vid}/checkins
- * Omitting it returns 400 VALIDATION_ERROR ("Missing required query
- * parameter: date"). BUT the OpenAPI spec (openapi.json, generated from the
- * Rust `iziwellpass-openapi` annotations) declares these operations with only
- * the `vid` path parameter — so the Orval-generated hooks physically cannot
- * send `date`, and every call 400s.
+ * These stay thin wrappers (rather than the raw generated hooks) so every call
+ * site shares one `{ date }` query-key suffix — register/check-in mutations
+ * invalidate `getListSlotsQueryKey` / `getGetAttendanceQueryKey` /
+ * `getListCheckInsQueryKey` and still match these entries — and one
+ * venueId/date `enabled` gate.
  *
- * We are NOT regenerating the client here (the fix belongs in the backend's
- * OpenAPI annotations). Instead we call the same endpoints through the shared
- * `customFetch` mutator — preserving auth-token injection, ApiError mapping,
- * and 401 handling — with `date` appended manually. The query keys reuse the
- * generated key factories as a prefix, so existing invalidations
- * (`getListSlotsQueryKey` / `getGetAttendanceQueryKey` /
- * `getListCheckInsQueryKey`) still match these entries.
- *
- * Once the backend adds `date` to those operations in its OpenAPI, delete this
- * file and switch the call sites back to the generated `useListSlots` /
- * `useGetAttendance` / `useListCheckIns` hooks passing the param normally.
- *
- * `date` MUST be the venue-local calendar day — use `venueToday(timeZone)`
- * from `lib/datetime.ts`, never the browser's date.
+ * `date` MUST be the venue-local calendar day — use `venueToday(timeZone)` from
+ * `lib/datetime.ts`, never the browser's date.
  */
 
 interface DatedQueryOptions {
@@ -53,16 +37,12 @@ interface DatedQueryOptions {
   enabled?: boolean;
 }
 
-function withDate(url: string, date: string): string {
-  return `${url}?date=${encodeURIComponent(date)}`;
-}
-
 /** Slots for a venue on a single calendar day (venue tz). */
 export function useSlotsByDate(venueId: string, date: string, options?: DatedQueryOptions) {
   return useQuery({
     queryKey: [...getListSlotsQueryKey(venueId), { date }],
     queryFn: () =>
-      customFetch<ApiResponseVecScheduleSlot>(withDate(getListSlotsUrl(venueId), date), {
+      customFetch<ApiResponseVecScheduleSlot>(getListSlotsUrl(venueId, { date }), {
         method: 'GET',
       }),
     select: unwrap,
@@ -75,7 +55,7 @@ export function useAttendanceByDate(venueId: string, date: string, options?: Dat
   return useQuery({
     queryKey: [...getGetAttendanceQueryKey(venueId), { date }],
     queryFn: () =>
-      customFetch<ApiResponseAttendanceStats>(withDate(getGetAttendanceUrl(venueId), date), {
+      customFetch<ApiResponseAttendanceStats>(getGetAttendanceUrl(venueId, { date }), {
         method: 'GET',
       }),
     select: unwrap,
@@ -88,7 +68,7 @@ export function useCheckInsByDate(venueId: string, date: string, options?: Dated
   return useQuery({
     queryKey: [...getListCheckInsQueryKey(venueId), { date }],
     queryFn: () =>
-      customFetch<ApiResponseVecCheckIn>(withDate(getListCheckInsUrl(venueId), date), {
+      customFetch<ApiResponseVecCheckIn>(getListCheckInsUrl(venueId, { date }), {
         method: 'GET',
       }),
     select: unwrap,

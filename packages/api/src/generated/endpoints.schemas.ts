@@ -6,6 +6,46 @@
  * OpenAPI spec version: 0.1.0
  */
 /**
+ * Closed platform catalog of activities. Adding one is a code change.
+ */
+export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ActivityType = {
+  gym: 'gym',
+  crossfit: 'crossfit',
+  hiit: 'hiit',
+  bootcamp: 'bootcamp',
+  cycling: 'cycling',
+  boxing: 'boxing',
+  martial_arts: 'martial_arts',
+  dance: 'dance',
+  running: 'running',
+  padel: 'padel',
+  tennis: 'tennis',
+  squash: 'squash',
+  basketball: 'basketball',
+  football: 'football',
+  swimming: 'swimming',
+  climbing: 'climbing',
+  bouldering: 'bouldering',
+  yoga: 'yoga',
+  pilates: 'pilates',
+  stretch: 'stretch',
+  spa: 'spa',
+  massage: 'massage',
+  beauty: 'beauty',
+} as const;
+
+/**
+ * Request body for `POST /gms/v1/venues/{id}/activities`.
+The venue is taken from the URL path; the body carries only the activity.
+ */
+export interface AddActivityRequest {
+  activity_type: ActivityType;
+}
+
+/**
  * Attendance statistics for a venue on a given date.
  */
 export type ApiResponseAttendanceStatsData = {
@@ -424,15 +464,20 @@ export interface ApiResponseResource {
   request_id: string;
 }
 
+export type ApiResponseResourceTypeDataActivityType = null | ActivityType;
+
 export type ApiResponseResourceTypeDataColor = string | null;
 
 export type ApiResponseResourceTypeDataIcon = string | null;
+
+export type ApiResponseResourceTypeDataVenueId = null | VenueId;
 
 /**
  * A category of bookable resource (e.g., "Gym Floor", "Yoga Room", "Tennis Court").
 Configured per tenant.
  */
 export type ApiResponseResourceTypeData = {
+  activity_type?: ApiResponseResourceTypeDataActivityType;
   booking_mode: BookingMode;
   color?: ApiResponseResourceTypeDataColor;
   created_at: string;
@@ -443,6 +488,7 @@ export type ApiResponseResourceTypeData = {
   is_active: boolean;
   name: string;
   tenant_id: TenantId;
+  venue_id?: ApiResponseResourceTypeDataVenueId;
 };
 
 /**
@@ -722,99 +768,6 @@ export interface ApiResponseVecMarketplaceSlot {
   request_id: string;
 }
 
-export type ApiResponseVecMemberDataItemEmail = string | null;
-
-export type ApiResponseVecMemberDataItemMembershipEnd = string | null;
-
-export type ApiResponseVecMemberDataItemNotes = string | null;
-
-export type ApiResponseVecMemberDataItemPhone = string | null;
-
-/**
- * Auth user_id — None for walk-in members (no account).
- */
-export type ApiResponseVecMemberDataItemUserId = string | null;
-
-/**
- * A person enrolled at a venue with a membership.
- */
-export type ApiResponseVecMemberDataItem = {
-  created_at: string;
-  email?: ApiResponseVecMemberDataItemEmail;
-  first_name: string;
-  id: MemberId;
-  is_active: boolean;
-  last_name: string;
-  membership_end?: ApiResponseVecMemberDataItemMembershipEnd;
-  membership_start: string;
-  membership_status: MembershipStatus;
-  membership_type: MembershipType;
-  notes?: ApiResponseVecMemberDataItemNotes;
-  phone?: ApiResponseVecMemberDataItemPhone;
-  tenant_id: TenantId;
-  updated_at: string;
-  /** Auth user_id — None for walk-in members (no account). */
-  user_id?: ApiResponseVecMemberDataItemUserId;
-};
-
-/**
- * Standard success response envelope matching the LLD format.
-
-All successful API responses wrap the payload in a `data` field
-alongside a `request_id` for traceability:
-
-```json
-{
-  "data": { ... },
-  "request_id": "req_abc123"
-}
-```
- */
-export interface ApiResponseVecMember {
-  data: ApiResponseVecMemberDataItem[];
-  request_id: string;
-}
-
-export type ApiResponseVecPassBookingDataItemVenueBookingId = null | BookingId;
-
-/**
- * A booking made by a pass holder at a venue they don't belong to.
-
-Platform-level record linking consumer to venue's tenant.
-Maps to `pass_bookings` table (LLD §5.3.1).
- */
-export type ApiResponseVecPassBookingDataItem = {
-  created_at: string;
-  /** Credits spent for this booking. */
-  credits_spent: number;
-  id: PassBookingId;
-  pass_holder_id: PassHolderId;
-  session_date: string;
-  status: PassBookingStatus;
-  updated_at: string;
-  venue_booking_id?: ApiResponseVecPassBookingDataItemVenueBookingId;
-  /** The venue's tenant ID (which tenant owns the venue). */
-  venue_tenant_id: TenantId;
-};
-
-/**
- * Standard success response envelope matching the LLD format.
-
-All successful API responses wrap the payload in a `data` field
-alongside a `request_id` for traceability:
-
-```json
-{
-  "data": { ... },
-  "request_id": "req_abc123"
-}
-```
- */
-export interface ApiResponseVecPassBooking {
-  data: ApiResponseVecPassBookingDataItem[];
-  request_id: string;
-}
-
 export type ApiResponseVecResourceDataItemDescription = string | null;
 
 /**
@@ -852,15 +805,20 @@ export interface ApiResponseVecResource {
   request_id: string;
 }
 
+export type ApiResponseVecResourceTypeDataItemActivityType = null | ActivityType;
+
 export type ApiResponseVecResourceTypeDataItemColor = string | null;
 
 export type ApiResponseVecResourceTypeDataItemIcon = string | null;
+
+export type ApiResponseVecResourceTypeDataItemVenueId = null | VenueId;
 
 /**
  * A category of bookable resource (e.g., "Gym Floor", "Yoga Room", "Tennis Court").
 Configured per tenant.
  */
 export type ApiResponseVecResourceTypeDataItem = {
+  activity_type?: ApiResponseVecResourceTypeDataItemActivityType;
   booking_mode: BookingMode;
   color?: ApiResponseVecResourceTypeDataItemColor;
   created_at: string;
@@ -871,6 +829,7 @@ export type ApiResponseVecResourceTypeDataItem = {
   is_active: boolean;
   name: string;
   tenant_id: TenantId;
+  venue_id?: ApiResponseVecResourceTypeDataItemVenueId;
 };
 
 /**
@@ -1049,7 +1008,7 @@ export type ApiResponseVecVenueDataItem = {
   tenant_id: TenantId;
   timezone: string;
   updated_at: string;
-  venue_type: VenueType;
+  venue_type: ActivityType;
 };
 
 /**
@@ -1067,6 +1026,50 @@ alongside a `request_id` for traceability:
  */
 export interface ApiResponseVecVenue {
   data: ApiResponseVecVenueDataItem[];
+  request_id: string;
+}
+
+export type ApiResponseVecVenueActivityDataItem = {
+  activity_type: ActivityType;
+  created_at: string;
+  id: VenueActivityId;
+  tenant_id: TenantId;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecVenueActivity {
+  data: ApiResponseVecVenueActivityDataItem[];
+  request_id: string;
+}
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecVenueId {
+  data: string[];
   request_id: string;
 }
 
@@ -1105,7 +1108,7 @@ export type ApiResponseVenueData = {
   tenant_id: TenantId;
   timezone: string;
   updated_at: string;
-  venue_type: VenueType;
+  venue_type: ActivityType;
 };
 
 /**
@@ -1124,6 +1127,32 @@ alongside a `request_id` for traceability:
 export interface ApiResponseVenue {
   /** A physical venue belonging to a tenant. */
   data: ApiResponseVenueData;
+  request_id: string;
+}
+
+export type ApiResponseVenueActivityData = {
+  activity_type: ActivityType;
+  created_at: string;
+  id: VenueActivityId;
+  tenant_id: TenantId;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVenueActivity {
+  data: ApiResponseVenueActivityData;
   request_id: string;
 }
 
@@ -1373,20 +1402,26 @@ export interface CreateResourceRequest {
   venue_id: VenueId;
 }
 
+export type CreateResourceTypeRequestActivityType = null | ActivityType;
+
 export type CreateResourceTypeRequestColor = string | null;
 
 export type CreateResourceTypeRequestIcon = string | null;
+
+export type CreateResourceTypeRequestVenueId = null | VenueId;
 
 /**
  * Request to create a new resource type (e.g., "Yoga Room", "Tennis Court").
  */
 export interface CreateResourceTypeRequest {
+  activity_type?: CreateResourceTypeRequestActivityType;
   booking_mode: BookingMode;
   color?: CreateResourceTypeRequestColor;
   default_capacity?: number;
   default_duration_minutes?: number;
   icon?: CreateResourceTypeRequestIcon;
   name: string;
+  venue_id?: CreateResourceTypeRequestVenueId;
 }
 
 export type CreateScheduleRequestDescription = string | null;
@@ -1413,6 +1448,26 @@ export interface CreateScheduleRequest {
   venue_id: VenueId;
 }
 
+export type CreateVenueRequestAddressLine = string | null;
+
+export type CreateVenueRequestDescription = string | null;
+
+export type CreateVenueRequestPhone = string | null;
+
+/**
+ * Request to create a new venue (onboarding or VenueService).
+ */
+export interface CreateVenueRequest {
+  address_line?: CreateVenueRequestAddressLine;
+  city: string;
+  country: string;
+  description?: CreateVenueRequestDescription;
+  name: string;
+  phone?: CreateVenueRequestPhone;
+  timezone?: string;
+  venue_type: ActivityType;
+}
+
 /**
  * When current credits expire (end of billing month).
  */
@@ -1430,9 +1485,13 @@ export interface CreditBalance {
   remaining: number;
 }
 
+/**
+ * A default resource type seeded for the venue's primary activity.
+The `id` is generated by the database, so it is not surfaced here; the
+response reflects the platform defaults for the venue's activity.
+ */
 export interface DefaultResourceType {
   booking_mode: BookingMode;
-  id: ResourceTypeId;
   name: string;
 }
 
@@ -1483,6 +1542,9 @@ export interface InviteStaffRequest {
   first_name: string;
   last_name: string;
   role: Role;
+  /** Venues to assign the new staff member to. Ignored for owner/admin (all
+venues). Empty for trainer/receptionist = no venue access until assigned. */
+  venue_ids?: VenueId[];
 }
 
 /**
@@ -1597,7 +1659,7 @@ export interface OnboardVenueRequest {
   phone?: OnboardVenueRequestPhone;
   timezone?: string;
   venue_name: string;
-  venue_type: VenueType;
+  venue_type: ActivityType;
 }
 
 /**
@@ -1613,6 +1675,97 @@ export interface OnboardVenueResponse {
 export interface OrgInfo {
   id: string;
   slug: string;
+}
+
+export type PaginatedApiResponseVecMemberDataItemEmail = string | null;
+
+export type PaginatedApiResponseVecMemberDataItemMembershipEnd = string | null;
+
+export type PaginatedApiResponseVecMemberDataItemNotes = string | null;
+
+export type PaginatedApiResponseVecMemberDataItemPhone = string | null;
+
+/**
+ * Auth user_id — None for walk-in members (no account).
+ */
+export type PaginatedApiResponseVecMemberDataItemUserId = string | null;
+
+/**
+ * A person enrolled at a venue with a membership.
+ */
+export type PaginatedApiResponseVecMemberDataItem = {
+  created_at: string;
+  email?: PaginatedApiResponseVecMemberDataItemEmail;
+  first_name: string;
+  id: MemberId;
+  is_active: boolean;
+  last_name: string;
+  membership_end?: PaginatedApiResponseVecMemberDataItemMembershipEnd;
+  membership_start: string;
+  membership_status: MembershipStatus;
+  membership_type: MembershipType;
+  notes?: PaginatedApiResponseVecMemberDataItemNotes;
+  phone?: PaginatedApiResponseVecMemberDataItemPhone;
+  tenant_id: TenantId;
+  updated_at: string;
+  /** Auth user_id — None for walk-in members (no account). */
+  user_id?: PaginatedApiResponseVecMemberDataItemUserId;
+};
+
+/**
+ * Paginated response envelope with cursor metadata.
+
+```json
+{
+  "data": [...],
+  "meta": { "next_cursor": "abc123" },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface PaginatedApiResponseVecMember {
+  data: PaginatedApiResponseVecMemberDataItem[];
+  meta: PaginationMeta;
+  request_id: string;
+}
+
+export type PaginatedApiResponseVecPassBookingDataItemVenueBookingId = null | BookingId;
+
+/**
+ * A booking made by a pass holder at a venue they don't belong to.
+
+Platform-level record linking consumer to venue's tenant.
+Maps to `pass_bookings` table (LLD §5.3.1).
+ */
+export type PaginatedApiResponseVecPassBookingDataItem = {
+  created_at: string;
+  /** Credits spent for this booking. */
+  credits_spent: number;
+  id: PassBookingId;
+  pass_holder_id: PassHolderId;
+  session_date: string;
+  status: PassBookingStatus;
+  updated_at: string;
+  venue_booking_id?: PaginatedApiResponseVecPassBookingDataItemVenueBookingId;
+  /** The venue's tenant ID (which tenant owns the venue). */
+  venue_tenant_id: TenantId;
+};
+
+/**
+ * Paginated response envelope with cursor metadata.
+
+```json
+{
+  "data": [...],
+  "meta": { "next_cursor": "abc123" },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface PaginatedApiResponseVecPassBooking {
+  data: PaginatedApiResponseVecPassBookingDataItem[];
+  meta: PaginationMeta;
+  request_id: string;
 }
 
 export type PaginatedApiResponseVecVenueCatalogEntryDataItemAddressLine = string | null;
@@ -1874,15 +2027,20 @@ export interface Resource {
  */
 export type ResourceId = string;
 
+export type ResourceTypeActivityType = null | ActivityType;
+
 export type ResourceTypeColor = string | null;
 
 export type ResourceTypeIcon = string | null;
+
+export type ResourceTypeVenueId = null | VenueId;
 
 /**
  * A category of bookable resource (e.g., "Gym Floor", "Yoga Room", "Tennis Court").
 Configured per tenant.
  */
 export interface ResourceType {
+  activity_type?: ResourceTypeActivityType;
   booking_mode: BookingMode;
   color?: ResourceTypeColor;
   created_at: string;
@@ -1893,6 +2051,7 @@ export interface ResourceType {
   is_active: boolean;
   name: string;
   tenant_id: TenantId;
+  venue_id?: ResourceTypeVenueId;
 }
 
 /**
@@ -1973,6 +2132,15 @@ export interface ScheduleSlot {
   status: SlotStatus;
   tenant_id: TenantId;
   venue_id: VenueId;
+}
+
+/**
+ * Request to replace a staff member's venue assignments.
+ */
+export interface SetStaffVenuesRequest {
+  /** Full set of venues the staff member should be assigned to. This
+replaces the existing assignments (not additive). */
+  venue_ids: VenueId[];
 }
 
 /**
@@ -2122,7 +2290,7 @@ export type UpdateVenueRequestPhone = string | null;
 
 export type UpdateVenueRequestTimezone = string | null;
 
-export type UpdateVenueRequestVenueType = null | VenueType;
+export type UpdateVenueRequestVenueType = null | ActivityType;
 
 /**
  * Request to update an existing venue. All fields optional.
@@ -2174,8 +2342,21 @@ export interface Venue {
   tenant_id: TenantId;
   timezone: string;
   updated_at: string;
-  venue_type: VenueType;
+  venue_type: ActivityType;
 }
+
+export interface VenueActivity {
+  activity_type: ActivityType;
+  created_at: string;
+  id: VenueActivityId;
+  tenant_id: TenantId;
+  venue_id: VenueId;
+}
+
+/**
+ * Unique identifier for a venue-activity link.
+ */
+export type VenueActivityId = string;
 
 export type VenueCatalogEntryAddressLine = string | null;
 
@@ -2269,20 +2450,107 @@ export interface VenueSettings {
   timezone_override?: VenueSettingsTimezoneOverride;
 }
 
-/**
- * Type of wellness venue.
- */
-export type VenueType = (typeof VenueType)[keyof typeof VenueType];
+export type ListMembersParams = {
+  /**
+   * Page size, 1-100 (default 20).
+   */
+  limit?: number;
+  /**
+   * Opaque cursor from a prior response's meta.next_cursor.
+   */
+  cursor?: string;
+  /**
+   * Filter by member name (partial match).
+   */
+  name?: string;
+  /**
+   * Filter by phone.
+   */
+  phone?: string;
+  /**
+   * Filter by email.
+   */
+  email?: string;
+};
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const VenueType = {
-  gym: 'gym',
-  yoga_studio: 'yoga_studio',
-  spa: 'spa',
-  tennis_club: 'tennis_club',
-  cross_fit: 'cross_fit',
-  swimming_pool: 'swimming_pool',
-  martial_arts: 'martial_arts',
-  dance: 'dance',
-  other: 'other',
-} as const;
+export type GetAttendanceParams = {
+  /**
+   * Calendar day to report on (YYYY-MM-DD, venue-local). Required.
+   */
+  date: string;
+};
+
+export type ListCheckInsParams = {
+  /**
+   * Calendar day to report on (YYYY-MM-DD, venue-local). Required.
+   */
+  date: string;
+};
+
+export type ListSlotsParams = {
+  /**
+   * Single calendar day (YYYY-MM-DD, venue-local). Use this OR from+to.
+   */
+  date?: string;
+  /**
+   * Inclusive range start (YYYY-MM-DD). Requires 'to'.
+   */
+  from?: string;
+  /**
+   * Inclusive range end (YYYY-MM-DD, max 62 days after 'from'). Requires 'from'.
+   */
+  to?: string;
+  /**
+   * Optional resource id (UUID) to filter slots.
+   */
+  resource_id?: string;
+};
+
+export type ListMarketplaceVenuesParams = {
+  /**
+   * Page size, 1-100 (default 20).
+   */
+  limit?: number;
+  /**
+   * Opaque cursor from a prior response's meta.next_cursor.
+   */
+  cursor?: string;
+  /**
+   * Filter by city.
+   */
+  city?: string;
+  /**
+   * Filter by activity type (e.g. gym, yoga, crossfit).
+   */
+  venue_type?: string;
+  /**
+   * Latitude for proximity search (with lng).
+   */
+  lat?: number;
+  /**
+   * Longitude for proximity search (with lat).
+   */
+  lng?: number;
+  /**
+   * Proximity radius in km (with lat/lng).
+   */
+  radius_km?: number;
+};
+
+export type ListMarketplaceSlotsParams = {
+  /**
+   * Calendar day (YYYY-MM-DD, venue-local). Required.
+   */
+  date: string;
+};
+
+export type ListPassBookingsParams = {
+  /**
+   * Page size, 1-100 (default 20).
+   */
+  limit?: number;
+  /**
+   * Opaque cursor from a prior response's meta.next_cursor.
+   */
+  cursor?: string;
+};

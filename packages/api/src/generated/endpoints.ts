@@ -22,6 +22,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AddActivityRequest,
   ApiResponseAttendanceStats,
   ApiResponseBooking,
   ApiResponseCheckIn,
@@ -39,15 +40,16 @@ import type {
   ApiResponseVecBooking,
   ApiResponseVecCheckIn,
   ApiResponseVecMarketplaceSlot,
-  ApiResponseVecMember,
-  ApiResponseVecPassBooking,
   ApiResponseVecResource,
   ApiResponseVecResourceType,
   ApiResponseVecSchedule,
   ApiResponseVecScheduleSlot,
   ApiResponseVecStaff,
   ApiResponseVecVenue,
+  ApiResponseVecVenueActivity,
+  ApiResponseVecVenueId,
   ApiResponseVenue,
+  ApiResponseVenueActivity,
   ApiResponseVenueDetail,
   BookViaPassRequest,
   CancelBookingRequest,
@@ -58,14 +60,25 @@ import type {
   CreateResourceRequest,
   CreateResourceTypeRequest,
   CreateScheduleRequest,
+  CreateVenueRequest,
   ErrorResponse,
+  GetAttendanceParams,
   HealthResponse,
   InviteStaffRequest,
+  ListCheckInsParams,
+  ListMarketplaceSlotsParams,
+  ListMarketplaceVenuesParams,
+  ListMembersParams,
+  ListPassBookingsParams,
+  ListSlotsParams,
   ManualCheckinRequest,
   OnboardVenueRequest,
+  PaginatedApiResponseVecMember,
+  PaginatedApiResponseVecPassBooking,
   PaginatedApiResponseVecVenueCatalogEntry,
   QrCheckinRequest,
   RegisterPassHolderRequest,
+  SetStaffVenuesRequest,
   UpdateMemberRequest,
   UpdateResourceRequest,
   UpdateScheduleRequest,
@@ -453,36 +466,55 @@ export const useCheckInViaQr = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
- * @summary List members in the current tenant.
+ * Cursor pagination: pass `limit` (1-100, default 20); the response
+`meta.next_cursor` (when present) is the `cursor` for the next page. There
+is NO `offset`/`page` param. Optional case-insensitive filters: name/phone/email.
+ * @summary List members in the current tenant (cursor-paginated, searchable).
  */
-export const getListMembersUrl = () => {
-  return `/gms/v1/members`;
+export const getListMembersUrl = (params?: ListMembersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/gms/v1/members?${stringifiedParams}` : `/gms/v1/members`;
 };
 
-export const listMembers = async (options?: RequestInit): Promise<ApiResponseVecMember> => {
-  return customFetch<ApiResponseVecMember>(getListMembersUrl(), {
+export const listMembers = async (
+  params?: ListMembersParams,
+  options?: RequestInit,
+): Promise<PaginatedApiResponseVecMember> => {
+  return customFetch<PaginatedApiResponseVecMember>(getListMembersUrl(params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getListMembersQueryKey = () => {
-  return [`/gms/v1/members`] as const;
+export const getListMembersQueryKey = (params?: ListMembersParams) => {
+  return [`/gms/v1/members`, ...(params ? [params] : [])] as const;
 };
 
 export const getListMembersQueryOptions = <
   TData = Awaited<ReturnType<typeof listMembers>>,
   TError = ErrorResponse,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: ListMembersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListMembersQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getListMembersQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof listMembers>>> = ({ signal }) =>
-    listMembers({ signal, ...requestOptions });
+    listMembers(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof listMembers>>,
@@ -498,6 +530,7 @@ export function useListMembers<
   TData = Awaited<ReturnType<typeof listMembers>>,
   TError = ErrorResponse,
 >(
+  params: undefined | ListMembersParams,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>> &
       Pick<
@@ -516,6 +549,7 @@ export function useListMembers<
   TData = Awaited<ReturnType<typeof listMembers>>,
   TError = ErrorResponse,
 >(
+  params?: ListMembersParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>> &
       Pick<
@@ -534,6 +568,7 @@ export function useListMembers<
   TData = Awaited<ReturnType<typeof listMembers>>,
   TError = ErrorResponse,
 >(
+  params?: ListMembersParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
@@ -541,20 +576,21 @@ export function useListMembers<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary List members in the current tenant.
+ * @summary List members in the current tenant (cursor-paginated, searchable).
  */
 
 export function useListMembers<
   TData = Awaited<ReturnType<typeof listMembers>>,
   TError = ErrorResponse,
 >(
+  params?: ListMembersParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListMembersQueryOptions(options);
+  const queryOptions = getListMembersQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -924,7 +960,11 @@ export const useSuspendMember = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
- * @summary List resource types in the current tenant.
+ * Owner/Admin see every resource type in the tenant. Venue-scoped staff
+(Trainer/Receptionist) see tenant-global types (those with no `venue_id`)
+plus the types belonging to their assigned venues; venue-specific types for
+other venues are filtered out (not a 403).
+ * @summary List resource types visible to the caller.
  */
 export const getListResourceTypesUrl = () => {
   return `/gms/v1/resource-types`;
@@ -1016,7 +1056,7 @@ export function useListResourceTypes<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary List resource types in the current tenant.
+ * @summary List resource types visible to the caller.
  */
 
 export function useListResourceTypes<
@@ -2160,7 +2200,94 @@ export const useChangeRole = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
- * @summary List all venues in the current tenant.
+ * @summary Replace a staff member's venue assignments.
+ */
+export const getSetStaffVenuesUrl = (sid: string) => {
+  return `/gms/v1/staff/${sid}/venues`;
+};
+
+export const setStaffVenues = async (
+  sid: string,
+  setStaffVenuesRequest: SetStaffVenuesRequest,
+  options?: RequestInit,
+): Promise<ApiResponseVecVenueId> => {
+  return customFetch<ApiResponseVecVenueId>(getSetStaffVenuesUrl(sid), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setStaffVenuesRequest),
+  });
+};
+
+export const getSetStaffVenuesMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setStaffVenues>>,
+    TError,
+    { sid: string; data: SetStaffVenuesRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setStaffVenues>>,
+  TError,
+  { sid: string; data: SetStaffVenuesRequest },
+  TContext
+> => {
+  const mutationKey = ['setStaffVenues'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setStaffVenues>>,
+    { sid: string; data: SetStaffVenuesRequest }
+  > = (props) => {
+    const { sid, data } = props ?? {};
+
+    return setStaffVenues(sid, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetStaffVenuesMutationResult = NonNullable<Awaited<ReturnType<typeof setStaffVenues>>>;
+export type SetStaffVenuesMutationBody = SetStaffVenuesRequest;
+export type SetStaffVenuesMutationError = ErrorResponse;
+
+/**
+ * @summary Replace a staff member's venue assignments.
+ */
+export const useSetStaffVenues = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setStaffVenues>>,
+      TError,
+      { sid: string; data: SetStaffVenuesRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setStaffVenues>>,
+  TError,
+  { sid: string; data: SetStaffVenuesRequest },
+  TContext
+> => {
+  const mutationOptions = getSetStaffVenuesMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Owner/Admin see every venue. Venue-scoped staff (Trainer/Receptionist) see
+only the venues they are assigned to; the list is filtered, not a 403.
+ * @summary List venues visible to the caller in the current tenant.
  */
 export const getListVenuesUrl = () => {
   return `/gms/v1/venues`;
@@ -2248,7 +2375,7 @@ export function useListVenues<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary List all venues in the current tenant.
+ * @summary List venues visible to the caller in the current tenant.
  */
 
 export function useListVenues<
@@ -2271,6 +2398,92 @@ export function useListVenues<
 
   return query;
 }
+
+/**
+ * The first venue + organization are created via onboarding; this endpoint
+lets an established owner/admin add more venues to the same org.
+ * @summary Create an additional venue under the caller's existing tenant.
+ */
+export const getCreateVenueUrl = () => {
+  return `/gms/v1/venues`;
+};
+
+export const createVenue = async (
+  createVenueRequest: CreateVenueRequest,
+  options?: RequestInit,
+): Promise<ApiResponseVenue> => {
+  return customFetch<ApiResponseVenue>(getCreateVenueUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createVenueRequest),
+  });
+};
+
+export const getCreateVenueMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createVenue>>,
+    TError,
+    { data: CreateVenueRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createVenue>>,
+  TError,
+  { data: CreateVenueRequest },
+  TContext
+> => {
+  const mutationKey = ['createVenue'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createVenue>>,
+    { data: CreateVenueRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createVenue(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateVenueMutationResult = NonNullable<Awaited<ReturnType<typeof createVenue>>>;
+export type CreateVenueMutationBody = CreateVenueRequest;
+export type CreateVenueMutationError = ErrorResponse;
+
+/**
+ * @summary Create an additional venue under the caller's existing tenant.
+ */
+export const useCreateVenue = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createVenue>>,
+      TError,
+      { data: CreateVenueRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createVenue>>,
+  TError,
+  { data: CreateVenueRequest },
+  TContext
+> => {
+  const mutationOptions = getCreateVenueMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
 
 /**
  * @summary Get one venue by id.
@@ -2461,6 +2674,313 @@ export const useUpdateVenue = <TError = ErrorResponse, TContext = unknown>(
   TContext
 > => {
   const mutationOptions = getUpdateVenueMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * @summary List the activities a venue offers.
+ */
+export const getListVenueActivitiesUrl = (id: string) => {
+  return `/gms/v1/venues/${id}/activities`;
+};
+
+export const listVenueActivities = async (
+  id: string,
+  options?: RequestInit,
+): Promise<ApiResponseVecVenueActivity> => {
+  return customFetch<ApiResponseVecVenueActivity>(getListVenueActivitiesUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListVenueActivitiesQueryKey = (id?: string) => {
+  return [`/gms/v1/venues/${id}/activities`] as const;
+};
+
+export const getListVenueActivitiesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listVenueActivities>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listVenueActivities>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListVenueActivitiesQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listVenueActivities>>> = ({ signal }) =>
+    listVenueActivities(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listVenueActivities>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListVenueActivitiesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listVenueActivities>>
+>;
+export type ListVenueActivitiesQueryError = ErrorResponse;
+
+export function useListVenueActivities<
+  TData = Awaited<ReturnType<typeof listVenueActivities>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listVenueActivities>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listVenueActivities>>,
+          TError,
+          Awaited<ReturnType<typeof listVenueActivities>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListVenueActivities<
+  TData = Awaited<ReturnType<typeof listVenueActivities>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listVenueActivities>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listVenueActivities>>,
+          TError,
+          Awaited<ReturnType<typeof listVenueActivities>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListVenueActivities<
+  TData = Awaited<ReturnType<typeof listVenueActivities>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listVenueActivities>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List the activities a venue offers.
+ */
+
+export function useListVenueActivities<
+  TData = Awaited<ReturnType<typeof listVenueActivities>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listVenueActivities>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListVenueActivitiesQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * @summary Add an activity to a venue (seeds default resource types).
+ */
+export const getAddVenueActivityUrl = (id: string) => {
+  return `/gms/v1/venues/${id}/activities`;
+};
+
+export const addVenueActivity = async (
+  id: string,
+  addActivityRequest: AddActivityRequest,
+  options?: RequestInit,
+): Promise<ApiResponseVenueActivity> => {
+  return customFetch<ApiResponseVenueActivity>(getAddVenueActivityUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(addActivityRequest),
+  });
+};
+
+export const getAddVenueActivityMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addVenueActivity>>,
+    TError,
+    { id: string; data: AddActivityRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addVenueActivity>>,
+  TError,
+  { id: string; data: AddActivityRequest },
+  TContext
+> => {
+  const mutationKey = ['addVenueActivity'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addVenueActivity>>,
+    { id: string; data: AddActivityRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return addVenueActivity(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddVenueActivityMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addVenueActivity>>
+>;
+export type AddVenueActivityMutationBody = AddActivityRequest;
+export type AddVenueActivityMutationError = ErrorResponse;
+
+/**
+ * @summary Add an activity to a venue (seeds default resource types).
+ */
+export const useAddVenueActivity = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof addVenueActivity>>,
+      TError,
+      { id: string; data: AddActivityRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof addVenueActivity>>,
+  TError,
+  { id: string; data: AddActivityRequest },
+  TContext
+> => {
+  const mutationOptions = getAddVenueActivityMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * @summary Remove an activity from a venue (deactivates its seeded resource types).
+ */
+export const getRemoveVenueActivityUrl = (id: string, activity: string) => {
+  return `/gms/v1/venues/${id}/activities/${activity}`;
+};
+
+export const removeVenueActivity = async (
+  id: string,
+  activity: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getRemoveVenueActivityUrl(id, activity), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveVenueActivityMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeVenueActivity>>,
+    TError,
+    { id: string; activity: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeVenueActivity>>,
+  TError,
+  { id: string; activity: string },
+  TContext
+> => {
+  const mutationKey = ['removeVenueActivity'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeVenueActivity>>,
+    { id: string; activity: string }
+  > = (props) => {
+    const { id, activity } = props ?? {};
+
+    return removeVenueActivity(id, activity, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveVenueActivityMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeVenueActivity>>
+>;
+
+export type RemoveVenueActivityMutationError = ErrorResponse;
+
+/**
+ * @summary Remove an activity from a venue (deactivates its seeded resource types).
+ */
+export const useRemoveVenueActivity = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeVenueActivity>>,
+      TError,
+      { id: string; activity: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeVenueActivity>>,
+  TError,
+  { id: string; activity: string },
+  TContext
+> => {
+  const mutationOptions = getRemoveVenueActivityMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -2674,24 +3194,37 @@ export const useCreateResource = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
- * @summary Get attendance statistics for a venue.
+ * @summary Get attendance statistics for a venue on a given day.
  */
-export const getGetAttendanceUrl = (vid: string) => {
-  return `/gms/v1/venues/${vid}/attendance`;
+export const getGetAttendanceUrl = (vid: string, params: GetAttendanceParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/gms/v1/venues/${vid}/attendance?${stringifiedParams}`
+    : `/gms/v1/venues/${vid}/attendance`;
 };
 
 export const getAttendance = async (
   vid: string,
+  params: GetAttendanceParams,
   options?: RequestInit,
 ): Promise<ApiResponseAttendanceStats> => {
-  return customFetch<ApiResponseAttendanceStats>(getGetAttendanceUrl(vid), {
+  return customFetch<ApiResponseAttendanceStats>(getGetAttendanceUrl(vid, params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getGetAttendanceQueryKey = (vid?: string) => {
-  return [`/gms/v1/venues/${vid}/attendance`] as const;
+export const getGetAttendanceQueryKey = (vid?: string, params?: GetAttendanceParams) => {
+  return [`/gms/v1/venues/${vid}/attendance`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetAttendanceQueryOptions = <
@@ -2699,6 +3232,7 @@ export const getGetAttendanceQueryOptions = <
   TError = ErrorResponse,
 >(
   vid: string,
+  params: GetAttendanceParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendance>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
@@ -2706,10 +3240,10 @@ export const getGetAttendanceQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetAttendanceQueryKey(vid);
+  const queryKey = queryOptions?.queryKey ?? getGetAttendanceQueryKey(vid, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getAttendance>>> = ({ signal }) =>
-    getAttendance(vid, { signal, ...requestOptions });
+    getAttendance(vid, params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, enabled: !!vid, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getAttendance>>,
@@ -2726,6 +3260,7 @@ export function useGetAttendance<
   TError = ErrorResponse,
 >(
   vid: string,
+  params: GetAttendanceParams,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendance>>, TError, TData>> &
       Pick<
@@ -2745,6 +3280,7 @@ export function useGetAttendance<
   TError = ErrorResponse,
 >(
   vid: string,
+  params: GetAttendanceParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendance>>, TError, TData>> &
       Pick<
@@ -2764,6 +3300,7 @@ export function useGetAttendance<
   TError = ErrorResponse,
 >(
   vid: string,
+  params: GetAttendanceParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendance>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
@@ -2771,7 +3308,7 @@ export function useGetAttendance<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Get attendance statistics for a venue.
+ * @summary Get attendance statistics for a venue on a given day.
  */
 
 export function useGetAttendance<
@@ -2779,13 +3316,14 @@ export function useGetAttendance<
   TError = ErrorResponse,
 >(
   vid: string,
+  params: GetAttendanceParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendance>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetAttendanceQueryOptions(vid, options);
+  const queryOptions = getGetAttendanceQueryOptions(vid, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -2797,24 +3335,37 @@ export function useGetAttendance<
 }
 
 /**
- * @summary List check-ins for a venue.
+ * @summary List check-ins for a venue on a given day.
  */
-export const getListCheckInsUrl = (vid: string) => {
-  return `/gms/v1/venues/${vid}/checkins`;
+export const getListCheckInsUrl = (vid: string, params: ListCheckInsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/gms/v1/venues/${vid}/checkins?${stringifiedParams}`
+    : `/gms/v1/venues/${vid}/checkins`;
 };
 
 export const listCheckIns = async (
   vid: string,
+  params: ListCheckInsParams,
   options?: RequestInit,
 ): Promise<ApiResponseVecCheckIn> => {
-  return customFetch<ApiResponseVecCheckIn>(getListCheckInsUrl(vid), {
+  return customFetch<ApiResponseVecCheckIn>(getListCheckInsUrl(vid, params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getListCheckInsQueryKey = (vid?: string) => {
-  return [`/gms/v1/venues/${vid}/checkins`] as const;
+export const getListCheckInsQueryKey = (vid?: string, params?: ListCheckInsParams) => {
+  return [`/gms/v1/venues/${vid}/checkins`, ...(params ? [params] : [])] as const;
 };
 
 export const getListCheckInsQueryOptions = <
@@ -2822,6 +3373,7 @@ export const getListCheckInsQueryOptions = <
   TError = ErrorResponse,
 >(
   vid: string,
+  params: ListCheckInsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCheckIns>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
@@ -2829,10 +3381,10 @@ export const getListCheckInsQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListCheckInsQueryKey(vid);
+  const queryKey = queryOptions?.queryKey ?? getListCheckInsQueryKey(vid, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof listCheckIns>>> = ({ signal }) =>
-    listCheckIns(vid, { signal, ...requestOptions });
+    listCheckIns(vid, params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, enabled: !!vid, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof listCheckIns>>,
@@ -2849,6 +3401,7 @@ export function useListCheckIns<
   TError = ErrorResponse,
 >(
   vid: string,
+  params: ListCheckInsParams,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCheckIns>>, TError, TData>> &
       Pick<
@@ -2868,6 +3421,7 @@ export function useListCheckIns<
   TError = ErrorResponse,
 >(
   vid: string,
+  params: ListCheckInsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCheckIns>>, TError, TData>> &
       Pick<
@@ -2887,6 +3441,7 @@ export function useListCheckIns<
   TError = ErrorResponse,
 >(
   vid: string,
+  params: ListCheckInsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCheckIns>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
@@ -2894,7 +3449,7 @@ export function useListCheckIns<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary List check-ins for a venue.
+ * @summary List check-ins for a venue on a given day.
  */
 
 export function useListCheckIns<
@@ -2902,13 +3457,14 @@ export function useListCheckIns<
   TError = ErrorResponse,
 >(
   vid: string,
+  params: ListCheckInsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCheckIns>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListCheckInsQueryOptions(vid, options);
+  const queryOptions = getListCheckInsQueryOptions(vid, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -3297,24 +3853,40 @@ export const useCreateSchedule = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
+ * Accepts EITHER a single day (`date`) OR an inclusive range (`from` + `to`,
+max 62 days) for the multi-day planning timetable. If `from`/`to` are
+supplied they take precedence over `date`. Optionally filter by `resource_id`.
  * @summary List generated slots for a venue.
  */
-export const getListSlotsUrl = (vid: string) => {
-  return `/gms/v1/venues/${vid}/slots`;
+export const getListSlotsUrl = (vid: string, params?: ListSlotsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/gms/v1/venues/${vid}/slots?${stringifiedParams}`
+    : `/gms/v1/venues/${vid}/slots`;
 };
 
 export const listSlots = async (
   vid: string,
+  params?: ListSlotsParams,
   options?: RequestInit,
 ): Promise<ApiResponseVecScheduleSlot> => {
-  return customFetch<ApiResponseVecScheduleSlot>(getListSlotsUrl(vid), {
+  return customFetch<ApiResponseVecScheduleSlot>(getListSlotsUrl(vid, params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getListSlotsQueryKey = (vid?: string) => {
-  return [`/gms/v1/venues/${vid}/slots`] as const;
+export const getListSlotsQueryKey = (vid?: string, params?: ListSlotsParams) => {
+  return [`/gms/v1/venues/${vid}/slots`, ...(params ? [params] : [])] as const;
 };
 
 export const getListSlotsQueryOptions = <
@@ -3322,6 +3894,7 @@ export const getListSlotsQueryOptions = <
   TError = ErrorResponse,
 >(
   vid: string,
+  params?: ListSlotsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSlots>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
@@ -3329,10 +3902,10 @@ export const getListSlotsQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListSlotsQueryKey(vid);
+  const queryKey = queryOptions?.queryKey ?? getListSlotsQueryKey(vid, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof listSlots>>> = ({ signal }) =>
-    listSlots(vid, { signal, ...requestOptions });
+    listSlots(vid, params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, enabled: !!vid, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof listSlots>>,
@@ -3346,6 +3919,7 @@ export type ListSlotsQueryError = ErrorResponse;
 
 export function useListSlots<TData = Awaited<ReturnType<typeof listSlots>>, TError = ErrorResponse>(
   vid: string,
+  params: undefined | ListSlotsParams,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSlots>>, TError, TData>> &
       Pick<
@@ -3362,6 +3936,7 @@ export function useListSlots<TData = Awaited<ReturnType<typeof listSlots>>, TErr
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useListSlots<TData = Awaited<ReturnType<typeof listSlots>>, TError = ErrorResponse>(
   vid: string,
+  params?: ListSlotsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSlots>>, TError, TData>> &
       Pick<
@@ -3378,6 +3953,7 @@ export function useListSlots<TData = Awaited<ReturnType<typeof listSlots>>, TErr
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useListSlots<TData = Awaited<ReturnType<typeof listSlots>>, TError = ErrorResponse>(
   vid: string,
+  params?: ListSlotsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSlots>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
@@ -3390,13 +3966,14 @@ export function useListSlots<TData = Awaited<ReturnType<typeof listSlots>>, TErr
 
 export function useListSlots<TData = Awaited<ReturnType<typeof listSlots>>, TError = ErrorResponse>(
   vid: string,
+  params?: ListSlotsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSlots>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListSlotsQueryOptions(vid, options);
+  const queryOptions = getListSlotsQueryOptions(vid, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -3593,40 +4170,61 @@ export const useBookViaPass = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
- * @summary Browse the venue catalog (paginated). Public — no authentication required.
+ * Cursor pagination: pass `limit` (1-100, default 20); the response `meta.next_cursor`
+(when present) is the `cursor` for the next page. Optional geo/text filters.
+ * @summary Browse the venue catalog (cursor-paginated). Public — no authentication required.
  */
-export const getListMarketplaceVenuesUrl = () => {
-  return `/platform/v1/marketplace/venues`;
+export const getListMarketplaceVenuesUrl = (params?: ListMarketplaceVenuesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/platform/v1/marketplace/venues?${stringifiedParams}`
+    : `/platform/v1/marketplace/venues`;
 };
 
 export const listMarketplaceVenues = async (
+  params?: ListMarketplaceVenuesParams,
   options?: RequestInit,
 ): Promise<PaginatedApiResponseVecVenueCatalogEntry> => {
-  return customFetch<PaginatedApiResponseVecVenueCatalogEntry>(getListMarketplaceVenuesUrl(), {
-    ...options,
-    method: 'GET',
-  });
+  return customFetch<PaginatedApiResponseVecVenueCatalogEntry>(
+    getListMarketplaceVenuesUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getListMarketplaceVenuesQueryKey = () => {
-  return [`/platform/v1/marketplace/venues`] as const;
+export const getListMarketplaceVenuesQueryKey = (params?: ListMarketplaceVenuesParams) => {
+  return [`/platform/v1/marketplace/venues`, ...(params ? [params] : [])] as const;
 };
 
 export const getListMarketplaceVenuesQueryOptions = <
   TData = Awaited<ReturnType<typeof listMarketplaceVenues>>,
   TError = unknown,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceVenues>>, TError, TData>
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: ListMarketplaceVenuesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceVenues>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListMarketplaceVenuesQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getListMarketplaceVenuesQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof listMarketplaceVenues>>> = ({ signal }) =>
-    listMarketplaceVenues({ signal, ...requestOptions });
+    listMarketplaceVenues(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof listMarketplaceVenues>>,
@@ -3644,6 +4242,7 @@ export function useListMarketplaceVenues<
   TData = Awaited<ReturnType<typeof listMarketplaceVenues>>,
   TError = unknown,
 >(
+  params: undefined | ListMarketplaceVenuesParams,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceVenues>>, TError, TData>
@@ -3664,6 +4263,7 @@ export function useListMarketplaceVenues<
   TData = Awaited<ReturnType<typeof listMarketplaceVenues>>,
   TError = unknown,
 >(
+  params?: ListMarketplaceVenuesParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceVenues>>, TError, TData>
@@ -3684,6 +4284,7 @@ export function useListMarketplaceVenues<
   TData = Awaited<ReturnType<typeof listMarketplaceVenues>>,
   TError = unknown,
 >(
+  params?: ListMarketplaceVenuesParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceVenues>>, TError, TData>
@@ -3693,13 +4294,14 @@ export function useListMarketplaceVenues<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Browse the venue catalog (paginated). Public — no authentication required.
+ * @summary Browse the venue catalog (cursor-paginated). Public — no authentication required.
  */
 
 export function useListMarketplaceVenues<
   TData = Awaited<ReturnType<typeof listMarketplaceVenues>>,
   TError = unknown,
 >(
+  params?: ListMarketplaceVenuesParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceVenues>>, TError, TData>
@@ -3708,7 +4310,7 @@ export function useListMarketplaceVenues<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListMarketplaceVenuesQueryOptions(options);
+  const queryOptions = getListMarketplaceVenuesQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -3855,31 +4457,48 @@ export function useGetMarketplaceVenue<
 }
 
 /**
- * @summary List available slots for a marketplace venue. Public — no authentication required.
+ * @summary List available slots for a marketplace venue on a given day. Public — no auth.
  */
-export const getListMarketplaceSlotsUrl = (vid: string) => {
-  return `/platform/v1/marketplace/venues/${vid}/slots`;
+export const getListMarketplaceSlotsUrl = (vid: string, params: ListMarketplaceSlotsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/platform/v1/marketplace/venues/${vid}/slots?${stringifiedParams}`
+    : `/platform/v1/marketplace/venues/${vid}/slots`;
 };
 
 export const listMarketplaceSlots = async (
   vid: string,
+  params: ListMarketplaceSlotsParams,
   options?: RequestInit,
 ): Promise<ApiResponseVecMarketplaceSlot> => {
-  return customFetch<ApiResponseVecMarketplaceSlot>(getListMarketplaceSlotsUrl(vid), {
+  return customFetch<ApiResponseVecMarketplaceSlot>(getListMarketplaceSlotsUrl(vid, params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getListMarketplaceSlotsQueryKey = (vid?: string) => {
-  return [`/platform/v1/marketplace/venues/${vid}/slots`] as const;
+export const getListMarketplaceSlotsQueryKey = (
+  vid?: string,
+  params?: ListMarketplaceSlotsParams,
+) => {
+  return [`/platform/v1/marketplace/venues/${vid}/slots`, ...(params ? [params] : [])] as const;
 };
 
 export const getListMarketplaceSlotsQueryOptions = <
   TData = Awaited<ReturnType<typeof listMarketplaceSlots>>,
-  TError = unknown,
+  TError = ErrorResponse,
 >(
   vid: string,
+  params: ListMarketplaceSlotsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceSlots>>, TError, TData>
@@ -3889,10 +4508,10 @@ export const getListMarketplaceSlotsQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListMarketplaceSlotsQueryKey(vid);
+  const queryKey = queryOptions?.queryKey ?? getListMarketplaceSlotsQueryKey(vid, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof listMarketplaceSlots>>> = ({ signal }) =>
-    listMarketplaceSlots(vid, { signal, ...requestOptions });
+    listMarketplaceSlots(vid, params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, enabled: !!vid, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof listMarketplaceSlots>>,
@@ -3904,13 +4523,14 @@ export const getListMarketplaceSlotsQueryOptions = <
 export type ListMarketplaceSlotsQueryResult = NonNullable<
   Awaited<ReturnType<typeof listMarketplaceSlots>>
 >;
-export type ListMarketplaceSlotsQueryError = unknown;
+export type ListMarketplaceSlotsQueryError = ErrorResponse;
 
 export function useListMarketplaceSlots<
   TData = Awaited<ReturnType<typeof listMarketplaceSlots>>,
-  TError = unknown,
+  TError = ErrorResponse,
 >(
   vid: string,
+  params: ListMarketplaceSlotsParams,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceSlots>>, TError, TData>
@@ -3929,9 +4549,10 @@ export function useListMarketplaceSlots<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useListMarketplaceSlots<
   TData = Awaited<ReturnType<typeof listMarketplaceSlots>>,
-  TError = unknown,
+  TError = ErrorResponse,
 >(
   vid: string,
+  params: ListMarketplaceSlotsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceSlots>>, TError, TData>
@@ -3950,9 +4571,10 @@ export function useListMarketplaceSlots<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useListMarketplaceSlots<
   TData = Awaited<ReturnType<typeof listMarketplaceSlots>>,
-  TError = unknown,
+  TError = ErrorResponse,
 >(
   vid: string,
+  params: ListMarketplaceSlotsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceSlots>>, TError, TData>
@@ -3962,14 +4584,15 @@ export function useListMarketplaceSlots<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary List available slots for a marketplace venue. Public — no authentication required.
+ * @summary List available slots for a marketplace venue on a given day. Public — no auth.
  */
 
 export function useListMarketplaceSlots<
   TData = Awaited<ReturnType<typeof listMarketplaceSlots>>,
-  TError = unknown,
+  TError = ErrorResponse,
 >(
   vid: string,
+  params: ListMarketplaceSlotsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceSlots>>, TError, TData>
@@ -3978,7 +4601,7 @@ export function useListMarketplaceSlots<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListMarketplaceSlotsQueryOptions(vid, options);
+  const queryOptions = getListMarketplaceSlotsQueryOptions(vid, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -4074,38 +4697,56 @@ export const useOnboardVenue = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
- * @summary List the caller's pass bookings.
+ * Cursor pagination: pass `limit` (1-100, default 20); the response
+`meta.next_cursor` (when present) is the `cursor` for the next page.
+ * @summary List the caller's pass bookings (cursor-paginated).
  */
-export const getListPassBookingsUrl = () => {
-  return `/platform/v1/pass/bookings`;
+export const getListPassBookingsUrl = (params?: ListPassBookingsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/platform/v1/pass/bookings?${stringifiedParams}`
+    : `/platform/v1/pass/bookings`;
 };
 
 export const listPassBookings = async (
+  params?: ListPassBookingsParams,
   options?: RequestInit,
-): Promise<ApiResponseVecPassBooking> => {
-  return customFetch<ApiResponseVecPassBooking>(getListPassBookingsUrl(), {
+): Promise<PaginatedApiResponseVecPassBooking> => {
+  return customFetch<PaginatedApiResponseVecPassBooking>(getListPassBookingsUrl(params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getListPassBookingsQueryKey = () => {
-  return [`/platform/v1/pass/bookings`] as const;
+export const getListPassBookingsQueryKey = (params?: ListPassBookingsParams) => {
+  return [`/platform/v1/pass/bookings`, ...(params ? [params] : [])] as const;
 };
 
 export const getListPassBookingsQueryOptions = <
   TData = Awaited<ReturnType<typeof listPassBookings>>,
   TError = ErrorResponse,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPassBookings>>, TError, TData>>;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: ListPassBookingsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPassBookings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListPassBookingsQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getListPassBookingsQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof listPassBookings>>> = ({ signal }) =>
-    listPassBookings({ signal, ...requestOptions });
+    listPassBookings(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof listPassBookings>>,
@@ -4121,6 +4762,7 @@ export function useListPassBookings<
   TData = Awaited<ReturnType<typeof listPassBookings>>,
   TError = ErrorResponse,
 >(
+  params: undefined | ListPassBookingsParams,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPassBookings>>, TError, TData>> &
       Pick<
@@ -4139,6 +4781,7 @@ export function useListPassBookings<
   TData = Awaited<ReturnType<typeof listPassBookings>>,
   TError = ErrorResponse,
 >(
+  params?: ListPassBookingsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPassBookings>>, TError, TData>> &
       Pick<
@@ -4157,6 +4800,7 @@ export function useListPassBookings<
   TData = Awaited<ReturnType<typeof listPassBookings>>,
   TError = ErrorResponse,
 >(
+  params?: ListPassBookingsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPassBookings>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
@@ -4164,20 +4808,21 @@ export function useListPassBookings<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary List the caller's pass bookings.
+ * @summary List the caller's pass bookings (cursor-paginated).
  */
 
 export function useListPassBookings<
   TData = Awaited<ReturnType<typeof listPassBookings>>,
   TError = ErrorResponse,
 >(
+  params?: ListPassBookingsParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPassBookings>>, TError, TData>>;
     request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListPassBookingsQueryOptions(options);
+  const queryOptions = getListPassBookingsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
