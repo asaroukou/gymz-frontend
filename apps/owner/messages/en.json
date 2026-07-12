@@ -590,7 +590,11 @@
       "loadError": "Could not load participants",
       "emptyTitle": "No participants",
       "emptyBody": "Add a participant to book a spot.",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "validate": "Check in",
+      "validating": "Checking in…",
+      "validateSuccess": "Checked in",
+      "validateError": "Could not check in"
     },
     "addBooking": {
       "label": "Add participant",

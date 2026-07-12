@@ -7,9 +7,12 @@ import { toast } from 'sonner';
 
 import { unwrap } from '@iziwellpass/api/client';
 import {
+  getGetAttendanceQueryKey,
   getListBookingsForSlotQueryKey,
+  getListCheckInsQueryKey,
   getListSlotsQueryKey,
   useCancelBooking,
+  useCheckInManual,
   useCreateBooking,
   useListBookingsForSlot,
 } from '@iziwellpass/api/generated';
@@ -236,10 +239,30 @@ export function BookingsSheet({
 }) {
   const t = useTranslations('planning');
   const { bookingStatusBadge, bookingSourceLabel } = usePlanningLabels();
+  const queryClient = useQueryClient();
 
   const bookingsQuery = useListBookingsForSlot(slot.id, { query: { select: unwrap } });
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+  const checkIn = useCheckInManual();
+  const [validatingBookingId, setValidatingBookingId] = useState<string | null>(null);
+
+  const handleValidate = (booking: Booking) => {
+    setValidatingBookingId(booking.id);
+    checkIn.mutate(
+      { data: { booking_id: booking.id, venue_id: venueId } },
+      {
+        onSuccess: () => {
+          toast.success(t('bookings.validateSuccess'));
+          void queryClient.invalidateQueries({ queryKey: getListBookingsForSlotQueryKey(slot.id) });
+          void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
+        },
+        onError: (err) => toast.error(apiErrorMessage(err, t('bookings.validateError'))),
+        onSettled: () => setValidatingBookingId(null),
+      },
+    );
+  };
 
   const bookings = useMemo(() => bookingsQuery.data ?? [], [bookingsQuery.data]);
   const bookedMemberIds = useMemo(() => {
@@ -332,6 +355,18 @@ export function BookingsSheet({
                     <Badge variant={badge.variant} className="shrink-0">
                       {badge.label}
                     </Badge>
+                    {canManageBookings && booking.status === 'confirmed' ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={validatingBookingId === booking.id}
+                        onClick={() => handleValidate(booking)}
+                      >
+                        {validatingBookingId === booking.id
+                          ? t('bookings.validating')
+                          : t('bookings.validate')}
+                      </Button>
+                    ) : null}
                     {canCancel ? (
                       <Button
                         variant="ghost"
