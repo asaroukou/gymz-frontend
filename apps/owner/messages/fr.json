@@ -772,6 +772,16 @@
     }
   },
   "staff": {
+    "venuesDialog": {
+      "manage": "Gérer les établissements",
+      "title": "Établissements assignés",
+      "replaceWarning": "La liste ci-dessous remplace entièrement les établissements actuels de ce membre.",
+      "venuesRequired": "Sélectionnez au moins un établissement",
+      "submit": "Enregistrer",
+      "submitting": "Enregistrement…",
+      "success": "Établissements mis à jour",
+      "error": "Impossible de mettre à jour les établissements"
+    },
     "title": "Équipe",
     "subtitle": "{count, plural, =0 {Aucun membre} one {# membre} other {# membres}}",
     "errorTitle": "Une erreur est survenue",

@@ -22,6 +22,7 @@ import {
   useInviteStaff,
   useListStaff,
   useRemoveStaff,
+  useSetStaffVenues,
 } from '@iziwellpass/api/generated';
 import type { Staff } from '@iziwellpass/api/schemas';
 import { Role } from '@iziwellpass/api/schemas';
@@ -426,6 +427,87 @@ function ChangeRoleDialog({
 }
 
 // ---------------------------------------------------------------------------
+// Manage venues dialog
+// ---------------------------------------------------------------------------
+
+function ManageVenuesDialog({
+  staff,
+  open,
+  onOpenChange,
+}: {
+  staff: Staff;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useTranslations('staff');
+  const tCommon = useTranslations('common');
+  const queryClient = useQueryClient();
+  const setVenues = useSetStaffVenues();
+  const [venueIds, setVenueIds] = useState<string[]>([]);
+  const [venuesError, setVenuesError] = useState(false);
+
+  // Blind replace: staff venue assignments aren't readable, so every open
+  // starts from an empty selection.
+  useEffect(() => {
+    if (open) {
+      setVenueIds([]);
+      setVenuesError(false);
+    }
+  }, [open]);
+
+  const handleSave = () => {
+    if (venueIds.length === 0) {
+      setVenuesError(true);
+      return;
+    }
+    setVenues.mutate(
+      { sid: staff.id, data: { venue_ids: venueIds } },
+      {
+        onSuccess: () => {
+          toast.success(t('venuesDialog.success'));
+          void queryClient.invalidateQueries({ queryKey: getListStaffQueryKey() });
+          onOpenChange(false);
+        },
+        onError: (err) => {
+          toast.error(apiErrorMessage(err, t('venuesDialog.error')));
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('venuesDialog.title')}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-2">
+          <p className="text-sm text-muted-foreground">{t('venuesDialog.replaceWarning')}</p>
+          <VenueChecklist
+            value={venueIds}
+            onChange={(next) => {
+              setVenueIds(next);
+              if (next.length > 0) setVenuesError(false);
+            }}
+          />
+          {venuesError ? (
+            <p className="text-sm text-destructive">{t('venuesDialog.venuesRequired')}</p>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {tCommon('cancel')}
+          </Button>
+          <Button onClick={handleSave} disabled={setVenues.isPending}>
+            {setVenues.isPending ? t('venuesDialog.submitting') : t('venuesDialog.submit')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Remove staff confirm dialog
 // ---------------------------------------------------------------------------
 
@@ -488,6 +570,7 @@ function RemoveStaffDialog({
 function StaffRowActions({ staff, isSelf }: { staff: Staff; isSelf: boolean }) {
   const t = useTranslations('staff');
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
+  const [manageVenuesOpen, setManageVenuesOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
 
   return (
@@ -503,6 +586,11 @@ function StaffRowActions({ staff, isSelf }: { staff: Staff; isSelf: boolean }) {
             <UserCogIcon />
             {t('row.changeRole')}
           </DropdownMenuItem>
+          {isVenueScopedRole(staff.role) ? (
+            <DropdownMenuItem onSelect={() => setManageVenuesOpen(true)}>
+              {t('venuesDialog.manage')}
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
@@ -521,6 +609,7 @@ function StaffRowActions({ staff, isSelf }: { staff: Staff; isSelf: boolean }) {
         </DropdownMenuContent>
       </DropdownMenu>
       <ChangeRoleDialog staff={staff} open={changeRoleOpen} onOpenChange={setChangeRoleOpen} />
+      <ManageVenuesDialog staff={staff} open={manageVenuesOpen} onOpenChange={setManageVenuesOpen} />
       <RemoveStaffDialog staff={staff} open={removeOpen} onOpenChange={setRemoveOpen} />
     </>
   );

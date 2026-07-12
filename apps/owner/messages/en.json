@@ -772,6 +772,16 @@
     }
   },
   "staff": {
+    "venuesDialog": {
+      "manage": "Manage venues",
+      "title": "Assigned venues",
+      "replaceWarning": "The list below fully replaces this member's current venues.",
+      "venuesRequired": "Select at least one venue",
+      "submit": "Save",
+      "submitting": "Saving…",
+      "success": "Venues updated",
+      "error": "Could not update venues"
+    },
     "title": "Team",
     "subtitle": "{count, plural, =0 {No members} one {# member} other {# members}}",
     "errorTitle": "Something went wrong",
