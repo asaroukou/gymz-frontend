@@ -14,6 +14,14 @@
     "addVenue": "Add a venue",
     "loadError": "Venues unavailable"
   },
+  "accessScope": {
+    "chain_wide": "All venues",
+    "venue_scoped": "Specific venues"
+  },
+  "venueChecklist": {
+    "loadError": "Could not load venues",
+    "empty": "Create a venue first."
+  },
   "activityType": {
     "gym": "Gym",
     "crossfit": "CrossFit",
@@ -338,6 +346,11 @@
       "type": "Membership type",
       "start": "Membership start",
       "notes": "Notes",
+      "accessScope": "Venue access",
+      "scopeChainWide": "All venues",
+      "scopeVenueScoped": "Specific venues",
+      "venues": "Venues",
+      "venuesRequired": "Select at least one venue",
       "submit": "Add member",
       "submitAndAnother": "Add and continue",
       "submitting": "Adding…",
@@ -399,6 +412,19 @@
         "confirming": "Suspending…",
         "success": "Member suspended",
         "error": "Could not suspend member"
+      },
+      "access": {
+        "title": "Venue access",
+        "manage": "Manage access",
+        "scopeLabel": "Access type",
+        "scopeChainWide": "All venues",
+        "scopeVenueScoped": "Specific venues",
+        "replaceWarning": "The list below fully replaces the member's current access.",
+        "venuesRequired": "Select at least one venue",
+        "submit": "Save access",
+        "submitting": "Saving…",
+        "success": "Access updated",
+        "error": "Could not update access"
       }
     }
   },
@@ -787,6 +813,9 @@
       "lastName": "Last name",
       "email": "Email",
       "role": "Role",
+      "venues": "Venues",
+      "venuesRequired": "Select at least one venue",
+      "venuesHint": "Only for venue-scoped roles.",
       "expectation": "This person will receive an email with a temporary password.",
       "submit": "Send invitation",
       "submitting": "Sending…",

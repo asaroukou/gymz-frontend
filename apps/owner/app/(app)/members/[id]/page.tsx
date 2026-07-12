@@ -17,6 +17,8 @@ import {
   getGetMemberQueryKey,
   getListMembersQueryKey,
   useGetMember,
+  useSetMemberAccess,
+  useSetMemberVenues,
   useSuspendMember,
   useUpdateMember,
 } from '@iziwellpass/api/generated';
@@ -64,6 +66,8 @@ import { Textarea } from '@iziwellpass/ui/components/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/components/tooltip';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { VenueChecklist } from '@/components/venue-checklist';
+import { ACCESS_SCOPE_VALUES, accessScopeBadgeVariant, useAccessScopeLabel } from '@/lib/access-scope';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { formatCalendarDate } from '@/lib/datetime';
 import { memberStatusBadgeVariant } from '@/lib/member-status';
@@ -87,9 +91,11 @@ function initials(member: Member): string {
 // Identity card
 // ---------------------------------------------------------------------------
 
-function IdentityCard({ member }: { member: Member }) {
+function IdentityCard({ member, canManage }: { member: Member; canManage: boolean }) {
   const t = useTranslations('members');
   const locale = useLocale();
+  const scopeLabel = useAccessScopeLabel();
+  const [accessOpen, setAccessOpen] = useState(false);
 
   return (
     <Card>
@@ -107,6 +113,14 @@ function IdentityCard({ member }: { member: Member }) {
               <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
                 {t(`status.${member.membership_status}`)}
               </Badge>
+              <Badge variant={accessScopeBadgeVariant(member.access_scope)}>
+                {scopeLabel(member.access_scope)}
+              </Badge>
+              {canManage ? (
+                <Button variant="outline" size="sm" onClick={() => setAccessOpen(true)}>
+                  {t('detail.access.manage')}
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -131,6 +145,7 @@ function IdentityCard({ member }: { member: Member }) {
           </div>
         </dl>
       </CardContent>
+      <EditAccessDialog member={member} open={accessOpen} onOpenChange={setAccessOpen} />
     </Card>
   );
 }
@@ -484,6 +499,113 @@ function SuspendMemberDialog({
 }
 
 // ---------------------------------------------------------------------------
+// Edit access dialog
+// ---------------------------------------------------------------------------
+
+function EditAccessDialog({
+  member,
+  open,
+  onOpenChange,
+}: {
+  member: Member;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useTranslations('members');
+  const tCommon = useTranslations('common');
+  const queryClient = useQueryClient();
+  const setAccess = useSetMemberAccess();
+  const setVenues = useSetMemberVenues();
+  const [scope, setScope] = useState<(typeof ACCESS_SCOPE_VALUES)[number]>(member.access_scope);
+  const [venueIds, setVenueIds] = useState<string[]>([]);
+  const [venuesError, setVenuesError] = useState(false);
+
+  // Reset local edit state whenever the dialog (re)opens for a member.
+  useEffect(() => {
+    if (open) {
+      setScope(member.access_scope);
+      setVenueIds([]);
+      setVenuesError(false);
+    }
+  }, [open, member.access_scope]);
+
+  const pending = setAccess.isPending || setVenues.isPending;
+
+  const onDone = () => {
+    void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
+    void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
+    toast.success(t('detail.access.success'));
+    onOpenChange(false);
+  };
+  const onErr = (err: unknown) => toast.error(apiErrorMessage(err, t('detail.access.error')));
+
+  const handleSave = () => {
+    if (scope === 'venue_scoped') {
+      if (venueIds.length === 0) {
+        setVenuesError(true);
+        return;
+      }
+      setVenues.mutate(
+        { mid: member.id, data: { venue_ids: venueIds } },
+        { onSuccess: onDone, onError: onErr },
+      );
+    } else {
+      setAccess.mutate(
+        { mid: member.id, data: { scope: 'chain_wide' } },
+        { onSuccess: onDone, onError: onErr },
+      );
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('detail.access.title')}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <span className="text-sm font-medium">{t('detail.access.scopeLabel')}</span>
+            <Select value={scope} onValueChange={(v) => setScope(v as typeof scope)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="chain_wide">{t('detail.access.scopeChainWide')}</SelectItem>
+                <SelectItem value="venue_scoped">{t('detail.access.scopeVenueScoped')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {scope === 'venue_scoped' ? (
+            <div className="grid gap-2">
+              <p className="text-sm text-muted-foreground">{t('detail.access.replaceWarning')}</p>
+              <VenueChecklist
+                value={venueIds}
+                onChange={(next) => {
+                  setVenueIds(next);
+                  if (next.length > 0) setVenuesError(false);
+                }}
+              />
+              {venuesError ? (
+                <p className="text-sm text-destructive">{t('detail.access.venuesRequired')}</p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {tCommon('cancel')}
+          </Button>
+          <Button onClick={handleSave} disabled={pending}>
+            {pending ? t('detail.access.submitting') : t('detail.access.submit')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Danger zone
 // ---------------------------------------------------------------------------
 
@@ -587,7 +709,7 @@ function MemberDetailContent() {
   return (
     <div className="space-y-6">
       {backLink}
-      <IdentityCard member={member} />
+      <IdentityCard member={member} canManage={canEdit} />
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <SubscriptionCard member={member} />

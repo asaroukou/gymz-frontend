@@ -81,6 +81,7 @@ import {
 } from '@iziwellpass/ui/components/table';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { VenueChecklist } from '@/components/venue-checklist';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 
 // ---------------------------------------------------------------------------
@@ -95,6 +96,15 @@ import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
  * via staff invite").
  */
 const ASSIGNABLE_ROLES = [Role.admin, Role.trainer, Role.receptionist] as const;
+
+/**
+ * Roles whose access is scoped to specific venues. The invite dialog shows a
+ * venue checklist (required, ≥1) for these and sends `venue_ids`; owner/admin
+ * are org-wide and get no checklist (their `venue_ids` is omitted).
+ */
+const VENUE_SCOPED_ROLES = [Role.trainer, Role.receptionist] as const;
+const isVenueScopedRole = (role: string): boolean =>
+  (VENUE_SCOPED_ROLES as readonly string[]).includes(role);
 
 function staffName(staff: Staff): string {
   return `${staff.first_name} ${staff.last_name}`.trim();
@@ -136,12 +146,23 @@ function InviteStaffDialog() {
 
   const schema = useMemo(
     () =>
-      z.object({
-        first_name: z.string().min(1, t('inviteDialog.firstNameRequired')),
-        last_name: z.string().min(1, t('inviteDialog.lastNameRequired')),
-        email: z.email(t('inviteDialog.emailInvalid')),
-        role: z.enum(ASSIGNABLE_ROLES),
-      }),
+      z
+        .object({
+          first_name: z.string().min(1, t('inviteDialog.firstNameRequired')),
+          last_name: z.string().min(1, t('inviteDialog.lastNameRequired')),
+          email: z.email(t('inviteDialog.emailInvalid')),
+          role: z.enum(ASSIGNABLE_ROLES),
+          venue_ids: z.array(z.string()),
+        })
+        .superRefine((val, ctx) => {
+          if (isVenueScopedRole(val.role) && val.venue_ids.length === 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ['venue_ids'],
+              message: t('inviteDialog.venuesRequired'),
+            });
+          }
+        }),
     [t],
   );
 
@@ -152,6 +173,7 @@ function InviteStaffDialog() {
     last_name: '',
     email: '',
     role: Role.trainer,
+    venue_ids: [],
   };
 
   const form = useForm<InviteStaffValues>({
@@ -161,7 +183,15 @@ function InviteStaffDialog() {
 
   const onSubmit = (values: InviteStaffValues) => {
     inviteStaff.mutate(
-      { data: values },
+      {
+        data: {
+          first_name: values.first_name,
+          last_name: values.last_name,
+          email: values.email,
+          role: values.role,
+          venue_ids: isVenueScopedRole(values.role) ? values.venue_ids : undefined,
+        },
+      },
       {
         onSuccess: () => {
           toast.success(t('inviteDialog.success'));
@@ -263,6 +293,20 @@ function InviteStaffDialog() {
                 </FormItem>
               )}
             />
+            {isVenueScopedRole(form.watch('role')) ? (
+              <FormField
+                control={form.control}
+                name="venue_ids"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('inviteDialog.venues')}</FormLabel>
+                    <VenueChecklist value={field.value} onChange={field.onChange} />
+                    <p className="text-sm text-muted-foreground">{t('inviteDialog.venuesHint')}</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
             <p className="text-sm text-muted-foreground">{t('inviteDialog.expectation')}</p>
             <DialogFooter>
               <Button type="submit" disabled={inviteStaff.isPending}>

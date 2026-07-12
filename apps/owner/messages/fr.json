@@ -14,6 +14,14 @@
     "addVenue": "Ajouter un lieu",
     "loadError": "Établissements indisponibles"
   },
+  "accessScope": {
+    "chain_wide": "Tous les établissements",
+    "venue_scoped": "Établissements spécifiques"
+  },
+  "venueChecklist": {
+    "loadError": "Impossible de charger les établissements",
+    "empty": "Créez d'abord un établissement."
+  },
   "activityType": {
     "gym": "Salle de sport",
     "crossfit": "CrossFit",
@@ -338,6 +346,11 @@
       "type": "Type d'abonnement",
       "start": "Début d'abonnement",
       "notes": "Notes",
+      "accessScope": "Accès aux établissements",
+      "scopeChainWide": "Tous les établissements",
+      "scopeVenueScoped": "Établissements spécifiques",
+      "venues": "Établissements",
+      "venuesRequired": "Sélectionnez au moins un établissement",
       "submit": "Ajouter le membre",
       "submitAndAnother": "Ajouter et enchaîner",
       "submitting": "Ajout…",
@@ -399,6 +412,19 @@
         "confirming": "Suspension…",
         "success": "Membre suspendu",
         "error": "Impossible de suspendre le membre"
+      },
+      "access": {
+        "title": "Accès aux établissements",
+        "manage": "Gérer l'accès",
+        "scopeLabel": "Type d'accès",
+        "scopeChainWide": "Tous les établissements",
+        "scopeVenueScoped": "Établissements spécifiques",
+        "replaceWarning": "La liste ci-dessous remplace entièrement l'accès actuel du membre.",
+        "venuesRequired": "Sélectionnez au moins un établissement",
+        "submit": "Enregistrer l'accès",
+        "submitting": "Enregistrement…",
+        "success": "Accès mis à jour",
+        "error": "Impossible de mettre à jour l'accès"
       }
     }
   },
@@ -787,6 +813,9 @@
       "lastName": "Nom",
       "email": "E-mail",
       "role": "Rôle",
+      "venues": "Établissements",
+      "venuesRequired": "Sélectionnez au moins un établissement",
+      "venuesHint": "Uniquement pour les rôles liés à un établissement.",
       "expectation": "Cette personne recevra un e-mail avec un mot de passe temporaire.",
       "submit": "Envoyer l'invitation",
       "submitting": "Envoi…",

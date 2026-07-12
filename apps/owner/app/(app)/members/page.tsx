@@ -83,6 +83,12 @@ import {
 import { Textarea } from '@iziwellpass/ui/components/textarea';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { VenueChecklist } from '@/components/venue-checklist';
+import {
+  ACCESS_SCOPE_VALUES,
+  accessScopeBadgeVariant,
+  useAccessScopeLabel,
+} from '@/lib/access-scope';
 import { useAllMembers } from '@/lib/all-members';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { daysUntilCalendarDate, formatCalendarDate } from '@/lib/datetime';
@@ -134,15 +140,27 @@ function AddMemberDialog() {
 
   const schema = useMemo(
     () =>
-      z.object({
-        first_name: z.string().min(1, t('validation.firstNameRequired')),
-        last_name: z.string().min(1, t('validation.lastNameRequired')),
-        email: z.email(t('validation.emailInvalid')).or(z.literal('')),
-        phone: z.string(),
-        membership_type: z.enum(MEMBERSHIP_TYPE_VALUES),
-        membership_start: z.string().min(1, t('validation.startRequired')),
-        notes: z.string(),
-      }),
+      z
+        .object({
+          first_name: z.string().min(1, t('validation.firstNameRequired')),
+          last_name: z.string().min(1, t('validation.lastNameRequired')),
+          email: z.email(t('validation.emailInvalid')).or(z.literal('')),
+          phone: z.string(),
+          membership_type: z.enum(MEMBERSHIP_TYPE_VALUES),
+          membership_start: z.string().min(1, t('validation.startRequired')),
+          access_scope: z.enum(ACCESS_SCOPE_VALUES),
+          venue_ids: z.array(z.string()),
+          notes: z.string(),
+        })
+        .superRefine((val, ctx) => {
+          if (val.access_scope === 'venue_scoped' && val.venue_ids.length === 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ['venue_ids'],
+              message: t('addDialog.venuesRequired'),
+            });
+          }
+        }),
     [t],
   );
 
@@ -155,6 +173,8 @@ function AddMemberDialog() {
     phone: '',
     membership_type: 'monthly',
     membership_start: todayIsoDate(),
+    access_scope: 'venue_scoped',
+    venue_ids: [],
     notes: '',
   };
 
@@ -176,6 +196,8 @@ function AddMemberDialog() {
           phone: values.phone || null,
           membership_type: values.membership_type,
           membership_start: values.membership_start,
+          access_scope: values.access_scope,
+          venue_ids: values.access_scope === 'venue_scoped' ? values.venue_ids : undefined,
           notes: values.notes || null,
         },
       },
@@ -313,6 +335,40 @@ function AddMemberDialog() {
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="access_scope"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('addDialog.accessScope')}</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="chain_wide">{t('addDialog.scopeChainWide')}</SelectItem>
+                      <SelectItem value="venue_scoped">{t('addDialog.scopeVenueScoped')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {form.watch('access_scope') === 'venue_scoped' ? (
+              <FormField
+                control={form.control}
+                name="venue_ids"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('addDialog.venues')}</FormLabel>
+                    <VenueChecklist value={field.value} onChange={field.onChange} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
             <FormField
               control={form.control}
               name="notes"
@@ -475,6 +531,7 @@ function MemberCard({
   onSuspend: (member: Member) => void;
 }) {
   const t = useTranslations('members');
+  const scopeLabel = useAccessScopeLabel();
   const expiringSoon = isExpiringSoon(member);
 
   return (
@@ -498,6 +555,9 @@ function MemberCard({
               {t(`status.${member.membership_status}`)}
             </Badge>
             <Badge variant="outline">{t(`type.${member.membership_type}`)}</Badge>
+            <Badge variant={accessScopeBadgeVariant(member.access_scope)}>
+              {scopeLabel(member.access_scope)}
+            </Badge>
             {expiringSoon ? <Badge variant="warning">{t('expiringSoon')}</Badge> : null}
           </div>
         </div>
@@ -518,6 +578,7 @@ function MemberRow({
 }) {
   const t = useTranslations('members');
   const locale = useLocale();
+  const scopeLabel = useAccessScopeLabel();
   const expiringSoon = isExpiringSoon(member);
 
   return (
@@ -542,7 +603,12 @@ function MemberRow({
         </div>
       </TableCell>
       <TableCell>
-        <Badge variant="outline">{t(`type.${member.membership_type}`)}</Badge>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant="outline">{t(`type.${member.membership_type}`)}</Badge>
+          <Badge variant={accessScopeBadgeVariant(member.access_scope)}>
+            {scopeLabel(member.access_scope)}
+          </Badge>
+        </div>
       </TableCell>
       <TableCell>
         <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
