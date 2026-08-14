@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
-import { useListPlans, useListSubscriptions } from '@iziwellpass/api/generated';
+import { getListPlansQueryOptions, useListSubscriptions } from '@iziwellpass/api/generated';
 import type { MemberSubscription, SubscriptionStatus } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
@@ -102,30 +103,30 @@ function SubscriptionRow({
 }
 
 /**
- * Plan names live on the venue's plan list, not on the subscription, so each
- * venue represented in the list needs its own query. Archived plans are
- * included: a member can hold a subscription to a plan that was later archived.
+ * Plan names live on the venue's plan list, not on the subscription, so every
+ * venue represented in the list needs its own plan query. `useQueries` runs
+ * that variable-length set in parallel and `combine` folds it into one id→name
+ * map plus one aggregate pending flag — no per-venue child component and no
+ * duplicated state to keep in sync.
+ *
+ * Archived plans are included: a member can hold a subscription to a plan that
+ * was archived afterwards. That makes this a different cache entry from the
+ * assign dialog's `include_archived: false` list, so a just-assigned plan's
+ * name is genuinely unknown here until this query resolves — which is why
+ * callers must distinguish "still loading" from "no such plan".
  */
-function VenuePlanNames({
-  venueId,
-  onLoaded,
-}: {
-  venueId: string;
-  onLoaded: (names: Record<string, string>) => void;
-}) {
-  const plansQuery = useListPlans(
-    venueId,
-    { include_archived: true },
-    { query: { select: unwrap } },
-  );
-  const plans = plansQuery.data;
-
-  useEffect(() => {
-    if (!plans) return;
-    onLoaded(Object.fromEntries(plans.map((p) => [p.id, p.name])));
-  }, [plans, onLoaded]);
-
-  return null;
+function useVenuePlanNames(venueIds: string[]) {
+  return useQueries({
+    queries: venueIds.map((venueId) =>
+      getListPlansQueryOptions(venueId, { include_archived: true }, { query: { select: unwrap } }),
+    ),
+    combine: (results) => ({
+      names: Object.fromEntries(
+        results.flatMap((result) => (result.data ?? []).map((plan) => [plan.id, plan.name])),
+      ) as Record<string, string>,
+      isPending: results.some((result) => result.isPending),
+    }),
+  });
 }
 
 export function SubscriptionsCard({
@@ -140,14 +141,21 @@ export function SubscriptionsCard({
   const subscriptionsQuery = useListSubscriptions(memberId, undefined, {
     query: { select: unwrap },
   });
-  const subscriptions = subscriptionsQuery.data ?? [];
+  const subscriptions = useMemo(() => subscriptionsQuery.data ?? [], [subscriptionsQuery.data]);
 
-  const [planNames, setPlanNames] = useState<Record<string, string>>({});
-  const mergeNames = useCallback(
-    (names: Record<string, string>) => setPlanNames((prev) => ({ ...prev, ...names })),
-    [],
+  // Memoised so the query list handed to useQueries keeps a stable identity.
+  const venueIds = useMemo(
+    () => [...new Set(subscriptions.map((s) => s.venue_id))],
+    [subscriptions],
   );
-  const venueIds = [...new Set(subscriptions.map((s) => s.venue_id))];
+  const planNames = useVenuePlanNames(venueIds);
+
+  // Until the plan queries settle, a name we don't have yet is unknown to us,
+  // not unknown to the system: show a neutral dash rather than claiming
+  // « Offre inconnue » — copy that would otherwise appear on every row for a
+  // round trip, and on a row the owner had just successfully created.
+  const planNameFor = (planId: string) =>
+    planNames.names[planId] ?? (planNames.isPending ? '—' : t('detail.subscriptions.unknownPlan'));
 
   return (
     <Card>
@@ -156,9 +164,6 @@ export function SubscriptionsCard({
         <CardDescription>{t('detail.subscriptions.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {venueIds.map((id) => (
-          <VenuePlanNames key={id} venueId={id} onLoaded={mergeNames} />
-        ))}
         {subscriptionsQuery.isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : subscriptionsQuery.isError ? (
@@ -176,9 +181,7 @@ export function SubscriptionsCard({
                 {i > 0 ? <Separator /> : null}
                 <SubscriptionRow
                   subscription={subscription}
-                  planName={
-                    planNames[subscription.plan_id] ?? t('detail.subscriptions.unknownPlan')
-                  }
+                  planName={planNameFor(subscription.plan_id)}
                   memberId={memberId}
                   canManage={canManage}
                 />
