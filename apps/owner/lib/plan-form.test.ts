@@ -95,6 +95,28 @@ describe('toCreatePlanRequest', () => {
     expect('duration_days' in request).toBe(false);
   });
 
+  it('keeps both terms for an entry pack that also expires', () => {
+    // The API allows an entry_pack to carry duration_days as an expiry date;
+    // neither term may be dropped on the way to the request.
+    const request = toCreatePlanRequest({
+      ...base,
+      kind: 'entry_pack',
+      duration_days: '90',
+      entry_count: '10',
+    });
+    expect(request.entry_count).toBe(10);
+    expect(request.duration_days).toBe(90);
+  });
+
+  it('drops an entry_count left over from switching kind back to subscription', () => {
+    // react-hook-form retains `entry_count` in form state when the field
+    // unmounts, so a subscription can still hold a count typed before the
+    // switch. It must not reach the API, which rejects it for a subscription.
+    const request = toCreatePlanRequest({ ...base, kind: 'subscription', entry_count: '10' });
+    expect('entry_count' in request).toBe(false);
+    expect(request.duration_days).toBe(30);
+  });
+
   it('sends the activity subset when all_activities is off', () => {
     const request = toCreatePlanRequest({
       ...base,
