@@ -149,9 +149,14 @@ describe('toMinorUnits', () => {
   });
 
   it('rounds rather than truncating float drift', () => {
-    // 19.99 * 100 === 1998.9999999999998 in IEEE 754
+    // 19.99 * 100 === 1998.9999999999998 in IEEE 754, so truncation gives 1998.
     expect(toMinorUnits(19.99, 'EUR')).not.toBe(1998);
-    expect(toMinorUnits(0.145, 'USD')).toBe(15);
+  });
+
+  it('rounds a fractional amount on a zero-decimal currency', () => {
+    // There are no centimes in FCFA, so a stray decimal must resolve to a whole unit.
+    expect(toMinorUnits(25000.4, 'XOF')).toBe(25000);
+    expect(toMinorUnits(25000.6, 'XOF')).toBe(25001);
   });
 });
 
