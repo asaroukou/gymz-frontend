@@ -1,0 +1,126 @@
+'use client';
+
+import { useLocale, useTranslations } from 'next-intl';
+
+import { unwrap } from '@iziwellpass/api/client';
+import { useListSubscriptions } from '@iziwellpass/api/generated';
+import type { MemberSubscription, SubscriptionStatus } from '@iziwellpass/api/schemas';
+import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
+import { Badge } from '@iziwellpass/ui/components/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@iziwellpass/ui/components/card';
+import { Separator } from '@iziwellpass/ui/components/separator';
+import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+
+import { apiErrorMessage } from '@/lib/api-error';
+import { formatCalendarDate } from '@/lib/datetime';
+import { formatMoney } from '@/lib/money';
+
+/**
+ * Status colour mirrors lib/member-status.ts: live reads as success, cancelled
+ * as destructive, spent/lapsed as muted. Colour always pairs with a text label.
+ */
+function statusVariant(status: SubscriptionStatus): 'success' | 'destructive' | 'secondary' {
+  if (status === 'active') return 'success';
+  if (status === 'cancelled') return 'destructive';
+  return 'secondary';
+}
+
+function SubscriptionRow({
+  subscription,
+  planName,
+}: {
+  subscription: MemberSubscription;
+  planName: string;
+}) {
+  const t = useTranslations('members');
+  const locale = useLocale();
+
+  // A subscription is time-based or count-based; show whichever the plan uses.
+  const terms =
+    subscription.entries_total != null
+      ? t('detail.subscriptions.entriesLeft', {
+          remaining: subscription.entries_remaining ?? 0,
+          total: subscription.entries_total,
+        })
+      : subscription.expires_on != null
+        ? t('detail.subscriptions.expiresOn', {
+            date: formatCalendarDate(subscription.expires_on, locale),
+          })
+        : null;
+
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-medium">{planName}</span>
+          <Badge variant={statusVariant(subscription.status)}>
+            {t(`detail.subscriptions.status.${subscription.status}`)}
+          </Badge>
+          {subscription.payment_status === 'unpaid' ? (
+            <Badge variant="outline">{t('detail.subscriptions.unpaid')}</Badge>
+          ) : null}
+        </div>
+        {terms ? <p className="text-sm text-muted-foreground">{terms}</p> : null}
+      </div>
+      <span className="font-medium">
+        {formatMoney(subscription.price_amount_minor, subscription.price_currency, locale)}
+      </span>
+    </div>
+  );
+}
+
+export function SubscriptionsCard({
+  memberId,
+  canManage,
+}: {
+  memberId: string;
+  canManage: boolean;
+}) {
+  const t = useTranslations('members');
+
+  const subscriptionsQuery = useListSubscriptions(memberId, undefined, {
+    query: { select: unwrap },
+  });
+  const subscriptions = subscriptionsQuery.data ?? [];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('detail.subscriptions.title')}</CardTitle>
+        <CardDescription>{t('detail.subscriptions.description')}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {subscriptionsQuery.isLoading ? (
+          <Skeleton className="h-16 w-full" />
+        ) : subscriptionsQuery.isError ? (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {apiErrorMessage(subscriptionsQuery.error, t('detail.subscriptions.loadError'))}
+            </AlertDescription>
+          </Alert>
+        ) : subscriptions.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('detail.subscriptions.empty')}</p>
+        ) : (
+          <div className="space-y-4">
+            {subscriptions.map((subscription, i) => (
+              <div key={subscription.id} className="space-y-4">
+                {i > 0 ? <Separator /> : null}
+                <SubscriptionRow
+                  subscription={subscription}
+                  planName={t('detail.subscriptions.unknownPlan')}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+        {canManage ? <div id="subscription-actions" /> : null}
+      </CardContent>
+    </Card>
+  );
+}

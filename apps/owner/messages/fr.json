@@ -373,13 +373,29 @@
       "noPhone": "Aucun téléphone",
       "memberSince": "Membre depuis le {date}",
       "subscription": {
-        "title": "Abonnement",
+        "title": "Adhésion",
         "type": "Type",
         "start": "Début",
         "end": "Fin",
         "status": "Statut",
         "notes": "Notes",
         "noNotes": "Aucune note"
+      },
+      "subscriptions": {
+        "title": "Abonnements",
+        "description": "Les formules achetées par ce membre.",
+        "empty": "Aucun abonnement pour le moment.",
+        "loadError": "Impossible de charger les abonnements",
+        "unknownPlan": "Offre inconnue",
+        "expiresOn": "Expire le {date}",
+        "entriesLeft": "{remaining} / {total} entrées restantes",
+        "unpaid": "Impayé",
+        "status": {
+          "active": "Actif",
+          "expired": "Expiré",
+          "exhausted": "Épuisé",
+          "cancelled": "Annulé"
+        }
       },
       "edit": {
         "title": "Modifier le membre",

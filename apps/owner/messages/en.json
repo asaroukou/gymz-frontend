@@ -373,13 +373,29 @@
       "noPhone": "No phone",
       "memberSince": "Member since {date}",
       "subscription": {
-        "title": "Subscription",
+        "title": "Membership",
         "type": "Type",
         "start": "Start",
         "end": "End",
         "status": "Status",
         "notes": "Notes",
         "noNotes": "No notes"
+      },
+      "subscriptions": {
+        "title": "Subscriptions",
+        "description": "The plans this member has bought.",
+        "empty": "No subscriptions yet.",
+        "loadError": "Could not load subscriptions",
+        "unknownPlan": "Unknown plan",
+        "expiresOn": "Expires {date}",
+        "entriesLeft": "{remaining} / {total} entries left",
+        "unpaid": "Unpaid",
+        "status": {
+          "active": "Active",
+          "expired": "Expired",
+          "exhausted": "Exhausted",
+          "cancelled": "Cancelled"
+        }
       },
       "edit": {
         "title": "Edit member",

@@ -67,10 +67,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/compone
 
 import { RequirePageAccess } from '@/components/page-access';
 import { VenueChecklist } from '@/components/venue-checklist';
-import { ACCESS_SCOPE_VALUES, accessScopeBadgeVariant, useAccessScopeLabel } from '@/lib/access-scope';
+import {
+  ACCESS_SCOPE_VALUES,
+  accessScopeBadgeVariant,
+  useAccessScopeLabel,
+} from '@/lib/access-scope';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { formatCalendarDate } from '@/lib/datetime';
 import { memberStatusBadgeVariant } from '@/lib/member-status';
+
+import { SubscriptionsCard } from './subscriptions-card';
 
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
@@ -711,7 +717,8 @@ function MemberDetailContent() {
       {backLink}
       <IdentityCard member={member} canManage={canEdit} />
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
+          <SubscriptionsCard memberId={member.id} canManage={canEdit} />
           <SubscriptionCard member={member} />
         </div>
         <div className="space-y-6 lg:col-span-2">
