@@ -1,7 +1,8 @@
 import type { Role } from '@iziwellpass/auth/claims';
 
 /** Key into the `nav` i18n namespace; the app resolves it to a display label. */
-export type NavLabelKey = 'dashboard' | 'frontdesk' | 'members' | 'planning' | 'venues' | 'staff';
+export type NavLabelKey =
+  'dashboard' | 'frontdesk' | 'members' | 'planning' | 'plans' | 'venues' | 'staff';
 
 export type NavScope = 'venue' | 'org';
 
@@ -18,7 +19,13 @@ export const NAV_ITEMS: readonly OwnerNavItem[] = [
   { labelKey: 'dashboard', href: '/', roles: STAFF_ROLES, scope: 'venue' },
   { labelKey: 'frontdesk', href: '/checkins', roles: STAFF_ROLES, scope: 'venue' },
   { labelKey: 'planning', href: '/schedules', roles: STAFF_ROLES, scope: 'venue' },
-  { labelKey: 'members', href: '/members', roles: ['owner', 'admin', 'receptionist'], scope: 'org' },
+  { labelKey: 'plans', href: '/plans', roles: ['owner', 'admin'], scope: 'venue' },
+  {
+    labelKey: 'members',
+    href: '/members',
+    roles: ['owner', 'admin', 'receptionist'],
+    scope: 'org',
+  },
   { labelKey: 'venues', href: '/venues', roles: ['owner', 'admin'], scope: 'org' },
   { labelKey: 'staff', href: '/staff', roles: ['owner', 'admin'], scope: 'org' },
 ];

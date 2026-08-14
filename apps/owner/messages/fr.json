@@ -4,6 +4,7 @@
     "frontdesk": "Accueil",
     "members": "Membres",
     "planning": "Planning",
+    "plans": "Offres",
     "venues": "Établissements",
     "staff": "Équipe",
     "organizationGroup": "Organisation"
@@ -624,6 +625,25 @@
       "success": "Réservation annulée",
       "error": "Impossible d'annuler la réservation"
     }
+  },
+  "plans": {
+    "title": "Offres",
+    "subtitle": "Les formules et tarifs proposés dans cet établissement.",
+    "errorTitle": "Erreur",
+    "venuesError": "Impossible de charger les établissements",
+    "venueNone": "Aucun établissement pour le moment.",
+    "venuePrompt": "Choisissez un établissement pour voir ses offres.",
+    "loadError": "Impossible de charger les offres",
+    "empty": "Aucune offre pour le moment.",
+    "showArchived": "Afficher les archivées",
+    "archivedBadge": "Archivée",
+    "kind": { "subscription": "Abonnement", "entry_pack": "Carnet d'entrées" },
+    "durationDays": "{count, plural, one {# jour} other {# jours}}",
+    "entryCount": "{count, plural, one {# entrée} other {# entrées}}",
+    "allActivities": "Toutes les activités",
+    "add": "Créer une offre",
+    "edit": "Modifier",
+    "archive": "Archiver"
   },
   "venues": {
     "title": "Établissements",

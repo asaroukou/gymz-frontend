@@ -4,6 +4,7 @@
     "frontdesk": "Front desk",
     "members": "Members",
     "planning": "Planning",
+    "plans": "Plans",
     "venues": "Venues",
     "staff": "Staff",
     "organizationGroup": "Organization"
@@ -624,6 +625,25 @@
       "success": "Booking cancelled",
       "error": "Could not cancel booking"
     }
+  },
+  "plans": {
+    "title": "Plans",
+    "subtitle": "The plans and prices offered at this venue.",
+    "errorTitle": "Error",
+    "venuesError": "Could not load venues",
+    "venueNone": "No venues yet.",
+    "venuePrompt": "Pick a venue to see its plans.",
+    "loadError": "Could not load plans",
+    "empty": "No plans yet.",
+    "showArchived": "Show archived",
+    "archivedBadge": "Archived",
+    "kind": { "subscription": "Subscription", "entry_pack": "Entry pack" },
+    "durationDays": "{count, plural, one {# day} other {# days}}",
+    "entryCount": "{count, plural, one {# entry} other {# entries}}",
+    "allActivities": "All activities",
+    "add": "Create a plan",
+    "edit": "Edit",
+    "archive": "Archive"
   },
   "venues": {
     "title": "Venues",
