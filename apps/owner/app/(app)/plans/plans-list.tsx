@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
-import { useListPlans } from '@iziwellpass/api/generated';
+import { useListPlans, useListVenueActivities } from '@iziwellpass/api/generated';
 import type { ActivityPlan } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
@@ -17,8 +17,20 @@ import { useActivityTypeLabel } from '@/lib/activity-type';
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatMoney } from '@/lib/money';
 
+import { PlanDialog } from './plan-dialog';
+
 /** One plan, rendered as a row: name + badges above, price + terms below. */
-function PlanRow({ plan }: { plan: ActivityPlan }) {
+function PlanRow({
+  plan,
+  venueId,
+  venueActivities,
+  canManage,
+}: {
+  plan: ActivityPlan;
+  venueId: string;
+  venueActivities: string[];
+  canManage: boolean;
+}) {
   const t = useTranslations('plans');
   const locale = useLocale();
   const activityLabel = useActivityTypeLabel();
@@ -52,6 +64,11 @@ function PlanRow({ plan }: { plan: ActivityPlan }) {
           {terms.length > 0 ? (
             <p className="text-sm text-muted-foreground">{terms.join(' · ')}</p>
           ) : null}
+          {canManage ? (
+            <div className="mt-2 flex justify-end gap-2">
+              <PlanDialog venueId={venueId} venueActivities={venueActivities} plan={plan} />
+            </div>
+          ) : null}
         </div>
       </CardContent>
     </Card>
@@ -69,6 +86,9 @@ export function PlansList({ venueId, canManage }: { venueId: string; canManage: 
   );
   const plans = plansQuery.data ?? [];
 
+  const activitiesQuery = useListVenueActivities(venueId, { query: { select: unwrap } });
+  const venueActivities = (activitiesQuery.data ?? []).map((a) => a.activity_type);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -76,7 +96,7 @@ export function PlansList({ venueId, canManage }: { venueId: string; canManage: 
           <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
           <Label htmlFor="show-archived">{t('showArchived')}</Label>
         </div>
-        {canManage ? <div id="plans-actions" /> : null}
+        {canManage ? <PlanDialog venueId={venueId} venueActivities={venueActivities} /> : null}
       </div>
 
       {plansQuery.isLoading ? (
@@ -94,7 +114,13 @@ export function PlansList({ venueId, canManage }: { venueId: string; canManage: 
       ) : (
         <div className="space-y-3">
           {plans.map((plan) => (
-            <PlanRow key={plan.id} plan={plan} />
+            <PlanRow
+              key={plan.id}
+              plan={plan}
+              venueId={venueId}
+              venueActivities={venueActivities}
+              canManage={canManage}
+            />
           ))}
         </div>
       )}

@@ -643,7 +643,33 @@
     "allActivities": "Toutes les activités",
     "add": "Créer une offre",
     "edit": "Modifier",
-    "archive": "Archiver"
+    "archive": "Archiver",
+    "dialog": {
+      "createTitle": "Créer une offre",
+      "editTitle": "Modifier l'offre",
+      "description": "Une offre est soit un abonnement limité dans le temps, soit un carnet d'entrées.",
+      "name": "Nom",
+      "kind": "Type",
+      "price": "Prix",
+      "currency": "Devise",
+      "duration": "Durée (jours)",
+      "entries": "Nombre d'entrées",
+      "allActivities": "Valable pour toutes les activités",
+      "activities": "Activités concernées",
+      "submit": "Enregistrer",
+      "submitting": "Enregistrement…",
+      "createSuccess": "Offre créée",
+      "editSuccess": "Offre modifiée",
+      "createError": "Impossible de créer l'offre",
+      "editError": "Impossible de modifier l'offre"
+    },
+    "validation": {
+      "nameRequired": "Le nom est requis",
+      "priceInvalid": "Saisissez un prix valide",
+      "durationRequired": "La durée est requise pour un abonnement",
+      "entriesRequired": "Le nombre d'entrées doit être supérieur à 0",
+      "activitiesRequired": "Choisissez au moins une activité"
+    }
   },
   "venues": {
     "title": "Établissements",
