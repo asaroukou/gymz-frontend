@@ -38,12 +38,12 @@ and the whole `/gms/v1/me/*` self-service surface (consumer app).
 A member now carries two overlapping notions of membership, unconnected in the
 API:
 
-| | Flat fields on `Member` | `MemberSubscription` |
-|---|---|---|
+|        | Flat fields on `Member`                                                                                     | `MemberSubscription`                                                                                      |
+| ------ | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | Fields | `membership_type` (monthly/annual/drop_in/trial), `membership_start`, `membership_end`, `membership_status` | plan ref, price snapshot, `payment_status`, `expires_on` or `entries_remaining`/`entries_total`, `status` |
-| Money | none | `price_amount_minor` + `price_currency` |
-| Scope | tenant-wide, no activity restriction | venue-scoped via the plan, optionally activity-restricted |
-| Set by | registration + member edit form | plan assignment |
+| Money  | none                                                                                                        | `price_amount_minor` + `price_currency`                                                                   |
+| Scope  | tenant-wide, no activity restriction                                                                        | venue-scoped via the plan, optionally activity-restricted                                                 |
+| Set by | registration + member edit form                                                                             | plan assignment                                                                                           |
 
 **Decision: keep both and present them as distinct things.** Subscriptions do
 not become the source of truth for the member status badge or the dashboard
