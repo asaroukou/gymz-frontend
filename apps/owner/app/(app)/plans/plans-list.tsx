@@ -17,6 +17,7 @@ import { useActivityTypeLabel } from '@/lib/activity-type';
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatMoney } from '@/lib/money';
 
+import { ArchivePlanDialog } from './archive-plan-dialog';
 import { PlanDialog } from './plan-dialog';
 
 /** One plan, rendered as a row: name + badges above, price + terms below. */
@@ -67,6 +68,7 @@ function PlanRow({
           {canManage ? (
             <div className="mt-2 flex justify-end gap-2">
               <PlanDialog venueId={venueId} venueActivities={venueActivities} plan={plan} />
+              {plan.is_active ? <ArchivePlanDialog venueId={venueId} plan={plan} /> : null}
             </div>
           ) : null}
         </div>

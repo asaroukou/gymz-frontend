@@ -669,6 +669,14 @@
       "durationRequired": "Duration is required for a subscription",
       "entriesRequired": "Entry count must be greater than 0",
       "activitiesRequired": "Pick at least one activity"
+    },
+    "archiveDialog": {
+      "title": "Archive this plan?",
+      "description": "\"{name}\" can no longer be assigned. Subscriptions already sold are unaffected.",
+      "confirm": "Archive",
+      "submitting": "Archiving…",
+      "success": "Plan archived",
+      "error": "Could not archive the plan"
     }
   },
   "venues": {

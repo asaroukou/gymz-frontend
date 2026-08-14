@@ -669,6 +669,14 @@
       "durationRequired": "La durée est requise pour un abonnement",
       "entriesRequired": "Le nombre d'entrées doit être supérieur à 0",
       "activitiesRequired": "Choisissez au moins une activité"
+    },
+    "archiveDialog": {
+      "title": "Archiver cette offre ?",
+      "description": "« {name} » ne pourra plus être attribuée. Les abonnements déjà vendus ne sont pas affectés.",
+      "confirm": "Archiver",
+      "submitting": "Archivage…",
+      "success": "Offre archivée",
+      "error": "Impossible d'archiver l'offre"
     }
   },
   "venues": {
