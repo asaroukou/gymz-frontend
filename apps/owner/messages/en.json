@@ -372,7 +372,7 @@
       "noEmail": "No email",
       "noPhone": "No phone",
       "memberSince": "Member since {date}",
-      "subscription": {
+      "membership": {
         "title": "Membership",
         "type": "Type",
         "start": "Start",

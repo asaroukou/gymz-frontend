@@ -157,25 +157,30 @@ function IdentityCard({ member, canManage }: { member: Member; canManage: boolea
 }
 
 // ---------------------------------------------------------------------------
-// Subscription summary card
+// Membership summary card (Adhésion)
+//
+// Distinct from SubscriptionsCard (Abonnements) in ./subscriptions-card: this
+// one reads the flat membership_* fields on `Member`, that one lists priced
+// `MemberSubscription` rows. Two deliberately separate models — see the
+// spec's Decision 1 — hence the deliberately separate names.
 // ---------------------------------------------------------------------------
 
-function SubscriptionCard({ member }: { member: Member }) {
+function MembershipCard({ member }: { member: Member }) {
   const t = useTranslations('members');
   const locale = useLocale();
 
   const rows: { label: string; value: ReactNode }[] = [
-    { label: t('detail.subscription.type'), value: t(`type.${member.membership_type}`) },
+    { label: t('detail.membership.type'), value: t(`type.${member.membership_type}`) },
     {
-      label: t('detail.subscription.start'),
+      label: t('detail.membership.start'),
       value: formatCalendarDate(member.membership_start, locale),
     },
     {
-      label: t('detail.subscription.end'),
+      label: t('detail.membership.end'),
       value: member.membership_end ? formatCalendarDate(member.membership_end, locale) : t('noEnd'),
     },
     {
-      label: t('detail.subscription.status'),
+      label: t('detail.membership.status'),
       value: (
         <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
           {t(`status.${member.membership_status}`)}
@@ -187,7 +192,7 @@ function SubscriptionCard({ member }: { member: Member }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('detail.subscription.title')}</CardTitle>
+        <CardTitle>{t('detail.membership.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         {rows.map((row, i) => (
@@ -201,10 +206,10 @@ function SubscriptionCard({ member }: { member: Member }) {
         ))}
         <Separator />
         <div className="space-y-1">
-          <span className="text-muted-foreground">{t('detail.subscription.notes')}</span>
+          <span className="text-muted-foreground">{t('detail.membership.notes')}</span>
           <p className="whitespace-pre-wrap">
             {member.notes ?? (
-              <span className="text-muted-foreground">{t('detail.subscription.noNotes')}</span>
+              <span className="text-muted-foreground">{t('detail.membership.noNotes')}</span>
             )}
           </p>
         </div>
@@ -719,7 +724,7 @@ function MemberDetailContent() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1 space-y-6">
           <SubscriptionsCard memberId={member.id} canManage={canEdit} />
-          <SubscriptionCard member={member} />
+          <MembershipCard member={member} />
         </div>
         <div className="space-y-6 lg:col-span-2">
           <EditMemberForm member={member} canEdit={canEdit} />
