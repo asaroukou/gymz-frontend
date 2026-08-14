@@ -85,7 +85,9 @@ export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
         mid: memberId,
         data: {
           plan_id: planId,
-          starts_on: startsOn,
+          // The date input can be cleared; `starts_on` is optional and the API
+          // defaults it to today, so omit it rather than posting "" into a 400.
+          starts_on: startsOn || undefined,
           payment_status: paid ? 'paid' : 'unpaid',
         },
       },
