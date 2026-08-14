@@ -396,6 +396,21 @@
           "expired": "Expired",
           "exhausted": "Exhausted",
           "cancelled": "Cancelled"
+        },
+        "assign": "Assign a plan",
+        "assignDialog": {
+          "title": "Assign a plan",
+          "description": "The plan's venue determines where the subscription is valid.",
+          "venue": "Venue",
+          "plan": "Plan",
+          "planPlaceholder": "Pick a plan",
+          "noPlans": "No active plans at this venue.",
+          "startsOn": "Start",
+          "paid": "Paid",
+          "submit": "Assign",
+          "submitting": "Assigning…",
+          "success": "Subscription assigned",
+          "error": "Could not assign the subscription"
         }
       },
       "edit": {

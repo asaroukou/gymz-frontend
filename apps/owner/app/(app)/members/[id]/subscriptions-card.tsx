@@ -1,9 +1,10 @@
 'use client';
 
+import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
-import { useListSubscriptions } from '@iziwellpass/api/generated';
+import { useListPlans, useListSubscriptions } from '@iziwellpass/api/generated';
 import type { MemberSubscription, SubscriptionStatus } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
@@ -20,6 +21,8 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatCalendarDate } from '@/lib/datetime';
 import { formatMoney } from '@/lib/money';
+
+import { AssignSubscriptionDialog } from './assign-subscription-dialog';
 
 /**
  * Status colour mirrors lib/member-status.ts: live reads as success, cancelled
@@ -82,6 +85,33 @@ function SubscriptionRow({
   );
 }
 
+/**
+ * Plan names live on the venue's plan list, not on the subscription, so each
+ * venue represented in the list needs its own query. Archived plans are
+ * included: a member can hold a subscription to a plan that was later archived.
+ */
+function VenuePlanNames({
+  venueId,
+  onLoaded,
+}: {
+  venueId: string;
+  onLoaded: (names: Record<string, string>) => void;
+}) {
+  const plansQuery = useListPlans(
+    venueId,
+    { include_archived: true },
+    { query: { select: unwrap } },
+  );
+  const plans = plansQuery.data;
+
+  useEffect(() => {
+    if (!plans) return;
+    onLoaded(Object.fromEntries(plans.map((p) => [p.id, p.name])));
+  }, [plans, onLoaded]);
+
+  return null;
+}
+
 export function SubscriptionsCard({
   memberId,
   canManage,
@@ -96,6 +126,13 @@ export function SubscriptionsCard({
   });
   const subscriptions = subscriptionsQuery.data ?? [];
 
+  const [planNames, setPlanNames] = useState<Record<string, string>>({});
+  const mergeNames = useCallback(
+    (names: Record<string, string>) => setPlanNames((prev) => ({ ...prev, ...names })),
+    [],
+  );
+  const venueIds = [...new Set(subscriptions.map((s) => s.venue_id))];
+
   return (
     <Card>
       <CardHeader>
@@ -103,6 +140,9 @@ export function SubscriptionsCard({
         <CardDescription>{t('detail.subscriptions.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {venueIds.map((id) => (
+          <VenuePlanNames key={id} venueId={id} onLoaded={mergeNames} />
+        ))}
         {subscriptionsQuery.isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : subscriptionsQuery.isError ? (
@@ -120,13 +160,15 @@ export function SubscriptionsCard({
                 {i > 0 ? <Separator /> : null}
                 <SubscriptionRow
                   subscription={subscription}
-                  planName={t('detail.subscriptions.unknownPlan')}
+                  planName={
+                    planNames[subscription.plan_id] ?? t('detail.subscriptions.unknownPlan')
+                  }
                 />
               </div>
             ))}
           </div>
         )}
-        {canManage ? <div id="subscription-actions" /> : null}
+        {canManage ? <AssignSubscriptionDialog memberId={memberId} /> : null}
       </CardContent>
     </Card>
   );

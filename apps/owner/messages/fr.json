@@ -396,6 +396,21 @@
           "expired": "Expiré",
           "exhausted": "Épuisé",
           "cancelled": "Annulé"
+        },
+        "assign": "Attribuer une formule",
+        "assignDialog": {
+          "title": "Attribuer une formule",
+          "description": "L'établissement de l'offre détermine où l'abonnement est valable.",
+          "venue": "Établissement",
+          "plan": "Offre",
+          "planPlaceholder": "Choisissez une offre",
+          "noPlans": "Aucune offre active dans cet établissement.",
+          "startsOn": "Début",
+          "paid": "Réglé",
+          "submit": "Attribuer",
+          "submitting": "Attribution…",
+          "success": "Abonnement attribué",
+          "error": "Impossible d'attribuer l'abonnement"
         }
       },
       "edit": {
