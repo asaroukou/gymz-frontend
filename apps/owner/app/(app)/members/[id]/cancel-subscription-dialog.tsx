@@ -34,6 +34,7 @@ export function CancelSubscriptionDialog({
   planName: string;
 }) {
   const t = useTranslations('members');
+  const tCommon = useTranslations('common');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const updateSubscription = useUpdateSubscription();
@@ -70,6 +71,15 @@ export function CancelSubscriptionDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
+          {/*
+            « Fermer », not « Annuler »: the trigger, the title and the
+            confirm button already read "annuler" in French, and a dismiss
+            control saying the same word would be read as a fourth way to
+            cancel the subscription.
+          */}
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            {tCommon('close')}
+          </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={updateSubscription.isPending}>
             {updateSubscription.isPending
               ? t('detail.subscriptions.cancelDialog.submitting')

@@ -23,6 +23,7 @@ import { apiErrorMessage } from '@/lib/api-error';
 /** Archive is a soft delete (is_active=false), so the copy avoids "supprimer". */
 export function ArchivePlanDialog({ venueId, plan }: { venueId: string; plan: ActivityPlan }) {
   const t = useTranslations('plans');
+  const tCommon = useTranslations('common');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const archivePlan = useArchivePlan();
@@ -56,6 +57,9 @@ export function ArchivePlanDialog({ venueId, plan }: { venueId: string; plan: Ac
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            {tCommon('cancel')}
+          </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={archivePlan.isPending}>
             {archivePlan.isPending ? t('archiveDialog.submitting') : t('archiveDialog.confirm')}
           </Button>
