@@ -4,12 +4,23 @@ import type {
   ActivityPlan,
   ActivityType,
   CreatePlanRequest,
-  Currency,
-  PlanKind,
   UpdatePlanRequest,
 } from '@iziwellpass/api/schemas';
+// Value imports: the generated enums are const objects whose type is declared
+// alongside them, so `Currency`/`PlanKind` serve as both type and value here.
+import { Currency, PlanKind } from '@iziwellpass/api/schemas';
 
 import { fromMinorUnits, toMinorUnits } from './money';
+
+/**
+ * Enum values as tuples for `z.enum(...)` and for the dialog's dropdowns, both
+ * derived from the generated schemas so the picker and the validator can never
+ * disagree: a currency added upstream would otherwise be offered by the picker
+ * and rejected by zod with an untranslated "Invalid option".
+ * Same cast idiom as `ACTIVITY_TYPE_VALUES` in lib/activity-type.ts.
+ */
+export const CURRENCY_VALUES = Object.values(Currency) as [Currency, ...Currency[]];
+export const PLAN_KIND_VALUES = Object.values(PlanKind) as [PlanKind, ...PlanKind[]];
 
 /**
  * Numeric fields are held as strings because they are text inputs: an empty
@@ -60,9 +71,9 @@ export function buildPlanSchema(m: PlanFormMessages) {
   return z
     .object({
       name: z.string().min(1, m.nameRequired),
-      kind: z.enum(['subscription', 'entry_pack']),
+      kind: z.enum(PLAN_KIND_VALUES),
       price_major: z.string(),
-      price_currency: z.enum(['XOF', 'XAF', 'EUR', 'USD', 'GHS', 'NGN']),
+      price_currency: z.enum(CURRENCY_VALUES),
       duration_days: z.string(),
       entry_count: z.string(),
       all_activities: z.boolean(),

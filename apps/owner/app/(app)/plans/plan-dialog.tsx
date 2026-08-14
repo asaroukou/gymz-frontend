@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 
 import { getListPlansQueryKey, useCreatePlan, useUpdatePlan } from '@iziwellpass/api/generated';
 import type { ActivityPlan } from '@iziwellpass/api/schemas';
-import { Currency, PlanKind } from '@iziwellpass/api/schemas';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
@@ -44,13 +43,12 @@ import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import type { PlanFormValues } from '@/lib/plan-form';
 import {
   buildPlanSchema,
+  CURRENCY_VALUES,
+  PLAN_KIND_VALUES,
   planToFormValues,
   toCreatePlanRequest,
   toUpdatePlanRequest,
 } from '@/lib/plan-form';
-
-const CURRENCIES = Object.values(Currency);
-const KINDS = Object.values(PlanKind);
 
 const emptyPlan: PlanFormValues = {
   name: '',
@@ -63,10 +61,23 @@ const emptyPlan: PlanFormValues = {
   activities: [],
 };
 
+/** A value the API cannot update: label above, current value as plain text. */
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-sm font-medium">{label}</p>
+      <p className="text-sm text-muted-foreground">{value}</p>
+    </div>
+  );
+}
+
 /**
- * One dialog, two modes. In edit mode `kind` renders as static text because the
- * API treats it as immutable, and the payload goes through toUpdatePlanRequest
- * (which drops kind, duration_days and entry_count — none are updatable).
+ * One dialog, two modes. `UpdatePlanRequest` carries only name, price,
+ * activities and is_active, so in edit mode `kind`, `duration_days` and
+ * `entry_count` render as static text: an editable input whose value
+ * `toUpdatePlanRequest` silently drops — behind a « Offre modifiée » toast —
+ * would let an owner believe they had repriced a 60-day plan that is still 30.
+ * All three stay editable in create mode, where the API does accept them.
  */
 export function PlanDialog({
   venueId,
@@ -105,6 +116,8 @@ export function PlanDialog({
   });
 
   const kind = form.watch('kind');
+  const durationDays = form.watch('duration_days');
+  const entryCount = form.watch('entry_count');
   const allActivities = form.watch('all_activities');
   const pending = createPlan.isPending || updatePlan.isPending;
 
@@ -179,10 +192,7 @@ export function PlanDialog({
             />
 
             {isEdit ? (
-              <div className="space-y-1">
-                <p className="text-sm font-medium">{t('dialog.kind')}</p>
-                <p className="text-sm text-muted-foreground">{t(`kind.${kind}`)}</p>
-              </div>
+              <ReadOnlyField label={t('dialog.kind')} value={t(`kind.${kind}`)} />
             ) : (
               <FormField
                 control={form.control}
@@ -197,7 +207,7 @@ export function PlanDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {KINDS.map((k) => (
+                        {PLAN_KIND_VALUES.map((k) => (
                           <SelectItem key={k} value={k}>
                             {t(`kind.${k}`)}
                           </SelectItem>
@@ -237,7 +247,7 @@ export function PlanDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {CURRENCIES.map((c) => (
+                        {CURRENCY_VALUES.map((c) => (
                           <SelectItem key={c} value={c}>
                             {c}
                           </SelectItem>
@@ -251,14 +261,37 @@ export function PlanDialog({
             </div>
 
             {/* An entry_pack may also carry a duration as an expiry, so the
-                duration field stays visible for both kinds. */}
+                duration stays visible for both kinds. Both are read-only in
+                edit mode — the update endpoint does not accept them. */}
             {kind === 'entry_pack' ? (
+              isEdit ? (
+                <ReadOnlyField label={t('dialog.entries')} value={entryCount || '—'} />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="entry_count"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('dialog.entries')}</FormLabel>
+                      <FormControl>
+                        <Input inputMode="numeric" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )
+            ) : null}
+
+            {isEdit ? (
+              <ReadOnlyField label={t('dialog.duration')} value={durationDays || '—'} />
+            ) : (
               <FormField
                 control={form.control}
-                name="entry_count"
+                name="duration_days"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('dialog.entries')}</FormLabel>
+                    <FormLabel>{t('dialog.duration')}</FormLabel>
                     <FormControl>
                       <Input inputMode="numeric" {...field} />
                     </FormControl>
@@ -266,21 +299,7 @@ export function PlanDialog({
                   </FormItem>
                 )}
               />
-            ) : null}
-
-            <FormField
-              control={form.control}
-              name="duration_days"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('dialog.duration')}</FormLabel>
-                  <FormControl>
-                    <Input inputMode="numeric" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            )}
 
             <FormField
               control={form.control}
