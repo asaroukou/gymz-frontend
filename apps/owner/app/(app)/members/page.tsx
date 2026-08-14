@@ -144,7 +144,13 @@ function AddMemberDialog() {
         .object({
           first_name: z.string().min(1, t('validation.firstNameRequired')),
           last_name: z.string().min(1, t('validation.lastNameRequired')),
-          email: z.email(t('validation.emailInvalid')).or(z.literal('')),
+          // Required by the API: Cognito uses the email as the account username,
+          // and the invitation email carrying the temporary password is the only
+          // handover channel (staff never see it).
+          email: z
+            .string()
+            .min(1, t('validation.emailRequired'))
+            .pipe(z.email(t('validation.emailInvalid'))),
           phone: z.string(),
           membership_type: z.enum(MEMBERSHIP_TYPE_VALUES),
           membership_start: z.string().min(1, t('validation.startRequired')),
@@ -192,7 +198,7 @@ function AddMemberDialog() {
         data: {
           first_name: values.first_name,
           last_name: values.last_name,
-          email: values.email || null,
+          email: values.email,
           phone: values.phone || null,
           membership_type: values.membership_type,
           membership_start: values.membership_start,

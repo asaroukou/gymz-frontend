@@ -3,14 +3,14 @@
 // so the frontend never needs the Rust toolchain.
 //
 // Default source assumes the sibling checkout layout:
-//   gymz-v1/gymz/docs/openapi.json  ->  gymz-v1/web/openapi.json
+//   gymz-v1/iziwellpass/docs/openapi.json  ->  gymz-v1/web/openapi.json
 // Override with: OPENAPI_SRC=/path/to/openapi.json pnpm sync:openapi
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const src = process.env.OPENAPI_SRC ?? path.resolve(repoRoot, '../gymz/docs/openapi.json');
+const src = process.env.OPENAPI_SRC ?? path.resolve(repoRoot, '../iziwellpass/docs/openapi.json');
 const dest = path.join(repoRoot, 'openapi.json');
 
 if (!existsSync(src)) {

@@ -360,6 +360,7 @@
     "validation": {
       "firstNameRequired": "First name is required",
       "lastNameRequired": "Last name is required",
+      "emailRequired": "Email is required to send the invitation",
       "emailInvalid": "Enter a valid email address",
       "startRequired": "Start date is required"
     },

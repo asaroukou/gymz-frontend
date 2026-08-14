@@ -19,6 +19,36 @@ export const AccessScope = {
   venue_scoped: 'venue_scoped',
 } as const;
 
+export type ActivityPlanDurationDays = number | null;
+
+export type ActivityPlanEntryCount = number | null;
+
+/**
+ * A priced access product defined by an owner on a venue.
+ */
+export interface ActivityPlan {
+  /** Populated when all_activities == false; empty otherwise. */
+  activities: ActivityType[];
+  all_activities: boolean;
+  created_at: string;
+  duration_days?: ActivityPlanDurationDays;
+  entry_count?: ActivityPlanEntryCount;
+  id: ActivityPlanId;
+  is_active: boolean;
+  kind: PlanKind;
+  name: string;
+  price_amount_minor: number;
+  price_currency: Currency;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+}
+
+/**
+ * Unique identifier for an activity plan (a priced access product).
+ */
+export type ActivityPlanId = string;
+
 /**
  * Closed platform catalog of activities. Adding one is a code change.
  */
@@ -57,6 +87,50 @@ The venue is taken from the URL path; the body carries only the activity.
  */
 export interface AddActivityRequest {
   activity_type: ActivityType;
+}
+
+export type ApiResponseActivityPlanDataDurationDays = number | null;
+
+export type ApiResponseActivityPlanDataEntryCount = number | null;
+
+/**
+ * A priced access product defined by an owner on a venue.
+ */
+export type ApiResponseActivityPlanData = {
+  /** Populated when all_activities == false; empty otherwise. */
+  activities: ActivityType[];
+  all_activities: boolean;
+  created_at: string;
+  duration_days?: ApiResponseActivityPlanDataDurationDays;
+  entry_count?: ApiResponseActivityPlanDataEntryCount;
+  id: ActivityPlanId;
+  is_active: boolean;
+  kind: PlanKind;
+  name: string;
+  price_amount_minor: number;
+  price_currency: Currency;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseActivityPlan {
+  /** A priced access product defined by an owner on a venue. */
+  data: ApiResponseActivityPlanData;
+  request_id: string;
 }
 
 /**
@@ -138,6 +212,8 @@ export interface ApiResponseBooking {
   request_id: string;
 }
 
+export type ApiResponseCheckInDataBookingId = null | BookingId;
+
 /**
  * Staff user_id for manual check-ins. None for QR self-check-in.
  */
@@ -147,7 +223,7 @@ export type ApiResponseCheckInDataCheckedInBy = string | null;
  * A recorded check-in event at a venue.
  */
 export type ApiResponseCheckInData = {
-  booking_id: BookingId;
+  booking_id?: ApiResponseCheckInDataBookingId;
   checked_in_at: string;
   /** Staff user_id for manual check-ins. None for QR self-check-in. */
   checked_in_by?: ApiResponseCheckInDataCheckedInBy;
@@ -215,6 +291,35 @@ Credits expire monthly (no rollover). `debit()` enforces non-negative invariant.
   request_id: string;
 }
 
+/**
+ * Response of POST /gms/v1/me/qr (mirrors lambdas/member MeQrResponse).
+ */
+export type ApiResponseMeQrResponseSchemaData = {
+  /** Unix seconds at which the token stops verifying. */
+  expires_at: number;
+  /** `"iwp1.<payload>.<mac>"`. Valid for 300 seconds. */
+  token: string;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseMeQrResponseSchema {
+  /** Response of POST /gms/v1/me/qr (mirrors lambdas/member MeQrResponse). */
+  data: ApiResponseMeQrResponseSchemaData;
+  request_id: string;
+}
+
 export type ApiResponseMemberDataEmail = string | null;
 
 export type ApiResponseMemberDataMembershipEnd = string | null;
@@ -267,6 +372,115 @@ alongside a `request_id` for traceability:
 export interface ApiResponseMember {
   /** A person enrolled at a venue with a membership. */
   data: ApiResponseMemberData;
+  request_id: string;
+}
+
+export type ApiResponseMemberSubscriptionDataAssignedBy = string | null;
+
+export type ApiResponseMemberSubscriptionDataEntriesRemaining = number | null;
+
+export type ApiResponseMemberSubscriptionDataEntriesTotal = number | null;
+
+export type ApiResponseMemberSubscriptionDataExpiresOn = string | null;
+
+/**
+ * A member's held instance of a plan.
+ */
+export type ApiResponseMemberSubscriptionData = {
+  assigned_by?: ApiResponseMemberSubscriptionDataAssignedBy;
+  created_at: string;
+  entries_remaining?: ApiResponseMemberSubscriptionDataEntriesRemaining;
+  entries_total?: ApiResponseMemberSubscriptionDataEntriesTotal;
+  expires_on?: ApiResponseMemberSubscriptionDataExpiresOn;
+  id: MemberSubscriptionId;
+  member_id: MemberId;
+  payment_status: PaymentStatus;
+  plan_id: ActivityPlanId;
+  price_amount_minor: number;
+  price_currency: Currency;
+  starts_on: string;
+  status: SubscriptionStatus;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseMemberSubscription {
+  /** A member's held instance of a plan. */
+  data: ApiResponseMemberSubscriptionData;
+  request_id: string;
+}
+
+/**
+ * `Option` because `Member::email` is nullable: members created before the
+email requirement, and walk-ins, may have none.
+ */
+export type ApiResponseMyProfileResponseDataEmail = string | null;
+
+export type ApiResponseMyProfileResponseDataMembershipEnd = string | null;
+
+export type ApiResponseMyProfileResponseDataPhone = string | null;
+
+/**
+ * What a member may see about themselves.
+
+Excluded by design: `notes` (staff-authored free text ABOUT the member) and
+`user_id` (their Cognito sub, which the app already knows from its own token
+and which should not be echoed back). Enum fields are flattened to their
+`as_str()` wire form by the caller.
+ */
+export type ApiResponseMyProfileResponseData = {
+  /** `AccessScope::as_str()`. */
+  access_scope: string;
+  /** `Option` because `Member::email` is nullable: members created before the
+email requirement, and walk-ins, may have none. */
+  email?: ApiResponseMyProfileResponseDataEmail;
+  first_name: string;
+  id: MemberId;
+  last_name: string;
+  membership_end?: ApiResponseMyProfileResponseDataMembershipEnd;
+  membership_start: string;
+  /** `MembershipStatus::as_str()`. */
+  membership_status: string;
+  /** `MembershipType::as_str()`. */
+  membership_type: string;
+  phone?: ApiResponseMyProfileResponseDataPhone;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseMyProfileResponse {
+  /** What a member may see about themselves.
+
+Excluded by design: `notes` (staff-authored free text ABOUT the member) and
+`user_id` (their Cognito sub, which the app already knows from its own token
+and which should not be echoed back). Enum fields are flattened to their
+`as_str()` wire form by the caller. */
+  data: ApiResponseMyProfileResponseData;
   request_id: string;
 }
 
@@ -658,6 +872,49 @@ export interface ApiResponseStaff {
   request_id: string;
 }
 
+export type ApiResponseVecActivityPlanDataItemDurationDays = number | null;
+
+export type ApiResponseVecActivityPlanDataItemEntryCount = number | null;
+
+/**
+ * A priced access product defined by an owner on a venue.
+ */
+export type ApiResponseVecActivityPlanDataItem = {
+  /** Populated when all_activities == false; empty otherwise. */
+  activities: ActivityType[];
+  all_activities: boolean;
+  created_at: string;
+  duration_days?: ApiResponseVecActivityPlanDataItemDurationDays;
+  entry_count?: ApiResponseVecActivityPlanDataItemEntryCount;
+  id: ActivityPlanId;
+  is_active: boolean;
+  kind: PlanKind;
+  name: string;
+  price_amount_minor: number;
+  price_currency: Currency;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecActivityPlan {
+  data: ApiResponseVecActivityPlanDataItem[];
+  request_id: string;
+}
+
 export type ApiResponseVecBookingDataItemCancellationReason = string | null;
 
 export type ApiResponseVecBookingDataItemCancelledAt = string | null;
@@ -705,6 +962,8 @@ export interface ApiResponseVecBooking {
   request_id: string;
 }
 
+export type ApiResponseVecCheckInDataItemBookingId = null | BookingId;
+
 /**
  * Staff user_id for manual check-ins. None for QR self-check-in.
  */
@@ -714,7 +973,7 @@ export type ApiResponseVecCheckInDataItemCheckedInBy = string | null;
  * A recorded check-in event at a venue.
  */
 export type ApiResponseVecCheckInDataItem = {
-  booking_id: BookingId;
+  booking_id?: ApiResponseVecCheckInDataItemBookingId;
   checked_in_at: string;
   /** Staff user_id for manual check-ins. None for QR self-check-in. */
   checked_in_by?: ApiResponseVecCheckInDataItemCheckedInBy;
@@ -780,6 +1039,103 @@ alongside a `request_id` for traceability:
  */
 export interface ApiResponseVecMarketplaceSlot {
   data: ApiResponseVecMarketplaceSlotDataItem[];
+  request_id: string;
+}
+
+export type ApiResponseVecMemberSubscriptionDataItemAssignedBy = string | null;
+
+export type ApiResponseVecMemberSubscriptionDataItemEntriesRemaining = number | null;
+
+export type ApiResponseVecMemberSubscriptionDataItemEntriesTotal = number | null;
+
+export type ApiResponseVecMemberSubscriptionDataItemExpiresOn = string | null;
+
+/**
+ * A member's held instance of a plan.
+ */
+export type ApiResponseVecMemberSubscriptionDataItem = {
+  assigned_by?: ApiResponseVecMemberSubscriptionDataItemAssignedBy;
+  created_at: string;
+  entries_remaining?: ApiResponseVecMemberSubscriptionDataItemEntriesRemaining;
+  entries_total?: ApiResponseVecMemberSubscriptionDataItemEntriesTotal;
+  expires_on?: ApiResponseVecMemberSubscriptionDataItemExpiresOn;
+  id: MemberSubscriptionId;
+  member_id: MemberId;
+  payment_status: PaymentStatus;
+  plan_id: ActivityPlanId;
+  price_amount_minor: number;
+  price_currency: Currency;
+  starts_on: string;
+  status: SubscriptionStatus;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecMemberSubscription {
+  data: ApiResponseVecMemberSubscriptionDataItem[];
+  request_id: string;
+}
+
+/**
+ * Entry packs only; `None` for time-based subscriptions.
+ */
+export type ApiResponseVecMySubscriptionResponseDataItemEntriesRemaining = number | null;
+
+export type ApiResponseVecMySubscriptionResponseDataItemExpiresOn = string | null;
+
+/**
+ * A member's own subscription, with staff PII projected out.
+
+Excluded by design: `assigned_by` (the Cognito sub of the staff member who
+sold the subscription) and `tenant_id`/`member_id` (both already implied by
+the caller's own token, so echoing them adds nothing).
+
+`plan_id` rather than a plan name: `MemberSubscription` carries no plan name,
+and resolving one would mean an extra read per row. The id is enough for the
+app to correlate against the plan it already fetched.
+ */
+export type ApiResponseVecMySubscriptionResponseDataItem = {
+  /** Entry packs only; `None` for time-based subscriptions. */
+  entries_remaining?: ApiResponseVecMySubscriptionResponseDataItemEntriesRemaining;
+  expires_on?: ApiResponseVecMySubscriptionResponseDataItemExpiresOn;
+  id: MemberSubscriptionId;
+  /** `PaymentStatus::as_str()`. */
+  payment_status: string;
+  plan_id: ActivityPlanId;
+  /** `SubscriptionStatus::as_str()`. */
+  status: string;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecMySubscriptionResponse {
+  data: ApiResponseVecMySubscriptionResponseDataItem[];
   request_id: string;
 }
 
@@ -1071,6 +1427,42 @@ export interface ApiResponseVecVenueActivity {
 }
 
 /**
+ * One precomputed rollup row: metrics for a venue on a calendar day.
+Fields mirror the `venue_day_metrics` table (migration 018). Only the
+honestly-computed columns are shipped (no `no_shows`/`revenue_minor`).
+ */
+export type ApiResponseVecVenueDayMetricDataItem = {
+  bookings_cancelled: number;
+  bookings_created: number;
+  checkins: number;
+  /** SUM of pass_booking credits_spent for the day. */
+  credits_earned: number;
+  day: string;
+  pass_bookings: number;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecVenueDayMetric {
+  data: ApiResponseVecVenueDayMetricDataItem[];
+  request_id: string;
+}
+
+/**
  * Standard success response envelope matching the LLD format.
 
 All successful API responses wrap the payload in a `data` field
@@ -1214,6 +1606,21 @@ a count of available slots in the upcoming days. */
 }
 
 /**
+ * Defaults to today when absent.
+ */
+export type AssignSubscriptionRequestStartsOn = string | null;
+
+/**
+ * Request body for POST /gms/v1/members/{memberId}/subscriptions.
+ */
+export interface AssignSubscriptionRequest {
+  payment_status?: PaymentStatus;
+  plan_id: ActivityPlanId;
+  /** Defaults to today when absent. */
+  starts_on?: AssignSubscriptionRequestStartsOn;
+}
+
+/**
  * Attendance statistics for a venue on a given date.
  */
 export interface AttendanceStats {
@@ -1328,6 +1735,8 @@ export interface ChangeRoleRequest {
   role: Role;
 }
 
+export type CheckInBookingId = null | BookingId;
+
 /**
  * Staff user_id for manual check-ins. None for QR self-check-in.
  */
@@ -1337,7 +1746,7 @@ export type CheckInCheckedInBy = string | null;
  * A recorded check-in event at a venue.
  */
 export interface CheckIn {
-  booking_id: BookingId;
+  booking_id?: CheckInBookingId;
   checked_in_at: string;
   /** Staff user_id for manual check-ins. None for QR self-check-in. */
   checked_in_by?: CheckInCheckedInBy;
@@ -1381,8 +1790,6 @@ export interface CreateBookingRequest {
   source?: BookingSource;
 }
 
-export type CreateMemberRequestEmail = string | null;
-
 export type CreateMemberRequestMembershipEnd = string | null;
 
 export type CreateMemberRequestNotes = string | null;
@@ -1395,7 +1802,10 @@ export type CreateMemberRequestPhone = string | null;
 export interface CreateMemberRequest {
   /** How the member is scoped. Defaults to venue_scoped (requires venue_ids). */
   access_scope?: AccessScope;
-  email?: CreateMemberRequestEmail;
+  /** Required: Cognito uses the email as the account username, and the
+invitation email carrying the temporary password is the only handover
+channel (staff never see the password). */
+  email: string;
   first_name: string;
   last_name: string;
   membership_end?: CreateMemberRequestMembershipEnd;
@@ -1405,6 +1815,33 @@ export interface CreateMemberRequest {
   phone?: CreateMemberRequestPhone;
   /** Venues the member is entitled to. Required (non-empty) for venue_scoped. */
   venue_ids?: VenueId[];
+}
+
+/**
+ * Required for subscription; optional (expiry) for entry_pack.
+ */
+export type CreatePlanRequestDurationDays = number | null;
+
+/**
+ * Required (>0) for entry_pack; must be absent for subscription.
+ */
+export type CreatePlanRequestEntryCount = number | null;
+
+/**
+ * Request body for POST /gms/v1/venues/{venueId}/plans. venue_id is from the path.
+ */
+export interface CreatePlanRequest {
+  activities?: ActivityType[];
+  /** Default true (whole venue). When false, `activities` must be non-empty. */
+  all_activities?: boolean;
+  /** Required for subscription; optional (expiry) for entry_pack. */
+  duration_days?: CreatePlanRequestDurationDays;
+  /** Required (>0) for entry_pack; must be absent for subscription. */
+  entry_count?: CreatePlanRequestEntryCount;
+  kind: PlanKind;
+  name: string;
+  price_amount_minor: number;
+  price_currency: Currency;
 }
 
 export type CreateResourceRequestDescription = string | null;
@@ -1505,6 +1942,21 @@ export interface CreditBalance {
 }
 
 /**
+ * Supported currencies (ISO-4217). Mirrors the DB CHECK on price_currency.
+ */
+export type Currency = (typeof Currency)[keyof typeof Currency];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const Currency = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+  EUR: 'EUR',
+  USD: 'USD',
+  GHS: 'GHS',
+  NGN: 'NGN',
+} as const;
+
+/**
  * A default resource type seeded for the venue's primary activity.
 The `id` is generated by the database, so it is not surfaced here; the
 response reflects the platform defaults for the venue's activity.
@@ -1598,6 +2050,24 @@ export interface MarketplaceSlot {
   venue_name: string;
 }
 
+/**
+ * Body of POST /gms/v1/me/qr (mirrors lambdas/member MeQrBody).
+ */
+export interface MeQrRequest {
+  /** Venue id (UUID) the member is about to walk into. */
+  venue_id: VenueId;
+}
+
+/**
+ * Response of POST /gms/v1/me/qr (mirrors lambdas/member MeQrResponse).
+ */
+export interface MeQrResponseSchema {
+  /** Unix seconds at which the token stops verifying. */
+  expires_at: number;
+  /** `"iwp1.<payload>.<mac>"`. Valid for 300 seconds. */
+  token: string;
+}
+
 export type MemberEmail = string | null;
 
 export type MemberMembershipEnd = string | null;
@@ -1639,6 +2109,41 @@ export interface Member {
  */
 export type MemberId = string;
 
+export type MemberSubscriptionAssignedBy = string | null;
+
+export type MemberSubscriptionEntriesRemaining = number | null;
+
+export type MemberSubscriptionEntriesTotal = number | null;
+
+export type MemberSubscriptionExpiresOn = string | null;
+
+/**
+ * A member's held instance of a plan.
+ */
+export interface MemberSubscription {
+  assigned_by?: MemberSubscriptionAssignedBy;
+  created_at: string;
+  entries_remaining?: MemberSubscriptionEntriesRemaining;
+  entries_total?: MemberSubscriptionEntriesTotal;
+  expires_on?: MemberSubscriptionExpiresOn;
+  id: MemberSubscriptionId;
+  member_id: MemberId;
+  payment_status: PaymentStatus;
+  plan_id: ActivityPlanId;
+  price_amount_minor: number;
+  price_currency: Currency;
+  starts_on: string;
+  status: SubscriptionStatus;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+}
+
+/**
+ * Unique identifier for a member subscription (a held plan instance).
+ */
+export type MemberSubscriptionId = string;
+
 /**
  * Current status of a member's membership.
  */
@@ -1664,6 +2169,73 @@ export const MembershipType = {
   drop_in: 'drop_in',
   trial: 'trial',
 } as const;
+
+/**
+ * `Option` because `Member::email` is nullable: members created before the
+email requirement, and walk-ins, may have none.
+ */
+export type MyProfileResponseEmail = string | null;
+
+export type MyProfileResponseMembershipEnd = string | null;
+
+export type MyProfileResponsePhone = string | null;
+
+/**
+ * What a member may see about themselves.
+
+Excluded by design: `notes` (staff-authored free text ABOUT the member) and
+`user_id` (their Cognito sub, which the app already knows from its own token
+and which should not be echoed back). Enum fields are flattened to their
+`as_str()` wire form by the caller.
+ */
+export interface MyProfileResponse {
+  /** `AccessScope::as_str()`. */
+  access_scope: string;
+  /** `Option` because `Member::email` is nullable: members created before the
+email requirement, and walk-ins, may have none. */
+  email?: MyProfileResponseEmail;
+  first_name: string;
+  id: MemberId;
+  last_name: string;
+  membership_end?: MyProfileResponseMembershipEnd;
+  membership_start: string;
+  /** `MembershipStatus::as_str()`. */
+  membership_status: string;
+  /** `MembershipType::as_str()`. */
+  membership_type: string;
+  phone?: MyProfileResponsePhone;
+}
+
+/**
+ * Entry packs only; `None` for time-based subscriptions.
+ */
+export type MySubscriptionResponseEntriesRemaining = number | null;
+
+export type MySubscriptionResponseExpiresOn = string | null;
+
+/**
+ * A member's own subscription, with staff PII projected out.
+
+Excluded by design: `assigned_by` (the Cognito sub of the staff member who
+sold the subscription) and `tenant_id`/`member_id` (both already implied by
+the caller's own token, so echoing them adds nothing).
+
+`plan_id` rather than a plan name: `MemberSubscription` carries no plan name,
+and resolving one would mean an extra read per row. The id is enough for the
+app to correlate against the plan it already fetched.
+ */
+export interface MySubscriptionResponse {
+  /** Entry packs only; `None` for time-based subscriptions. */
+  entries_remaining?: MySubscriptionResponseEntriesRemaining;
+  expires_on?: MySubscriptionResponseExpiresOn;
+  id: MemberSubscriptionId;
+  /** `PaymentStatus::as_str()`. */
+  payment_status: string;
+  plan_id: ActivityPlanId;
+  /** `SubscriptionStatus::as_str()`. */
+  status: string;
+  venue_id: VenueId;
+}
 
 export type OnboardVenueRequestAddressLine = string | null;
 
@@ -1989,6 +2561,28 @@ export const PassPlan = {
 } as const;
 
 /**
+ * Manual payment tracking (no gateway in this feature).
+ */
+export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PaymentStatus = {
+  paid: 'paid',
+  unpaid: 'unpaid',
+} as const;
+
+/**
+ * Plan kind: time-based subscription or count-based entry pack.
+ */
+export type PlanKind = (typeof PlanKind)[keyof typeof PlanKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PlanKind = {
+  subscription: 'subscription',
+  entry_pack: 'entry_pack',
+} as const;
+
+/**
  * QR check-in request body (mirrors lambdas/checkin QrCheckInBody).
  */
 export interface QrCheckinRequest {
@@ -2217,6 +2811,19 @@ export interface Staff {
 export type StaffId = string;
 
 /**
+ * Lifecycle of a held subscription.
+ */
+export type SubscriptionStatus = (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const SubscriptionStatus = {
+  active: 'active',
+  expired: 'expired',
+  exhausted: 'exhausted',
+  cancelled: 'cancelled',
+} as const;
+
+/**
  * Unique identifier for a tenant (maps 1:1 to Auth organization).
  */
 export type TenantId = string;
@@ -2255,6 +2862,34 @@ export interface UpdateMemberRequest {
   membership_type?: UpdateMemberRequestMembershipType;
   notes?: UpdateMemberRequestNotes;
   phone?: UpdateMemberRequestPhone;
+}
+
+/**
+ * When present, replaces the plan's activity subset.
+ */
+export type UpdatePlanRequestActivities = ActivityType[] | null;
+
+export type UpdatePlanRequestAllActivities = boolean | null;
+
+export type UpdatePlanRequestIsActive = boolean | null;
+
+export type UpdatePlanRequestName = string | null;
+
+export type UpdatePlanRequestPriceAmountMinor = number | null;
+
+export type UpdatePlanRequestPriceCurrency = null | Currency;
+
+/**
+ * Request body for PUT /gms/v1/venues/{venueId}/plans/{planId}. kind is immutable.
+ */
+export interface UpdatePlanRequest {
+  /** When present, replaces the plan's activity subset. */
+  activities?: UpdatePlanRequestActivities;
+  all_activities?: UpdatePlanRequestAllActivities;
+  is_active?: UpdatePlanRequestIsActive;
+  name?: UpdatePlanRequestName;
+  price_amount_minor?: UpdatePlanRequestPriceAmountMinor;
+  price_currency?: UpdatePlanRequestPriceCurrency;
 }
 
 export type UpdateResourceRequestAmenities = string[] | null;
@@ -2309,7 +2944,23 @@ export interface UpdateScheduleRequest {
   title?: UpdateScheduleRequestTitle;
 }
 
+export type UpdateSubscriptionRequestPaymentStatus = null | PaymentStatus;
+
+/**
+ * Request body for PUT /gms/v1/members/{memberId}/subscriptions/{subId}.
+Set payment_status to mark paid; set cancel=true to cancel.
+ */
+export interface UpdateSubscriptionRequest {
+  cancel?: boolean;
+  payment_status?: UpdateSubscriptionRequestPaymentStatus;
+}
+
 export type UpdateVenueRequestAddressLine = string | null;
+
+/**
+ * Minutes before a class starts, after which a member may no longer self-cancel.
+ */
+export type UpdateVenueRequestCancellationWindowMinutes = number | null;
 
 export type UpdateVenueRequestCity = string | null;
 
@@ -2328,10 +2979,17 @@ export type UpdateVenueRequestTimezone = string | null;
 export type UpdateVenueRequestVenueType = null | ActivityType;
 
 /**
+ * Minutes within which a repeat walk-in check-in counts as the same visit.
+ */
+export type UpdateVenueRequestWalkinDedupeMinutes = number | null;
+
+/**
  * Request to update an existing venue. All fields optional.
  */
 export interface UpdateVenueRequest {
   address_line?: UpdateVenueRequestAddressLine;
+  /** Minutes before a class starts, after which a member may no longer self-cancel. */
+  cancellation_window_minutes?: UpdateVenueRequestCancellationWindowMinutes;
   city?: UpdateVenueRequestCity;
   country?: UpdateVenueRequestCountry;
   description?: UpdateVenueRequestDescription;
@@ -2340,6 +2998,8 @@ export interface UpdateVenueRequest {
   phone?: UpdateVenueRequestPhone;
   timezone?: UpdateVenueRequestTimezone;
   venue_type?: UpdateVenueRequestVenueType;
+  /** Minutes within which a repeat walk-in check-in counts as the same visit. */
+  walkin_dedupe_minutes?: UpdateVenueRequestWalkinDedupeMinutes;
 }
 
 export type VenueAddressLine = string | null;
@@ -2436,6 +3096,24 @@ export interface VenueCatalogEntry {
 }
 
 /**
+ * One precomputed rollup row: metrics for a venue on a calendar day.
+Fields mirror the `venue_day_metrics` table (migration 018). Only the
+honestly-computed columns are shipped (no `no_shows`/`revenue_minor`).
+ */
+export interface VenueDayMetric {
+  bookings_cancelled: number;
+  bookings_created: number;
+  checkins: number;
+  /** SUM of pass_booking credits_spent for the day. */
+  credits_earned: number;
+  day: string;
+  pass_bookings: number;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+}
+
+/**
  * Date of the next available slot (None if no upcoming slots).
  */
 export type VenueDetailAllOfNextAvailableDate = string | null;
@@ -2466,6 +3144,13 @@ export interface VenueInfo {
 }
 
 /**
+ * Minutes before a class starts, after which a member may no longer
+self-cancel. Defaults to 120 when unset (see `cancellation_window_or_default`).
+A value of 0 means a member may cancel right up to the slot start time.
+ */
+export type VenueSettingsCancellationWindowMinutes = number | null;
+
+/**
  * Locale for notifications (e.g., "fr", "en")
  */
 export type VenueSettingsLocale = string | null;
@@ -2476,14 +3161,54 @@ export type VenueSettingsLocale = string | null;
 export type VenueSettingsTimezoneOverride = string | null;
 
 /**
+ * Minutes within which a repeat walk-in check-in counts as the same visit.
+Defaults to 1440 (24 hours) when unset (see `walkin_dedupe_or_default`).
+A value of 0 disables dedupe (every walk-in is a distinct visit).
+ */
+export type VenueSettingsWalkinDedupeMinutes = number | null;
+
+/**
  * Venue-level settings (stored as JSONB).
  */
 export interface VenueSettings {
+  /** Minutes before a class starts, after which a member may no longer
+self-cancel. Defaults to 120 when unset (see `cancellation_window_or_default`).
+A value of 0 means a member may cancel right up to the slot start time. */
+  cancellation_window_minutes?: VenueSettingsCancellationWindowMinutes;
   /** Locale for notifications (e.g., "fr", "en") */
   locale?: VenueSettingsLocale;
   /** IANA timezone (e.g., "Africa/Lome") */
   timezone_override?: VenueSettingsTimezoneOverride;
+  /** Minutes within which a repeat walk-in check-in counts as the same visit.
+Defaults to 1440 (24 hours) when unset (see `walkin_dedupe_or_default`).
+A value of 0 disables dedupe (every walk-in is a distinct visit). */
+  walkin_dedupe_minutes?: VenueSettingsWalkinDedupeMinutes;
 }
+
+/**
+ * Walk-in check-in request body (mirrors lambdas/checkin WalkinCheckInBody).
+ */
+export interface WalkinCheckinRequest {
+  /** Member id (UUID) walking in. */
+  member_id: MemberId;
+  /** Venue id (UUID) where the walk-in occurs. */
+  venue_id: VenueId;
+}
+
+export type MeSlotsParams = {
+  /**
+   * Venue id (UUID). REQUIRED; must be a venue the caller is entitled to.
+   */
+  venue_id: string;
+  /**
+   * Inclusive start day (YYYY-MM-DD). REQUIRED.
+   */
+  from: string;
+  /**
+   * Inclusive end day (YYYY-MM-DD, max 62 days after 'from'). Omitted = the single 'from' day.
+   */
+  to?: string;
+};
 
 export type ListMembersParams = {
   /**
@@ -2506,6 +3231,24 @@ export type ListMembersParams = {
    * Filter by email.
    */
   email?: string;
+  /**
+   * Activity filter: active (active+expired) or inactive (suspended). Omitted returns both; cancelled is never listed.
+   */
+  status?: string;
+};
+
+export type ListSubscriptionsParams = {
+  /**
+   * Filter by lifecycle status: active, expired, exhausted, or cancelled.
+   */
+  status?: string;
+};
+
+export type ListPlansParams = {
+  /**
+   * When true, also return soft-archived (is_active=false) plans.
+   */
+  include_archived?: boolean;
 };
 
 export type GetAttendanceParams = {
@@ -2520,6 +3263,17 @@ export type ListCheckInsParams = {
    * Calendar day to report on (YYYY-MM-DD, venue-local). Required.
    */
   date: string;
+};
+
+export type GetVenueMetricsParams = {
+  /**
+   * Inclusive range start (YYYY-MM-DD). Required.
+   */
+  from: string;
+  /**
+   * Inclusive range end (YYYY-MM-DD). Required. Must be >= from.
+   */
+  to: string;
 };
 
 export type ListSlotsParams = {
