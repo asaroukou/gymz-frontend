@@ -113,3 +113,32 @@ Reminder that the deployed web app can only call the gateway from `*.iziwellpass
 ## Suggested guardrail
 
 Issues #1 (and the class of bug it represents) would be caught by a **contract test that exercises each handler against the generated OpenAPI** — i.e. assert that every query/path param the handler reads is declared in its `#[utoipa::path]`, and vice-versa. The drift here (handler requires `date`, spec doesn't declare it) passed all existing checks because the two are maintained separately.
+
+---
+
+## Plans & subscriptions (2026-08-14, owner app)
+
+**Found by:** building plan and subscription management in the owner web app (create/edit/archive a plan, assign and cancel a member's subscription), reading the OpenAPI spec against `ActivityPlan`, `MemberSubscription`, and `Member`.
+**Audience:** IziWellPass backend team.
+
+### 7. 🟠 No venue- or tenant-level subscription listing
+
+`GET /gms/v1/members/{mid}/subscriptions` is the only read path, so "who hasn't paid?" and any revenue view would require walking every member. Requesting `GET /gms/v1/venues/{vid}/subscriptions` (filterable by `payment_status` and `status`).
+
+---
+
+### 8. 🟠 No payment method or date on `MemberSubscription`
+
+The model stores only a `paid`/`unpaid` flag plus a price snapshot. The market collects by cash, Wave and Orange Money, and owners need to know which and when. Until this exists the owner app records payment at assign time only and offers no collection worklist.
+
+---
+
+### 9. 🟡 No read side for member venue entitlements
+
+`Member` carries no `venue_ids` and `PUT /gms/v1/members/{mid}/venues` is write-only, so the assign dialog cannot filter plans to venues the member may actually enter, and `EditAccessDialog` cannot pre-fill. Mirrors the still-open staff-venues ask.
+
+---
+
+### 10. 🔴 Clarify the check-in "no valid, paid plan" 403
+
+`POST /checkins/qr` and `/checkins/manual` gained a 403 for "the member has no valid, paid plan covering this visit". If that evaluates `MemberSubscription` while the members list badges off `Member.membership_status`, a member can read **Actif** in the owner app and still be refused at the door. Please confirm what it evaluates, and whether the flat `membership_*` fields are deprecated in favour of subscriptions.

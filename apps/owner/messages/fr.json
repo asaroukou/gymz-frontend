@@ -411,6 +411,15 @@
           "submitting": "Attribution…",
           "success": "Abonnement attribué",
           "error": "Impossible d'attribuer l'abonnement"
+        },
+        "cancel": "Annuler",
+        "cancelDialog": {
+          "title": "Annuler cet abonnement ?",
+          "description": "« {name} » sera marqué comme annulé. Cette action est définitive.",
+          "confirm": "Annuler l'abonnement",
+          "submitting": "Annulation…",
+          "success": "Abonnement annulé",
+          "error": "Impossible d'annuler l'abonnement"
         }
       },
       "edit": {

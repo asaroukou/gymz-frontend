@@ -411,6 +411,15 @@
           "submitting": "Assigning…",
           "success": "Subscription assigned",
           "error": "Could not assign the subscription"
+        },
+        "cancel": "Cancel",
+        "cancelDialog": {
+          "title": "Cancel this subscription?",
+          "description": "\"{name}\" will be marked cancelled. This cannot be undone.",
+          "confirm": "Cancel subscription",
+          "submitting": "Cancelling…",
+          "success": "Subscription cancelled",
+          "error": "Could not cancel the subscription"
         }
       },
       "edit": {

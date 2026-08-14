@@ -23,6 +23,7 @@ import { formatCalendarDate } from '@/lib/datetime';
 import { formatMoney } from '@/lib/money';
 
 import { AssignSubscriptionDialog } from './assign-subscription-dialog';
+import { CancelSubscriptionDialog } from './cancel-subscription-dialog';
 
 /**
  * Status colour mirrors lib/member-status.ts: live reads as success, cancelled
@@ -37,9 +38,13 @@ function statusVariant(status: SubscriptionStatus): 'success' | 'destructive' | 
 function SubscriptionRow({
   subscription,
   planName,
+  memberId,
+  canManage,
 }: {
   subscription: MemberSubscription;
   planName: string;
+  memberId: string;
+  canManage: boolean;
 }) {
   const t = useTranslations('members');
   const locale = useLocale();
@@ -78,9 +83,20 @@ function SubscriptionRow({
         </div>
         {terms ? <p className="text-sm text-muted-foreground">{terms}</p> : null}
       </div>
-      <span className="font-medium">
-        {formatMoney(subscription.price_amount_minor, subscription.price_currency, locale)}
-      </span>
+      <div className="text-right">
+        <span className="font-medium">
+          {formatMoney(subscription.price_amount_minor, subscription.price_currency, locale)}
+        </span>
+        {canManage && subscription.status === 'active' ? (
+          <div className="mt-2">
+            <CancelSubscriptionDialog
+              memberId={memberId}
+              subscription={subscription}
+              planName={planName}
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -163,6 +179,8 @@ export function SubscriptionsCard({
                   planName={
                     planNames[subscription.plan_id] ?? t('detail.subscriptions.unknownPlan')
                   }
+                  memberId={memberId}
+                  canManage={canManage}
                 />
               </div>
             ))}
