@@ -6,7 +6,8 @@
     "dev": "next dev --port 3011",
     "build": "next build",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -34,6 +35,7 @@
     "@types/react-dom": "^19.0.0",
     "eslint": "^9.25.0",
     "tailwindcss": "^4.1.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
   }
 }
