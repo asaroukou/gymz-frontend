@@ -42,12 +42,19 @@ function SubscriptionRow({
   const locale = useLocale();
 
   // A subscription is time-based or count-based; show whichever the plan uses.
+  // When entries_total is known but entries_remaining isn't, show a
+  // total-only label rather than coercing the remaining count to zero —
+  // "0 / N left" would misread as exhausted when it's actually unknown.
   const terms =
     subscription.entries_total != null
-      ? t('detail.subscriptions.entriesLeft', {
-          remaining: subscription.entries_remaining ?? 0,
-          total: subscription.entries_total,
-        })
+      ? subscription.entries_remaining != null
+        ? t('detail.subscriptions.entriesLeft', {
+            remaining: subscription.entries_remaining,
+            total: subscription.entries_total,
+          })
+        : t('detail.subscriptions.entriesTotal', {
+            total: subscription.entries_total,
+          })
       : subscription.expires_on != null
         ? t('detail.subscriptions.expiresOn', {
             date: formatCalendarDate(subscription.expires_on, locale),

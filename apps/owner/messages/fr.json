@@ -389,6 +389,7 @@
         "unknownPlan": "Offre inconnue",
         "expiresOn": "Expire le {date}",
         "entriesLeft": "{remaining} / {total} entrées restantes",
+        "entriesTotal": "{total} entrées au total",
         "unpaid": "Impayé",
         "status": {
           "active": "Actif",
