@@ -111,7 +111,6 @@ export function PlanDialog({
   const onDone = (message: string) => {
     toast.success(message);
     void queryClient.invalidateQueries({ queryKey: getListPlansQueryKey(venueId) });
-    form.reset(defaults);
     setOpen(false);
   };
 
@@ -146,7 +145,10 @@ export function PlanDialog({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) form.reset(defaults);
+        // Reset on both transitions: on open, so a stale form (from a prior
+        // edit whose invalidation hadn't resolved yet when the dialog closed)
+        // picks up the latest `plan` prop; on close, to discard unsaved input.
+        form.reset(defaults);
       }}
     >
       <DialogTrigger asChild>
