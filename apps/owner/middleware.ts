@@ -6,7 +6,8 @@ export const middleware = createAuthMiddleware({
 });
 
 export const config = {
-  // Excludes the /api/backend proxy: those are fetch() calls carrying a Bearer
-  // token — a 307-to-login redirect there would hand HTML to the API client.
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/backend).*)'],
+  // Excludes the /api/backend and /api/control proxies: those are fetch()
+  // calls carrying a Bearer token — a 307-to-login redirect there would hand
+  // HTML to the API client.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/backend|api/control).*)'],
 };

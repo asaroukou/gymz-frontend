@@ -36,6 +36,8 @@ export type UnauthorizedHandler = () => Promise<string | null | undefined>;
 
 interface ApiConfig {
   baseUrl: string;
+  /** Base URL for control-plane routes (onboarding, register-owner, admin, billing). */
+  controlPlaneBaseUrl?: string;
   getToken: TokenGetter;
   onUnauthorized?: UnauthorizedHandler;
 }
@@ -51,6 +53,36 @@ let config: ApiConfig = {
 /** Configure base URL and auth-token source. Call once at app startup. */
 export function configureApi(next: Partial<ApiConfig>): void {
   config = { ...config, ...next };
+}
+
+/**
+ * Route prefixes served by the control-plane gateway (ControlPlaneApiUrl)
+ * rather than the app plane (ApiUrl). Mirrors the route table in
+ * iziwellpass/docs/client-integration.md; a drift from the backend's split
+ * fails loudly (403 from the wrong gateway), never silently.
+ */
+export const CONTROL_PLANE_PREFIXES = [
+  '/platform/v1/auth/',
+  '/platform/v1/onboarding/',
+  '/platform/v1/admin/',
+  '/platform/v1/billing/',
+] as const;
+
+/** Pick the base URL for a generated-client path. Pure; unit-tested. */
+export function resolveBaseUrl(
+  url: string,
+  cfg: { baseUrl: string; controlPlaneBaseUrl?: string },
+): string {
+  if (!CONTROL_PLANE_PREFIXES.some((p) => url.startsWith(p))) {
+    return cfg.baseUrl;
+  }
+  if (!cfg.controlPlaneBaseUrl) {
+    throw new Error(
+      `[api] ${url} is a control-plane route but controlPlaneBaseUrl is not configured — ` +
+        'set NEXT_PUBLIC_CONTROL_PLANE_BASE_URL and pass it to configureApi()',
+    );
+  }
+  return cfg.controlPlaneBaseUrl;
 }
 
 async function parseErrorResponse(response: Response): Promise<ApiError> {
@@ -83,7 +115,7 @@ async function doFetch(url: string, options: RequestInit, token: string | null):
 
   // Network-level failures (offline/DNS) intentionally pass through as raw TypeError —
   // callers distinguish transport errors (not ApiError) from API errors (ApiError).
-  return fetch(`${config.baseUrl}${url}`, { ...options, headers });
+  return fetch(`${resolveBaseUrl(url, config)}${url}`, { ...options, headers });
 }
 
 /** Orval mutator: every generated operation funnels through here. */
@@ -107,7 +139,8 @@ export async function customFetch<T>(url: string, options: RequestInit): Promise
   if (response.status === 204) {
     return undefined as T;
   }
-  return (await response.json()) as T;
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 /** Convenience for React Query `select`: `select: unwrap`. */

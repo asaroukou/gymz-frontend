@@ -36,6 +36,7 @@ function ApiConfigurator({ children }: { children: ReactNode }) {
   useEffect(() => {
     configureApi({
       baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? '',
+      controlPlaneBaseUrl: process.env.NEXT_PUBLIC_CONTROL_PLANE_BASE_URL ?? '',
       getToken,
       onUnauthorized: async () => {
         // In unconfigured envs `client` is the noopAuthClient, whose

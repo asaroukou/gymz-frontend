@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, configureApi, customFetch, unwrap } from './client';
+import {
+  ApiError,
+  configureApi,
+  customFetch,
+  unwrap,
+  resolveBaseUrl,
+  CONTROL_PLANE_PREFIXES,
+} from './client';
 
 const jsonResponse = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
@@ -186,5 +193,70 @@ describe('customFetch 401 refresh-once interceptor', () => {
 describe('unwrap', () => {
   it('returns the data field of an envelope', () => {
     expect(unwrap({ data: 42, request_id: 'r' })).toBe(42);
+  });
+});
+
+describe('resolveBaseUrl', () => {
+  const cfg = { baseUrl: 'https://app.test/v1', controlPlaneBaseUrl: 'https://ctrl.test/v1' };
+
+  it('routes app-plane paths to baseUrl', () => {
+    expect(resolveBaseUrl('/gms/v1/staff', cfg)).toBe('https://app.test/v1');
+    expect(resolveBaseUrl('/platform/v1/pass/credits', cfg)).toBe('https://app.test/v1');
+    expect(resolveBaseUrl('/platform/v1/marketplace/venues', cfg)).toBe('https://app.test/v1');
+  });
+
+  it('routes every control-plane prefix to controlPlaneBaseUrl', () => {
+    expect(resolveBaseUrl('/platform/v1/auth/register-owner', cfg)).toBe('https://ctrl.test/v1');
+    expect(resolveBaseUrl('/platform/v1/onboarding/venue', cfg)).toBe('https://ctrl.test/v1');
+    expect(resolveBaseUrl('/platform/v1/admin/tenants', cfg)).toBe('https://ctrl.test/v1');
+    expect(resolveBaseUrl('/platform/v1/billing/webhook', cfg)).toBe('https://ctrl.test/v1');
+  });
+
+  it('throws a descriptive error when a control-plane path has no configured base', () => {
+    expect(() =>
+      resolveBaseUrl('/platform/v1/onboarding/venue', { baseUrl: 'https://app.test/v1' }),
+    ).toThrowError(/controlPlaneBaseUrl/);
+  });
+
+  it('covers exactly the four documented prefixes', () => {
+    expect(CONTROL_PLANE_PREFIXES).toEqual([
+      '/platform/v1/auth/',
+      '/platform/v1/onboarding/',
+      '/platform/v1/admin/',
+      '/platform/v1/billing/',
+    ]);
+  });
+});
+
+describe('customFetch plane routing and empty bodies', () => {
+  beforeEach(() => {
+    configureApi({
+      baseUrl: 'https://api.test/v1',
+      getToken: () => Promise.resolve(null),
+      onUnauthorized: undefined,
+    });
+    vi.stubGlobal('fetch', vi.fn());
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('sends control-plane requests to the control-plane base', async () => {
+    configureApi({
+      baseUrl: 'https://app.test/v1',
+      controlPlaneBaseUrl: 'https://ctrl.test/v1',
+      getToken: () => Promise.resolve(null),
+    });
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 202 }));
+    await customFetch('/platform/v1/auth/register-owner', { method: 'POST', body: '{}' });
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe(
+      'https://ctrl.test/v1/platform/v1/auth/register-owner',
+    );
+  });
+
+  it('resolves undefined for a success response with no body (202)', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 202 }));
+    const res = await customFetch('/gms/v1/whatever', { method: 'POST', body: '{}' });
+    expect(res).toBeUndefined();
   });
 });
