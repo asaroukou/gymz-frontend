@@ -2,7 +2,7 @@ import { createAuthMiddleware } from '@iziwellpass/auth/middleware';
 
 export const middleware = createAuthMiddleware({
   loginPath: '/login',
-  publicPaths: ['/login', '/signup', '/confirm'],
+  publicPaths: ['/login', '/signup'],
 });
 
 export const config = {

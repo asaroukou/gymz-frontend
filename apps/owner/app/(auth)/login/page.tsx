@@ -201,14 +201,7 @@ function CredentialsCard({
       }
       onChallenge({ complete: result.complete });
     } catch (err) {
-      const { code, message } = resolveError(err, t('login.error'));
-      // An unconfirmed account can't sign in until the emailed code is entered;
-      // send them to the confirm flow (email prefilled) instead of dead-ending
-      // on an error they can't resolve here.
-      if (code === 'userNotConfirmed') {
-        router.push(`/confirm?email=${encodeURIComponent(values.email)}`);
-        return;
-      }
+      const { message } = resolveError(err, t('login.error'));
       form.setError('root', { message });
     }
   };
