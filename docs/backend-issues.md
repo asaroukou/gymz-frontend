@@ -142,3 +142,19 @@ The model stores only a `paid`/`unpaid` flag plus a price snapshot. The market c
 ### 10. 🔴 Clarify the check-in "no valid, paid plan" 403
 
 `POST /checkins/qr` and `/checkins/manual` gained a 403 for "the member has no valid, paid plan covering this visit". If that evaluates `MemberSubscription` while the members list badges off `Member.membership_status`, a member can read **Actif** in the owner app and still be refused at the door. Please confirm what it evaluates, and whether the flat `membership_*` fields are deprecated in favour of subscriptions.
+
+---
+
+## Signup/onboarding rework (2026-08-22, owner app)
+
+1. **Doc bug — register-owner body.** The client-integration guide's prose
+   example sends `{ "email", "full_name" }`, but `RegisterOwnerRequest` in the
+   OpenAPI schema requires `email`, `first_name`, `last_name` (no `full_name`).
+   An integrator following the prose gets a 400. The schema is authoritative;
+   please fix the prose.
+2. **Read side for `member_login_mode`.** `PATCH /gms/v1/tenant/settings` is
+   write-only and the field appears in no response schema, so the app cannot
+   know whether the tenant is in login or roster mode. The add-member form now
+   leaves email optional and defers to the server's per-mode 400; with a read
+   side it could adapt upfront (require email in login mode, hide the hint in
+   roster mode).

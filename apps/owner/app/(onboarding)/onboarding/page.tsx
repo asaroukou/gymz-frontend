@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { unwrap } from '@iziwellpass/api/client';
-import { useOnboardVenue } from '@iziwellpass/api/generated';
+import { onboardVenue } from '@iziwellpass/api/generated';
+import type { OnboardVenueRequest } from '@iziwellpass/api/schemas';
 import { parseClaims } from '@iziwellpass/auth/claims';
 import { useAuth, useSession } from '@iziwellpass/auth/provider';
 import { Button } from '@iziwellpass/ui/components/button';
@@ -77,7 +79,14 @@ function LoadingShell() {
 function OnboardingForm() {
   const router = useRouter();
   const { client, refresh, signOut } = useAuth();
-  const onboardVenue = useOnboardVenue();
+  // The generated hook fixes request options at render time, but the API
+  // requires a FRESH Idempotency-Key per attempt (a reused key replays the
+  // stored response — a failed first attempt would replay forever). Keying
+  // inside mutationFn generates one per call by construction.
+  const onboard = useMutation({
+    mutationFn: (data: OnboardVenueRequest) =>
+      onboardVenue(data, { headers: { 'Idempotency-Key': crypto.randomUUID() } }),
+  });
   const t = useTranslations('onboarding');
   const typeOptions = useActivityTypeOptions();
 
@@ -109,17 +118,15 @@ function OnboardingForm() {
   });
 
   const onSubmit = (values: OnboardingValues) => {
-    onboardVenue.mutate(
+    onboard.mutate(
       {
-        data: {
-          venue_name: values.venue_name,
-          venue_type: values.venue_type,
-          city: values.city,
-          country: values.country,
-          address_line: values.address_line || undefined,
-          phone: values.phone || undefined,
-          timezone: values.timezone || undefined,
-        },
+        venue_name: values.venue_name,
+        venue_type: values.venue_type,
+        city: values.city,
+        country: values.country,
+        address_line: values.address_line || undefined,
+        phone: values.phone || undefined,
+        timezone: values.timezone || undefined,
       },
       {
         onSuccess: async (response) => {
@@ -284,8 +291,8 @@ function OnboardingForm() {
           )}
         />
         <div className="grid gap-2 sm:col-span-2">
-          <Button type="submit" disabled={onboardVenue.isPending} className="w-full">
-            {onboardVenue.isPending ? t('submitting') : t('submit')}
+          <Button type="submit" disabled={onboard.isPending} className="w-full">
+            {onboard.isPending ? t('submitting') : t('submit')}
           </Button>
           <p className="text-center text-sm text-muted-foreground">{t('whatsNext')}</p>
         </div>
