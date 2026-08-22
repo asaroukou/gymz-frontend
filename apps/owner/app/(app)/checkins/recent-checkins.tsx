@@ -45,9 +45,15 @@ function CheckInRow({
   timeZone: string | undefined;
 }) {
   const t = useTranslations('frontdesk');
+  const tCommon = useTranslations('common');
   // Never surface a raw UUID: fall back to a generic label when the member
-  // isn't in the loaded list (e.g. a stale/partial cache).
-  const name = member ? memberName(member) : t('feed.unknownMember');
+  // isn't in the loaded list (e.g. a stale/partial cache). A null member_id
+  // means the check-in belongs to a marketplace pass-holder, not a member.
+  const name = member
+    ? memberName(member)
+    : checkIn.member_id
+      ? t('feed.unknownMember')
+      : tCommon('passVisitor');
   const isQr = checkIn.method === CheckInMethod.qr;
 
   // `checked_in_by` is a staff user_id for manual entries and null for QR

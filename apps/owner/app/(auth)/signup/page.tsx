@@ -41,8 +41,8 @@ export default function SignupPage() {
     () =>
       z.object({
         email: z.email(t('errors.emailInvalid')),
-        first_name: z.string().min(1, t('signup.firstName')),
-        last_name: z.string().min(1, t('signup.lastName')),
+        first_name: z.string().min(1, t('errors.firstNameRequired')),
+        last_name: z.string().min(1, t('errors.lastNameRequired')),
       }),
     [t],
   );
@@ -87,7 +87,7 @@ export default function SignupPage() {
         subtitle={t('signup.sentBody', { email: sentTo })}
         footer={footer}
       >
-        <Button asChild className="w-full">
+        <Button asChild className="h-11 w-full">
           <Link href="/login">{t('signup.signin')}</Link>
         </Button>
       </AuthCard>
@@ -106,7 +106,7 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>{t('signup.firstName')}</FormLabel>
                   <FormControl>
-                    <Input autoComplete="given-name" {...field} />
+                    <Input autoComplete="given-name" className="h-11" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,7 +119,7 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>{t('signup.lastName')}</FormLabel>
                   <FormControl>
-                    <Input autoComplete="family-name" {...field} />
+                    <Input autoComplete="family-name" className="h-11" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -133,7 +133,7 @@ export default function SignupPage() {
               <FormItem>
                 <FormLabel>{t('signup.email')}</FormLabel>
                 <FormControl>
-                  <Input type="email" autoComplete="email" {...field} />
+                  <Input type="email" autoComplete="email" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -144,7 +144,7 @@ export default function SignupPage() {
               {form.formState.errors.root.message}
             </p>
           ) : null}
-          <Button type="submit" className="w-full" disabled={registerOwner.isPending}>
+          <Button type="submit" className="h-11 w-full" disabled={registerOwner.isPending}>
             {registerOwner.isPending ? t('signup.submitting') : t('signup.submit')}
           </Button>
         </form>

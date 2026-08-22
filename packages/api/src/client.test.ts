@@ -285,4 +285,42 @@ describe('customFetch plane routing and empty bodies', () => {
     const secondCallHeaders = new Headers(vi.mocked(fetch).mock.calls[1]?.[1]?.headers);
     expect(secondCallHeaders.get('authorization')).toBe('Bearer fresh-token');
   });
+
+  it('forwards a fresh Idempotency-Key header on each call', async () => {
+    configureApi({
+      baseUrl: 'https://app.test/v1',
+      controlPlaneBaseUrl: 'https://ctrl.test/v1',
+      getToken: () => Promise.resolve(null),
+    });
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 202 }));
+
+    await customFetch('/platform/v1/onboarding/venue', {
+      method: 'POST',
+      body: '{}',
+      headers: { 'Idempotency-Key': 'key-one' },
+    });
+    await customFetch('/platform/v1/onboarding/venue', {
+      method: 'POST',
+      body: '{}',
+      headers: { 'Idempotency-Key': 'key-two' },
+    });
+
+    const firstCallHeaders = new Headers(vi.mocked(fetch).mock.calls[0]?.[1]?.headers);
+    const secondCallHeaders = new Headers(vi.mocked(fetch).mock.calls[1]?.[1]?.headers);
+    expect(firstCallHeaders.get('idempotency-key')).toBe('key-one');
+    expect(secondCallHeaders.get('idempotency-key')).toBe('key-two');
+  });
+
+  it('rejects with an error mentioning controlPlaneBaseUrl when the control plane is unconfigured', async () => {
+    configureApi({
+      baseUrl: 'https://app.test/v1',
+      controlPlaneBaseUrl: undefined,
+      getToken: () => Promise.resolve(null),
+    });
+
+    await expect(
+      customFetch('/platform/v1/onboarding/venue', { method: 'POST', body: '{}' }),
+    ).rejects.toThrow(/controlPlaneBaseUrl/);
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });
