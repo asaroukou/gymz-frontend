@@ -219,6 +219,10 @@ export type ApiResponseCheckInDataBookingId = null | BookingId;
  */
 export type ApiResponseCheckInDataCheckedInBy = string | null;
 
+export type ApiResponseCheckInDataMemberId = null | MemberId;
+
+export type ApiResponseCheckInDataPassHolderId = null | PassHolderId;
+
 /**
  * A recorded check-in event at a venue.
  */
@@ -228,8 +232,9 @@ export type ApiResponseCheckInData = {
   /** Staff user_id for manual check-ins. None for QR self-check-in. */
   checked_in_by?: ApiResponseCheckInDataCheckedInBy;
   id: CheckInId;
-  member_id: MemberId;
+  member_id?: ApiResponseCheckInDataMemberId;
   method: CheckInMethod;
+  pass_holder_id?: ApiResponseCheckInDataPassHolderId;
   tenant_id: TenantId;
   venue_id: VenueId;
 };
@@ -288,6 +293,37 @@ export interface ApiResponseCreditBalance {
 
 Credits expire monthly (no rollover). `debit()` enforces non-negative invariant. */
   data: ApiResponseCreditBalanceData;
+  request_id: string;
+}
+
+/**
+ * The marketplace-visibility state of a venue's catalog row, returned by the
+marketplace-enable route.
+ */
+export type ApiResponseMarketplaceStatusData = {
+  credit_cost_per_session: number;
+  is_visible: boolean;
+  iziwellpass_enabled: boolean;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseMarketplaceStatus {
+  /** The marketplace-visibility state of a venue's catalog row, returned by the
+marketplace-enable route. */
+  data: ApiResponseMarketplaceStatusData;
   request_id: string;
 }
 
@@ -554,6 +590,35 @@ export interface ApiResponsePassBooking {
 Platform-level record linking consumer to venue's tenant.
 Maps to `pass_bookings` table (LLD §5.3.1). */
   data: ApiResponsePassBookingData;
+  request_id: string;
+}
+
+/**
+ * Response of POST /platform/v1/pass/bookings/{bid}/qr (mirrors lambdas/passholder MintedQr).
+ */
+export type ApiResponsePassBookingQrResponseData = {
+  /** Unix seconds at which the token stops verifying. */
+  expires_at: number;
+  /** `"iwp1.<payload>.<mac>"`: render this into a QR image client-side. */
+  token: string;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponsePassBookingQrResponse {
+  /** Response of POST /platform/v1/pass/bookings/{bid}/qr (mirrors lambdas/passholder MintedQr). */
+  data: ApiResponsePassBookingQrResponseData;
   request_id: string;
 }
 
@@ -872,6 +937,122 @@ export interface ApiResponseStaff {
   request_id: string;
 }
 
+export type ApiResponseTenantSummaryDataDeletedAt = string | null;
+
+/**
+ * Operator-facing summary of a tenant row. `created_at`/`deleted_at` are
+RFC3339 strings (the DB adapter formats them) so this DTO carries no chrono
+dependency.
+ */
+export type ApiResponseTenantSummaryData = {
+  created_at: string;
+  deleted_at?: ApiResponseTenantSummaryDataDeletedAt;
+  id: TenantId;
+  name: string;
+  plan: Plan;
+  slug: string;
+  status: TenantStatus;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseTenantSummary {
+  /** Operator-facing summary of a tenant row. `created_at`/`deleted_at` are
+RFC3339 strings (the DB adapter formats them) so this DTO carries no chrono
+dependency. */
+  data: ApiResponseTenantSummaryData;
+  request_id: string;
+}
+
+/**
+ * Per-tenant usage aggregate over an inclusive [from, to] date range. Summed
+across ALL of the tenant's venues. This is the metered-usage source the
+operator health rollup surfaces and P4 billing will reuse.
+ */
+export type ApiResponseTenantUsageData = {
+  /** Number of distinct venues that reported any metric in the range. */
+  active_venues: number;
+  bookings_cancelled: number;
+  bookings_created: number;
+  checkins: number;
+  credits_earned: number;
+  from: string;
+  pass_bookings: number;
+  tenant_id: TenantId;
+  to: string;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseTenantUsage {
+  /** Per-tenant usage aggregate over an inclusive [from, to] date range. Summed
+across ALL of the tenant's venues. This is the metered-usage source the
+operator health rollup surfaces and P4 billing will reuse. */
+  data: ApiResponseTenantUsageData;
+  request_id: string;
+}
+
+/**
+ * Body of `PATCH /gms/v1/tenant/settings`: the tenant's member-login policy.
+
+Deliberately a single required field (not an `Option`): the route is a full
+set of the policy, not a partial merge, so the caller always states the mode
+it wants. Enabling `Login` is feature-gated on `MemberSelfService` at the
+handler; switching to `Roster` is always allowed (a downgrade is never
+blocked).
+ */
+export type ApiResponseUpdateTenantSettingsRequestData = {
+  /** The member-login mode to set for this tenant. */
+  member_login_mode: MemberLoginMode;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseUpdateTenantSettingsRequest {
+  /** Body of `PATCH /gms/v1/tenant/settings`: the tenant's member-login policy.
+
+Deliberately a single required field (not an `Option`): the route is a full
+set of the policy, not a partial merge, so the caller always states the mode
+it wants. Enabling `Login` is feature-gated on `MemberSelfService` at the
+handler; switching to `Roster` is always allowed (a downgrade is never
+blocked). */
+  data: ApiResponseUpdateTenantSettingsRequestData;
+  request_id: string;
+}
+
 export type ApiResponseVecActivityPlanDataItemDurationDays = number | null;
 
 export type ApiResponseVecActivityPlanDataItemEntryCount = number | null;
@@ -969,6 +1150,10 @@ export type ApiResponseVecCheckInDataItemBookingId = null | BookingId;
  */
 export type ApiResponseVecCheckInDataItemCheckedInBy = string | null;
 
+export type ApiResponseVecCheckInDataItemMemberId = null | MemberId;
+
+export type ApiResponseVecCheckInDataItemPassHolderId = null | PassHolderId;
+
 /**
  * A recorded check-in event at a venue.
  */
@@ -978,8 +1163,9 @@ export type ApiResponseVecCheckInDataItem = {
   /** Staff user_id for manual check-ins. None for QR self-check-in. */
   checked_in_by?: ApiResponseVecCheckInDataItemCheckedInBy;
   id: CheckInId;
-  member_id: MemberId;
+  member_id?: ApiResponseVecCheckInDataItemMemberId;
   method: CheckInMethod;
+  pass_holder_id?: ApiResponseVecCheckInDataItemPassHolderId;
   tenant_id: TenantId;
   venue_id: VenueId;
 };
@@ -1344,6 +1530,41 @@ export interface ApiResponseVecStaff {
   request_id: string;
 }
 
+export type ApiResponseVecTenantSummaryDataItemDeletedAt = string | null;
+
+/**
+ * Operator-facing summary of a tenant row. `created_at`/`deleted_at` are
+RFC3339 strings (the DB adapter formats them) so this DTO carries no chrono
+dependency.
+ */
+export type ApiResponseVecTenantSummaryDataItem = {
+  created_at: string;
+  deleted_at?: ApiResponseVecTenantSummaryDataItemDeletedAt;
+  id: TenantId;
+  name: string;
+  plan: Plan;
+  slug: string;
+  status: TenantStatus;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecTenantSummary {
+  data: ApiResponseVecTenantSummaryDataItem[];
+  request_id: string;
+}
+
 export type ApiResponseVecVenueDataItemAddressLine = string | null;
 
 export type ApiResponseVecVenueDataItemCoverImageUrl = string | null;
@@ -1633,6 +1854,21 @@ export interface AttendanceStats {
 }
 
 /**
+ * A tenant's SaaS-billing lifecycle. Serializes to the exact snake_case strings
+the `chk_billing_status` CHECK permits; a value outside this set makes the
+UPDATE fail at runtime, so the serde contract is pinned by a test.
+ */
+export type BillingStatus = (typeof BillingStatus)[keyof typeof BillingStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const BillingStatus = {
+  active: 'active',
+  past_due: 'past_due',
+  suspended: 'suspended',
+  canceled: 'canceled',
+} as const;
+
+/**
  * Request from the API to book via pass.
  */
 export interface BookViaPassRequest {
@@ -1742,6 +1978,10 @@ export type CheckInBookingId = null | BookingId;
  */
 export type CheckInCheckedInBy = string | null;
 
+export type CheckInMemberId = null | MemberId;
+
+export type CheckInPassHolderId = null | PassHolderId;
+
 /**
  * A recorded check-in event at a venue.
  */
@@ -1751,8 +1991,9 @@ export interface CheckIn {
   /** Staff user_id for manual check-ins. None for QR self-check-in. */
   checked_in_by?: CheckInCheckedInBy;
   id: CheckInId;
-  member_id: MemberId;
+  member_id?: CheckInMemberId;
   method: CheckInMethod;
+  pass_holder_id?: CheckInPassHolderId;
   tenant_id: TenantId;
   venue_id: VenueId;
 }
@@ -1773,6 +2014,18 @@ export const CheckInMethod = {
   manual: 'manual',
 } as const;
 
+/**
+ * Which QR check-in scan directions a venue accepts.
+ */
+export type CheckinScanMode = (typeof CheckinScanMode)[keyof typeof CheckinScanMode];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const CheckinScanMode = {
+  staff_scan: 'staff_scan',
+  member_scan: 'member_scan',
+  both: 'both',
+} as const;
+
 export type CreateBookingRequestMemberId = null | MemberId;
 
 export type CreateBookingRequestPassHolderId = null | PassHolderId;
@@ -1790,6 +2043,13 @@ export interface CreateBookingRequest {
   source?: BookingSource;
 }
 
+/**
+ * Optional. In login mode Cognito uses the email as the account username;
+required in that mode and enforced in `register_member`. Roster-mode
+members have no login and may omit email entirely.
+ */
+export type CreateMemberRequestEmail = string | null;
+
 export type CreateMemberRequestMembershipEnd = string | null;
 
 export type CreateMemberRequestNotes = string | null;
@@ -1802,10 +2062,10 @@ export type CreateMemberRequestPhone = string | null;
 export interface CreateMemberRequest {
   /** How the member is scoped. Defaults to venue_scoped (requires venue_ids). */
   access_scope?: AccessScope;
-  /** Required: Cognito uses the email as the account username, and the
-invitation email carrying the temporary password is the only handover
-channel (staff never see the password). */
-  email: string;
+  /** Optional. In login mode Cognito uses the email as the account username;
+required in that mode and enforced in `register_member`. Roster-mode
+members have no login and may omit email entirely. */
+  email?: CreateMemberRequestEmail;
   first_name: string;
   last_name: string;
   membership_end?: CreateMemberRequestMembershipEnd;
@@ -2051,6 +2311,17 @@ export interface MarketplaceSlot {
 }
 
 /**
+ * The marketplace-visibility state of a venue's catalog row, returned by the
+marketplace-enable route.
+ */
+export interface MarketplaceStatus {
+  credit_cost_per_session: number;
+  is_visible: boolean;
+  iziwellpass_enabled: boolean;
+  venue_id: VenueId;
+}
+
+/**
  * Body of POST /gms/v1/me/qr (mirrors lambdas/member MeQrBody).
  */
 export interface MeQrRequest {
@@ -2066,6 +2337,14 @@ export interface MeQrResponseSchema {
   expires_at: number;
   /** `"iwp1.<payload>.<mac>"`. Valid for 300 seconds. */
   token: string;
+}
+
+/**
+ * Body of POST /gms/v1/me/checkins/walkin (mirrors lambdas/member SelfWalkinBody).
+ */
+export interface MeWalkinCheckinRequest {
+  /** Venue id (UUID) the member is walking into. */
+  venue_id: VenueId;
 }
 
 export type MemberEmail = string | null;
@@ -2108,6 +2387,18 @@ export interface Member {
  * Unique identifier for a member (person enrolled at a venue).
  */
 export type MemberId = string;
+
+/**
+ * Whether a tenant's members get a Cognito login (and thus `/me/*` self-service)
+or exist as roster-only rows with no identity.
+ */
+export type MemberLoginMode = (typeof MemberLoginMode)[keyof typeof MemberLoginMode];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const MemberLoginMode = {
+  login: 'login',
+  roster: 'roster',
+} as const;
 
 export type MemberSubscriptionAssignedBy = string | null;
 
@@ -2457,6 +2748,16 @@ export interface PassBooking {
 export type PassBookingId = string;
 
 /**
+ * Response of POST /platform/v1/pass/bookings/{bid}/qr (mirrors lambdas/passholder MintedQr).
+ */
+export interface PassBookingQrResponse {
+  /** Unix seconds at which the token stops verifying. */
+  expires_at: number;
+  /** `"iwp1.<payload>.<mac>"`: render this into a QR image client-side. */
+  token: string;
+}
+
+/**
  * QR code URL (None until QR generation is implemented — IWP-041).
  */
 export type PassBookingResultQrUrl = string | null;
@@ -2492,6 +2793,14 @@ export const PassBookingStatus = {
   no_show: 'no_show',
   cancelled: 'cancelled',
 } as const;
+
+/**
+ * Marketplace pass check-in request body (mirrors lambdas/checkin PassCheckInBody).
+ */
+export interface PassCheckinRequest {
+  /** Signed `PassBooking` QR token the pass-holder minted for their booking. */
+  qr_token: string;
+}
 
 /**
  * When credits expire.
@@ -2572,6 +2881,21 @@ export const PaymentStatus = {
 } as const;
 
 /**
+ * Tenant subscription tier. Persisted in `tenants.plan` (see the
+`chk_plan_valid` CHECK constraint, which permits exactly these four
+snake_case values). Drives feature entitlement via `capabilities_for`.
+ */
+export type Plan = (typeof Plan)[keyof typeof Plan];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const Plan = {
+  free: 'free',
+  starter: 'starter',
+  pro: 'pro',
+  enterprise: 'enterprise',
+} as const;
+
+/**
  * Plan kind: time-based subscription or count-based entry pack.
  */
 export type PlanKind = (typeof PlanKind)[keyof typeof PlanKind];
@@ -2603,6 +2927,17 @@ Supported MVP patterns:
 Full RRULE parsing (EXDATE, BYMONTHDAY, etc.) deferred to IWP-029.
  */
 export type RecurrenceRule = string;
+
+/**
+ * Request to create a new gym-owner identity (Spec B2). Identity only, no
+venue data; the owner provisions their gym via the authenticated
+`/onboarding/venue` after logging in.
+ */
+export interface RegisterOwnerRequest {
+  email: string;
+  first_name: string;
+  last_name: string;
+}
 
 export type RegisterPassHolderRequestPhone = string | null;
 
@@ -2750,6 +3085,30 @@ export interface ScheduleSlot {
 }
 
 /**
+ * Per-period seat usage for the overage meter.
+ */
+export interface SeatUsage {
+  /** @minimum 0 */
+  active_members: number;
+  /** @minimum 0 */
+  overage: number;
+  /** @minimum 0 */
+  quota: number;
+}
+
+export type SetMarketplaceRequestCreditCostPerSession = number | null;
+
+/**
+ * Request to toggle a venue's marketplace participation. `enabled` sets BOTH
+`is_visible` and `iziwellpass_enabled` together. `credit_cost_per_session`,
+when present, must be >= 1; when omitted the existing value is unchanged.
+ */
+export interface SetMarketplaceRequest {
+  credit_cost_per_session?: SetMarketplaceRequestCreditCostPerSession;
+  enabled: boolean;
+}
+
+/**
  * Flip a member's access scope.
  */
 export interface SetMemberAccessRequest {
@@ -2770,6 +3129,20 @@ export interface SetStaffVenuesRequest {
   /** Full set of venues the staff member should be assigned to. This
 replaces the existing assignments (not additive). */
   venue_ids: VenueId[];
+}
+
+/**
+ * Body of `PATCH /platform/v1/admin/tenants/{id}/plan`.
+ */
+export interface SetTenantPlanRequest {
+  plan: Plan;
+}
+
+/**
+ * Body of `PATCH /platform/v1/admin/tenants/{id}/status`.
+ */
+export interface SetTenantStatusRequest {
+  status: TenantStatus;
 }
 
 /**
@@ -2823,6 +3196,33 @@ export const SubscriptionStatus = {
   cancelled: 'cancelled',
 } as const;
 
+export type TenantBillingCurrentPeriodEnd = string | null;
+
+export type TenantBillingCurrentPeriodStart = string | null;
+
+export type TenantBillingExternalCustomerId = string | null;
+
+export type TenantBillingExternalSubscriptionId = string | null;
+
+export type TenantBillingGraceDeadline = string | null;
+
+/**
+ * A tenant's persisted billing record. `provider`/external ids identify the
+subscription at the billing provider; `grace_deadline` is set when entering
+PastDue. Timestamps are RFC3339 strings (the DB adapter formats them) so this
+DTO carries no chrono dependency.
+ */
+export interface TenantBilling {
+  current_period_end?: TenantBillingCurrentPeriodEnd;
+  current_period_start?: TenantBillingCurrentPeriodStart;
+  external_customer_id?: TenantBillingExternalCustomerId;
+  external_subscription_id?: TenantBillingExternalSubscriptionId;
+  grace_deadline?: TenantBillingGraceDeadline;
+  provider: string;
+  status: BillingStatus;
+  tenant_id: TenantId;
+}
+
 /**
  * Unique identifier for a tenant (maps 1:1 to Auth organization).
  */
@@ -2832,6 +3232,56 @@ export interface TenantInfo {
   id: TenantId;
   plan: string;
   slug: string;
+}
+
+/**
+ * A tenant's lifecycle status. Serializes to exactly the three strings the
+`chk_status_valid` CHECK constraint permits (`migrations/..000003:43-44`):
+a value outside this set makes the `UPDATE tenants SET status=...` fail at
+runtime, so the serde contract is pinned by a test.
+ */
+export type TenantStatus = (typeof TenantStatus)[keyof typeof TenantStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const TenantStatus = {
+  active: 'active',
+  suspended: 'suspended',
+  offboarding: 'offboarding',
+} as const;
+
+export type TenantSummaryDeletedAt = string | null;
+
+/**
+ * Operator-facing summary of a tenant row. `created_at`/`deleted_at` are
+RFC3339 strings (the DB adapter formats them) so this DTO carries no chrono
+dependency.
+ */
+export interface TenantSummary {
+  created_at: string;
+  deleted_at?: TenantSummaryDeletedAt;
+  id: TenantId;
+  name: string;
+  plan: Plan;
+  slug: string;
+  status: TenantStatus;
+}
+
+/**
+ * Per-tenant usage aggregate over an inclusive [from, to] date range. Summed
+across ALL of the tenant's venues. This is the metered-usage source the
+operator health rollup surfaces and P4 billing will reuse.
+ */
+export interface TenantUsage {
+  /** Number of distinct venues that reported any metric in the range. */
+  active_venues: number;
+  bookings_cancelled: number;
+  bookings_created: number;
+  checkins: number;
+  credits_earned: number;
+  from: string;
+  pass_bookings: number;
+  tenant_id: TenantId;
+  to: string;
 }
 
 export type UpdateMemberRequestEmail = string | null;
@@ -2955,12 +3405,28 @@ export interface UpdateSubscriptionRequest {
   payment_status?: UpdateSubscriptionRequestPaymentStatus;
 }
 
+/**
+ * Body of `PATCH /gms/v1/tenant/settings`: the tenant's member-login policy.
+
+Deliberately a single required field (not an `Option`): the route is a full
+set of the policy, not a partial merge, so the caller always states the mode
+it wants. Enabling `Login` is feature-gated on `MemberSelfService` at the
+handler; switching to `Roster` is always allowed (a downgrade is never
+blocked).
+ */
+export interface UpdateTenantSettingsRequest {
+  /** The member-login mode to set for this tenant. */
+  member_login_mode: MemberLoginMode;
+}
+
 export type UpdateVenueRequestAddressLine = string | null;
 
 /**
  * Minutes before a class starts, after which a member may no longer self-cancel.
  */
 export type UpdateVenueRequestCancellationWindowMinutes = number | null;
+
+export type UpdateVenueRequestCheckinScanMode = null | CheckinScanMode;
 
 export type UpdateVenueRequestCity = string | null;
 
@@ -2990,6 +3456,7 @@ export interface UpdateVenueRequest {
   address_line?: UpdateVenueRequestAddressLine;
   /** Minutes before a class starts, after which a member may no longer self-cancel. */
   cancellation_window_minutes?: UpdateVenueRequestCancellationWindowMinutes;
+  checkin_scan_mode?: UpdateVenueRequestCheckinScanMode;
   city?: UpdateVenueRequestCity;
   country?: UpdateVenueRequestCountry;
   description?: UpdateVenueRequestDescription;
@@ -3150,6 +3617,8 @@ A value of 0 means a member may cancel right up to the slot start time.
  */
 export type VenueSettingsCancellationWindowMinutes = number | null;
 
+export type VenueSettingsCheckinScanMode = null | CheckinScanMode;
+
 /**
  * Locale for notifications (e.g., "fr", "en")
  */
@@ -3175,6 +3644,7 @@ export interface VenueSettings {
 self-cancel. Defaults to 120 when unset (see `cancellation_window_or_default`).
 A value of 0 means a member may cancel right up to the slot start time. */
   cancellation_window_minutes?: VenueSettingsCancellationWindowMinutes;
+  checkin_scan_mode?: VenueSettingsCheckinScanMode;
   /** Locale for notifications (e.g., "fr", "en") */
   locale?: VenueSettingsLocale;
   /** IANA timezone (e.g., "Africa/Lome") */
@@ -3293,6 +3763,65 @@ export type ListSlotsParams = {
    * Optional resource id (UUID) to filter slots.
    */
   resource_id?: string;
+};
+
+export type ListTenantsParams = {
+  /**
+   * Filter by tenant status (active|suspended|offboarding).
+   */
+  status?: string;
+  /**
+   * Page size, 1-500 (default 50).
+   */
+  limit?: number;
+  /**
+   * Row offset (default 0).
+   */
+  offset?: number;
+};
+
+export type TenantBilling200DataBilling = null | TenantBilling;
+
+/**
+ * Operator-facing billing view: a tenant's billing record + current seat usage.
+Single definition used by both the lambda response and the OpenAPI doc stub.
+ */
+export type TenantBilling200Data = {
+  billing?: TenantBilling200DataBilling;
+  plan: Plan;
+  seats: SeatUsage;
+  tenant_id: TenantId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export type TenantBilling200 = {
+  /** Operator-facing billing view: a tenant's billing record + current seat usage.
+Single definition used by both the lambda response and the OpenAPI doc stub. */
+  data: TenantBilling200Data;
+  request_id: string;
+};
+
+export type TenantUsageParams = {
+  /**
+   * Inclusive range start (YYYY-MM-DD).
+   */
+  from: string;
+  /**
+   * Inclusive range end (YYYY-MM-DD).
+   */
+  to: string;
 };
 
 export type ListMarketplaceVenuesParams = {

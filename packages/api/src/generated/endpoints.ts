@@ -28,12 +28,14 @@ import type {
   ApiResponseBooking,
   ApiResponseCheckIn,
   ApiResponseCreditBalance,
+  ApiResponseMarketplaceStatus,
   ApiResponseMeQrResponseSchema,
   ApiResponseMember,
   ApiResponseMemberSubscription,
   ApiResponseMyProfileResponse,
   ApiResponseOnboardVenueResponse,
   ApiResponsePassBooking,
+  ApiResponsePassBookingQrResponse,
   ApiResponsePassBookingResult,
   ApiResponsePassHolder,
   ApiResponseResource,
@@ -41,6 +43,9 @@ import type {
   ApiResponseSchedule,
   ApiResponseScheduleSlot,
   ApiResponseStaff,
+  ApiResponseTenantSummary,
+  ApiResponseTenantUsage,
+  ApiResponseUpdateTenantSettingsRequest,
   ApiResponseVecActivityPlan,
   ApiResponseVecBooking,
   ApiResponseVecCheckIn,
@@ -52,6 +57,7 @@ import type {
   ApiResponseVecSchedule,
   ApiResponseVecScheduleSlot,
   ApiResponseVecStaff,
+  ApiResponseVecTenantSummary,
   ApiResponseVecVenue,
   ApiResponseVecVenueActivity,
   ApiResponseVecVenueDayMetric,
@@ -84,23 +90,33 @@ import type {
   ListPlansParams,
   ListSlotsParams,
   ListSubscriptionsParams,
+  ListTenantsParams,
   ManualCheckinRequest,
   MeQrRequest,
   MeSlotsParams,
+  MeWalkinCheckinRequest,
   OnboardVenueRequest,
   PaginatedApiResponseVecMember,
   PaginatedApiResponseVecPassBooking,
   PaginatedApiResponseVecVenueCatalogEntry,
+  PassCheckinRequest,
   QrCheckinRequest,
+  RegisterOwnerRequest,
   RegisterPassHolderRequest,
+  SetMarketplaceRequest,
   SetMemberAccessRequest,
   SetMemberVenuesRequest,
   SetStaffVenuesRequest,
+  SetTenantPlanRequest,
+  SetTenantStatusRequest,
+  TenantBilling200,
+  TenantUsageParams,
   UpdateMemberRequest,
   UpdatePlanRequest,
   UpdateResourceRequest,
   UpdateScheduleRequest,
   UpdateSubscriptionRequest,
+  UpdateTenantSettingsRequest,
   UpdateVenueRequest,
   WalkinCheckinRequest,
 } from './endpoints.schemas';
@@ -574,6 +590,97 @@ export const useCheckInWalkin = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
+ * Staff scan the token the member minted via `POST /gms/v1/me/qr`. The member is
+resolved from the token payload (a walk-in QR carries the member it
+authorizes); the request body only carries the token and the venue. Feature-
+gated on `QrCheckin`. Runs every entitlement axis walk-in does: dedupe (409),
+active membership, venue entitlement, and pricing consumption.
+ * @summary Record a walk-in check-in from a member-held walk-in QR token.
+ */
+export const getCheckInWalkinQrUrl = () => {
+  return `/gms/v1/checkins/walkin/qr`;
+};
+
+export const checkInWalkinQr = async (
+  qrCheckinRequest: QrCheckinRequest,
+  options?: RequestInit,
+): Promise<ApiResponseCheckIn> => {
+  return customFetch<ApiResponseCheckIn>(getCheckInWalkinQrUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(qrCheckinRequest),
+  });
+};
+
+export const getCheckInWalkinQrMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkInWalkinQr>>,
+    TError,
+    { data: QrCheckinRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof checkInWalkinQr>>,
+  TError,
+  { data: QrCheckinRequest },
+  TContext
+> => {
+  const mutationKey = ['checkInWalkinQr'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof checkInWalkinQr>>,
+    { data: QrCheckinRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return checkInWalkinQr(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CheckInWalkinQrMutationResult = NonNullable<
+  Awaited<ReturnType<typeof checkInWalkinQr>>
+>;
+export type CheckInWalkinQrMutationBody = QrCheckinRequest;
+export type CheckInWalkinQrMutationError = ErrorResponse;
+
+/**
+ * @summary Record a walk-in check-in from a member-held walk-in QR token.
+ */
+export const useCheckInWalkinQr = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof checkInWalkinQr>>,
+      TError,
+      { data: QrCheckinRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof checkInWalkinQr>>,
+  TError,
+  { data: QrCheckinRequest },
+  TContext
+> => {
+  const mutationOptions = getCheckInWalkinQrMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
  * The member id comes only from the verified token, so this always returns the
 caller's own row. Staff-only fields (`notes`, `user_id`) are projected out.
  * @summary Get the caller's own member profile.
@@ -928,6 +1035,272 @@ export const useMeCancelBooking = <TError = ErrorResponse, TContext = unknown>(
   TContext
 > => {
   const mutationOptions = getMeCancelBookingMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Gated on the `MemberSelfService` capability (Starter+) and on the venue's
+per-venue `checkin_scan_mode` (same as the self walk-in route). Ownership is
+resolved from the verified token, so a booking that is not the caller's own
+surfaces as 404, never 403. The policy check runs before the check-in write.
+ * @summary Member self-check-in to the caller's OWN booking.
+ */
+export const getMeBookingCheckinUrl = (bid: string) => {
+  return `/gms/v1/me/bookings/${bid}/checkin`;
+};
+
+export const meBookingCheckin = async (
+  bid: string,
+  options?: RequestInit,
+): Promise<ApiResponseCheckIn> => {
+  return customFetch<ApiResponseCheckIn>(getMeBookingCheckinUrl(bid), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getMeBookingCheckinMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof meBookingCheckin>>,
+    TError,
+    { bid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof meBookingCheckin>>,
+  TError,
+  { bid: string },
+  TContext
+> => {
+  const mutationKey = ['meBookingCheckin'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof meBookingCheckin>>,
+    { bid: string }
+  > = (props) => {
+    const { bid } = props ?? {};
+
+    return meBookingCheckin(bid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MeBookingCheckinMutationResult = NonNullable<
+  Awaited<ReturnType<typeof meBookingCheckin>>
+>;
+
+export type MeBookingCheckinMutationError = ErrorResponse;
+
+/**
+ * @summary Member self-check-in to the caller's OWN booking.
+ */
+export const useMeBookingCheckin = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof meBookingCheckin>>,
+      TError,
+      { bid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof meBookingCheckin>>,
+  TError,
+  { bid: string },
+  TContext
+> => {
+  const mutationOptions = getMeBookingCheckinMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Gated on the `MemberQr` capability (Pro/Enterprise), like `POST /gms/v1/me/qr`.
+Ownership is resolved from the verified token, so a booking that is not the
+caller's own surfaces as 404, never 403. The minted `Booking` token carries
+the booking id and no member identity (the member is resolved server-side at
+scan time). Valid for 300 seconds.
+ * @summary Mint a short-lived QR token for the caller's OWN booking.
+ */
+export const getMeBookingQrUrl = (bid: string) => {
+  return `/gms/v1/me/bookings/${bid}/qr`;
+};
+
+export const meBookingQr = async (
+  bid: string,
+  options?: RequestInit,
+): Promise<ApiResponseMeQrResponseSchema> => {
+  return customFetch<ApiResponseMeQrResponseSchema>(getMeBookingQrUrl(bid), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getMeBookingQrMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof meBookingQr>>,
+    TError,
+    { bid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof meBookingQr>>,
+  TError,
+  { bid: string },
+  TContext
+> => {
+  const mutationKey = ['meBookingQr'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof meBookingQr>>, { bid: string }> = (
+    props,
+  ) => {
+    const { bid } = props ?? {};
+
+    return meBookingQr(bid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MeBookingQrMutationResult = NonNullable<Awaited<ReturnType<typeof meBookingQr>>>;
+
+export type MeBookingQrMutationError = ErrorResponse;
+
+/**
+ * @summary Mint a short-lived QR token for the caller's OWN booking.
+ */
+export const useMeBookingQr = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof meBookingQr>>,
+      TError,
+      { bid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof meBookingQr>>,
+  TError,
+  { bid: string },
+  TContext
+> => {
+  const mutationOptions = getMeBookingQrMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Gated on the `MemberSelfService` capability (Starter+) and additionally on the
+venue's per-venue `checkin_scan_mode`: a venue must opt into member self-scan,
+otherwise 403. The policy check runs before the check-in write, so a rejected
+venue burns no entry. The member id comes only from the verified token; the
+venue id from the body. Runs the same entitlement axes as the staff walk-in:
+dedupe (409), active membership, venue entitlement, and pricing consumption.
+ * @summary Member self-check-in (walk-in) at a venue that allows member scan.
+ */
+export const getMeWalkinCheckinUrl = () => {
+  return `/gms/v1/me/checkins/walkin`;
+};
+
+export const meWalkinCheckin = async (
+  meWalkinCheckinRequest: MeWalkinCheckinRequest,
+  options?: RequestInit,
+): Promise<ApiResponseCheckIn> => {
+  return customFetch<ApiResponseCheckIn>(getMeWalkinCheckinUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(meWalkinCheckinRequest),
+  });
+};
+
+export const getMeWalkinCheckinMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof meWalkinCheckin>>,
+    TError,
+    { data: MeWalkinCheckinRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof meWalkinCheckin>>,
+  TError,
+  { data: MeWalkinCheckinRequest },
+  TContext
+> => {
+  const mutationKey = ['meWalkinCheckin'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof meWalkinCheckin>>,
+    { data: MeWalkinCheckinRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return meWalkinCheckin(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MeWalkinCheckinMutationResult = NonNullable<
+  Awaited<ReturnType<typeof meWalkinCheckin>>
+>;
+export type MeWalkinCheckinMutationBody = MeWalkinCheckinRequest;
+export type MeWalkinCheckinMutationError = ErrorResponse;
+
+/**
+ * @summary Member self-check-in (walk-in) at a venue that allows member scan.
+ */
+export const useMeWalkinCheckin = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof meWalkinCheckin>>,
+      TError,
+      { data: MeWalkinCheckinRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof meWalkinCheckin>>,
+  TError,
+  { data: MeWalkinCheckinRequest },
+  TContext
+> => {
+  const mutationOptions = getMeWalkinCheckinMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -3703,6 +4076,96 @@ export const useSetStaffVenues = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
+ * @summary Set the tenant's member-login policy (login vs roster). Owner/admin only;
+enabling login requires the MemberSelfService capability (Starter+).
+Switching to roster is always allowed (downgrade is never blocked).
+ */
+export const getPatchTenantSettingsUrl = () => {
+  return `/gms/v1/tenant/settings`;
+};
+
+export const patchTenantSettings = async (
+  updateTenantSettingsRequest: UpdateTenantSettingsRequest,
+  options?: RequestInit,
+): Promise<ApiResponseUpdateTenantSettingsRequest> => {
+  return customFetch<ApiResponseUpdateTenantSettingsRequest>(getPatchTenantSettingsUrl(), {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateTenantSettingsRequest),
+  });
+};
+
+export const getPatchTenantSettingsMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof patchTenantSettings>>,
+    TError,
+    { data: UpdateTenantSettingsRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof patchTenantSettings>>,
+  TError,
+  { data: UpdateTenantSettingsRequest },
+  TContext
+> => {
+  const mutationKey = ['patchTenantSettings'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof patchTenantSettings>>,
+    { data: UpdateTenantSettingsRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return patchTenantSettings(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PatchTenantSettingsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof patchTenantSettings>>
+>;
+export type PatchTenantSettingsMutationBody = UpdateTenantSettingsRequest;
+export type PatchTenantSettingsMutationError = ErrorResponse;
+
+/**
+ * @summary Set the tenant's member-login policy (login vs roster). Owner/admin only;
+enabling login requires the MemberSelfService capability (Starter+).
+Switching to roster is always allowed (downgrade is never blocked).
+ */
+export const usePatchTenantSettings = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof patchTenantSettings>>,
+      TError,
+      { data: UpdateTenantSettingsRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof patchTenantSettings>>,
+  TError,
+  { data: UpdateTenantSettingsRequest },
+  TContext
+> => {
+  const mutationOptions = getPatchTenantSettingsMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
  * Owner/Admin see every venue. Venue-scoped staff (Trainer/Receptionist) see
 only the venues they are assigned to; the list is filtered, not a 403.
  * @summary List venues visible to the caller in the current tenant.
@@ -4399,6 +4862,93 @@ export const useRemoveVenueActivity = <TError = ErrorResponse, TContext = unknow
   TContext
 > => {
   const mutationOptions = getRemoveVenueActivityMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * @summary Enable or disable a venue's marketplace participation.
+ */
+export const getSetVenueMarketplaceUrl = (id: string) => {
+  return `/gms/v1/venues/${id}/marketplace`;
+};
+
+export const setVenueMarketplace = async (
+  id: string,
+  setMarketplaceRequest: SetMarketplaceRequest,
+  options?: RequestInit,
+): Promise<ApiResponseMarketplaceStatus> => {
+  return customFetch<ApiResponseMarketplaceStatus>(getSetVenueMarketplaceUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setMarketplaceRequest),
+  });
+};
+
+export const getSetVenueMarketplaceMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setVenueMarketplace>>,
+    TError,
+    { id: string; data: SetMarketplaceRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setVenueMarketplace>>,
+  TError,
+  { id: string; data: SetMarketplaceRequest },
+  TContext
+> => {
+  const mutationKey = ['setVenueMarketplace'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setVenueMarketplace>>,
+    { id: string; data: SetMarketplaceRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return setVenueMarketplace(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetVenueMarketplaceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setVenueMarketplace>>
+>;
+export type SetVenueMarketplaceMutationBody = SetMarketplaceRequest;
+export type SetVenueMarketplaceMutationError = ErrorResponse;
+
+/**
+ * @summary Enable or disable a venue's marketplace participation.
+ */
+export const useSetVenueMarketplace = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setVenueMarketplace>>,
+      TError,
+      { id: string; data: SetMarketplaceRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setVenueMarketplace>>,
+  TError,
+  { id: string; data: SetMarketplaceRequest },
+  TContext
+> => {
+  const mutationOptions = getSetVenueMarketplaceMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -6144,6 +6694,926 @@ export function useHealth<TData = Awaited<ReturnType<typeof health>>, TError = u
 }
 
 /**
+ * @summary List tenants (operator). Optional `status`, `limit`, `offset` query params.
+ */
+export const getListTenantsUrl = (params?: ListTenantsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/platform/v1/admin/tenants?${stringifiedParams}`
+    : `/platform/v1/admin/tenants`;
+};
+
+export const listTenants = async (
+  params?: ListTenantsParams,
+  options?: RequestInit,
+): Promise<ApiResponseVecTenantSummary> => {
+  return customFetch<ApiResponseVecTenantSummary>(getListTenantsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListTenantsQueryKey = (params?: ListTenantsParams) => {
+  return [`/platform/v1/admin/tenants`, ...(params ? [params] : [])] as const;
+};
+
+export const getListTenantsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTenants>>,
+  TError = ErrorResponse,
+>(
+  params?: ListTenantsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTenants>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTenantsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listTenants>>> = ({ signal }) =>
+    listTenants(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTenants>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListTenantsQueryResult = NonNullable<Awaited<ReturnType<typeof listTenants>>>;
+export type ListTenantsQueryError = ErrorResponse;
+
+export function useListTenants<
+  TData = Awaited<ReturnType<typeof listTenants>>,
+  TError = ErrorResponse,
+>(
+  params: undefined | ListTenantsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTenants>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTenants>>,
+          TError,
+          Awaited<ReturnType<typeof listTenants>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListTenants<
+  TData = Awaited<ReturnType<typeof listTenants>>,
+  TError = ErrorResponse,
+>(
+  params?: ListTenantsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTenants>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTenants>>,
+          TError,
+          Awaited<ReturnType<typeof listTenants>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListTenants<
+  TData = Awaited<ReturnType<typeof listTenants>>,
+  TError = ErrorResponse,
+>(
+  params?: ListTenantsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTenants>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List tenants (operator). Optional `status`, `limit`, `offset` query params.
+ */
+
+export function useListTenants<
+  TData = Awaited<ReturnType<typeof listTenants>>,
+  TError = ErrorResponse,
+>(
+  params?: ListTenantsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTenants>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListTenantsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * @summary Inspect one tenant (operator).
+ */
+export const getGetTenantUrl = (id: string) => {
+  return `/platform/v1/admin/tenants/${id}`;
+};
+
+export const getTenant = async (
+  id: string,
+  options?: RequestInit,
+): Promise<ApiResponseTenantSummary> => {
+  return customFetch<ApiResponseTenantSummary>(getGetTenantUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetTenantQueryKey = (id?: string) => {
+  return [`/platform/v1/admin/tenants/${id}`] as const;
+};
+
+export const getGetTenantQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTenant>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenant>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetTenantQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTenant>>> = ({ signal }) =>
+    getTenant(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTenant>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetTenantQueryResult = NonNullable<Awaited<ReturnType<typeof getTenant>>>;
+export type GetTenantQueryError = ErrorResponse;
+
+export function useGetTenant<TData = Awaited<ReturnType<typeof getTenant>>, TError = ErrorResponse>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenant>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTenant>>,
+          TError,
+          Awaited<ReturnType<typeof getTenant>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetTenant<TData = Awaited<ReturnType<typeof getTenant>>, TError = ErrorResponse>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenant>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTenant>>,
+          TError,
+          Awaited<ReturnType<typeof getTenant>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetTenant<TData = Awaited<ReturnType<typeof getTenant>>, TError = ErrorResponse>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenant>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Inspect one tenant (operator).
+ */
+
+export function useGetTenant<TData = Awaited<ReturnType<typeof getTenant>>, TError = ErrorResponse>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenant>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetTenantQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * @summary Tenant billing state: optional billing record + live seat usage (operator).
+ */
+export const getTenantBillingUrl = (id: string) => {
+  return `/platform/v1/admin/tenants/${id}/billing`;
+};
+
+export const tenantBilling = async (
+  id: string,
+  options?: RequestInit,
+): Promise<TenantBilling200> => {
+  return customFetch<TenantBilling200>(getTenantBillingUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getTenantBillingQueryKey = (id?: string) => {
+  return [`/platform/v1/admin/tenants/${id}/billing`] as const;
+};
+
+export const getTenantBillingQueryOptions = <
+  TData = Awaited<ReturnType<typeof tenantBilling>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantBilling>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getTenantBillingQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof tenantBilling>>> = ({ signal }) =>
+    tenantBilling(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof tenantBilling>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type TenantBillingQueryResult = NonNullable<Awaited<ReturnType<typeof tenantBilling>>>;
+export type TenantBillingQueryError = ErrorResponse;
+
+export function useTenantBilling<
+  TData = Awaited<ReturnType<typeof tenantBilling>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantBilling>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof tenantBilling>>,
+          TError,
+          Awaited<ReturnType<typeof tenantBilling>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useTenantBilling<
+  TData = Awaited<ReturnType<typeof tenantBilling>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantBilling>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof tenantBilling>>,
+          TError,
+          Awaited<ReturnType<typeof tenantBilling>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useTenantBilling<
+  TData = Awaited<ReturnType<typeof tenantBilling>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantBilling>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Tenant billing state: optional billing record + live seat usage (operator).
+ */
+
+export function useTenantBilling<
+  TData = Awaited<ReturnType<typeof tenantBilling>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantBilling>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getTenantBillingQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * @summary Change a tenant's plan (operator).
+ */
+export const getSetTenantPlanUrl = (id: string) => {
+  return `/platform/v1/admin/tenants/${id}/plan`;
+};
+
+export const setTenantPlan = async (
+  id: string,
+  setTenantPlanRequest: SetTenantPlanRequest,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getSetTenantPlanUrl(id), {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setTenantPlanRequest),
+  });
+};
+
+export const getSetTenantPlanMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setTenantPlan>>,
+    TError,
+    { id: string; data: SetTenantPlanRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setTenantPlan>>,
+  TError,
+  { id: string; data: SetTenantPlanRequest },
+  TContext
+> => {
+  const mutationKey = ['setTenantPlan'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setTenantPlan>>,
+    { id: string; data: SetTenantPlanRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return setTenantPlan(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetTenantPlanMutationResult = NonNullable<Awaited<ReturnType<typeof setTenantPlan>>>;
+export type SetTenantPlanMutationBody = SetTenantPlanRequest;
+export type SetTenantPlanMutationError = ErrorResponse;
+
+/**
+ * @summary Change a tenant's plan (operator).
+ */
+export const useSetTenantPlan = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setTenantPlan>>,
+      TError,
+      { id: string; data: SetTenantPlanRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setTenantPlan>>,
+  TError,
+  { id: string; data: SetTenantPlanRequest },
+  TContext
+> => {
+  const mutationOptions = getSetTenantPlanMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * @summary Suspend / reactivate / offboard a tenant (operator).
+ */
+export const getSetTenantStatusUrl = (id: string) => {
+  return `/platform/v1/admin/tenants/${id}/status`;
+};
+
+export const setTenantStatus = async (
+  id: string,
+  setTenantStatusRequest: SetTenantStatusRequest,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getSetTenantStatusUrl(id), {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setTenantStatusRequest),
+  });
+};
+
+export const getSetTenantStatusMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setTenantStatus>>,
+    TError,
+    { id: string; data: SetTenantStatusRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setTenantStatus>>,
+  TError,
+  { id: string; data: SetTenantStatusRequest },
+  TContext
+> => {
+  const mutationKey = ['setTenantStatus'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setTenantStatus>>,
+    { id: string; data: SetTenantStatusRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return setTenantStatus(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetTenantStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setTenantStatus>>
+>;
+export type SetTenantStatusMutationBody = SetTenantStatusRequest;
+export type SetTenantStatusMutationError = ErrorResponse;
+
+/**
+ * @summary Suspend / reactivate / offboard a tenant (operator).
+ */
+export const useSetTenantStatus = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setTenantStatus>>,
+      TError,
+      { id: string; data: SetTenantStatusRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setTenantStatus>>,
+  TError,
+  { id: string; data: SetTenantStatusRequest },
+  TContext
+> => {
+  const mutationOptions = getSetTenantStatusMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * @summary Per-tenant usage rollup over an inclusive date range (operator).
+ */
+export const getTenantUsageUrl = (id: string, params: TenantUsageParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/platform/v1/admin/tenants/${id}/usage?${stringifiedParams}`
+    : `/platform/v1/admin/tenants/${id}/usage`;
+};
+
+export const tenantUsage = async (
+  id: string,
+  params: TenantUsageParams,
+  options?: RequestInit,
+): Promise<ApiResponseTenantUsage> => {
+  return customFetch<ApiResponseTenantUsage>(getTenantUsageUrl(id, params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getTenantUsageQueryKey = (id?: string, params?: TenantUsageParams) => {
+  return [`/platform/v1/admin/tenants/${id}/usage`, ...(params ? [params] : [])] as const;
+};
+
+export const getTenantUsageQueryOptions = <
+  TData = Awaited<ReturnType<typeof tenantUsage>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  params: TenantUsageParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantUsage>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getTenantUsageQueryKey(id, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof tenantUsage>>> = ({ signal }) =>
+    tenantUsage(id, params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof tenantUsage>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type TenantUsageQueryResult = NonNullable<Awaited<ReturnType<typeof tenantUsage>>>;
+export type TenantUsageQueryError = ErrorResponse;
+
+export function useTenantUsage<
+  TData = Awaited<ReturnType<typeof tenantUsage>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  params: TenantUsageParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantUsage>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof tenantUsage>>,
+          TError,
+          Awaited<ReturnType<typeof tenantUsage>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useTenantUsage<
+  TData = Awaited<ReturnType<typeof tenantUsage>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  params: TenantUsageParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantUsage>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof tenantUsage>>,
+          TError,
+          Awaited<ReturnType<typeof tenantUsage>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useTenantUsage<
+  TData = Awaited<ReturnType<typeof tenantUsage>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  params: TenantUsageParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantUsage>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Per-tenant usage rollup over an inclusive date range (operator).
+ */
+
+export function useTenantUsage<
+  TData = Awaited<ReturnType<typeof tenantUsage>>,
+  TError = ErrorResponse,
+>(
+  id: string,
+  params: TenantUsageParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof tenantUsage>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getTenantUsageQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * @summary Register a new gym-owner identity. Public (no auth). Returns 202 regardless
+of whether the email was new or already existed (enumeration-safe).
+ */
+export const getRegisterOwnerUrl = () => {
+  return `/platform/v1/auth/register-owner`;
+};
+
+export const registerOwner = async (
+  registerOwnerRequest: RegisterOwnerRequest,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getRegisterOwnerUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(registerOwnerRequest),
+  });
+};
+
+export const getRegisterOwnerMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof registerOwner>>,
+    TError,
+    { data: RegisterOwnerRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof registerOwner>>,
+  TError,
+  { data: RegisterOwnerRequest },
+  TContext
+> => {
+  const mutationKey = ['registerOwner'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof registerOwner>>,
+    { data: RegisterOwnerRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return registerOwner(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RegisterOwnerMutationResult = NonNullable<Awaited<ReturnType<typeof registerOwner>>>;
+export type RegisterOwnerMutationBody = RegisterOwnerRequest;
+export type RegisterOwnerMutationError = ErrorResponse;
+
+/**
+ * @summary Register a new gym-owner identity. Public (no auth). Returns 202 regardless
+of whether the email was new or already existed (enumeration-safe).
+ */
+export const useRegisterOwner = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof registerOwner>>,
+      TError,
+      { data: RegisterOwnerRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof registerOwner>>,
+  TError,
+  { data: RegisterOwnerRequest },
+  TContext
+> => {
+  const mutationOptions = getRegisterOwnerMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * @summary Ingest a billing-provider webhook. Public (providers cannot carry a Cognito
+token) but signature-verified (X-Billing-Signature) and idempotent
+(X-Billing-Event-Id). Returns 200 on accepted/replayed, 401 on bad signature.
+ */
+export const getBillingWebhookUrl = () => {
+  return `/platform/v1/billing/webhook`;
+};
+
+export const billingWebhook = async (options?: RequestInit): Promise<void> => {
+  return customFetch<void>(getBillingWebhookUrl(), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getBillingWebhookMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof billingWebhook>>, TError, void, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof billingWebhook>>, TError, void, TContext> => {
+  const mutationKey = ['billingWebhook'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof billingWebhook>>, void> = () => {
+    return billingWebhook(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BillingWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof billingWebhook>>>;
+
+export type BillingWebhookMutationError = ErrorResponse;
+
+/**
+ * @summary Ingest a billing-provider webhook. Public (providers cannot carry a Cognito
+token) but signature-verified (X-Billing-Signature) and idempotent
+(X-Billing-Event-Id). Returns 200 on accepted/replayed, 401 on bad signature.
+ */
+export const useBillingWebhook = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof billingWebhook>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof billingWebhook>>, TError, void, TContext> => {
+  const mutationOptions = getBillingWebhookMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Staff scan the `PassBooking` token the pass-holder minted via
+`POST /platform/v1/pass/bookings/{bid}/qr`. The token is keyed on the
+scanning venue's tenant, so a wrong-tenant/forged token fails the MAC (401).
+The booking, venue, and pass-holder are resolved from the token payload; the
+booking is then settled under the platform role.
+ * @summary Record a marketplace pass-holder check-in from a scanned QR.
+ */
+export const getPassCheckinUrl = () => {
+  return `/platform/v1/checkins/pass`;
+};
+
+export const passCheckin = async (
+  passCheckinRequest: PassCheckinRequest,
+  options?: RequestInit,
+): Promise<ApiResponseCheckIn> => {
+  return customFetch<ApiResponseCheckIn>(getPassCheckinUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(passCheckinRequest),
+  });
+};
+
+export const getPassCheckinMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof passCheckin>>,
+    TError,
+    { data: PassCheckinRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof passCheckin>>,
+  TError,
+  { data: PassCheckinRequest },
+  TContext
+> => {
+  const mutationKey = ['passCheckin'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof passCheckin>>,
+    { data: PassCheckinRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return passCheckin(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PassCheckinMutationResult = NonNullable<Awaited<ReturnType<typeof passCheckin>>>;
+export type PassCheckinMutationBody = PassCheckinRequest;
+export type PassCheckinMutationError = ErrorResponse;
+
+/**
+ * @summary Record a marketplace pass-holder check-in from a scanned QR.
+ */
+export const usePassCheckin = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof passCheckin>>,
+      TError,
+      { data: PassCheckinRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof passCheckin>>,
+  TError,
+  { data: PassCheckinRequest },
+  TContext
+> => {
+  const mutationOptions = getPassCheckinMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
  * @summary Book a marketplace slot using pass credits.
  */
 export const getBookViaPassUrl = () => {
@@ -6971,6 +8441,91 @@ export const useCancelPassBooking = <TError = ErrorResponse, TContext = unknown>
   TContext
 > => {
   const mutationOptions = getCancelPassBookingMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * The token is a venue-tenant-keyed `PassBooking` QR that verifies only at the
+booking's destination venue (marketplace check-in). It carries no member or
+booking id; the pass-holder is resolved server-side at scan time. A booking
+that is not the caller's own surfaces as 404 (no existence oracle).
+ * @summary Mint a pass-booking check-in QR for the caller's own confirmed booking.
+ */
+export const getPassBookingQrUrl = (bid: string) => {
+  return `/platform/v1/pass/bookings/${bid}/qr`;
+};
+
+export const passBookingQr = async (
+  bid: string,
+  options?: RequestInit,
+): Promise<ApiResponsePassBookingQrResponse> => {
+  return customFetch<ApiResponsePassBookingQrResponse>(getPassBookingQrUrl(bid), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getPassBookingQrMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof passBookingQr>>,
+    TError,
+    { bid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof passBookingQr>>,
+  TError,
+  { bid: string },
+  TContext
+> => {
+  const mutationKey = ['passBookingQr'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof passBookingQr>>, { bid: string }> = (
+    props,
+  ) => {
+    const { bid } = props ?? {};
+
+    return passBookingQr(bid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PassBookingQrMutationResult = NonNullable<Awaited<ReturnType<typeof passBookingQr>>>;
+
+export type PassBookingQrMutationError = ErrorResponse;
+
+/**
+ * @summary Mint a pass-booking check-in QR for the caller's own confirmed booking.
+ */
+export const usePassBookingQr = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof passBookingQr>>,
+      TError,
+      { bid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof passBookingQr>>,
+  TError,
+  { bid: string },
+  TContext
+> => {
+  const mutationOptions = getPassBookingQrMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };

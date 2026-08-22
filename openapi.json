@@ -402,6 +402,93 @@
         ]
       }
     },
+    "/gms/v1/checkins/walkin/qr": {
+      "post": {
+        "tags": [
+          "checkin"
+        ],
+        "summary": "Record a walk-in check-in from a member-held walk-in QR token.",
+        "description": "Staff scan the token the member minted via `POST /gms/v1/me/qr`. The member is\nresolved from the token payload (a walk-in QR carries the member it\nauthorizes); the request body only carries the token and the venue. Feature-\ngated on `QrCheckin`. Runs every entitlement axis walk-in does: dedupe (409),\nactive membership, venue entitlement, and pricing consumption.",
+        "operationId": "check_in_walkin_qr",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QrCheckinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Checked in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_CheckIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error / invalid or wrong-venue token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks checkin:write, is a venue-scoped staff member not assigned to the venue, the member's membership is not active, the member is not entitled to this venue, or the member has no valid, paid plan covering this visit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Venue or member not found (an inactive venue reads as not found)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Member already walked in at this venue inside the venue's dedupe window",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
     "/gms/v1/me": {
       "get": {
         "tags": [
@@ -632,6 +719,259 @@
           },
           "409": {
             "description": "Cancellation window has closed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/me/bookings/{bid}/checkin": {
+      "post": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Member self-check-in to the caller's OWN booking.",
+        "description": "Gated on the `MemberSelfService` capability (Starter+) and on the venue's\nper-venue `checkin_scan_mode` (same as the self walk-in route). Ownership is\nresolved from the verified token, so a booking that is not the caller's own\nsurfaces as 404, never 403. The policy check runs before the check-in write.",
+        "operationId": "me_booking_checkin",
+        "parameters": [
+          {
+            "name": "bid",
+            "in": "path",
+            "description": "Booking id (UUID) of the caller's own booking",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Checked in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_CheckIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (invalid booking id, or booking not eligible for check-in)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not a member principal, tenant lacks MemberSelfService, the venue does not allow member self-scan, the member is not entitled to this venue, or the member has no valid, paid plan covering this visit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking or venue not found (or not the caller's own)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Booking has already been checked in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/me/bookings/{bid}/qr": {
+      "post": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Mint a short-lived QR token for the caller's OWN booking.",
+        "description": "Gated on the `MemberQr` capability (Pro/Enterprise), like `POST /gms/v1/me/qr`.\nOwnership is resolved from the verified token, so a booking that is not the\ncaller's own surfaces as 404, never 403. The minted `Booking` token carries\nthe booking id and no member identity (the member is resolved server-side at\nscan time). Valid for 300 seconds.",
+        "operationId": "me_booking_qr",
+        "parameters": [
+          {
+            "name": "bid",
+            "in": "path",
+            "description": "Booking id (UUID) of the caller's own booking",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Token minted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_MeQrResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (invalid booking id)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not a linked member, or the tenant's plan does not include member_qr",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found (or not the caller's own)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/me/checkins/walkin": {
+      "post": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Member self-check-in (walk-in) at a venue that allows member scan.",
+        "description": "Gated on the `MemberSelfService` capability (Starter+) and additionally on the\nvenue's per-venue `checkin_scan_mode`: a venue must opt into member self-scan,\notherwise 403. The policy check runs before the check-in write, so a rejected\nvenue burns no entry. The member id comes only from the verified token; the\nvenue id from the body. Runs the same entitlement axes as the staff walk-in:\ndedupe (409), active membership, venue entitlement, and pricing consumption.",
+        "operationId": "me_walkin_checkin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeWalkinCheckinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Checked in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_CheckIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not a member principal, tenant lacks MemberSelfService, the venue does not allow member self-scan, the member's membership is not active, the member is not entitled to this venue, or the member has no valid, paid plan covering this visit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Venue not found (an inactive venue reads as not found)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Member already walked in at this venue inside the venue's dedupe window",
             "content": {
               "application/json": {
                 "schema": {
@@ -2729,6 +3069,72 @@
         ]
       }
     },
+    "/gms/v1/tenant/settings": {
+      "patch": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Set the tenant's member-login policy (login vs roster). Owner/admin only;\nenabling login requires the MemberSelfService capability (Starter+).\nSwitching to roster is always allowed (downgrade is never blocked).",
+        "operationId": "patch_tenant_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated tenant member-login mode",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_UpdateTenantSettingsRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks venue:write permission, or the requested mode requires MemberSelfService (Starter+)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
     "/gms/v1/venues": {
       "get": {
         "tags": [
@@ -3188,6 +3594,93 @@
           },
           "404": {
             "description": "Venue does not offer the activity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/venues/{id}/marketplace": {
+      "put": {
+        "tags": [
+          "venue"
+        ],
+        "summary": "Enable or disable a venue's marketplace participation.",
+        "operationId": "set_venue_marketplace",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Venue id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMarketplaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Marketplace status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_MarketplaceStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (credit_cost_per_session < 1)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks venue:write, or venue-scoped staff not assigned to this venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Venue not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -4413,6 +4906,757 @@
         }
       }
     },
+    "/platform/v1/admin/tenants": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List tenants (operator). Optional `status`, `limit`, `offset` query params.",
+        "operationId": "list_tenants",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by tenant status (active|suspended|offboarding).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size, 1-500 (default 50).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Row offset (default 0).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant summaries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Vec_TenantSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a platform operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/platform/v1/admin/tenants/{id}": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Inspect one tenant (operator).",
+        "operationId": "get_tenant",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Tenant id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_TenantSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a platform operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/platform/v1/admin/tenants/{id}/billing": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Tenant billing state: optional billing record + live seat usage (operator).",
+        "operationId": "tenant_billing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Tenant id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant billing state + seat usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+                  "required": [
+                    "data",
+                    "request_id"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "description": "Operator-facing billing view: a tenant's billing record + current seat usage.\nSingle definition used by both the lambda response and the OpenAPI doc stub.",
+                      "required": [
+                        "tenant_id",
+                        "plan",
+                        "seats"
+                      ],
+                      "properties": {
+                        "billing": {
+                          "oneOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "$ref": "#/components/schemas/TenantBilling"
+                            }
+                          ]
+                        },
+                        "plan": {
+                          "$ref": "#/components/schemas/Plan"
+                        },
+                        "seats": {
+                          "$ref": "#/components/schemas/SeatUsage"
+                        },
+                        "tenant_id": {
+                          "$ref": "#/components/schemas/TenantId"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a platform operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/platform/v1/admin/tenants/{id}/plan": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Change a tenant's plan (operator).",
+        "operationId": "set_tenant_plan",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Tenant id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTenantPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Plan changed"
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a platform operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/platform/v1/admin/tenants/{id}/status": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Suspend / reactivate / offboard a tenant (operator).",
+        "operationId": "set_tenant_status",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Tenant id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTenantStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Status changed"
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a platform operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/platform/v1/admin/tenants/{id}/usage": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Per-tenant usage rollup over an inclusive date range (operator).",
+        "operationId": "tenant_usage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Tenant id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Inclusive range start (YYYY-MM-DD).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Inclusive range end (YYYY-MM-DD).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant usage rollup",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_TenantUsage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid/missing date range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a platform operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/platform/v1/auth/register-owner": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Register a new gym-owner identity. Public (no auth). Returns 202 regardless\nof whether the email was new or already existed (enumeration-safe).",
+        "operationId": "register_owner",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterOwnerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "If the email is valid, sign-in instructions are sent"
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/platform/v1/billing/webhook": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Ingest a billing-provider webhook. Public (providers cannot carry a Cognito\ntoken) but signature-verified (X-Billing-Signature) and idempotent\n(X-Billing-Event-Id). Returns 200 on accepted/replayed, 401 on bad signature.",
+        "operationId": "billing_webhook",
+        "parameters": [
+          {
+            "name": "X-Billing-Signature",
+            "in": "header",
+            "description": "Provider webhook signature; verified fail-closed.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Billing-Event-Id",
+            "in": "header",
+            "description": "Required. Provider event id; used for idempotent replay.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event accepted or already processed (idempotent replay)"
+          },
+          "400": {
+            "description": "Missing event id or malformed body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid webhook signature",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced tenant not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/platform/v1/checkins/pass": {
+      "post": {
+        "tags": [
+          "checkin"
+        ],
+        "summary": "Record a marketplace pass-holder check-in from a scanned QR.",
+        "description": "Staff scan the `PassBooking` token the pass-holder minted via\n`POST /platform/v1/pass/bookings/{bid}/qr`. The token is keyed on the\nscanning venue's tenant, so a wrong-tenant/forged token fails the MAC (401).\nThe booking, venue, and pass-holder are resolved from the token payload; the\nbooking is then settled under the platform role.",
+        "operationId": "pass_checkin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassCheckinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Marketplace pass-holder check-in recorded from a scanned QR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_CheckIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error / invalid or wrong-shape token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token, or a wrong-tenant/forged QR token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks checkin:write, or is a venue-scoped staff member not assigned to the token's venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Pass booking not settleable: not found for the scanning tenant, already checked in, or not today's session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
     "/platform/v1/marketplace/book": {
       "post": {
         "tags": [
@@ -4690,6 +5934,17 @@
         ],
         "summary": "Onboard a new venue: provisions a tenant, venue, and default resource types.",
         "operationId": "onboard_venue",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Required. Client-generated unique key; retries with the same key replay the first response.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -4712,7 +5967,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Validation error or missing Idempotency-Key",
             "content": {
               "application/json": {
                 "schema": {
@@ -4733,6 +5988,26 @@
           },
           "403": {
             "description": "Caller not authorized to onboard",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A request with this Idempotency-Key is still in progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Idempotency-Key reused with a different request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -4878,6 +6153,84 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/platform/v1/pass/bookings/{bid}/qr": {
+      "post": {
+        "tags": [
+          "passholder"
+        ],
+        "summary": "Mint a pass-booking check-in QR for the caller's own confirmed booking.",
+        "description": "The token is a venue-tenant-keyed `PassBooking` QR that verifies only at the\nbooking's destination venue (marketplace check-in). It carries no member or\nbooking id; the pass-holder is resolved server-side at scan time. A booking\nthat is not the caller's own surfaces as 404 (no existence oracle).",
+        "operationId": "pass_booking_qr",
+        "parameters": [
+          {
+            "name": "bid",
+            "in": "path",
+            "description": "Pass booking id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Pass-booking check-in QR minted for the caller's own booking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_PassBookingQrResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error: invalid booking id, or booking not confirmed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (a booking that is not the caller's own reads as not found)",
             "content": {
               "application/json": {
                 "schema": {
@@ -5508,7 +6861,6 @@
             "required": [
               "id",
               "tenant_id",
-              "member_id",
               "venue_id",
               "method",
               "checked_in_at"
@@ -5540,10 +6892,29 @@
                 "$ref": "#/components/schemas/CheckInId"
               },
               "member_id": {
-                "$ref": "#/components/schemas/MemberId"
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/MemberId",
+                    "description": "The tenant member, if this is a member check-in. At least one of\n`member_id` / `pass_holder_id` is `Some` (DB `checkin_has_actor` CHECK,\nan OR). Exactly-one is a caller invariant enforced on the write path\n(the pass-booking settle in a later task), not by the DB."
+                  }
+                ]
               },
               "method": {
                 "$ref": "#/components/schemas/CheckInMethod"
+              },
+              "pass_holder_id": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PassHolderId",
+                    "description": "The marketplace pass-holder, if this is a cross-tenant pass check-in."
+                  }
+                ]
               },
               "tenant_id": {
                 "$ref": "#/components/schemas/TenantId"
@@ -5585,6 +6956,44 @@
                 "type": "integer",
                 "format": "int32",
                 "description": "Credits remaining in current billing cycle."
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_MarketplaceStatus": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "The marketplace-visibility state of a venue's catalog row, returned by the\nmarketplace-enable route.",
+            "required": [
+              "venue_id",
+              "is_visible",
+              "iziwellpass_enabled",
+              "credit_cost_per_session"
+            ],
+            "properties": {
+              "credit_cost_per_session": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "is_visible": {
+                "type": "boolean"
+              },
+              "iziwellpass_enabled": {
+                "type": "boolean"
+              },
+              "venue_id": {
+                "$ref": "#/components/schemas/VenueId"
               }
             }
           },
@@ -6000,6 +7409,38 @@
               "venue_tenant_id": {
                 "$ref": "#/components/schemas/TenantId",
                 "description": "The venue's tenant ID (which tenant owns the venue)."
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_PassBookingQrResponse": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Response of POST /platform/v1/pass/bookings/{bid}/qr (mirrors lambdas/passholder MintedQr).",
+            "required": [
+              "token",
+              "expires_at"
+            ],
+            "properties": {
+              "expires_at": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Unix seconds at which the token stops verifying."
+              },
+              "token": {
+                "type": "string",
+                "description": "`\"iwp1.<payload>.<mac>\"`: render this into a QR image client-side."
               }
             }
           },
@@ -6559,6 +8000,149 @@
           }
         }
       },
+      "ApiResponse_TenantSummary": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Operator-facing summary of a tenant row. `created_at`/`deleted_at` are\nRFC3339 strings (the DB adapter formats them) so this DTO carries no chrono\ndependency.",
+            "required": [
+              "id",
+              "name",
+              "slug",
+              "plan",
+              "status",
+              "created_at"
+            ],
+            "properties": {
+              "created_at": {
+                "type": "string"
+              },
+              "deleted_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "id": {
+                "$ref": "#/components/schemas/TenantId"
+              },
+              "name": {
+                "type": "string"
+              },
+              "plan": {
+                "$ref": "#/components/schemas/Plan"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/components/schemas/TenantStatus"
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_TenantUsage": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Per-tenant usage aggregate over an inclusive [from, to] date range. Summed\nacross ALL of the tenant's venues. This is the metered-usage source the\noperator health rollup surfaces and P4 billing will reuse.",
+            "required": [
+              "tenant_id",
+              "from",
+              "to",
+              "bookings_created",
+              "bookings_cancelled",
+              "checkins",
+              "pass_bookings",
+              "credits_earned",
+              "active_venues"
+            ],
+            "properties": {
+              "active_venues": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Number of distinct venues that reported any metric in the range."
+              },
+              "bookings_cancelled": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "bookings_created": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "checkins": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "credits_earned": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "from": {
+                "type": "string",
+                "format": "date"
+              },
+              "pass_bookings": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "tenant_id": {
+                "$ref": "#/components/schemas/TenantId"
+              },
+              "to": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_UpdateTenantSettingsRequest": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Body of `PATCH /gms/v1/tenant/settings`: the tenant's member-login policy.\n\nDeliberately a single required field (not an `Option`): the route is a full\nset of the policy, not a partial merge, so the caller always states the mode\nit wants. Enabling `Login` is feature-gated on `MemberSelfService` at the\nhandler; switching to `Roster` is always allowed (a downgrade is never\nblocked).",
+            "required": [
+              "member_login_mode"
+            ],
+            "properties": {
+              "member_login_mode": {
+                "$ref": "#/components/schemas/MemberLoginMode",
+                "description": "The member-login mode to set for this tenant."
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_Vec_ActivityPlan": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -6767,7 +8351,6 @@
               "required": [
                 "id",
                 "tenant_id",
-                "member_id",
                 "venue_id",
                 "method",
                 "checked_in_at"
@@ -6799,10 +8382,29 @@
                   "$ref": "#/components/schemas/CheckInId"
                 },
                 "member_id": {
-                  "$ref": "#/components/schemas/MemberId"
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/MemberId",
+                      "description": "The tenant member, if this is a member check-in. At least one of\n`member_id` / `pass_holder_id` is `Some` (DB `checkin_has_actor` CHECK,\nan OR). Exactly-one is a caller invariant enforced on the write path\n(the pass-booking settle in a later task), not by the DB."
+                    }
+                  ]
                 },
                 "method": {
                   "$ref": "#/components/schemas/CheckInMethod"
+                },
+                "pass_holder_id": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PassHolderId",
+                      "description": "The marketplace pass-holder, if this is a cross-tenant pass check-in."
+                    }
+                  ]
                 },
                 "tenant_id": {
                   "$ref": "#/components/schemas/TenantId"
@@ -7472,6 +9074,60 @@
           }
         }
       },
+      "ApiResponse_Vec_TenantSummary": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Operator-facing summary of a tenant row. `created_at`/`deleted_at` are\nRFC3339 strings (the DB adapter formats them) so this DTO carries no chrono\ndependency.",
+              "required": [
+                "id",
+                "name",
+                "slug",
+                "plan",
+                "status",
+                "created_at"
+              ],
+              "properties": {
+                "created_at": {
+                  "type": "string"
+                },
+                "deleted_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "id": {
+                  "$ref": "#/components/schemas/TenantId"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "plan": {
+                  "$ref": "#/components/schemas/Plan"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "status": {
+                  "$ref": "#/components/schemas/TenantStatus"
+                }
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_Vec_Venue": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -7969,6 +9625,16 @@
           }
         }
       },
+      "BillingStatus": {
+        "type": "string",
+        "description": "A tenant's SaaS-billing lifecycle. Serializes to the exact snake_case strings\nthe `chk_billing_status` CHECK permits; a value outside this set makes the\nUPDATE fail at runtime, so the serde contract is pinned by a test.",
+        "enum": [
+          "active",
+          "past_due",
+          "suspended",
+          "canceled"
+        ]
+      },
       "BookViaPassRequest": {
         "type": "object",
         "description": "Request from the API to book via pass.",
@@ -8144,7 +9810,6 @@
         "required": [
           "id",
           "tenant_id",
-          "member_id",
           "venue_id",
           "method",
           "checked_in_at"
@@ -8176,10 +9841,29 @@
             "$ref": "#/components/schemas/CheckInId"
           },
           "member_id": {
-            "$ref": "#/components/schemas/MemberId"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MemberId",
+                "description": "The tenant member, if this is a member check-in. At least one of\n`member_id` / `pass_holder_id` is `Some` (DB `checkin_has_actor` CHECK,\nan OR). Exactly-one is a caller invariant enforced on the write path\n(the pass-booking settle in a later task), not by the DB."
+              }
+            ]
           },
           "method": {
             "$ref": "#/components/schemas/CheckInMethod"
+          },
+          "pass_holder_id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PassHolderId",
+                "description": "The marketplace pass-holder, if this is a cross-tenant pass check-in."
+              }
+            ]
           },
           "tenant_id": {
             "$ref": "#/components/schemas/TenantId"
@@ -8200,6 +9884,15 @@
         "enum": [
           "qr",
           "manual"
+        ]
+      },
+      "CheckinScanMode": {
+        "type": "string",
+        "description": "Which QR check-in scan directions a venue accepts.",
+        "enum": [
+          "staff_scan",
+          "member_scan",
+          "both"
         ]
       },
       "CreateBookingRequest": {
@@ -8243,7 +9936,6 @@
         "required": [
           "first_name",
           "last_name",
-          "email",
           "membership_type",
           "membership_start"
         ],
@@ -8253,8 +9945,11 @@
             "description": "How the member is scoped. Defaults to venue_scoped (requires venue_ids)."
           },
           "email": {
-            "type": "string",
-            "description": "Required: Cognito uses the email as the account username, and the\ninvitation email carrying the temporary password is the only handover\nchannel (staff never see the password)."
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional. In login mode Cognito uses the email as the account username;\nrequired in that mode and enforced in `register_member`. Roster-mode\nmembers have no login and may omit email entirely."
           },
           "first_name": {
             "type": "string"
@@ -8787,6 +10482,31 @@
           }
         }
       },
+      "MarketplaceStatus": {
+        "type": "object",
+        "description": "The marketplace-visibility state of a venue's catalog row, returned by the\nmarketplace-enable route.",
+        "required": [
+          "venue_id",
+          "is_visible",
+          "iziwellpass_enabled",
+          "credit_cost_per_session"
+        ],
+        "properties": {
+          "credit_cost_per_session": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "is_visible": {
+            "type": "boolean"
+          },
+          "iziwellpass_enabled": {
+            "type": "boolean"
+          },
+          "venue_id": {
+            "$ref": "#/components/schemas/VenueId"
+          }
+        }
+      },
       "MeQrRequest": {
         "type": "object",
         "description": "Body of POST /gms/v1/me/qr (mirrors lambdas/member MeQrBody).",
@@ -8816,6 +10536,19 @@
           "token": {
             "type": "string",
             "description": "`\"iwp1.<payload>.<mac>\"`. Valid for 300 seconds."
+          }
+        }
+      },
+      "MeWalkinCheckinRequest": {
+        "type": "object",
+        "description": "Body of POST /gms/v1/me/checkins/walkin (mirrors lambdas/member SelfWalkinBody).",
+        "required": [
+          "venue_id"
+        ],
+        "properties": {
+          "venue_id": {
+            "$ref": "#/components/schemas/VenueId",
+            "description": "Venue id (UUID) the member is walking into."
           }
         }
       },
@@ -8910,6 +10643,14 @@
         "type": "string",
         "format": "uuid",
         "description": "Unique identifier for a member (person enrolled at a venue)."
+      },
+      "MemberLoginMode": {
+        "type": "string",
+        "description": "Whether a tenant's members get a Cognito login (and thus `/me/*` self-service)\nor exist as roster-only rows with no identity.",
+        "enum": [
+          "login",
+          "roster"
+        ]
       },
       "MemberSubscription": {
         "type": "object",
@@ -9586,6 +11327,25 @@
         "format": "uuid",
         "description": "Unique identifier for a pass booking (cross-tenant consumer booking)."
       },
+      "PassBookingQrResponse": {
+        "type": "object",
+        "description": "Response of POST /platform/v1/pass/bookings/{bid}/qr (mirrors lambdas/passholder MintedQr).",
+        "required": [
+          "token",
+          "expires_at"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix seconds at which the token stops verifying."
+          },
+          "token": {
+            "type": "string",
+            "description": "`\"iwp1.<payload>.<mac>\"`: render this into a QR image client-side."
+          }
+        }
+      },
       "PassBookingResult": {
         "type": "object",
         "description": "Result of a successful cross-tenant booking.",
@@ -9642,6 +11402,19 @@
           "no_show",
           "cancelled"
         ]
+      },
+      "PassCheckinRequest": {
+        "type": "object",
+        "description": "Marketplace pass check-in request body (mirrors lambdas/checkin PassCheckInBody).",
+        "required": [
+          "qr_token"
+        ],
+        "properties": {
+          "qr_token": {
+            "type": "string",
+            "description": "Signed `PassBooking` QR token the pass-holder minted for their booking."
+          }
+        }
       },
       "PassHolder": {
         "type": "object",
@@ -9751,6 +11524,16 @@
           "unpaid"
         ]
       },
+      "Plan": {
+        "type": "string",
+        "description": "Tenant subscription tier. Persisted in `tenants.plan` (see the\n`chk_plan_valid` CHECK constraint, which permits exactly these four\nsnake_case values). Drives feature entitlement via `capabilities_for`.",
+        "enum": [
+          "free",
+          "starter",
+          "pro",
+          "enterprise"
+        ]
+      },
       "PlanKind": {
         "type": "string",
         "description": "Plan kind: time-based subscription or count-based entry pack.",
@@ -9780,6 +11563,26 @@
       "RecurrenceRule": {
         "type": "string",
         "description": "iCal RRULE string wrapper with basic validation.\n\nSupported MVP patterns:\n- `FREQ=DAILY`\n- `FREQ=WEEKLY;BYDAY=MO,WE,FR`\n- `FREQ=WEEKLY;BYDAY=SA;INTERVAL=2`\n\nFull RRULE parsing (EXDATE, BYMONTHDAY, etc.) deferred to IWP-029."
+      },
+      "RegisterOwnerRequest": {
+        "type": "object",
+        "description": "Request to create a new gym-owner identity (Spec B2). Identity only, no\nvenue data; the owner provisions their gym via the authenticated\n`/onboarding/venue` after logging in.",
+        "required": [
+          "email",
+          "first_name",
+          "last_name"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          }
+        }
       },
       "RegisterPassHolderRequest": {
         "type": "object",
@@ -10126,6 +11929,51 @@
           }
         }
       },
+      "SeatUsage": {
+        "type": "object",
+        "description": "Per-period seat usage for the overage meter.",
+        "required": [
+          "active_members",
+          "quota",
+          "overage"
+        ],
+        "properties": {
+          "active_members": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "overage": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "quota": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "SetMarketplaceRequest": {
+        "type": "object",
+        "description": "Request to toggle a venue's marketplace participation. `enabled` sets BOTH\n`is_visible` and `iziwellpass_enabled` together. `credit_cost_per_session`,\nwhen present, must be >= 1; when omitted the existing value is unchanged.",
+        "required": [
+          "enabled"
+        ],
+        "properties": {
+          "credit_cost_per_session": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
       "SetMemberAccessRequest": {
         "type": "object",
         "description": "Flip a member's access scope.",
@@ -10166,6 +12014,30 @@
               "$ref": "#/components/schemas/VenueId"
             },
             "description": "Full set of venues the staff member should be assigned to. This\nreplaces the existing assignments (not additive)."
+          }
+        }
+      },
+      "SetTenantPlanRequest": {
+        "type": "object",
+        "description": "Body of `PATCH /platform/v1/admin/tenants/{id}/plan`.",
+        "required": [
+          "plan"
+        ],
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/Plan"
+          }
+        }
+      },
+      "SetTenantStatusRequest": {
+        "type": "object",
+        "description": "Body of `PATCH /platform/v1/admin/tenants/{id}/status`.",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/TenantStatus"
           }
         }
       },
@@ -10248,6 +12120,56 @@
           "cancelled"
         ]
       },
+      "TenantBilling": {
+        "type": "object",
+        "description": "A tenant's persisted billing record. `provider`/external ids identify the\nsubscription at the billing provider; `grace_deadline` is set when entering\nPastDue. Timestamps are RFC3339 strings (the DB adapter formats them) so this\nDTO carries no chrono dependency.",
+        "required": [
+          "tenant_id",
+          "provider",
+          "status"
+        ],
+        "properties": {
+          "current_period_end": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "current_period_start": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "external_customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "external_subscription_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grace_deadline": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BillingStatus"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/TenantId"
+          }
+        }
+      },
       "TenantId": {
         "type": "string",
         "format": "uuid",
@@ -10269,6 +12191,106 @@
           },
           "slug": {
             "type": "string"
+          }
+        }
+      },
+      "TenantStatus": {
+        "type": "string",
+        "description": "A tenant's lifecycle status. Serializes to exactly the three strings the\n`chk_status_valid` CHECK constraint permits (`migrations/..000003:43-44`):\na value outside this set makes the `UPDATE tenants SET status=...` fail at\nruntime, so the serde contract is pinned by a test.",
+        "enum": [
+          "active",
+          "suspended",
+          "offboarding"
+        ]
+      },
+      "TenantSummary": {
+        "type": "object",
+        "description": "Operator-facing summary of a tenant row. `created_at`/`deleted_at` are\nRFC3339 strings (the DB adapter formats them) so this DTO carries no chrono\ndependency.",
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "plan",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "deleted_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "$ref": "#/components/schemas/TenantId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Plan"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TenantStatus"
+          }
+        }
+      },
+      "TenantUsage": {
+        "type": "object",
+        "description": "Per-tenant usage aggregate over an inclusive [from, to] date range. Summed\nacross ALL of the tenant's venues. This is the metered-usage source the\noperator health rollup surfaces and P4 billing will reuse.",
+        "required": [
+          "tenant_id",
+          "from",
+          "to",
+          "bookings_created",
+          "bookings_cancelled",
+          "checkins",
+          "pass_bookings",
+          "credits_earned",
+          "active_venues"
+        ],
+        "properties": {
+          "active_venues": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of distinct venues that reported any metric in the range."
+          },
+          "bookings_cancelled": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bookings_created": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "checkins": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "credits_earned": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "pass_bookings": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/TenantId"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
@@ -10504,6 +12526,19 @@
           }
         }
       },
+      "UpdateTenantSettingsRequest": {
+        "type": "object",
+        "description": "Body of `PATCH /gms/v1/tenant/settings`: the tenant's member-login policy.\n\nDeliberately a single required field (not an `Option`): the route is a full\nset of the policy, not a partial merge, so the caller always states the mode\nit wants. Enabling `Login` is feature-gated on `MemberSelfService` at the\nhandler; switching to `Roster` is always allowed (a downgrade is never\nblocked).",
+        "required": [
+          "member_login_mode"
+        ],
+        "properties": {
+          "member_login_mode": {
+            "$ref": "#/components/schemas/MemberLoginMode",
+            "description": "The member-login mode to set for this tenant."
+          }
+        }
+      },
       "UpdateVenueRequest": {
         "type": "object",
         "description": "Request to update an existing venue. All fields optional.",
@@ -10521,6 +12556,17 @@
             ],
             "format": "int32",
             "description": "Minutes before a class starts, after which a member may no longer self-cancel."
+          },
+          "checkin_scan_mode": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CheckinScanMode",
+                "description": "Which QR check-in scan directions this venue accepts."
+              }
+            ]
           },
           "city": {
             "type": [
@@ -10927,6 +12973,17 @@
             "format": "int32",
             "description": "Minutes before a class starts, after which a member may no longer\nself-cancel. Defaults to 120 when unset (see `cancellation_window_or_default`).\nA value of 0 means a member may cancel right up to the slot start time."
           },
+          "checkin_scan_mode": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CheckinScanMode",
+                "description": "Which QR check-in scan directions this venue accepts. Defaults to\n`StaffScan` when unset, so member self-check-in is strictly opt-in."
+              }
+            ]
+          },
           "locale": {
             "type": [
               "string",
@@ -10987,6 +13044,14 @@
     {
       "name": "onboarding",
       "description": "Venue onboarding & tenant provisioning (platform)"
+    },
+    {
+      "name": "billing",
+      "description": "SaaS billing webhook ingestion (platform)"
+    },
+    {
+      "name": "admin",
+      "description": "Operator tenant lifecycle (platform control plane)"
     },
     {
       "name": "venue",

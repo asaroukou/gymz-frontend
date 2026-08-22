@@ -66,7 +66,8 @@
     "delete": "Delete",
     "search": "Search",
     "loading": "Loading…",
-    "retry": "Retry"
+    "retry": "Retry",
+    "passVisitor": "Pass visitor"
   },
   "auth": {
     "footer": "Need help? Contact whoever gave you access.",
@@ -361,7 +362,6 @@
     "validation": {
       "firstNameRequired": "First name is required",
       "lastNameRequired": "Last name is required",
-      "emailRequired": "Email is required to send the invitation",
       "emailInvalid": "Enter a valid email address",
       "startRequired": "Start date is required"
     },

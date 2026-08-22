@@ -144,13 +144,11 @@ function AddMemberDialog() {
         .object({
           first_name: z.string().min(1, t('validation.firstNameRequired')),
           last_name: z.string().min(1, t('validation.lastNameRequired')),
-          // Required by the API: Cognito uses the email as the account username,
-          // and the invitation email carrying the temporary password is the only
-          // handover channel (staff never see it).
-          email: z
-            .string()
-            .min(1, t('validation.emailRequired'))
-            .pipe(z.email(t('validation.emailInvalid'))),
+          // Optional again per the Aug 22 contract: roster-mode members have no login
+          // and may omit email. The tenant's login mode is write-only (no read side),
+          // so the server enforces per mode; a login-mode 400 maps onto this field
+          // via applyFieldErrors.
+          email: z.email(t('validation.emailInvalid')).or(z.literal('')),
           phone: z.string(),
           membership_type: z.enum(MEMBERSHIP_TYPE_VALUES),
           membership_start: z.string().min(1, t('validation.startRequired')),
@@ -198,7 +196,7 @@ function AddMemberDialog() {
         data: {
           first_name: values.first_name,
           last_name: values.last_name,
-          email: values.email,
+          email: values.email || null,
           phone: values.phone || null,
           membership_type: values.membership_type,
           membership_start: values.membership_start,
@@ -355,7 +353,9 @@ function AddMemberDialog() {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="chain_wide">{t('addDialog.scopeChainWide')}</SelectItem>
-                      <SelectItem value="venue_scoped">{t('addDialog.scopeVenueScoped')}</SelectItem>
+                      <SelectItem value="venue_scoped">
+                        {t('addDialog.scopeVenueScoped')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

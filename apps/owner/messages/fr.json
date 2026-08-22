@@ -66,7 +66,8 @@
     "delete": "Supprimer",
     "search": "Rechercher",
     "loading": "Chargement…",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "passVisitor": "Visiteur pass"
   },
   "auth": {
     "footer": "Besoin d'aide ? Contactez la personne qui vous a donné accès.",
@@ -361,7 +362,6 @@
     "validation": {
       "firstNameRequired": "Le prénom est requis",
       "lastNameRequired": "Le nom est requis",
-      "emailRequired": "L'e-mail est requis pour envoyer l'invitation",
       "emailInvalid": "Saisissez une adresse e-mail valide",
       "startRequired": "La date de début est requise"
     },

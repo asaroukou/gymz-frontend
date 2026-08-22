@@ -38,7 +38,10 @@ function CheckInRow({
   timeZone: string | undefined;
 }) {
   const t = useTranslations('dashboard');
-  const name = member ? memberName(member) : checkIn.member_id;
+  const tCommon = useTranslations('common');
+  // member_id is null for marketplace pass-holder check-ins (pass_holder_id
+  // carries the actor); show a neutral label until pass UX exists.
+  const name = member ? memberName(member) : (checkIn.member_id ?? tCommon('passVisitor'));
   const isQr = checkIn.method === CheckInMethod.qr;
 
   return (
@@ -103,7 +106,7 @@ export function RecentCheckins({
               <CheckInRow
                 key={checkIn.id}
                 checkIn={checkIn}
-                member={memberById.get(checkIn.member_id)}
+                member={checkIn.member_id ? memberById.get(checkIn.member_id) : undefined}
                 timeZone={timeZone}
               />
             ))}

@@ -147,7 +147,7 @@ export function RecentCheckins({
               <CheckInRow
                 key={checkIn.id}
                 checkIn={checkIn}
-                member={memberById.get(checkIn.member_id)}
+                member={checkIn.member_id ? memberById.get(checkIn.member_id) : undefined}
                 staffByUserId={staffByUserId}
                 timeZone={timeZone}
               />

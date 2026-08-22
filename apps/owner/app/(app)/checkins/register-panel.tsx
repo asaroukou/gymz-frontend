@@ -46,9 +46,21 @@ type Translate = ReturnType<typeof useTranslations>;
 /**
  * Success toast with the member's name when it can be resolved from the loaded
  * member list (`checked-in member_id` → name), falling back to a name-less
- * confirmation for QR self check-ins of members not in the cache.
+ * confirmation for QR self check-ins of members not in the cache. A null
+ * member_id is a marketplace pass-holder check-in (pass_holder_id carries the
+ * actor); show the neutral pass-visitor label instead of doing an identity
+ * lookup until marketplace UX is scoped.
  */
-function checkinSuccessToast(t: Translate, memberById: Map<string, Member>, memberId: string) {
+function checkinSuccessToast(
+  t: Translate,
+  tCommon: Translate,
+  memberById: Map<string, Member>,
+  memberId: string | null | undefined,
+) {
+  if (!memberId) {
+    toast.success(t('success', { name: tCommon('passVisitor') }));
+    return;
+  }
   const member = memberById.get(memberId);
   toast.success(member ? t('success', { name: memberName(member) }) : t('successNoName'));
 }
@@ -63,6 +75,7 @@ interface QrValues {
 
 function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<string, Member> }) {
   const t = useTranslations('frontdesk');
+  const tCommon = useTranslations('common');
   const queryClient = useQueryClient();
   const checkInViaQr = useCheckInViaQr();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -98,7 +111,7 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
       { data: { qr_token: values.qr_token, venue_id: venueId } },
       {
         onSuccess: (res) => {
-          checkinSuccessToast(t, memberById, res.data.member_id);
+          checkinSuccessToast(t, tCommon, memberById, res.data.member_id);
           void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
           void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
           // Clear + refocus for rapid repeated scanning at the door.
@@ -200,6 +213,7 @@ function ManualForm({
   memberById: Map<string, Member>;
 }) {
   const t = useTranslations('frontdesk');
+  const tCommon = useTranslations('common');
   const queryClient = useQueryClient();
   const checkInManual = useCheckInManual();
 
@@ -231,7 +245,7 @@ function ManualForm({
       { data: { booking_id: values.booking_id, venue_id: venueId } },
       {
         onSuccess: (res) => {
-          checkinSuccessToast(t, memberById, res.data.member_id);
+          checkinSuccessToast(t, tCommon, memberById, res.data.member_id);
           void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
           void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
           form.reset({ member_id: '', booking_id: '' });
