@@ -259,4 +259,30 @@ describe('customFetch plane routing and empty bodies', () => {
     const res = await customFetch('/gms/v1/whatever', { method: 'POST', body: '{}' });
     expect(res).toBeUndefined();
   });
+
+  it('retries a control-plane 401 against the control-plane base, not the app base', async () => {
+    configureApi({
+      baseUrl: 'https://app.test/v1',
+      controlPlaneBaseUrl: 'https://ctrl.test/v1',
+      getToken: () => Promise.resolve('stale-token'),
+      onUnauthorized: () => Promise.resolve('fresh-token'),
+    });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: 'UNAUTHORIZED', message: 'expired' }, request_id: 'r' }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 202 }));
+
+    await customFetch('/platform/v1/onboarding/venue', { method: 'POST', body: '{}' });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe(
+      'https://ctrl.test/v1/platform/v1/onboarding/venue',
+    );
+    expect(vi.mocked(fetch).mock.calls[1]?.[0]).toBe(
+      'https://ctrl.test/v1/platform/v1/onboarding/venue',
+    );
+    const secondCallHeaders = new Headers(vi.mocked(fetch).mock.calls[1]?.[1]?.headers);
+    expect(secondCallHeaders.get('authorization')).toBe('Bearer fresh-token');
+  });
 });
