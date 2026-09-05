@@ -1530,6 +1530,24 @@ export interface ApiResponseVecStaff {
   request_id: string;
 }
 
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecString {
+  data: string[];
+  request_id: string;
+}
+
 export type ApiResponseVecTenantSummaryDataItemDeletedAt = string | null;
 
 /**
@@ -1649,8 +1667,8 @@ export interface ApiResponseVecVenueActivity {
 
 /**
  * One precomputed rollup row: metrics for a venue on a calendar day.
-Fields mirror the `venue_day_metrics` table (migration 018). Only the
-honestly-computed columns are shipped (no `no_shows`/`revenue_minor`).
+Fields mirror the `venue_day_metrics` table (migrations 018, 025). Only the
+honestly-computed columns are shipped (no `revenue_minor`).
  */
 export type ApiResponseVecVenueDayMetricDataItem = {
   bookings_cancelled: number;
@@ -1659,6 +1677,8 @@ export type ApiResponseVecVenueDayMetricDataItem = {
   /** SUM of pass_booking credits_spent for the day. */
   credits_earned: number;
   day: string;
+  /** Count of no-shows (swept confirmed pass_bookings past grace) for the day. */
+  no_shows: number;
   pass_bookings: number;
   tenant_id: TenantId;
   updated_at: string;
@@ -2168,6 +2188,18 @@ export type CreateVenueRequestAddressLine = string | null;
 
 export type CreateVenueRequestDescription = string | null;
 
+/**
+ * Optional geographic latitude in decimal degrees. Must be provided together
+with `longitude` and within [-90.0, 90.0].
+ */
+export type CreateVenueRequestLatitude = number | null;
+
+/**
+ * Optional geographic longitude in decimal degrees. Must be provided together
+with `latitude` and within [-180.0, 180.0].
+ */
+export type CreateVenueRequestLongitude = number | null;
+
 export type CreateVenueRequestPhone = string | null;
 
 /**
@@ -2178,6 +2210,12 @@ export interface CreateVenueRequest {
   city: string;
   country: string;
   description?: CreateVenueRequestDescription;
+  /** Optional geographic latitude in decimal degrees. Must be provided together
+with `longitude` and within [-90.0, 90.0]. */
+  latitude?: CreateVenueRequestLatitude;
+  /** Optional geographic longitude in decimal degrees. Must be provided together
+with `latitude` and within [-180.0, 180.0]. */
+  longitude?: CreateVenueRequestLongitude;
   name: string;
   phone?: CreateVenueRequestPhone;
   timezone?: string;
@@ -2530,6 +2568,18 @@ export interface MySubscriptionResponse {
 
 export type OnboardVenueRequestAddressLine = string | null;
 
+/**
+ * Optional geographic latitude in decimal degrees. Must be provided together
+with `longitude` and within [-90.0, 90.0].
+ */
+export type OnboardVenueRequestLatitude = number | null;
+
+/**
+ * Optional geographic longitude in decimal degrees. Must be provided together
+with `latitude` and within [-180.0, 180.0].
+ */
+export type OnboardVenueRequestLongitude = number | null;
+
 export type OnboardVenueRequestPhone = string | null;
 
 /**
@@ -2539,6 +2589,12 @@ export interface OnboardVenueRequest {
   address_line?: OnboardVenueRequestAddressLine;
   city: string;
   country: string;
+  /** Optional geographic latitude in decimal degrees. Must be provided together
+with `longitude` and within [-90.0, 90.0]. */
+  latitude?: OnboardVenueRequestLatitude;
+  /** Optional geographic longitude in decimal degrees. Must be provided together
+with `latitude` and within [-180.0, 180.0]. */
+  longitude?: OnboardVenueRequestLongitude;
   phone?: OnboardVenueRequestPhone;
   timezone?: string;
   venue_name: string;
@@ -2674,6 +2730,8 @@ Maps to `venue_catalog` table (platform-level, no RLS).
 Only includes venues where `is_visible = true AND iziwellpass_enabled = true`.
  */
 export type PaginatedApiResponseVecVenueCatalogEntryDataItem = {
+  /** Activity types this venue offers (denormalized from venue_activities). */
+  activities: string[];
   address_line?: PaginatedApiResponseVecVenueCatalogEntryDataItemAddressLine;
   amenities: string[];
   city: string;
@@ -3123,6 +3181,14 @@ export interface SetMemberVenuesRequest {
 }
 
 /**
+ * Request to replace a pass-holder's activity preference set.
+ */
+export interface SetPreferencesRequest {
+  /** Preferred activity types (snake_case ActivityType values). */
+  activities: string[];
+}
+
+/**
  * Request to replace a staff member's venue assignments.
  */
 export interface SetStaffVenuesRequest {
@@ -3235,10 +3301,11 @@ export interface TenantInfo {
 }
 
 /**
- * A tenant's lifecycle status. Serializes to exactly the three strings the
-`chk_status_valid` CHECK constraint permits (`migrations/..000003:43-44`):
-a value outside this set makes the `UPDATE tenants SET status=...` fail at
-runtime, so the serde contract is pinned by a test.
+ * A tenant's lifecycle status. Serializes to exactly the strings the
+`chk_status_valid` CHECK constraint permits (`migrations/..000003:44`, widened
+to add `purged` in `migrations/..000030`): a value outside this set makes the
+`UPDATE tenants SET status=...` fail at runtime, so the serde contract is
+pinned by a test.
  */
 export type TenantStatus = (typeof TenantStatus)[keyof typeof TenantStatus];
 
@@ -3247,6 +3314,7 @@ export const TenantStatus = {
   active: 'active',
   suspended: 'suspended',
   offboarding: 'offboarding',
+  purged: 'purged',
 } as const;
 
 export type TenantSummaryDeletedAt = string | null;
@@ -3436,6 +3504,18 @@ export type UpdateVenueRequestDescription = string | null;
 
 export type UpdateVenueRequestIsActive = boolean | null;
 
+/**
+ * Optional geographic latitude in decimal degrees. Must be provided together
+with `longitude` (within this request) and within [-90.0, 90.0].
+ */
+export type UpdateVenueRequestLatitude = number | null;
+
+/**
+ * Optional geographic longitude in decimal degrees. Must be provided together
+with `latitude` (within this request) and within [-180.0, 180.0].
+ */
+export type UpdateVenueRequestLongitude = number | null;
+
 export type UpdateVenueRequestName = string | null;
 
 export type UpdateVenueRequestPhone = string | null;
@@ -3461,6 +3541,12 @@ export interface UpdateVenueRequest {
   country?: UpdateVenueRequestCountry;
   description?: UpdateVenueRequestDescription;
   is_active?: UpdateVenueRequestIsActive;
+  /** Optional geographic latitude in decimal degrees. Must be provided together
+with `longitude` (within this request) and within [-90.0, 90.0]. */
+  latitude?: UpdateVenueRequestLatitude;
+  /** Optional geographic longitude in decimal degrees. Must be provided together
+with `latitude` (within this request) and within [-180.0, 180.0]. */
+  longitude?: UpdateVenueRequestLongitude;
   name?: UpdateVenueRequestName;
   phone?: UpdateVenueRequestPhone;
   timezone?: UpdateVenueRequestTimezone;
@@ -3542,6 +3628,8 @@ Maps to `venue_catalog` table (platform-level, no RLS).
 Only includes venues where `is_visible = true AND iziwellpass_enabled = true`.
  */
 export interface VenueCatalogEntry {
+  /** Activity types this venue offers (denormalized from venue_activities). */
+  activities: string[];
   address_line?: VenueCatalogEntryAddressLine;
   amenities: string[];
   city: string;
@@ -3564,8 +3652,8 @@ export interface VenueCatalogEntry {
 
 /**
  * One precomputed rollup row: metrics for a venue on a calendar day.
-Fields mirror the `venue_day_metrics` table (migration 018). Only the
-honestly-computed columns are shipped (no `no_shows`/`revenue_minor`).
+Fields mirror the `venue_day_metrics` table (migrations 018, 025). Only the
+honestly-computed columns are shipped (no `revenue_minor`).
  */
 export interface VenueDayMetric {
   bookings_cancelled: number;
@@ -3574,6 +3662,8 @@ export interface VenueDayMetric {
   /** SUM of pass_booking credits_spent for the day. */
   credits_earned: number;
   day: string;
+  /** Count of no-shows (swept confirmed pass_bookings past grace) for the day. */
+  no_shows: number;
   pass_bookings: number;
   tenant_id: TenantId;
   updated_at: string;
@@ -3842,6 +3932,10 @@ export type ListMarketplaceVenuesParams = {
    */
   venue_type?: string;
   /**
+   * Filter to venues offering this activity (snake_case ActivityType, e.g. yoga). Unknown value = 400.
+   */
+  activity?: string;
+  /**
    * Latitude for proximity search (with lng).
    */
   lat?: number;
@@ -3853,6 +3947,10 @@ export type ListMarketplaceVenuesParams = {
    * Proximity radius in km (with lat/lng).
    */
   radius_km?: number;
+  /**
+   * Free-text fuzzy search over venue name, city, and description (typo- and accent-tolerant). 2-100 chars; blank = no filter.
+   */
+  q?: string;
 };
 
 export type ListMarketplaceSlotsParams = {

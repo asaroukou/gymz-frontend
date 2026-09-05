@@ -57,6 +57,7 @@ import type {
   ApiResponseVecSchedule,
   ApiResponseVecScheduleSlot,
   ApiResponseVecStaff,
+  ApiResponseVecString,
   ApiResponseVecTenantSummary,
   ApiResponseVecVenue,
   ApiResponseVecVenueActivity,
@@ -106,6 +107,7 @@ import type {
   SetMarketplaceRequest,
   SetMemberAccessRequest,
   SetMemberVenuesRequest,
+  SetPreferencesRequest,
   SetStaffVenuesRequest,
   SetTenantPlanRequest,
   SetTenantStatusRequest,
@@ -8821,6 +8823,207 @@ export const useChangePlan = <TError = ErrorResponse, TContext = unknown>(
   TContext
 > => {
   const mutationOptions = getChangePlanMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Returns the pass-holder's preferred activity types as snake_case
+`ActivityType` strings (empty when none are set).
+ * @summary Get the caller's activity preferences.
+ */
+export const getGetPreferencesUrl = () => {
+  return `/platform/v1/pass/preferences`;
+};
+
+export const getPreferences = async (options?: RequestInit): Promise<ApiResponseVecString> => {
+  return customFetch<ApiResponseVecString>(getGetPreferencesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetPreferencesQueryKey = () => {
+  return [`/platform/v1/pass/preferences`] as const;
+};
+
+export const getGetPreferencesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPreferences>>,
+  TError = ErrorResponse,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreferences>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPreferencesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPreferences>>> = ({ signal }) =>
+    getPreferences({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPreferences>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPreferencesQueryResult = NonNullable<Awaited<ReturnType<typeof getPreferences>>>;
+export type GetPreferencesQueryError = ErrorResponse;
+
+export function useGetPreferences<
+  TData = Awaited<ReturnType<typeof getPreferences>>,
+  TError = ErrorResponse,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreferences>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof getPreferences>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPreferences<
+  TData = Awaited<ReturnType<typeof getPreferences>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreferences>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof getPreferences>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPreferences<
+  TData = Awaited<ReturnType<typeof getPreferences>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreferences>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get the caller's activity preferences.
+ */
+
+export function useGetPreferences<
+  TData = Awaited<ReturnType<typeof getPreferences>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreferences>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPreferencesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * The request set fully replaces any prior preferences. Unknown activity
+strings are rejected (400); duplicates are deduplicated first-seen.
+ * @summary Replace the caller's activity preferences.
+ */
+export const getSetPreferencesUrl = () => {
+  return `/platform/v1/pass/preferences`;
+};
+
+export const setPreferences = async (
+  setPreferencesRequest: SetPreferencesRequest,
+  options?: RequestInit,
+): Promise<ApiResponseVecString> => {
+  return customFetch<ApiResponseVecString>(getSetPreferencesUrl(), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setPreferencesRequest),
+  });
+};
+
+export const getSetPreferencesMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setPreferences>>,
+    TError,
+    { data: SetPreferencesRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setPreferences>>,
+  TError,
+  { data: SetPreferencesRequest },
+  TContext
+> => {
+  const mutationKey = ['setPreferences'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setPreferences>>,
+    { data: SetPreferencesRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return setPreferences(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetPreferencesMutationResult = NonNullable<Awaited<ReturnType<typeof setPreferences>>>;
+export type SetPreferencesMutationBody = SetPreferencesRequest;
+export type SetPreferencesMutationError = ErrorResponse;
+
+/**
+ * @summary Replace the caller's activity preferences.
+ */
+export const useSetPreferences = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setPreferences>>,
+      TError,
+      { data: SetPreferencesRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setPreferences>>,
+  TError,
+  { data: SetPreferencesRequest },
+  TContext
+> => {
+  const mutationOptions = getSetPreferencesMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };

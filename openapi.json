@@ -5790,6 +5790,15 @@
             }
           },
           {
+            "name": "activity",
+            "in": "query",
+            "description": "Filter to venues offering this activity (snake_case ActivityType, e.g. yoga). Unknown value = 400.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "lat",
             "in": "query",
             "description": "Latitude for proximity search (with lng).",
@@ -5817,6 +5826,15 @@
             "schema": {
               "type": "number",
               "format": "double"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Free-text fuzzy search over venue name, city, and description (typo- and accent-tolerant). 2-100 chars; blank = no filter.",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -6399,6 +6417,138 @@
           },
           "403": {
             "description": "Caller not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/platform/v1/pass/preferences": {
+      "get": {
+        "tags": [
+          "passholder"
+        ],
+        "summary": "Get the caller's activity preferences.",
+        "description": "Returns the pass-holder's preferred activity types as snake_case\n`ActivityType` strings (empty when none are set).",
+        "operationId": "get_preferences",
+        "responses": {
+          "200": {
+            "description": "Activity preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Vec_String"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "passholder"
+        ],
+        "summary": "Replace the caller's activity preferences.",
+        "description": "The request set fully replaces any prior preferences. Unknown activity\nstrings are rejected (400); duplicates are deduplicated first-seen.",
+        "operationId": "set_preferences",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPreferencesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Preferences replaced",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Vec_String"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (unknown activity)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -9074,6 +9224,25 @@
           }
         }
       },
+      "ApiResponse_Vec_String": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_Vec_TenantSummary": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -9298,7 +9467,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "One precomputed rollup row: metrics for a venue on a calendar day.\nFields mirror the `venue_day_metrics` table (migration 018). Only the\nhonestly-computed columns are shipped (no `no_shows`/`revenue_minor`).",
+              "description": "One precomputed rollup row: metrics for a venue on a calendar day.\nFields mirror the `venue_day_metrics` table (migrations 018, 025). Only the\nhonestly-computed columns are shipped (no `revenue_minor`).",
               "required": [
                 "tenant_id",
                 "venue_id",
@@ -9308,6 +9477,7 @@
                 "checkins",
                 "pass_bookings",
                 "credits_earned",
+                "no_shows",
                 "updated_at"
               ],
               "properties": {
@@ -9331,6 +9501,11 @@
                 "day": {
                   "type": "string",
                   "format": "date"
+                },
+                "no_shows": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Count of no-shows (swept confirmed pass_bookings past grace) for the day."
                 },
                 "pass_bookings": {
                   "type": "integer",
@@ -10227,6 +10402,22 @@
               "null"
             ]
           },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Optional geographic latitude in decimal degrees. Must be provided together\nwith `longitude` and within [-90.0, 90.0]."
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Optional geographic longitude in decimal degrees. Must be provided together\nwith `latitude` and within [-180.0, 180.0]."
+          },
           "name": {
             "type": "string"
           },
@@ -10891,6 +11082,22 @@
           "country": {
             "type": "string"
           },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Optional geographic latitude in decimal degrees. Must be provided together\nwith `longitude` and within [-90.0, 90.0]."
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Optional geographic longitude in decimal degrees. Must be provided together\nwith `latitude` and within [-180.0, 180.0]."
+          },
           "phone": {
             "type": [
               "string",
@@ -11156,12 +11363,20 @@
                 "city",
                 "country",
                 "amenities",
+                "activities",
                 "rating",
                 "total_reviews",
                 "credit_cost_per_session",
                 "updated_at"
               ],
               "properties": {
+                "activities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Activity types this venue offers (denormalized from venue_activities)."
+                },
                 "address_line": {
                   "type": [
                     "string",
@@ -12001,6 +12216,22 @@
           }
         }
       },
+      "SetPreferencesRequest": {
+        "type": "object",
+        "description": "Request to replace a pass-holder's activity preference set.",
+        "required": [
+          "activities"
+        ],
+        "properties": {
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Preferred activity types (snake_case ActivityType values)."
+          }
+        }
+      },
       "SetStaffVenuesRequest": {
         "type": "object",
         "description": "Request to replace a staff member's venue assignments.",
@@ -12196,11 +12427,12 @@
       },
       "TenantStatus": {
         "type": "string",
-        "description": "A tenant's lifecycle status. Serializes to exactly the three strings the\n`chk_status_valid` CHECK constraint permits (`migrations/..000003:43-44`):\na value outside this set makes the `UPDATE tenants SET status=...` fail at\nruntime, so the serde contract is pinned by a test.",
+        "description": "A tenant's lifecycle status. Serializes to exactly the strings the\n`chk_status_valid` CHECK constraint permits (`migrations/..000003:44`, widened\nto add `purged` in `migrations/..000030`): a value outside this set makes the\n`UPDATE tenants SET status=...` fail at runtime, so the serde contract is\npinned by a test.",
         "enum": [
           "active",
           "suspended",
-          "offboarding"
+          "offboarding",
+          "purged"
         ]
       },
       "TenantSummary": {
@@ -12592,6 +12824,22 @@
               "null"
             ]
           },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Optional geographic latitude in decimal degrees. Must be provided together\nwith `longitude` (within this request) and within [-90.0, 90.0]."
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Optional geographic longitude in decimal degrees. Must be provided together\nwith `latitude` (within this request) and within [-180.0, 180.0]."
+          },
           "name": {
             "type": [
               "string",
@@ -12772,12 +13020,20 @@
           "city",
           "country",
           "amenities",
+          "activities",
           "rating",
           "total_reviews",
           "credit_cost_per_session",
           "updated_at"
         ],
         "properties": {
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Activity types this venue offers (denormalized from venue_activities)."
+          },
           "address_line": {
             "type": [
               "string",
@@ -12862,7 +13118,7 @@
       },
       "VenueDayMetric": {
         "type": "object",
-        "description": "One precomputed rollup row: metrics for a venue on a calendar day.\nFields mirror the `venue_day_metrics` table (migration 018). Only the\nhonestly-computed columns are shipped (no `no_shows`/`revenue_minor`).",
+        "description": "One precomputed rollup row: metrics for a venue on a calendar day.\nFields mirror the `venue_day_metrics` table (migrations 018, 025). Only the\nhonestly-computed columns are shipped (no `revenue_minor`).",
         "required": [
           "tenant_id",
           "venue_id",
@@ -12872,6 +13128,7 @@
           "checkins",
           "pass_bookings",
           "credits_earned",
+          "no_shows",
           "updated_at"
         ],
         "properties": {
@@ -12895,6 +13152,11 @@
           "day": {
             "type": "string",
             "format": "date"
+          },
+          "no_shows": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Count of no-shows (swept confirmed pass_bookings past grace) for the day."
           },
           "pass_bookings": {
             "type": "integer",
