@@ -1,4 +1,57 @@
 {
+  "auth": {
+    "footer": "Need help? Contact whoever gave you access.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Sign in to reach your workspace.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "onboardedNotice": "Your venue is ready — sign in to continue.",
+      "forgotPassword": "Forgot password?",
+      "forgotPasswordSoon": "Coming soon",
+      "error": "Invalid email or password"
+    },
+    "newPassword": {
+      "title": "Choose a new password",
+      "subtitle": "Your account needs a new password to continue.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Save password",
+      "submitting": "Saving…",
+      "back": "Back to sign in",
+      "error": "Could not set new password"
+    },
+    "passwordChecklist": {
+      "label": "Password requirements",
+      "length": "At least 12 characters",
+      "uppercase": "One uppercase letter",
+      "lowercase": "One lowercase letter",
+      "digit": "One digit"
+    },
+    "errors": {
+      "emailInvalid": "Enter a valid email address",
+      "passwordRequired": "Password is required",
+      "confirmRequired": "Please confirm your password",
+      "passwordsMismatch": "Passwords do not match",
+      "passwordMin": "At least 12 characters",
+      "passwordLowercase": "At least one lowercase letter",
+      "passwordUppercase": "At least one uppercase letter",
+      "passwordDigit": "At least one digit",
+      "invalidCredentials": "Invalid email or password.",
+      "userNotConfirmed": "Your account isn't confirmed yet.",
+      "tooManyAttempts": "Too many attempts. Wait a few minutes before trying again.",
+      "passwordResetRequired": "Your password must be reset. Contact whoever gave you access.",
+      "invalidPassword": "This password doesn't meet the security rules.",
+      "codeMismatch": "Incorrect code. Check the 6 digits from your email.",
+      "codeExpired": "This code has expired. Request a new one.",
+      "usernameExists": "An account already exists with this email.",
+      "network": "Can't connect. Check your connection and try again."
+    }
+  },
   "shell": {
     "title": "IziWellPass Admin",
     "navClients": "Clients",

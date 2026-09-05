@@ -1,4 +1,57 @@
 {
+  "auth": {
+    "footer": "Besoin d'aide ? Contactez la personne qui vous a donné accès.",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Connectez-vous pour accéder à votre espace.",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "submitting": "Connexion…",
+      "onboardedNotice": "Votre établissement est prêt — connectez-vous pour continuer.",
+      "forgotPassword": "Mot de passe oublié ?",
+      "forgotPasswordSoon": "Bientôt disponible",
+      "error": "E-mail ou mot de passe incorrect"
+    },
+    "newPassword": {
+      "title": "Choisissez un nouveau mot de passe",
+      "subtitle": "Votre compte nécessite un nouveau mot de passe pour continuer.",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmez le mot de passe",
+      "submit": "Enregistrer le mot de passe",
+      "submitting": "Enregistrement…",
+      "back": "Retour à la connexion",
+      "error": "Impossible de définir le nouveau mot de passe"
+    },
+    "passwordChecklist": {
+      "label": "Exigences du mot de passe",
+      "length": "12 caractères minimum",
+      "uppercase": "Une majuscule",
+      "lowercase": "Une minuscule",
+      "digit": "Un chiffre"
+    },
+    "errors": {
+      "emailInvalid": "Saisissez une adresse e-mail valide",
+      "passwordRequired": "Le mot de passe est requis",
+      "confirmRequired": "Confirmez votre mot de passe",
+      "passwordsMismatch": "Les mots de passe ne correspondent pas",
+      "passwordMin": "12 caractères minimum",
+      "passwordLowercase": "Au moins une minuscule",
+      "passwordUppercase": "Au moins une majuscule",
+      "passwordDigit": "Au moins un chiffre",
+      "invalidCredentials": "E-mail ou mot de passe incorrect.",
+      "userNotConfirmed": "Votre compte n'est pas encore confirmé.",
+      "tooManyAttempts": "Trop de tentatives. Patientez quelques minutes avant de réessayer.",
+      "passwordResetRequired": "Votre mot de passe doit être réinitialisé. Contactez la personne qui vous a donné accès.",
+      "invalidPassword": "Ce mot de passe ne respecte pas les règles de sécurité.",
+      "codeMismatch": "Code incorrect. Vérifiez les 6 chiffres reçus par e-mail.",
+      "codeExpired": "Ce code a expiré. Renvoyez-en un nouveau.",
+      "usernameExists": "Un compte existe déjà avec cet e-mail.",
+      "network": "Connexion impossible. Vérifiez votre connexion et réessayez."
+    }
+  },
   "shell": {
     "title": "IziWellPass Admin",
     "navClients": "Clients",
