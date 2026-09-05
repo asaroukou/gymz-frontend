@@ -35,7 +35,13 @@ function ApiConfigurator({ children }: { children: ReactNode }) {
   const { getToken, client } = useAuth();
   useEffect(() => {
     configureApi({
-      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? '',
+      // Hardcoded on purpose: this is a control-plane-only app with no
+      // app-plane (gms) calls. Leaving `baseUrl` wired to an env var means an
+      // accidentally-present NEXT_PUBLIC_API_BASE_URL (e.g. from copying the
+      // owner app's .env) would silently point admin at the app-plane API
+      // instead of failing. An empty string makes resolveBaseUrl() reject any
+      // accidental app-plane call loudly instead.
+      baseUrl: '',
       controlPlaneBaseUrl: process.env.NEXT_PUBLIC_CONTROL_PLANE_BASE_URL ?? '',
       getToken,
       onUnauthorized: async () => {

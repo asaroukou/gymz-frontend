@@ -3,6 +3,7 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 
 import { unwrap } from '@iziwellpass/api/client';
 import { useGetTenant, useTenantBilling, useTenantUsage } from '@iziwellpass/api/generated';
@@ -17,7 +18,7 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { Stat, StatPanel } from '@iziwellpass/ui/components/stat';
 
 import { apiErrorMessage } from '@/lib/api-error';
-import { planBadgeVariant, statusBadgeVariant } from '@/lib/tenants';
+import { isForbidden, planBadgeVariant, statusBadgeVariant } from '@/lib/tenants';
 import { defaultUsageRange } from '@/lib/usage-range';
 
 import { TenantActions } from './tenant-actions';
@@ -27,6 +28,7 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' });
 export default function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('tenant');
+  const tTenants = useTranslations('tenants');
   const [range, setRange] = useState(() => defaultUsageRange());
   const [draft, setDraft] = useState(range);
 
@@ -39,6 +41,20 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
       <div className="space-y-4">
         <Skeleton className="h-10 w-72" />
         <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
+
+  if (isForbidden(tenantQuery.error)) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertTitle>{tTenants('forbiddenTitle')}</AlertTitle>
+          <AlertDescription>{tTenants('forbiddenBody')}</AlertDescription>
+        </Alert>
+        <Button variant="outline" asChild>
+          <Link href="/">{t('backToList')}</Link>
+        </Button>
       </div>
     );
   }
@@ -62,6 +78,20 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
   // Explicit TenantSummary boundary for Task 5's <TenantActions tenant={tenant} />.
   const tenant: TenantSummary = tenantQuery.data;
 
+  const copyTenantId = () => {
+    // `navigator.clipboard` is undefined in insecure contexts (http on a LAN
+    // IP); calling writeText() there throws synchronously and would send the
+    // page to the error boundary on a click, so guard its existence first.
+    if (!navigator.clipboard) {
+      toast.error(t('copyIdError'));
+      return;
+    }
+    navigator.clipboard.writeText(tenant.id).then(
+      () => toast.success(t('copyIdSuccess')),
+      () => toast.error(t('copyIdError')),
+    );
+  };
+
   const usage = usageQuery.isError ? undefined : usageQuery.data;
   // `billing` is a nullable field on a *successful* response (a tenant can have
   // no billing record yet), distinct from a real fetch error — both degrade to
@@ -84,7 +114,7 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
           <button
             type="button"
             className="underline decoration-dotted underline-offset-2"
-            onClick={() => void navigator.clipboard.writeText(tenant.id)}
+            onClick={copyTenantId}
             title={t('copyId')}
           >
             {tenant.id}

@@ -1,12 +1,15 @@
 import { z } from 'zod';
 
 /**
- * Matches the Cognito user pool password policy exactly (see
+ * Mirrors the *main* user pool's password policy (see
  * `gymz/cdk/lib/constructs/cognito.ts`): minLength 12, requireLowercase,
- * requireUppercase, requireDigits, requireSymbols: false. Shared between
- * signup (new account) and login's new-password challenge form so both
- * reject a password before it round-trips to Cognito and comes back as a
- * generic `InvalidPasswordException`.
+ * requireUppercase, requireDigits, requireSymbols: false. This app
+ * authenticates against a different (operator) pool, so this may drift from
+ * the operator pool's actual policy — treat it as a best-effort client-side
+ * check, not a guarantee. Shared with login's new-password challenge form
+ * (the only password-entry flow this app has) so it rejects a password
+ * before it round-trips to Cognito and comes back as a generic
+ * `InvalidPasswordException`.
  */
 
 /**
@@ -15,7 +18,8 @@ import { z } from 'zod';
  * this same list, so the two can never drift: editing a rule here changes
  * validation and the checklist together. Order is display order
  * (length → uppercase → lowercase → digit) and drives which message surfaces
- * first on submit. Each `key` also resolves to an i18n label under
+ * first on submit (on the new-password challenge form — this app has no
+ * signup flow). Each `key` also resolves to an i18n label under
  * `auth.passwordChecklist`.
  */
 export const PASSWORD_RULES = [

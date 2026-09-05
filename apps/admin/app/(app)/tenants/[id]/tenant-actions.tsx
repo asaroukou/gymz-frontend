@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import {
   getGetTenantQueryKey,
   getListTenantsQueryKey,
+  getTenantBillingQueryKey,
   useSetTenantPlan,
   useSetTenantStatus,
 } from '@iziwellpass/api/generated';
@@ -64,6 +65,9 @@ export function TenantActions({ tenant }: { tenant: TenantSummary }) {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: getListTenantsQueryKey() }),
       queryClient.invalidateQueries({ queryKey: getGetTenantQueryKey(tenant.id) }),
+      // TenantBilling200Data carries plan-dependent plan/seats, so a plan
+      // change must invalidate it too or the billing card goes stale.
+      queryClient.invalidateQueries({ queryKey: getTenantBillingQueryKey(tenant.id) }),
     ]);
 
   const planMutation = useSetTenantPlan({

@@ -46,21 +46,16 @@
       "tooManyAttempts": "Too many attempts. Wait a few minutes before trying again.",
       "passwordResetRequired": "Your password must be reset. Contact whoever gave you access.",
       "invalidPassword": "This password doesn't meet the security rules.",
-      "codeMismatch": "Incorrect code. Check the 6 digits from your email.",
-      "codeExpired": "This code has expired. Request a new one.",
-      "usernameExists": "An account already exists with this email.",
       "network": "Can't connect. Check your connection and try again."
     }
   },
   "shell": {
     "title": "IziWellPass Admin",
     "navClients": "Clients",
-    "account": "Account",
     "signOut": "Sign out",
     "openMenu": "Open menu"
   },
   "common": {
-    "loading": "Loading…",
     "back": "Back"
   },
   "system": {
@@ -117,6 +112,8 @@
     },
     "createdOn": "created on {date}",
     "copyId": "Copy id",
+    "copyIdSuccess": "Id copied",
+    "copyIdError": "Could not copy the id",
     "backToList": "Back to list",
     "notFoundTitle": "Client not found",
     "notFoundBody": "This client does not exist or could not be loaded.",

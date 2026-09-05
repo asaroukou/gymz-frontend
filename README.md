@@ -6,14 +6,15 @@ in the API repo:
 
 ## Layout
 
-| Path              | What                                                 |
-| ----------------- | ---------------------------------------------------- |
-| `apps/owner`      | Venue-owner GMS app (Next.js App Router, port 3000)  |
-| `packages/config` | Shared tsconfig / eslint presets                     |
-| `packages/ui`     | (SP1) shadcn components, Tailwind preset, app-shell  |
-| `packages/api`    | (SP2) Orval-generated client + React Query hooks     |
-| `packages/auth`   | (SP3) Cognito SRP auth, session, route guard         |
-| `openapi.json`    | Committed API contract copy (source: Rust repo)      |
+| Path              | What                                                                 |
+| ----------------- | -------------------------------------------------------------------- |
+| `apps/owner`      | Venue-owner GMS app (Next.js App Router, port 3011)                  |
+| `apps/admin`      | Platform-operator app (Next.js App Router, port 3012, control plane) |
+| `packages/config` | Shared tsconfig / eslint presets                                     |
+| `packages/ui`     | (SP1) shadcn components, Tailwind preset, app-shell                  |
+| `packages/api`    | (SP2) Orval-generated client + React Query hooks                     |
+| `packages/auth`   | (SP3) Cognito SRP auth, session, route guard                         |
+| `openapi.json`    | Committed API contract copy (source: Rust repo)                      |
 
 ## Commands
 

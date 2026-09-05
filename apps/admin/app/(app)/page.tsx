@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
@@ -36,7 +36,6 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' });
 
 export default function TenantsPage() {
   const t = useTranslations('tenants');
-  const router = useRouter();
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [page, setPage] = useState(0);
 
@@ -105,12 +104,16 @@ export default function TenantsPage() {
             {tenants.map((tenant) => (
               <TableRow
                 key={tenant.id}
-                onClick={() => router.push(`/tenants/${tenant.id}`)}
-                className={
-                  tenant.status === 'purged' ? 'cursor-pointer opacity-50' : 'cursor-pointer'
-                }
+                className={tenant.status === 'purged' ? 'opacity-50' : undefined}
               >
-                <TableCell className="font-medium">{tenant.name}</TableCell>
+                <TableCell className="font-medium">
+                  <Link
+                    href={`/tenants/${tenant.id}`}
+                    className="rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15"
+                  >
+                    {tenant.name}
+                  </Link>
+                </TableCell>
                 <TableCell className="text-muted-foreground">{tenant.slug}</TableCell>
                 <TableCell>
                   <Badge variant={planBadgeVariant(tenant.plan)}>{t(`plan.${tenant.plan}`)}</Badge>

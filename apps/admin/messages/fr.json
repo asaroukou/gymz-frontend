@@ -46,21 +46,16 @@
       "tooManyAttempts": "Trop de tentatives. Patientez quelques minutes avant de réessayer.",
       "passwordResetRequired": "Votre mot de passe doit être réinitialisé. Contactez la personne qui vous a donné accès.",
       "invalidPassword": "Ce mot de passe ne respecte pas les règles de sécurité.",
-      "codeMismatch": "Code incorrect. Vérifiez les 6 chiffres reçus par e-mail.",
-      "codeExpired": "Ce code a expiré. Renvoyez-en un nouveau.",
-      "usernameExists": "Un compte existe déjà avec cet e-mail.",
       "network": "Connexion impossible. Vérifiez votre connexion et réessayez."
     }
   },
   "shell": {
     "title": "IziWellPass Admin",
     "navClients": "Clients",
-    "account": "Compte",
     "signOut": "Se déconnecter",
     "openMenu": "Ouvrir le menu"
   },
   "common": {
-    "loading": "Chargement…",
     "back": "Retour"
   },
   "system": {
@@ -117,6 +112,8 @@
     },
     "createdOn": "créé le {date}",
     "copyId": "Copier l'identifiant",
+    "copyIdSuccess": "Identifiant copié",
+    "copyIdError": "Impossible de copier l'identifiant",
     "backToList": "Retour à la liste",
     "notFoundTitle": "Client introuvable",
     "notFoundBody": "Ce client n'existe pas ou n'a pas pu être chargé.",

@@ -18,8 +18,8 @@ export interface ResolvedAuthError {
  * flow-specific generic (`fallback`) so a novel Cognito exception never leaks
  * English prose to the operator.
  *
- * Shared by login, signup, confirm, and the new-password challenge so error
- * copy can't drift between them.
+ * Shared by login and the new-password challenge (this app has no signup or
+ * confirm flow) so error copy can't drift between them.
  */
 export function useAuthError(): (err: unknown, fallback: string) => ResolvedAuthError {
   const t = useTranslations('auth.errors');
