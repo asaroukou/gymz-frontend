@@ -12,7 +12,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "sync:openapi": "node scripts/sync-openapi.mjs"
+    "sync:openapi": "node scripts/sync-openapi.mjs",
+    "create:operator": "node packages/ops/src/create-operator.mjs"
   },
   "devDependencies": {
     "prettier": "^3.5.0",

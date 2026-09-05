@@ -1,0 +1,19 @@
+{
+  "name": "@iziwellpass/ops",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Platform operator tooling. Not consumed by any app — it owns the AWS SDK dependency so apps/* never pull it.",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.700.0"
+  },
+  "devDependencies": {
+    "@iziwellpass/config": "workspace:*",
+    "eslint": "^9.25.0",
+    "vitest": "^3.1.0"
+  }
+}
