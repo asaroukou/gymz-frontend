@@ -76,5 +76,30 @@
       "body": "La page que vous recherchez n'existe pas ou a été déplacée.",
       "home": "Retour à l'accueil"
     }
+  },
+  "tenants": {
+    "title": "Clients",
+    "subtitle": "Organisations clientes de la plateforme",
+    "filter": {
+      "all": "Tous",
+      "active": "Actifs",
+      "suspended": "Suspendus",
+      "offboarding": "Résiliation"
+    },
+    "colName": "Nom",
+    "colSlug": "Identifiant",
+    "colPlan": "Offre",
+    "colStatus": "Statut",
+    "colCreated": "Créé le",
+    "plan": { "free": "Gratuit", "starter": "Starter", "pro": "Pro", "enterprise": "Entreprise" },
+    "status": { "active": "Actif", "suspended": "Suspendu", "offboarding": "Résiliation" },
+    "errorTitle": "Chargement impossible",
+    "errorBody": "La liste des clients n'a pas pu être chargée.",
+    "forbiddenTitle": "Accès réservé",
+    "forbiddenBody": "Cette application est réservée aux opérateurs de la plateforme IziWellPass.",
+    "emptyTitle": "Aucun client",
+    "emptyBody": "Aucune organisation ne correspond à ce filtre.",
+    "prevPage": "Précédent",
+    "nextPage": "Suivant"
   }
 }

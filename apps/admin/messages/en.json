@@ -76,5 +76,30 @@
       "body": "The page you're looking for doesn't exist or has moved.",
       "home": "Back to home"
     }
+  },
+  "tenants": {
+    "title": "Clients",
+    "subtitle": "Client organizations on the platform",
+    "filter": {
+      "all": "All",
+      "active": "Active",
+      "suspended": "Suspended",
+      "offboarding": "Offboarding"
+    },
+    "colName": "Name",
+    "colSlug": "Slug",
+    "colPlan": "Plan",
+    "colStatus": "Status",
+    "colCreated": "Created",
+    "plan": { "free": "Free", "starter": "Starter", "pro": "Pro", "enterprise": "Enterprise" },
+    "status": { "active": "Active", "suspended": "Suspended", "offboarding": "Offboarding" },
+    "errorTitle": "Could not load",
+    "errorBody": "The client list could not be loaded.",
+    "forbiddenTitle": "Restricted access",
+    "forbiddenBody": "This application is restricted to IziWellPass platform operators.",
+    "emptyTitle": "No clients",
+    "emptyBody": "No organization matches this filter.",
+    "prevPage": "Previous",
+    "nextPage": "Next"
   }
 }
