@@ -141,5 +141,27 @@
     "billingSubscription": "External subscription",
     "billingPeriod": "Current period",
     "billingGrace": "Grace deadline"
+  },
+  "tenantActions": {
+    "plan": { "free": "Free", "starter": "Starter", "pro": "Pro", "enterprise": "Enterprise" },
+    "changePlan": "Change plan",
+    "confirmPlanTitle": "Change plan",
+    "confirmPlanBody": "Move {name} from the {from} plan to the {to} plan?",
+    "action": { "suspend": "Suspend", "reactivate": "Reactivate", "offboard": "Offboard" },
+    "confirmStatusTitle": {
+      "suspend": "Suspend client",
+      "reactivate": "Reactivate client",
+      "offboard": "Offboard client"
+    },
+    "confirmStatusBody": {
+      "suspend": "Suspend {name}? Its users lose access until reactivation.",
+      "reactivate": "Reactivate {name}? Its users regain access.",
+      "offboard": "Offboard {name}? The automatic purge will permanently erase its data. This remains reversible until the purge runs."
+    },
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "planChanged": "Plan updated",
+    "statusChanged": "Status updated",
+    "genericError": "The operation failed."
   }
 }

@@ -20,6 +20,8 @@ import { apiErrorMessage } from '@/lib/api-error';
 import { planBadgeVariant, statusBadgeVariant } from '@/lib/tenants';
 import { defaultUsageRange } from '@/lib/usage-range';
 
+import { TenantActions } from './tenant-actions';
+
 const dateFmt = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' });
 
 export default function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -98,7 +100,7 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
         </Alert>
       ) : null}
 
-      {/* TenantActionsSlot: Task 5 mounts <TenantActions tenant={tenant} /> here. */}
+      <TenantActions tenant={tenant} />
 
       <Card>
         <CardHeader>

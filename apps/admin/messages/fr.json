@@ -141,5 +141,27 @@
     "billingSubscription": "Abonnement externe",
     "billingPeriod": "Période en cours",
     "billingGrace": "Échéance de grâce"
+  },
+  "tenantActions": {
+    "plan": { "free": "Gratuit", "starter": "Starter", "pro": "Pro", "enterprise": "Entreprise" },
+    "changePlan": "Changer d'offre",
+    "confirmPlanTitle": "Changer d'offre",
+    "confirmPlanBody": "Passer {name} de l'offre {from} à l'offre {to} ?",
+    "action": { "suspend": "Suspendre", "reactivate": "Réactiver", "offboard": "Résilier" },
+    "confirmStatusTitle": {
+      "suspend": "Suspendre le client",
+      "reactivate": "Réactiver le client",
+      "offboard": "Résilier le client"
+    },
+    "confirmStatusBody": {
+      "suspend": "Suspendre {name} ? Ses utilisateurs perdront l'accès jusqu'à réactivation.",
+      "reactivate": "Réactiver {name} ? Ses utilisateurs retrouveront l'accès.",
+      "offboard": "Résilier {name} ? La purge automatique effacera définitivement ses données. Cette action reste réversible tant que la purge n'a pas eu lieu."
+    },
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "planChanged": "Offre mise à jour",
+    "statusChanged": "Statut mis à jour",
+    "genericError": "L'opération a échoué."
   }
 }
