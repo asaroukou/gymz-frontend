@@ -33,11 +33,6 @@ export function isForbidden(err: unknown): boolean {
 
 type BadgeVariant = 'default' | 'secondary' | 'success' | 'warning' | 'destructive' | 'outline';
 
-/**
- * `TenantStatus` (packages/api/src/generated/endpoints.schemas.ts) only ever
- * carries 'active' | 'suspended' | 'offboarding' — there is no 'purged' value
- * on the wire, so this switch is exhaustive without one.
- */
 export function statusBadgeVariant(status: TenantStatus): BadgeVariant {
   switch (status) {
     case 'active':
@@ -46,6 +41,8 @@ export function statusBadgeVariant(status: TenantStatus): BadgeVariant {
       return 'warning';
     case 'offboarding':
       return 'destructive';
+    case 'purged':
+      return 'outline';
   }
 }
 

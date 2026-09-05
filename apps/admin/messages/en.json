@@ -92,7 +92,12 @@
     "colStatus": "Status",
     "colCreated": "Created",
     "plan": { "free": "Free", "starter": "Starter", "pro": "Pro", "enterprise": "Enterprise" },
-    "status": { "active": "Active", "suspended": "Suspended", "offboarding": "Offboarding" },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "offboarding": "Offboarding",
+      "purged": "Purged"
+    },
     "errorTitle": "Could not load",
     "errorBody": "The client list could not be loaded.",
     "forbiddenTitle": "Restricted access",

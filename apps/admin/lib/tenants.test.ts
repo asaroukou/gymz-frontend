@@ -24,6 +24,7 @@ describe('statusBadgeVariant', () => {
     expect(statusBadgeVariant('active')).toBe('success');
     expect(statusBadgeVariant('suspended')).toBe('warning');
     expect(statusBadgeVariant('offboarding')).toBe('destructive');
+    expect(statusBadgeVariant('purged')).toBe('outline');
   });
 });
 

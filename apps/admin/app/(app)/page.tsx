@@ -106,7 +106,9 @@ export default function TenantsPage() {
               <TableRow
                 key={tenant.id}
                 onClick={() => router.push(`/tenants/${tenant.id}`)}
-                className="cursor-pointer"
+                className={
+                  tenant.status === 'purged' ? 'cursor-pointer opacity-50' : 'cursor-pointer'
+                }
               >
                 <TableCell className="font-medium">{tenant.name}</TableCell>
                 <TableCell className="text-muted-foreground">{tenant.slug}</TableCell>

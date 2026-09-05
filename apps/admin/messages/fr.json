@@ -92,7 +92,12 @@
     "colStatus": "Statut",
     "colCreated": "Créé le",
     "plan": { "free": "Gratuit", "starter": "Starter", "pro": "Pro", "enterprise": "Entreprise" },
-    "status": { "active": "Actif", "suspended": "Suspendu", "offboarding": "Résiliation" },
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "offboarding": "Résiliation",
+      "purged": "Purgé"
+    },
     "errorTitle": "Chargement impossible",
     "errorBody": "La liste des clients n'a pas pu être chargée.",
     "forbiddenTitle": "Accès réservé",
