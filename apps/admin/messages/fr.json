@@ -106,5 +106,40 @@
     "emptyBody": "Aucune organisation ne correspond à ce filtre.",
     "prevPage": "Précédent",
     "nextPage": "Suivant"
+  },
+  "tenant": {
+    "plan": { "free": "Gratuit", "starter": "Starter", "pro": "Pro", "enterprise": "Entreprise" },
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "offboarding": "Résiliation",
+      "purged": "Purgé"
+    },
+    "createdOn": "créé le {date}",
+    "copyId": "Copier l'identifiant",
+    "backToList": "Retour à la liste",
+    "notFoundTitle": "Client introuvable",
+    "notFoundBody": "Ce client n'existe pas ou n'a pas pu être chargé.",
+    "purgedTitle": "Client purgé",
+    "purgedBody": "Les données de ce client ont été effacées. Aucune action n'est possible.",
+    "usageTitle": "Utilisation",
+    "usageFrom": "Du",
+    "usageTo": "Au",
+    "usageApply": "Appliquer",
+    "usageError": "L'utilisation n'a pas pu être chargée.",
+    "usageVenues": "Salles actives",
+    "usageCheckins": "Check-ins",
+    "usageBookingsCreated": "Réservations créées",
+    "usageBookingsCancelled": "Réservations annulées",
+    "usagePassBookings": "Réservations pass",
+    "usageCredits": "Crédits gagnés",
+    "billingTitle": "Facturation",
+    "billingNone": "Aucune facturation",
+    "billingProvider": "Fournisseur",
+    "billingStatus": "Statut",
+    "billingCustomer": "Client externe",
+    "billingSubscription": "Abonnement externe",
+    "billingPeriod": "Période en cours",
+    "billingGrace": "Échéance de grâce"
   }
 }

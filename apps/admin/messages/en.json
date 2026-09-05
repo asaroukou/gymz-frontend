@@ -106,5 +106,40 @@
     "emptyBody": "No organization matches this filter.",
     "prevPage": "Previous",
     "nextPage": "Next"
+  },
+  "tenant": {
+    "plan": { "free": "Free", "starter": "Starter", "pro": "Pro", "enterprise": "Enterprise" },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "offboarding": "Offboarding",
+      "purged": "Purged"
+    },
+    "createdOn": "created on {date}",
+    "copyId": "Copy id",
+    "backToList": "Back to list",
+    "notFoundTitle": "Client not found",
+    "notFoundBody": "This client does not exist or could not be loaded.",
+    "purgedTitle": "Purged client",
+    "purgedBody": "This client's data has been erased. No action is possible.",
+    "usageTitle": "Usage",
+    "usageFrom": "From",
+    "usageTo": "To",
+    "usageApply": "Apply",
+    "usageError": "Usage could not be loaded.",
+    "usageVenues": "Active venues",
+    "usageCheckins": "Check-ins",
+    "usageBookingsCreated": "Bookings created",
+    "usageBookingsCancelled": "Bookings cancelled",
+    "usagePassBookings": "Pass bookings",
+    "usageCredits": "Credits earned",
+    "billingTitle": "Billing",
+    "billingNone": "No billing",
+    "billingProvider": "Provider",
+    "billingStatus": "Status",
+    "billingCustomer": "External customer",
+    "billingSubscription": "External subscription",
+    "billingPeriod": "Current period",
+    "billingGrace": "Grace deadline"
   }
 }
