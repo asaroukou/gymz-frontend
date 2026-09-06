@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { CalendarClockIcon, TriangleAlertIcon, UsersIcon } from 'lucide-react';
+import { CalendarClockIcon, PlusIcon, TriangleAlertIcon, UsersIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -10,7 +10,12 @@ import {
   AlertReference,
   AlertTitle,
 } from '@iziwellpass/ui/components/alert';
-import { Avatar, AvatarFallback, AvatarGroup } from '@iziwellpass/ui/components/avatar';
+import {
+  Avatar,
+  AvatarBadge,
+  AvatarFallback,
+  AvatarGroup,
+} from '@iziwellpass/ui/components/avatar';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
 import { Capacity } from '@iziwellpass/ui/components/capacity';
@@ -30,7 +35,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@iziwellpass/ui/components/dialog';
-import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from '@iziwellpass/ui/components/empty';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyMedia,
+  EmptyTitle,
+} from '@iziwellpass/ui/components/empty';
 import { Popover, PopoverContent, PopoverTrigger } from '@iziwellpass/ui/components/popover';
 import { Progress } from '@iziwellpass/ui/components/progress';
 import { Separator } from '@iziwellpass/ui/components/separator';
@@ -72,6 +83,7 @@ const BADGE_VARIANTS = [
   'info',
   'outline',
   'ghost',
+  'link',
 ] as const;
 
 const BADGE_LABELS: Record<string, string> = {
@@ -83,6 +95,7 @@ const BADGE_LABELS: Record<string, string> = {
   info: 'Invité',
   outline: 'Archivé',
   ghost: 'Aucun',
+  link: 'Voir la fiche',
 };
 
 const ALERT_VARIANTS = ['default', 'destructive', 'success', 'warning', 'info'] as const;
@@ -267,7 +280,7 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         title="État vide"
         note="Jamais un cul-de-sac : l’état vide dit toujours quoi faire ensuite."
       >
-        <Specimen name="Empty" signature="Media, Title, Description">
+        <Specimen name="Empty" signature="Media, Title, Description, Content">
           <Empty className="w-full">
             <EmptyMedia>
               <UsersIcon className="size-6" aria-hidden />
@@ -276,6 +289,12 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
             <EmptyDescription>
               Ajoutez un premier membre pour commencer à enregistrer les passages.
             </EmptyDescription>
+            <EmptyContent>
+              <Button>
+                <PlusIcon />
+                Ajouter un membre
+              </Button>
+            </EmptyContent>
           </Empty>
         </Specimen>
       </Section>
@@ -311,6 +330,31 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
               <AvatarFallback>FT</AvatarFallback>
             </Avatar>
           </AvatarGroup>
+        </Specimen>
+
+        <Specimen name="Avatar" signature="size=sm | default | lg">
+          <Avatar size="sm">
+            <AvatarFallback>AD</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarFallback>AD</AvatarFallback>
+          </Avatar>
+          <Avatar size="lg">
+            <AvatarFallback>AD</AvatarFallback>
+          </Avatar>
+        </Specimen>
+
+        <Specimen
+          name="Avatar"
+          signature="AvatarBadge, aux trois tailles"
+          note="La pastille se dimensionne d’après la taille de l’avatar qui la contient."
+        >
+          {(['sm', 'default', 'lg'] as const).map((size) => (
+            <Avatar key={size} size={size}>
+              <AvatarFallback>AD</AvatarFallback>
+              <AvatarBadge />
+            </Avatar>
+          ))}
         </Specimen>
       </Section>
 
