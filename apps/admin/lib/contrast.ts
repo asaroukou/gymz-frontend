@@ -31,12 +31,8 @@ function decodeGamma(channel: number): number {
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
 
-/** OKLCH to linear-light sRGB (Bjorn Ottosson's matrices). May be out of gamut. */
-function oklchToLinearSrgb(lightness: number, chroma: number, hueDeg: number): Rgb {
-  const hue = (hueDeg * Math.PI) / 180;
-  const a = chroma * Math.cos(hue);
-  const b = chroma * Math.sin(hue);
-
+/** OKLAB (Cartesian L, a, b) to linear-light sRGB (Bjorn Ottosson's matrices). May be out of gamut. */
+function oklabToLinearSrgb(lightness: number, a: number, b: number): Rgb {
   const lRoot = lightness + 0.3963377774 * a + 0.2158037573 * b;
   const mRoot = lightness - 0.1055613458 * a - 0.0638541728 * b;
   const sRoot = lightness - 0.0894841775 * a - 1.291485548 * b;
@@ -50,6 +46,14 @@ function oklchToLinearSrgb(lightness: number, chroma: number, hueDeg: number): R
     -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
     -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
   ];
+}
+
+/** OKLCH (polar L, C, H) to linear-light sRGB, via OKLAB. May be out of gamut. */
+function oklchToLinearSrgb(lightness: number, chroma: number, hueDeg: number): Rgb {
+  const hue = (hueDeg * Math.PI) / 180;
+  const a = chroma * Math.cos(hue);
+  const b = chroma * Math.sin(hue);
+  return oklabToLinearSrgb(lightness, a, b);
 }
 
 /** Reads a number that may be written as a percentage. */
@@ -67,7 +71,10 @@ function splitComponents(body: string): { parts: string[]; alpha: number } {
   const split_result = body.split('/');
   const head = split_result[0]!;
   const tail = split_result[1];
-  const parts = head.trim().split(/[\s,]+/).filter(Boolean) as string[];
+  const parts = head
+    .trim()
+    .split(/[\s,]+/)
+    .filter(Boolean) as string[];
   return { parts, alpha: readAlpha(tail) };
 }
 
@@ -92,16 +99,16 @@ function parseHex(input: string): ParsedColor | null {
 }
 
 /**
- * Parses hex, rgb()/rgba() (comma or space separated), color(srgb ...) and
- * oklch(). Returns null for anything else, including named colors: the preview
- * would rather show nothing than a wrong ratio.
+ * Parses hex, rgb()/rgba() (comma or space separated), color(srgb ...),
+ * oklch() and oklab(). Returns null for anything else, including named
+ * colors: the preview would rather show nothing than a wrong ratio.
  */
 export function parseCssColor(input: string): ParsedColor | null {
   const value = input.trim().toLowerCase();
   if (value === '') return null;
   if (value.startsWith('#')) return parseHex(value);
 
-  const match = /^(rgba?|oklch|color)\((.*)\)$/.exec(value);
+  const match = /^(rgba?|oklch|oklab|color)\((.*)\)$/.exec(value);
   if (!match) return null;
 
   const fn = match[1]!;
@@ -119,25 +126,40 @@ export function parseCssColor(input: string): ParsedColor | null {
 
   if (fn === 'rgb' || fn === 'rgba') {
     if (parts.length < 3) return null;
-    const channels = parts.slice(0, 3).map((part) =>
-      part.endsWith('%')
-        ? clamp01(Number.parseFloat(part) / 100)
-        : clamp01(Number.parseFloat(part) / 255),
-    );
+    const channels = parts
+      .slice(0, 3)
+      .map((part) =>
+        part.endsWith('%')
+          ? clamp01(Number.parseFloat(part) / 100)
+          : clamp01(Number.parseFloat(part) / 255),
+      );
     if (channels.some(Number.isNaN)) return null;
     // rgba(r, g, b, a) puts alpha in the fourth comma-separated slot.
     const alpha = parts.length > 3 ? readAlpha(parts[3]) : slashAlpha;
     return { rgb: [channels[0]!, channels[1]!, channels[2]!], alpha };
   }
 
-  // oklch(L C H)
   if (parts.length < 3) return null;
   const part0 = parts[0]!;
   const part1 = parts[1]!;
   const part2 = parts[2]!;
-  const lightness = part0.endsWith('%')
-    ? Number.parseFloat(part0) / 100
-    : Number.parseFloat(part0);
+  const lightness = part0.endsWith('%') ? Number.parseFloat(part0) / 100 : Number.parseFloat(part0);
+  const alpha = parts.length > 3 ? readAlpha(parts[3]) : slashAlpha;
+
+  if (fn === 'oklab') {
+    // oklab(L a b)
+    const a = Number.parseFloat(part1);
+    const b = Number.parseFloat(part2);
+    if ([lightness, a, b].some(Number.isNaN)) return null;
+
+    const linear = oklabToLinearSrgb(lightness, a, b);
+    return {
+      rgb: [encodeGamma(linear[0]!), encodeGamma(linear[1]!), encodeGamma(linear[2]!)],
+      alpha,
+    };
+  }
+
+  // oklch(L C H)
   const chroma = Number.parseFloat(part1);
   const hue = Number.parseFloat(part2);
   if ([lightness, chroma, hue].some(Number.isNaN)) return null;
@@ -145,7 +167,7 @@ export function parseCssColor(input: string): ParsedColor | null {
   const linear = oklchToLinearSrgb(lightness, chroma, hue);
   return {
     rgb: [encodeGamma(linear[0]!), encodeGamma(linear[1]!), encodeGamma(linear[2]!)],
-    alpha: parts.length > 3 ? readAlpha(parts[3]) : slashAlpha,
+    alpha,
   };
 }
 
@@ -166,11 +188,7 @@ export function contrastRatio(a: Rgb, b: Rgb): number {
 /** Source-over compositing, done in gamma-encoded space as browsers do it. */
 export function compositeOver(fg: Rgb, fgAlpha: number, bg: Rgb): Rgb {
   const a = clamp01(fgAlpha);
-  return [
-    fg[0] * a + bg[0] * (1 - a),
-    fg[1] * a + bg[1] * (1 - a),
-    fg[2] * a + bg[2] * (1 - a),
-  ];
+  return [fg[0] * a + bg[0] * (1 - a), fg[1] * a + bg[1] * (1 - a), fg[2] * a + bg[2] * (1 - a)];
 }
 
 export function wcagLevel(ratio: number): WcagLevel {

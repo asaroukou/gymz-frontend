@@ -63,6 +63,47 @@ describe('parseCssColor', () => {
   });
 });
 
+describe('parseCssColor, oklab', () => {
+  it('parses the oklab form a browser reports for color-mix(in oklab, ...)', () => {
+    // The --success/15 tint over --background, as Chrome resolves it.
+    expect(toHex(parseCssColor('oklab(0.9416 -0.0215748 0.0145422)')!.rgb)).toBe('#e1f1e2');
+  });
+
+  it('reads a slash alpha on the oklab form', () => {
+    expect(parseCssColor('oklab(0.9416 -0.0215748 0.0145422 / 0.5)')?.alpha).toBeCloseTo(0.5, 5);
+  });
+
+  it('agrees with the equivalent oklch value', () => {
+    // oklch(0.2161 0.0061 56) is --neutral-900; the same colour in Cartesian form.
+    const viaLch = parseCssColor('oklch(0.2161 0.0061 56)')!.rgb;
+    const viaLab = parseCssColor('oklab(0.2161 0.003410 0.005057)')!.rgb;
+    expect(toHex(viaLab)).toBe(toHex(viaLch));
+  });
+
+  it('returns null for a malformed oklab', () => {
+    expect(parseCssColor('oklab(0.9416 -0.02)')).toBeNull();
+  });
+});
+
+describe('measureContrast, status tints as the browser reports them', () => {
+  // Every one of these currently renders as the no-data glyph on /design/foundations.
+  const cases = [
+    ['oklch(0.4479 0.1083 151.33)', 'oklab(0.9416 -0.0215748 0.0145422)', 6.06, 'AA'],
+    ['oklch(0.4732 0.1247 46.2)', 'oklab(0.962825 0.00873529 0.0247234)', 6.35, 'AA'],
+    ['oklch(0.4882 0.2172 264.38)', 'oklab(0.92945 -0.00368292 -0.0305345)', 5.44, 'AA'],
+    ['oklch(0.8003 0.1821 151.71)', 'oklab(0.24491 -0.0217661 0.0155757)', 9.24, 'AAA'],
+    ['oklch(0.8369 0.1644 84.43)', 'oklab(0.2504 0.00467991 0.0271737)', 9.59, 'AAA'],
+    ['oklch(0.7137 0.1434 254.62)', 'oklab(0.23192 -0.00341851 -0.0181095)', 6.61, 'AA'],
+  ] as const;
+
+  it.each(cases)('measures %s on %s', (fg, bg, ratio, level) => {
+    const result = measureContrast(fg, bg);
+    expect(result).not.toBeNull();
+    expect(result!.ratio).toBeCloseTo(ratio, 1);
+    expect(result!.level).toBe(level);
+  });
+});
+
 describe('relativeLuminance', () => {
   it('anchors at the sRGB extremes', () => {
     expect(relativeLuminance(WHITE)).toBeCloseTo(1, 5);
