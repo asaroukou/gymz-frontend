@@ -59,15 +59,9 @@ import {
   TooltipTrigger,
 } from '@iziwellpass/ui/components/tooltip';
 
-import { primitivesInGroup } from '@/lib/design-registry';
 import { sectionNumber, type TocEntry } from '../_chrome/page-frame';
 import { Section } from '../_chrome/section';
 import { Specimen } from '../_chrome/specimen';
-
-export const DISPLAY_SECTIONS: readonly TocEntry[] = primitivesInGroup('display').map((entry) => ({
-  id: entry.id,
-  label: entry.title,
-}));
 
 const BADGE_VARIANTS = [
   'default',

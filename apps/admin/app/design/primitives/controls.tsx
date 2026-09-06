@@ -38,16 +38,10 @@ import { Switch } from '@iziwellpass/ui/components/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iziwellpass/ui/components/tabs';
 import { Textarea } from '@iziwellpass/ui/components/textarea';
 
-import { primitivesInGroup } from '@/lib/design-registry';
 import { Matrix } from '../_chrome/matrix';
 import { sectionNumber, type TocEntry } from '../_chrome/page-frame';
 import { Section } from '../_chrome/section';
 import { Specimen } from '../_chrome/specimen';
-
-export const CONTROL_SECTIONS: readonly TocEntry[] = primitivesInGroup('controls').map((entry) => ({
-  id: entry.id,
-  label: entry.title,
-}));
 
 const BUTTON_VARIANTS = [
   'default',
