@@ -16,7 +16,8 @@
    at the light/dark extremes and the whole neutral family warm.
    ============================================================ */
 
-:root {
+:root,
+.light {
   /* Warm "stone" neutral ramp. The two lightest steps carry
      imperceptible chroma; their hue is pinned to the warm family
      (~75) so the ramp never drifts cool/green if chroma is raised. */

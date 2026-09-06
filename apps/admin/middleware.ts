@@ -2,7 +2,9 @@ import { createAuthMiddleware } from '@iziwellpass/auth/middleware';
 
 export const middleware = createAuthMiddleware({
   loginPath: '/login',
-  publicPaths: ['/login'],
+  // '/design' is the design-system preview: components only, never data, and
+  // marked noindex. Prefix match, so this covers the whole group.
+  publicPaths: ['/login', '/design'],
 });
 
 export const config = {
