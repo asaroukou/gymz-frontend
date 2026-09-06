@@ -257,7 +257,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="select"
         number={number('select')}
         title="Liste déroulante"
-        note="Le contenu s’ouvre dans un portail : il se rend dans le thème ambiant de la page, donc en clair. Voir la note sur les portails."
+        note="Le contenu s’ouvre dans un portail : il se rend dans le thème ambiant de la page, donc en clair."
       >
         <Specimen name="Select" signature="défaut, avec valeur, désactivé">
           <div className="grid w-full gap-3">
@@ -299,7 +299,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="combobox"
         number={number('combobox')}
         title="Sélecteur avec recherche"
-        note="Textes par défaut en français. Une option désactivée affiche son motif."
+        note="Textes par défaut en français. Une option désactivée affiche son motif. Ouvre dans un portail, donc en clair."
       >
         <Specimen name="Combobox" signature="options, value, onValueChange">
           <ComboboxSpecimen />
@@ -373,7 +373,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="dropdown-menu"
         number={number('dropdown-menu')}
         title="Menu déroulant"
-        note="Ouvre dans un portail, donc en clair. Voir la note sur les portails."
+        note="Ouvre dans un portail, donc en clair."
       >
         <Specimen name="DropdownMenu" signature="Trigger, Label, Item, Separator">
           <DropdownMenu>

@@ -484,7 +484,7 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="tooltip"
         number={number('tooltip')}
         title="Infobulle"
-        note="Ombre popover, jamais l’ombre des vrais calques flottants."
+        note="Ombre popover, jamais l’ombre des vrais calques flottants. Ouvre dans un portail, donc en clair."
       >
         <Specimen name="Tooltip" signature="Provider, Trigger, Content">
           <TooltipProvider>
@@ -504,7 +504,7 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="sonner"
         number={number('sonner')}
         title="Notification"
-        note="Le Toaster est monté une seule fois par application, au niveau des providers. Le déclencheur ci-dessous n’affiche une notification que si un Toaster est présent : ouvrez-le depuis l’application, pas depuis cette page."
+        note="Le déclencheur fonctionne ici : le Toaster est monté dans les providers de l’application, qui enveloppent aussi cette page. La notification se rend au niveau du document, dans le thème clair ambiant, comme les autres calques portés."
       >
         <Specimen name="toast" signature="déclencheur">
           <Button variant="outline" onClick={() => toast('Passage enregistré à 06:32.')}>
