@@ -232,12 +232,14 @@
     "qr": {
       "label": "QR code or token",
       "placeholder": "Scan or enter the code",
-      "hint": "Present the QR to the reader, or enter the token, then validate.",
+      "hint": "Scan the QR or type the token, then submit. Bookings, walk-ins, and marketplace passes are all accepted.",
       "submit": "Validate",
       "submitting": "Validating…",
       "scanButton": "Scan with camera",
       "cameraError": "Camera access denied — use the text field instead.",
-      "dialogDescription": "Point the camera at the member's QR code."
+      "dialogDescription": "Point the camera at the member's QR code.",
+      "errorExpired": "This code has expired. Ask the member to generate a new one.",
+      "errorWrongVenue": "This code was issued for a different venue."
     },
     "manual": {
       "member": "Member",

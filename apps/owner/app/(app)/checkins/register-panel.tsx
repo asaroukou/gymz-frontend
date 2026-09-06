@@ -14,8 +14,10 @@ import {
   getListCheckInsQueryKey,
   useCheckInManual,
   useCheckInViaQr,
+  useCheckInWalkinQr,
+  usePassCheckin,
 } from '@iziwellpass/api/generated';
-import type { Member } from '@iziwellpass/api/schemas';
+import type { ApiResponseCheckIn, Member } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Button } from '@iziwellpass/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/components/card';
@@ -33,6 +35,7 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iziwellpass/ui/components/tabs';
 
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import { decodeQrToken, type DecodedQrToken } from '@/lib/qr-token';
 
 import { QrScannerDialog } from './qr-scanner-dialog';
 import type { QueryLike } from './use-frontdesk-data';
@@ -65,6 +68,28 @@ function checkinSuccessToast(
   toast.success(member ? t('success', { name: memberName(member) }) : t('successNoName'));
 }
 
+/**
+ * Explains a rejection the SERVER already made; never pre-empts the call.
+ * A counter tablet with a skewed clock must not be able to refuse a valid
+ * scan, so expiry is only ever used to phrase an error, not to skip a request.
+ */
+function qrErrorMessage(
+  t: Translate,
+  err: unknown,
+  decoded: DecodedQrToken | null,
+  venueId: string,
+): string {
+  if (decoded) {
+    if (decoded.expiresAt !== null && decoded.expiresAt * 1000 < Date.now()) {
+      return t('qr.errorExpired');
+    }
+    if (decoded.venueId !== null && decoded.venueId !== venueId) {
+      return t('qr.errorWrongVenue');
+    }
+  }
+  return apiErrorMessage(err, t('error'));
+}
+
 // ---------------------------------------------------------------------------
 // QR / token check-in
 // ---------------------------------------------------------------------------
@@ -78,7 +103,13 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
   const tCommon = useTranslations('common');
   const queryClient = useQueryClient();
   const checkInViaQr = useCheckInViaQr();
+  const checkInWalkinQr = useCheckInWalkinQr();
+  const passCheckin = usePassCheckin();
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // One flag for the whole tab: whichever endpoint a scan routes to, the field
+  // and button must lock for the in-flight window.
+  const isPending = checkInViaQr.isPending || checkInWalkinQr.isPending || passCheckin.isPending;
 
   const schema = useMemo(
     () => z.object({ qr_token: z.string().min(1, t('validation.qrRequired')) }),
@@ -105,29 +136,45 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
     // a fast second Enter (or a wedge-scanner double-fire) would otherwise
     // re-submit the still-visible token during the in-flight window and trip a
     // spurious "already checked in" error right after the success.
-    if (checkInViaQr.isPending) return;
-    // Payload kept byte-identical to the pre-redesign page: { qr_token, venue_id }.
-    checkInViaQr.mutate(
-      { data: { qr_token: values.qr_token, venue_id: venueId } },
-      {
-        onSuccess: (res) => {
-          checkinSuccessToast(t, tCommon, memberById, res.data.member_id);
-          void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
-          void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
-          // Clear + refocus for rapid repeated scanning at the door.
-          form.reset({ qr_token: '' });
-          inputRef.current?.focus();
-        },
-        onError: (err) => {
-          if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, t('error')));
-          }
-          // Keep the token visible, but refocus so continued scanning doesn't
-          // stall if a field error moved focus.
-          inputRef.current?.focus();
-        },
+    if (isPending) return;
+
+    const token = values.qr_token;
+    // Routing only — never a security decision. The payload is readable without
+    // a key; the server still verifies the MAC under the kind+tenant key.
+    const decoded = decodeQrToken(token);
+
+    const handlers = {
+      onSuccess: (res: ApiResponseCheckIn) => {
+        checkinSuccessToast(t, tCommon, memberById, res.data.member_id);
+        void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
+        void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
+        // Clear + refocus for rapid repeated scanning at the door.
+        form.reset({ qr_token: '' });
+        inputRef.current?.focus();
       },
-    );
+      onError: (err: unknown) => {
+        if (!applyFieldErrors(form, err)) {
+          toast.error(qrErrorMessage(t, err, decoded, venueId));
+        }
+        // Keep the token visible, but refocus so continued scanning doesn't
+        // stall if a field error moved focus.
+        inputRef.current?.focus();
+      },
+    };
+
+    if (decoded?.kind === 'pass_booking') {
+      // Marketplace pass token: venue-keyed, so it carries no venue_id of ours.
+      passCheckin.mutate({ data: { qr_token: token } }, handlers);
+      return;
+    }
+    if (decoded?.kind === 'walkin') {
+      checkInWalkinQr.mutate({ data: { qr_token: token, venue_id: venueId } }, handlers);
+      return;
+    }
+    // 'booking' — and every undecodable token. Falling back here (rather than
+    // refusing) keeps a future token format working exactly as it does today;
+    // the server produces the authoritative error.
+    checkInViaQr.mutate({ data: { qr_token: token, venue_id: venueId } }, handlers);
   };
 
   return (
@@ -158,14 +205,14 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
                       autoCapitalize="none"
                       autoCorrect="off"
                       spellCheck={false}
-                      disabled={checkInViaQr.isPending}
+                      disabled={isPending}
                       placeholder={t('qr.placeholder')}
                       className="h-11 pl-12"
                     />
                   </FormControl>
                 </div>
                 <QrScannerDialog
-                  disabled={checkInViaQr.isPending}
+                  disabled={isPending}
                   onClose={() => inputRef.current?.focus()}
                   onDetected={(token) => {
                     form.setValue('qr_token', token, { shouldDirty: true, shouldTouch: true });
@@ -177,8 +224,8 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={checkInViaQr.isPending} className="h-11 w-full">
-          {checkInViaQr.isPending ? t('qr.submitting') : t('qr.submit')}
+        <Button type="submit" disabled={isPending} className="h-11 w-full">
+          {isPending ? t('qr.submitting') : t('qr.submit')}
         </Button>
       </form>
     </Form>

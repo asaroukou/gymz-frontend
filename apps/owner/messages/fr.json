@@ -232,12 +232,14 @@
     "qr": {
       "label": "Code QR ou jeton",
       "placeholder": "Scannez ou saisissez le code",
-      "hint": "Présentez le QR au lecteur, ou saisissez le jeton, puis validez.",
+      "hint": "Présentez le QR au lecteur, ou saisissez le jeton, puis validez. Réservations, entrées libres et pass marketplace sont acceptés.",
       "submit": "Valider",
       "submitting": "Validation…",
       "scanButton": "Scanner avec la caméra",
       "cameraError": "Accès à la caméra refusé — utilisez le champ de texte.",
-      "dialogDescription": "Pointez la caméra vers le QR code du membre."
+      "dialogDescription": "Pointez la caméra vers le QR code du membre.",
+      "errorExpired": "Ce code a expiré. Demandez au membre d'en générer un nouveau.",
+      "errorWrongVenue": "Ce code a été généré pour un autre établissement."
     },
     "manual": {
       "member": "Membre",
