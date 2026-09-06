@@ -68,31 +68,31 @@ const TYPE_STEPS = [
   {
     name: 'display',
     spec: '24px / 600 / 1.2 / -0.6px',
-    className: 'text-2xl font-semibold tracking-tight',
+    className: 'text-2xl font-semibold tracking-tight leading-[1.2]',
     sample: 'Planning de la semaine',
   },
   {
     name: 'title',
     spec: '16px / 600 / 1.4',
-    className: 'text-base font-semibold',
+    className: 'text-base font-semibold leading-[1.4]',
     sample: 'Abonnements actifs',
   },
   {
     name: 'body',
     spec: '14px / 400 / 1.5',
-    className: 'text-sm',
+    className: 'text-sm leading-[1.5]',
     sample: 'Le membre a été enregistré. Sa carte est active jusqu’au 31 décembre.',
   },
   {
     name: 'label',
     spec: '14px / 500 / 1.3',
-    className: 'text-sm font-medium',
+    className: 'text-sm font-medium leading-[1.3]',
     sample: 'Moyen de paiement',
   },
   {
     name: 'mono',
     spec: '14px / 400 / 1.4, tabular-nums',
-    className: 'font-mono text-sm tabular-nums',
+    className: 'font-mono text-sm tabular-nums leading-[1.4]',
     sample: '06:30 · 14/18 · 25 000 FCFA',
   },
 ];
@@ -440,7 +440,7 @@ export default function FoundationsPage() {
           signature="120ms ease-out"
           note="Changements de couleur, de fond et d’ombre au survol ou au basculement. Survolez le bloc."
         >
-          <div className="size-24 rounded-xl border border-border bg-card transition-colors duration-150 ease-out hover:bg-accent" />
+          <div className="size-24 rounded-xl border border-border bg-card transition-colors duration-[120ms] ease-out hover:bg-accent" />
         </Specimen>
 
         <Specimen
