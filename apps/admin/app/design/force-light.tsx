@@ -19,17 +19,28 @@ export function ForceLight() {
     const wasDark = root.classList.contains('dark');
     const previousColorScheme = root.style.colorScheme;
 
-    root.classList.remove('dark');
-    root.style.colorScheme = 'light';
-
-    // next-themes re-applies the class if the OS preference flips while the
-    // page is open. Keep light pinned for as long as we are on this route.
-    const observer = new MutationObserver(() => {
+    const pinLight = () => {
       if (root.classList.contains('dark')) {
         root.classList.remove('dark');
       }
-    });
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+      if (root.style.colorScheme !== 'light') {
+        root.style.colorScheme = 'light';
+      }
+    };
+
+    pinLight();
+
+    // next-themes re-applies both the class and color-scheme if the OS
+    // preference flips while the page is open, so both are pinned here, not
+    // just the class; color-scheme alone drives native UA styling (scrollbars,
+    // form controls), and leaving it dark would be the same "light pane is a
+    // lie" failure this mechanism exists to prevent. The two guards inside
+    // pinLight are load-bearing: writing `style` from inside a `style`
+    // observer would otherwise queue another record on every tick, so a
+    // callback that finds nothing to change must mutate nothing for the
+    // chain to terminate.
+    const observer = new MutationObserver(pinLight);
+    observer.observe(root, { attributes: true, attributeFilter: ['class', 'style'] });
 
     return () => {
       observer.disconnect();
