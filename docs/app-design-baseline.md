@@ -133,11 +133,12 @@ Phase 2, items 1 + 7 + 2 first (control sizing, shell gaps, responsive Table) â€
 
 ### What the audit confirmed as healthy
 
-- **Every token pair on the foundations page passes AA in both themes.** 18 measured pairs on `/design/foundations`, band tally AA 7 / AAA 11, zero failures. Notably the three status tints, which are what Batch B2 was about, measure: success 6.06:1, warning 6.35:1, info 5.44:1 on the light `/15` tint; success 9.24:1, warning 9.59:1, info 6.61:1 on the dark. **Batch B2's AA remediation is confirmed effective**, which was previously asserted but never measured.
+- **Every token pair on the foundations page passes AA in both themes.** 18 measured pairs on `/design/foundations`, band tally AA 7 / AAA 11, zero failures. Notably the three status tints, which are what Batch B2 was about, measure: success 5.99:1, warning 6.28:1, info 5.39:1 on the light `/15` tint; success 8.75:1, warning 9.00:1, info 6.36:1 on the dark. **Batch B2's AA remediation is confirmed effective**, which was previously asserted but never measured.
 - **Batch A1's responsive touch sizing works as intended.** Measured on `/design/primitives`: default-size buttons render 44px at a 375px viewport and 36px at 1280px. The `md`-breakpoint shell collapse and its 44px menu trigger also check out on `/design/shell`.
 
 ### Defects the preview had in itself, now fixed
 
 - `parseCssColor` didn't handle the `oklab()` form Chrome returns for `color-mix(in oklab, ...)`, so the three status-tint contrast rows rendered a no-data glyph in both themes: the audit surface was silently blind at exactly the pairs that mattered most. Fixed in `apps/admin/lib/contrast.ts` (commit `78f31cb`). The general lesson: a measuring instrument that renders "no data" identically to "cannot parse" hides its own failures.
+- The six status-tint figures above were first measured from a stand-in: `tint()` on `/design/foundations` built its swatch by interpolating in OKLab against the pane background, but Tailwind v4 actually compiles a `/15` opacity modifier to an alpha-0.15 color composited over the surface in gamma-encoded sRGB, a different operation. The preview and its tests were corrected to measure the real composite; the figures above are the corrected values, still AA/AAA throughout. This is the second time this surface's own instrument was wrong in a way that looked like data.
 - The design route bar overflowed at 375px, putting two of five routes off-screen and giving every page a horizontal scrollbar. Fixed by wrapping (commit `4d5fa0c`).
 - Specimen panes had the default `min-width: auto` as grid items, so wide specimen content was clipped and unreachable instead of scrolling inside the `Table` primitive's own scroller. Fixed with `min-w-0` (commit `f01a777`).

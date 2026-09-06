@@ -6,10 +6,20 @@ import type { ReactNode } from 'react';
  * (see force-light.tsx) it is also the only place where `dark:` utilities match.
  * The inner div paints `bg-background` so each pane shows its own surface
  * rather than the greige desk behind the chrome.
+ *
+ * `color-scheme` is set alongside the class, per pane, for the same reason
+ * force-light.tsx pins it on `<html>`: the class alone re-declares the token
+ * custom properties, but native UA chrome (number input spinners, the Table
+ * primitive's scrollbar) follows `color-scheme`, not the class. Leaving the
+ * dark pane's `color-scheme` at the page's `light` would be the same
+ * "light pane is a lie" failure force-light.tsx exists to prevent, mirrored.
  */
 function Pane({ label, dark, children }: { label: string; dark?: boolean; children: ReactNode }) {
   return (
-    <div className={dark ? 'dark min-w-0' : 'min-w-0'}>
+    <div
+      className={dark ? 'dark min-w-0' : 'min-w-0'}
+      style={{ colorScheme: dark ? 'dark' : 'light' }}
+    >
       <div className="flex h-full flex-col bg-background">
         <p className="border-b border-border px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
           {label}
