@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { MoreHorizontalIcon, PlusIcon, SearchIcon } from 'lucide-react';
 
@@ -112,6 +112,45 @@ function ComboboxSpecimen() {
   );
 }
 
+/**
+ * `Specimen` renders its children twice (light pane, dark pane) from the same
+ * element, so a literal `id` string would collide across the two mounts and
+ * `label[for]`/`getElementById` would resolve to the first match only. `useId`
+ * returns a distinct value per mount, so this must be a component, not raw JSX.
+ */
+function LabelSpecimen() {
+  const id = useId();
+  return (
+    <div className="grid w-full gap-1.5">
+      <Label htmlFor={id}>Salle de rattachement</Label>
+      <Input id={id} defaultValue="Salle du Plateau" />
+    </div>
+  );
+}
+
+function CheckboxSpecimen() {
+  const invitationId = useId();
+  const renewalId = useId();
+  const multiVenueId = useId();
+
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <Checkbox id={invitationId} />
+        <Label htmlFor={invitationId}>Envoyer l’invitation par e-mail</Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <Checkbox id={renewalId} defaultChecked />
+        <Label htmlFor={renewalId}>Renouvellement automatique</Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <Checkbox id={multiVenueId} disabled />
+        <Label htmlFor={multiVenueId}>Accès multi-salles</Label>
+      </div>
+    </div>
+  );
+}
+
 export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) {
   const number = (id: string) => sectionNumber(entries, id);
 
@@ -202,10 +241,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         note="14px, poids 500, casse phrase. Jamais en majuscules dans le produit ; les majuscules de cette page appartiennent au chrome."
       >
         <Specimen name="Label" signature="associé à un champ">
-          <div className="grid w-full gap-1.5">
-            <Label htmlFor="specimen-venue">Salle de rattachement</Label>
-            <Input id="specimen-venue" defaultValue="Salle du Plateau" />
-          </div>
+          <LabelSpecimen />
         </Specimen>
       </Section>
 
@@ -281,20 +317,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
 
       <Section id="checkbox" number={number('checkbox')} title="Case à cocher">
         <Specimen name="Checkbox" signature="décochée, cochée, désactivée">
-          <div className="flex w-full flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <Checkbox id="specimen-cb-1" />
-              <Label htmlFor="specimen-cb-1">Envoyer l’invitation par e-mail</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox id="specimen-cb-2" defaultChecked />
-              <Label htmlFor="specimen-cb-2">Renouvellement automatique</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox id="specimen-cb-3" disabled />
-              <Label htmlFor="specimen-cb-3">Accès multi-salles</Label>
-            </div>
-          </div>
+          <CheckboxSpecimen />
         </Specimen>
       </Section>
 
@@ -321,7 +344,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
                 ))}
               </InputOTPGroup>
             </InputOTP>
-            <InputOTP maxLength={6} value="0630" onChange={() => undefined}>
+            <InputOTP maxLength={6} value="062318" onChange={() => undefined}>
               <InputOTPGroup>
                 {[0, 1, 2, 3, 4, 5].map((index) => (
                   <InputOTPSlot key={index} index={index} />
