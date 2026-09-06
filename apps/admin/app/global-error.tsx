@@ -7,8 +7,8 @@ import { useEffect } from 'react';
  * layout, so it cannot rely on the layout's <html>/<body>, on the next-intl
  * provider (no `useTranslations` available here), or on the app fonts / Tailwind
  * being present — hence its own document shell, hardcoded French copy, and
- * inline styles only. Colors mirror the v2 tokens (greige desk `--backdrop`,
- * warm ink primary) so the fallback still reads as IziWellPass. Keep this file
+ * inline styles only. Colors mirror the v3 tokens (paper surface, green ink
+ * primary) so the fallback still reads as IziWellPass. Keep this file
  * self-contained: importing app modules risks re-triggering the same failure.
  */
 export default function GlobalError({
@@ -34,7 +34,7 @@ export default function GlobalError({
           padding: '1rem',
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-          backgroundColor: '#d6d2cc',
+          backgroundColor: '#fffefd',
           color: '#1c1917',
         }}
       >
@@ -84,7 +84,7 @@ export default function GlobalError({
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 color: '#fafaf9',
-                backgroundColor: '#1c1917',
+                backgroundColor: '#0c3d22',
                 border: 'none',
                 borderRadius: '9999px',
                 cursor: 'pointer',

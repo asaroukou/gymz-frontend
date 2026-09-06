@@ -150,9 +150,9 @@ export function AppShell({
   };
 
   return (
-    <div className="flex min-h-screen bg-backdrop">
-      {/* Desktop sidebar (transparent on the desk) */}
-      <aside className="hidden w-[248px] shrink-0 flex-col md:flex">
+    <div className="flex min-h-screen bg-background">
+      {/* Desktop sidebar: a hairline, not a desk, separates it from the content */}
+      <aside className="hidden w-[248px] shrink-0 flex-col border-r md:flex">
         <div className="flex h-[72px] items-center">
           <Wordmark title={title} />
         </div>
@@ -165,9 +165,9 @@ export function AppShell({
         />
       </aside>
 
-      {/* Content column */}
-      <div className="flex min-w-0 flex-1 flex-col p-3 pl-0 max-md:pl-3">
-        <div className="flex min-h-full flex-1 flex-col overflow-hidden rounded-2xl border bg-background shadow-xs">
+      {/* Content column: the page is the sheet, so no card, radius or shadow */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-full flex-1 flex-col">
           {/* Topbar */}
           <header className="flex h-[60px] shrink-0 items-center gap-3 border-b px-6">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -183,7 +183,7 @@ export function AppShell({
               </SheetTrigger>
               <SheetContent
                 side="left"
-                className="w-[248px] bg-backdrop p-0"
+                className="w-[248px] bg-background p-0"
                 aria-describedby={undefined}
               >
                 <SheetTitle asChild>

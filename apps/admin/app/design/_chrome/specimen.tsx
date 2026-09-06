@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
  * custom properties for its subtree, and because the ambient page is light
  * (see force-light.tsx) it is also the only place where `dark:` utilities match.
  * The inner div paints `bg-background` so each pane shows its own surface
- * rather than the greige desk behind the chrome.
+ * rather than the muted field behind the chrome.
  *
  * `color-scheme` is set alongside the class, per pane, for the same reason
  * force-light.tsx pins it on `<html>`: the class alone re-declares the token

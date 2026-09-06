@@ -1,15 +1,15 @@
 ---
 name: IziWellPass Owner App
-description: Warm ink on greige — the calm operating surface for wellness venues
+description: Green ink on paper — the calm operating surface for wellness venues
 # Color space is OKLCH (the runtime token layer is OKLCH throughout). Values
 # round-trip to the documented hex, so the AA ratios below still hold. Hex
 # equivalents are named in prose for human reference.
 colors:
+  encre-verte: 'oklch(0.32 0.07 155)'
+  encre-verte-hover: 'oklch(0.36 0.07 155)'
   encre-chaude: 'oklch(0.2161 0.0061 56)'
-  encre-hover: 'oklch(0.2685 0.0063 34)'
   papier: 'oklch(0.9848 0.0013 75)'
   surface: 'oklch(0.9971 0.0018 78)'
-  grege: 'oklch(0.8653 0.0093 78)'
   pierre-100: 'oklch(0.9699 0.0013 75)'
   pierre-200: 'oklch(0.9232 0.0026 49)'
   pierre-300: 'oklch(0.8687 0.0043 56)'
@@ -22,7 +22,7 @@ colors:
   statut-succes: 'oklch(0.6271 0.1699 149.21)'
   statut-attention: 'oklch(0.7686 0.1647 70.08)'
   statut-info: 'oklch(0.5461 0.2152 262.88)'
-  chart-ink: 'oklch(0.2161 0.0061 56)'
+  chart-ink: 'oklch(0.32 0.07 155)'
   chart-stone: 'oklch(0.5534 0.0116 58)'
   chart-grid: 'oklch(0.9232 0.0026 49)'
   chart-track: 'oklch(0.9699 0.0013 75)'
@@ -122,8 +122,8 @@ This system explicitly rejects the four lanes named in PRODUCT.md: the generic S
 
 **Key Characteristics:**
 
-- Monochrome warmth: a single near-black primary on a re-anchored warm "stone" neutral scale; no cool greys anywhere.
-- The desk-and-sheet layout: greige backdrop (`#d6d2cc`) behind a white, `16px`-rounded app surface with a hairline border.
+- One green ink: a single near-black green accent on a warm "stone" neutral scale; no cool greys anywhere.
+- A single sheet of paper: the app is one near-white surface divided by 1px hairlines. There is no desk and no floating card.
 - Pill-forward shape language: every control (button, input, tab, nav item, search) is fully rounded; surfaces are `16px`.
 - Numerals are mono: times (`06:30`), capacity (`4/4`), amounts, codes, and references always render in Geist Mono with tabular figures.
 - French-first, sentence case, operational voice; meaning carried by Lucide icons and badge color, never emoji.
@@ -131,17 +131,18 @@ This system explicitly rejects the four lanes named in PRODUCT.md: the generic S
 
 ## 2. Colors
 
-A warm monochrome palette: one ink, one stone scale, and four semantic status colors used strictly for meaning. The runtime color space is **OKLCH** throughout — it keeps chroma low at the light and dark extremes and holds the whole neutral family warm. Hex equivalents below are the human reference; the OKLCH values in the frontmatter are canonical.
+A restrained palette: one green ink, one warm stone scale, and four semantic status colors used strictly for meaning. The runtime color space is **OKLCH** throughout — it keeps chroma low at the light and dark extremes and holds the whole neutral family warm. Hex equivalents below are the human reference; the OKLCH values in the frontmatter are canonical.
 
 ### Primary
 
-- **Encre chaude** (#1c1917): the single accent. Primary buttons, the active nav pill, toggles pressed on, focus rings. Warm near-black — never pure `#000`. In dark mode the ink inverts to **Papier** (#fafaf9) on near-black surfaces.
-- **Encre hover** (#292524): the only hover shift for solid ink surfaces — one step lighter, nothing else changes.
+- **Encre verte** (#0c3d22, `oklch(0.32 0.07 155)`): the single accent. Primary buttons, the active nav pill, toggles pressed on, focus rings, the auth masthead, single-series charts. A near-black green at low chroma: an ink that happens to be green, never "a green". Papier reads on it at 11.8:1. In dark mode the ink inverts to **Papier** (#fafaf9) on near-black surfaces rather than introducing a hue; the green is a daylight colour.
+- **Encre verte hover** (#19482c, `oklch(0.36 0.07 155)`): the only hover shift for solid ink surfaces — one step lighter, nothing else changes.
+- **Encre chaude** (#1c1917) remains the text ink: body copy, headings, icons. It is no longer an accent.
 
 ### Neutral
 
-- **Grège** (#d6d2cc): the desk. The backdrop behind the app surface and behind the auth/onboarding cards. It appears nowhere else.
-- **Surface** (`oklch(0.9971 0.0018 78)`, a whisper-warm near-white — never raw `#ffffff`): the sheet of paper — app surface, cards, popovers. The faint warmth keeps the sheet in the same family as the greige desk instead of reading as a cool card on a warm mat. Dark mode: pierre-950/900.
+- **Grège** (#d6d2cc): retired. The desk model is gone; `--backdrop` survives only as an alias of the surface so older layouts keep compiling, and new code uses `--background`.
+- **Surface** (`oklch(0.9971 0.0018 78)`, a whisper-warm near-white — never raw `#ffffff`): the sheet of paper — app surface, cards, popovers. The faint warmth keeps the paper in the same family as the stone hairlines and the green ink. Dark mode: pierre-950/900.
 - **Papier** (#fafaf9): text and icons sitting on ink (button labels, active nav text).
 - **Pierre 100** (#f5f5f4): secondary surfaces — tab rails, avatar chips, muted fills, hover washes.
 - **Pierre 200** (#e7e5e4): the workhorse hairline. Borders, row separators, input strokes.
@@ -150,14 +151,14 @@ A warm monochrome palette: one ink, one stone scale, and four semantic status co
 
 ### Status (semantic only)
 
-- **Statut succès** (#16a34a): active memberships, confirmed states. Used as a 15% tint with solid-color text in badges.
+- **Statut succès** (#16a34a): active memberships, confirmed states. Used as a 15% tint with a dark text stop (L 0.45) in badges, and never as a solid fill: that role and lightness gap is what keeps it distinct from encre verte (a solid at L 0.32), so a "Payé" badge never reads as brand.
 - **Statut attention** (#f59e0b): expiring soon, capacity above 85%.
 - **Statut erreur** (#dc2626): destructive actions, full capacity ("Complet"), suspended members.
 - **Statut info** (#2563eb): secondary informational accents (QR method badge, links). The old brand blue, demoted on purpose.
 
 ### Named Rules
 
-**The One Ink Rule.** There is exactly one accent: encre chaude. If a screen needs a second "brand" color, the design is wrong, not the palette.
+**The One Ink Rule.** There is exactly one accent: encre verte. Encre chaude is text, not accent. If a screen needs a second "brand" color, the design is wrong, not the palette.
 
 **The Meaning-Only Color Rule.** Green, amber, red, and blue may appear only to state a fact (status, capacity, method). Decorative color use is prohibited.
 

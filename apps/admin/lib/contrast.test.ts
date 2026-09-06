@@ -38,7 +38,7 @@ describe('parseCssColor', () => {
   });
 
   it('converts the greige desk token to its documented hex', () => {
-    // --backdrop, documented as #d6d2cc
+    // The retired greige desk, documented as #d6d2cc: a fixed parser input, not a live token.
     expect(toHex(parseCssColor('oklch(0.8653 0.0093 78)')!.rgb)).toBe('#d6d2cc');
   });
 
@@ -190,13 +190,13 @@ describe('measureContrast', () => {
     expect(result!.level).toBe('AA');
   });
 
-  it('reproduces the globals.css note that neutral-500 fails on the greige desk', () => {
+  it('measures neutral-500 on the retired greige desk as AA-large only', () => {
     const result = measureContrast('oklch(0.5534 0.0116 58)', 'oklch(0.8653 0.0093 78)');
     expect(result!.ratio).toBeCloseTo(3.19, 1);
     expect(result!.level).toBe('AA-large');
   });
 
-  it('reproduces the globals.css note that neutral-600 clears AA on the greige desk', () => {
+  it('measures neutral-600 on the retired greige desk as clearing AA', () => {
     const result = measureContrast('oklch(0.4444 0.0096 74)', 'oklch(0.8653 0.0093 78)');
     expect(result!.ratio).toBeCloseTo(5.07, 1);
     expect(result!.level).toBe('AA');

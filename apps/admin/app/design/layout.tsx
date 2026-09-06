@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function DesignLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-backdrop text-backdrop-foreground">
+    <div className="min-h-screen bg-muted text-[color:var(--neutral-600)]">
       <ForceLight />
       <RouteBar />
       {children}

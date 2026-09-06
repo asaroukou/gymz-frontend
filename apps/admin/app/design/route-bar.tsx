@@ -11,7 +11,7 @@ export function RouteBar() {
   return (
     <nav
       aria-label="Sections du système de design"
-      className="sticky top-0 z-30 border-b border-border bg-backdrop"
+      className="sticky top-0 z-30 border-b border-border bg-muted"
     >
       <ul className="mx-auto flex max-w-[1600px] flex-wrap items-stretch px-4 sm:px-8">
         {DESIGN_ROUTES.map((route) => {

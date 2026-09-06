@@ -30,7 +30,6 @@ const NEUTRAL_RAMP = [
 ];
 
 const SURFACE_TOKENS = [
-  '--backdrop',
   '--background',
   '--card',
   '--popover',
@@ -39,13 +38,7 @@ const SURFACE_TOKENS = [
   '--accent',
 ];
 
-const INK_TOKENS = [
-  '--foreground',
-  '--muted-foreground',
-  '--backdrop-foreground',
-  '--primary',
-  '--primary-foreground',
-];
+const INK_TOKENS = ['--foreground', '--muted-foreground', '--primary', '--primary-foreground'];
 
 const LINE_TOKENS = ['--border', '--input', '--ring'];
 
@@ -183,7 +176,7 @@ export default function FoundationsPage() {
 
         <Specimen
           name="Surfaces"
-          signature="--backdrop, --background, --card, --popover, --muted, --secondary, --accent"
+          signature="--background, --card, --popover, --muted, --secondary, --accent"
         >
           <div className="flex w-full flex-wrap gap-2">
             {SURFACE_TOKENS.map((token) => (
@@ -194,7 +187,7 @@ export default function FoundationsPage() {
 
         <Specimen
           name="Encres"
-          signature="--foreground, --muted-foreground, --backdrop-foreground, --primary…"
+          signature="--foreground, --muted-foreground, --primary, --primary-foreground"
         >
           <div className="flex w-full flex-wrap gap-2">
             {INK_TOKENS.map((token) => (
@@ -246,11 +239,6 @@ export default function FoundationsPage() {
               foreground="var(--muted-foreground)"
               background="var(--background)"
               label="--muted-foreground sur --background"
-            />
-            <ContrastRow
-              foreground="var(--backdrop-foreground)"
-              background="var(--backdrop)"
-              label="--backdrop-foreground sur --backdrop"
             />
             <ContrastRow
               foreground="var(--primary-foreground)"
