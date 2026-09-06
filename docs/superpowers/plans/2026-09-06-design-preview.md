@@ -1118,7 +1118,7 @@ export function Specimen({
 Create `apps/admin/app/design/_chrome/matrix.tsx`:
 
 ```tsx
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
 /**
  * A variant x size grid with mono axis labels. Used inside a Specimen pane, so
@@ -1164,12 +1164,6 @@ export function Matrix<R extends string, C extends string>({
     </div>
   );
 }
-```
-
-Add `import { Fragment } from 'react';` to the top of the file alongside the type import:
-
-```tsx
-import { Fragment, type ReactNode } from 'react';
 ```
 
 - [ ] **Step 5: Write the swatches**
@@ -1651,7 +1645,7 @@ export default function FoundationsPage() {
         title="Icônes"
         note="Lucide uniquement, trait de 2px, taille 4 (16px) par défaut. Le sens est porté par l’icône et la couleur du badge, jamais par un emoji."
       >
-        <Specimen name="Jeu en usage" signature={`${ICONS.length} icônes`} note="Régénérer la liste avec : grep -rh --include=&quot;*.tsx&quot; -oE &quot;\\{[^}]*\\} from 'lucide-react'&quot; apps packages">
+        <Specimen name="Jeu en usage" signature={`${ICONS.length} icônes`} note="Liste régénérée depuis les imports lucide-react du dépôt.">
           <ul className="flex w-full flex-wrap gap-x-4 gap-y-3">
             {ICONS.map((name) => (
               <li key={name} className="w-28 text-center">
@@ -1675,6 +1669,14 @@ export default function FoundationsPage() {
     </PageFrame>
   );
 }
+```
+
+To regenerate the `ICONS` array when it drifts, run this from `web/`:
+
+```bash
+grep -rh --include="*.tsx" -oE "\{[^}]*\} from 'lucide-react'" apps packages \
+  | sed "s/[{}]//g;s/ from 'lucide-react'//" | tr ',' '\n' \
+  | sed 's/^ *//;s/ *$//' | grep -v '^$' | sort -u
 ```
 
 The icon section lists names rather than rendering all 30 glyphs, because rendering them would require 30 named imports whose only purpose is decoration. The two icons that are imported are shown at their real size against real 14px text, which is the thing worth checking.
