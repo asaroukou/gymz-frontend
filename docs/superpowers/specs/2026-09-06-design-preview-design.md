@@ -111,7 +111,7 @@ The page admits this rather than fabricating the state.
 | Route | Contents |
 | --- | --- |
 | `/design` | What this is, the four sections, and `DESIGN.md`'s hard rules as a live checklist |
-| `/design/foundations` | 01 Couleur (stone ramp with OKLCH values and measured ratios, semantic tokens by role, status colors), 02 Typographie (scale, weights, mono-numeral proof), 03 Espacement et rayons, 04 Elevation (the three shadows and the hairline that precedes them), 05 Focus et etats, 06 Mouvement, 07 Icones |
+| `/design/foundations` | 01 Couleur (stone ramp with OKLCH values and measured ratios, semantic tokens by role, status colors), 02 Typographie (scale, weights, mono-numeral proof), 03 Espacement et rayons, 04 Élévation (the three shadows and the hairline that precedes them), 05 Focus et états, 06 Mouvement, 07 Icônes |
 | `/design/primitives` | Every export in `packages/ui/src/components`: button, input, textarea, select, combobox, checkbox, switch, label, form, badge, alert, capacity, stat, progress, table, tabs, card, dialog, sheet, popover, tooltip, dropdown-menu, avatar, separator, skeleton, empty, input-otp, sonner |
 | `/design/compositions` | Member row, capacity strip, form section, a list in empty / loading / error, page header, stat panel, table with numeric cells |
 | `/design/shell` | AppShell chrome, nav states, breakpoints |
