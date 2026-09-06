@@ -210,16 +210,32 @@ export function toHex(rgb: Rgb): string {
  * The one function the swatches call: composite a possibly-translucent
  * foreground over its background, then measure. Returns null if either color
  * could not be read, so the caller can render nothing instead of a lie.
+ *
+ * When the background is itself translucent (a Tailwind `/NN` tint, which
+ * Tailwind v4 compiles to `color-mix(in oklab, <color> NN%, transparent)`),
+ * `surface` is what it paints over. Without a surface there is nothing to
+ * composite the tint onto, and returning a ratio would be inventing one, so
+ * this returns null instead.
  */
 export function measureContrast(
   foreground: string,
   background: string,
+  surface?: string,
 ): { ratio: number; level: WcagLevel } | null {
   const fg = parseCssColor(foreground);
   const bg = parseCssColor(background);
   if (!fg || !bg) return null;
 
-  const flattened = compositeOver(fg.rgb, fg.alpha, bg.rgb);
-  const ratio = contrastRatio(flattened, bg.rgb);
+  let flatBg = bg.rgb;
+  if (bg.alpha < 1) {
+    // A translucent background is only meaningful over something. Without
+    // knowing what is behind it, any ratio we returned would be invented.
+    const behind = surface ? parseCssColor(surface) : null;
+    if (!behind || behind.alpha < 1) return null;
+    flatBg = compositeOver(bg.rgb, bg.alpha, behind.rgb);
+  }
+
+  const flattened = compositeOver(fg.rgb, fg.alpha, flatBg);
+  const ratio = contrastRatio(flattened, flatBg);
   return { ratio, level: wcagLevel(ratio) };
 }

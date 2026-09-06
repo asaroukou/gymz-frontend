@@ -37,9 +37,10 @@ export function Swatch({ token, label }: { token: string; label?: string }) {
  * with a wavy underline rather than a colour, because the chrome adds no colour
  * to what it measures.
  *
- * Known limit: a translucent foreground is composited over the background, but
- * a translucent *background* is not composited over the pane behind it. No
- * current token pair needs that.
+ * Both a translucent foreground and a translucent background are composited
+ * before measuring: the background composites over the nearest opaque
+ * ancestor, found at read time, since that is what a Tailwind `/NN` tint
+ * actually paints over.
  */
 export function ContrastRow({
   foreground,
@@ -59,7 +60,20 @@ export function ContrastRow({
     const element = sampleRef.current;
     if (!element) return;
     const styles = getComputedStyle(element);
-    setReading(measureContrast(styles.color, styles.backgroundColor));
+
+    // A tinted background is transparent over whatever the pane paints. Find
+    // that, rather than assuming it: the specimen sits in one theme's pane, and
+    // reading the real ancestor is what keeps the number honest in both.
+    let behind: string | null = null;
+    for (let node = element.parentElement; node; node = node.parentElement) {
+      const parsed = parseCssColor(getComputedStyle(node).backgroundColor);
+      if (parsed && parsed.alpha === 1) {
+        behind = getComputedStyle(node).backgroundColor;
+        break;
+      }
+    }
+
+    setReading(measureContrast(styles.color, styles.backgroundColor, behind ?? undefined));
   }, [foreground, background]);
 
   return (

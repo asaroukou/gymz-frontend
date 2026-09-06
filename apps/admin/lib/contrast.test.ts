@@ -86,21 +86,51 @@ describe('parseCssColor, oklab', () => {
 });
 
 describe('measureContrast, status tints as the browser reports them', () => {
-  // Every one of these currently renders as the no-data glyph on /design/foundations.
+  // These assert the actual shipped utility: Tailwind v4 compiles a `/15`
+  // opacity modifier to `color-mix(in oklab, <color> 15%, transparent)`, so
+  // the tint is genuinely translucent and must be composited over the pane
+  // it sits on (the surface argument) before it can be measured.
+  const LIGHT_SURFACE = 'oklch(0.9971 0.0018 78)';
+  const DARK_SURFACE = 'oklch(0.1469 0.0041 49)';
+
   const cases = [
-    ['oklch(0.4479 0.1083 151.33)', 'oklab(0.9416 -0.0215748 0.0145422)', 6.06, 'AA'],
-    ['oklch(0.4732 0.1247 46.2)', 'oklab(0.962825 0.00873529 0.0247234)', 6.35, 'AA'],
-    ['oklch(0.4882 0.2172 264.38)', 'oklab(0.92945 -0.00368292 -0.0305345)', 5.44, 'AA'],
-    ['oklch(0.8003 0.1821 151.71)', 'oklab(0.24491 -0.0217661 0.0155757)', 9.24, 'AAA'],
-    ['oklch(0.8369 0.1644 84.43)', 'oklab(0.2504 0.00467991 0.0271737)', 9.59, 'AAA'],
-    ['oklch(0.7137 0.1434 254.62)', 'oklab(0.23192 -0.00341851 -0.0181095)', 6.61, 'AA'],
+    [
+      'oklch(0.4479 0.1083 151.33)',
+      'oklch(0.6271 0.1699 149.21 / 0.15)',
+      LIGHT_SURFACE,
+      5.99,
+      'AA',
+    ],
+    ['oklch(0.4732 0.1247 46.2)', 'oklch(0.7686 0.1647 70.08 / 0.15)', LIGHT_SURFACE, 6.28, 'AA'],
+    [
+      'oklch(0.4882 0.2172 264.38)',
+      'oklch(0.5461 0.2152 262.88 / 0.15)',
+      LIGHT_SURFACE,
+      5.39,
+      'AA',
+    ],
+    [
+      'oklch(0.8003 0.1821 151.71)',
+      'oklch(0.8003 0.1821 151.71 / 0.15)',
+      DARK_SURFACE,
+      8.75,
+      'AAA',
+    ],
+    ['oklch(0.8369 0.1644 84.43)', 'oklch(0.8369 0.1644 84.43 / 0.15)', DARK_SURFACE, 9.0, 'AAA'],
+    ['oklch(0.7137 0.1434 254.62)', 'oklch(0.7137 0.1434 254.62 / 0.15)', DARK_SURFACE, 6.36, 'AA'],
   ] as const;
 
-  it.each(cases)('measures %s on %s', (fg, bg, ratio, level) => {
-    const result = measureContrast(fg, bg);
+  it.each(cases)('measures %s on %s over %s', (fg, tint, surface, ratio, level) => {
+    const result = measureContrast(fg, tint, surface);
     expect(result).not.toBeNull();
     expect(result!.ratio).toBeCloseTo(ratio, 1);
     expect(result!.level).toBe(level);
+  });
+
+  it('returns null for a translucent background with no surface given', () => {
+    expect(
+      measureContrast('oklch(0.4479 0.1083 151.33)', 'oklch(0.6271 0.1699 149.21 / 0.15)'),
+    ).toBeNull();
   });
 });
 

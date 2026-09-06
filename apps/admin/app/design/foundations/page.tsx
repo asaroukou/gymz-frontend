@@ -61,8 +61,8 @@ const CHART_TOKENS = [
   '--chart-track',
 ];
 
-/** A Tailwind `/15` tint expressed as a measurable CSS value. */
-const tint = (token: string) => `color-mix(in oklab, var(${token}) 15%, var(--background))`;
+/** A Tailwind `/15` opacity modifier, as Tailwind v4 actually compiles it. */
+const tint = (token: string) => `color-mix(in oklab, var(${token}) 15%, transparent)`;
 
 const TYPE_STEPS = [
   {
