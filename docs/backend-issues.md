@@ -158,3 +158,24 @@ The model stores only a `paid`/`unpaid` flag plus a price snapshot. The market c
    leaves email optional and defers to the server's per-mode 400; with a read
    side it could adapt upfront (require email in login mode, hide the hint in
    roster mode).
+
+---
+
+## Owner-app gap closure (2026-09-06)
+
+1. **Read side for marketplace status.** `PUT /gms/v1/venues/{id}/marketplace`
+   returns `MarketplaceStatus` (`iziwellpass_enabled`, `is_visible`,
+   `credit_cost_per_session`), but no GET returns it and `VenueSettings` does
+   not carry it either. The owner app therefore cannot render a marketplace
+   toggle with its current position, nor show the credit price already set —
+   only blind-write a new one. Please expose it, either as a
+   `GET /gms/v1/venues/{id}/marketplace` or as a field on `Venue`.
+2. **Read side for `member_login_mode` (repeat of the 2026-08-22 ask, now
+   harder-blocking).** Same shape of problem: `PATCH /gms/v1/tenant/settings`
+   is write-only. It previously degraded a form hint; it now blocks a tenant
+   settings screen entirely, since the control would have no initial state.
+   Both toggles are deferred until a read side exists.
+3. **Stale doc, minor:** the client-integration guide still describes venue
+   `settings` as read-only, but `UpdateVenueRequest` now accepts
+   `cancellation_window_minutes`, `checkin_scan_mode`, and
+   `walkin_dedupe_minutes`.
