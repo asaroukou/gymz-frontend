@@ -422,7 +422,7 @@ export default function FoundationsPage() {
           <button
             type="button"
             disabled
-            className="h-11 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground opacity-50 lg:h-9"
+            className="h-11 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground disabled:pointer-events-none disabled:opacity-50 lg:h-9"
           >
             Valider
           </button>
