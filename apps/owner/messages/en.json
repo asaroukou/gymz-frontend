@@ -240,7 +240,8 @@
       "cameraError": "Camera access denied — use the text field instead.",
       "dialogDescription": "Point the camera at the member's QR code.",
       "errorExpired": "This code has expired. Ask the member to generate a new one.",
-      "errorWrongVenue": "This code was issued for a different venue."
+      "errorWrongVenue": "This code was issued for a different venue.",
+      "errorPassNotSettleable": "This pass booking can't be settled here — it may be for another day, already used, or cancelled. Ask the visitor to check their booking."
     },
     "manual": {
       "member": "Member",
@@ -258,9 +259,9 @@
     "walkin": {
       "hint": "Check in a member who is here without a booking.",
       "member": "Member",
-      "memberPlaceholder": "Search for a member",
-      "memberSearch": "Name or email",
-      "noMembers": "No member found",
+      "memberPlaceholder": "Choose a member",
+      "memberSearch": "Search a member",
+      "noMembers": "No members",
       "submit": "Check in",
       "submitting": "Checking in…",
       "errorDuplicate": "This member was already checked in here recently."

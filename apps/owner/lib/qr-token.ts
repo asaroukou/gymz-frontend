@@ -78,3 +78,28 @@ export function decodeQrToken(raw: string): DecodedQrToken | null {
     expiresAt: typeof payload.exp === 'number' ? payload.exp : null,
   };
 }
+
+/**
+ * The front desk's central routing decision: which check-in endpoint a scan
+ * should hit, given what (if anything) was decoded from its token. Pulled out
+ * of the QR form so the "undecodable token falls back to the booking
+ * endpoint" rule — the one that keeps a future/unknown token format scanning
+ * exactly as today — is covered by a table test instead of living silently
+ * inline where a future edit could flip it unnoticed.
+ */
+export function checkinRouteFor(decoded: DecodedQrToken | null): 'booking' | 'walkin' | 'pass' {
+  if (decoded === null) {
+    // Deliberate degrade: an unrecognized/undecodable token is routed to the
+    // booking endpoint, exactly as every token was before this branch. The
+    // server is the authoritative validator either way.
+    return 'booking';
+  }
+  switch (decoded.kind) {
+    case 'pass_booking':
+      return 'pass';
+    case 'walkin':
+      return 'walkin';
+    case 'booking':
+      return 'booking';
+  }
+}

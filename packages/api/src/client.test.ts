@@ -6,6 +6,7 @@ import {
   unwrap,
   resolveBaseUrl,
   CONTROL_PLANE_PREFIXES,
+  TOKEN_REJECTION_401_PATHS,
 } from './client';
 
 const jsonResponse = (status: number, body: unknown) =>
@@ -188,6 +189,45 @@ describe('customFetch 401 refresh-once interceptor', () => {
     expect((err as ApiError).status).toBe(401);
     expect(fetch).toHaveBeenCalledTimes(1);
   });
+
+  it('does not run the refresh-and-retry flow on a pass check-in 401 (a rejected QR token, not an expired session)', async () => {
+    const onUnauthorized = vi.fn().mockResolvedValue('tok-2');
+    configureApi({ onUnauthorized });
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(401, {
+        error: { code: 'UNAUTHORIZED', message: 'wrong-tenant token' },
+        request_id: 'r1',
+      }),
+    );
+
+    const err = await customFetch('/platform/v1/checkins/pass', { method: 'POST' }).catch(
+      (e: unknown) => e,
+    );
+
+    expect(err).toBeInstanceOf(ApiError);
+    expect((err as ApiError).status).toBe(401);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it('still refreshes once and retries a 401 on a normal route (existing behaviour unaffected)', async () => {
+    const onUnauthorized = vi.fn().mockResolvedValue('tok-2');
+    configureApi({ onUnauthorized });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        jsonResponse(401, {
+          error: { code: 'UNAUTHORIZED', message: 'Expired' },
+          request_id: 'r1',
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse(200, { data: { ok: true }, request_id: 'r2' }));
+
+    const res = await customFetch<{ data: { ok: boolean } }>('/gms/v1/staff', { method: 'GET' });
+
+    expect(res.data.ok).toBe(true);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('unwrap', () => {
@@ -225,6 +265,10 @@ describe('resolveBaseUrl', () => {
       '/platform/v1/admin/',
       '/platform/v1/billing/',
     ]);
+  });
+
+  it('covers exactly the pass check-in route as a token-rejection 401 path', () => {
+    expect(TOKEN_REJECTION_401_PATHS).toEqual(['/platform/v1/checkins/pass']);
   });
 });
 

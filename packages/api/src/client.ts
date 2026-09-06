@@ -68,6 +68,19 @@ export const CONTROL_PLANE_PREFIXES = [
   '/platform/v1/billing/',
 ] as const;
 
+/**
+ * Check-in routes where a 401 means "the scanned QR token failed its check",
+ * not "the caller's session expired". `pass_checkin`'s 401 (see openapi.json)
+ * explicitly covers "a wrong-tenant/forged QR token" — a marketplace visitor
+ * can trigger it just by presenting a pass minted for a different tenant.
+ * Running the normal refresh-and-retry flow here would force a Cognito token
+ * refresh (and, if that refresh fails, sign the operator out) in response to
+ * someone else's bad QR code, throwing the front desk to /login mid-rush for
+ * a problem that has nothing to do with the operator's own session. These
+ * routes must surface the 401 to the caller as a plain ApiError instead.
+ */
+export const TOKEN_REJECTION_401_PATHS: readonly string[] = ['/platform/v1/checkins/pass'];
+
 /** Pick the base URL for a generated-client path. Pure; unit-tested. */
 export function resolveBaseUrl(
   url: string,
@@ -123,7 +136,11 @@ export async function customFetch<T>(url: string, options: RequestInit): Promise
   const token = await config.getToken();
   let response = await doFetch(url, options, token);
 
-  if (response.status === 401 && config.onUnauthorized) {
+  if (
+    response.status === 401 &&
+    config.onUnauthorized &&
+    !TOKEN_REJECTION_401_PATHS.includes(url)
+  ) {
     const freshToken = await config.onUnauthorized();
     if (freshToken) {
       response = await doFetch(url, options, freshToken);

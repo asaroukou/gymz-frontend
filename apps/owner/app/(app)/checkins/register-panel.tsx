@@ -37,7 +37,7 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iziwellpass/ui/components/tabs';
 
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
-import { decodeQrToken, type DecodedQrToken } from '@/lib/qr-token';
+import { checkinRouteFor, decodeQrToken, type DecodedQrToken } from '@/lib/qr-token';
 
 import { QrScannerDialog } from './qr-scanner-dialog';
 import type { QueryLike } from './use-frontdesk-data';
@@ -74,6 +74,17 @@ function checkinSuccessToast(
  * Explains a rejection the SERVER already made; never pre-empts the call.
  * A counter tablet with a skewed clock must not be able to refuse a valid
  * scan, so expiry is only ever used to phrase an error, not to skip a request.
+ *
+ * Only enriches when the server actually rejected the TOKEN (400/401) — a
+ * plan-gate 403, a duplicate 409, a 404, or a transport failure (offline
+ * TypeError, not even an ApiError) has nothing to do with the token's expiry
+ * or venue, and must fall straight through to the generic message instead of
+ * being mislabelled "expired" just because the local clock is skewed.
+ *
+ * The venue-mismatch branch is skipped for `pass_booking` tokens: those carry
+ * no venue_id of ours (the client never sends one — the server resolves the
+ * venue from the token), so `decoded.venueId` there is never "this counter's
+ * venue" and comparing it to `venueId` is categorically wrong.
  */
 function qrErrorMessage(
   t: Translate,
@@ -81,12 +92,17 @@ function qrErrorMessage(
   decoded: DecodedQrToken | null,
   venueId: string,
 ): string {
-  if (decoded) {
+  const isTokenRejection = err instanceof ApiError && (err.status === 400 || err.status === 401);
+  if (isTokenRejection && decoded) {
     if (decoded.expiresAt !== null && decoded.expiresAt * 1000 < Date.now()) {
-      return t('qr.errorExpired');
+      return apiErrorMessage(err, t('qr.errorExpired'));
     }
-    if (decoded.venueId !== null && decoded.venueId !== venueId) {
-      return t('qr.errorWrongVenue');
+    if (
+      decoded.kind !== 'pass_booking' &&
+      decoded.venueId !== null &&
+      decoded.venueId !== venueId
+    ) {
+      return apiErrorMessage(err, t('qr.errorWrongVenue'));
     }
   }
   return apiErrorMessage(err, t('error'));
@@ -144,19 +160,37 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
     // Routing only — never a security decision. The payload is readable without
     // a key; the server still verifies the MAC under the kind+tenant key.
     const decoded = decodeQrToken(token);
+    const route = checkinRouteFor(decoded);
 
     const handlers = {
       onSuccess: (res: ApiResponseCheckIn) => {
         checkinSuccessToast(t, tCommon, memberById, res.data.member_id);
-        void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
-        void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
+        // Invalidate the venue the server actually resolved the check-in
+        // against, not the counter's currently-selected venue: a pass token
+        // sends no venue_id (the server resolves it from the token), so a
+        // tenant-wide owner with a different venue selected would otherwise
+        // see a success toast while the scanned venue's feed never moves.
+        const checkedInVenueId = res.data.venue_id;
+        void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(checkedInVenueId) });
+        void queryClient.invalidateQueries({
+          queryKey: getGetAttendanceQueryKey(checkedInVenueId),
+        });
         // Clear + refocus for rapid repeated scanning at the door.
         form.reset({ qr_token: '' });
         inputRef.current?.focus();
       },
       onError: (err: unknown) => {
         if (!applyFieldErrors(form, err)) {
-          toast.error(qrErrorMessage(t, err, decoded, venueId));
+          // The pass flow's most common failure: the booking may be for
+          // another day, another venue, or already used. Gets its own copy
+          // rather than the generic "(CONFLICT)" fallback.
+          const isPassNotSettleable =
+            route === 'pass' && err instanceof ApiError && err.status === 409;
+          toast.error(
+            isPassNotSettleable
+              ? apiErrorMessage(err, t('qr.errorPassNotSettleable'))
+              : qrErrorMessage(t, err, decoded, venueId),
+          );
         }
         // Keep the token visible, but refocus so continued scanning doesn't
         // stall if a field error moved focus.
@@ -164,12 +198,12 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
       },
     };
 
-    if (decoded?.kind === 'pass_booking') {
+    if (route === 'pass') {
       // Marketplace pass token: venue-keyed, so it carries no venue_id of ours.
       passCheckin.mutate({ data: { qr_token: token } }, handlers);
       return;
     }
-    if (decoded?.kind === 'walkin') {
+    if (route === 'walkin') {
       checkInWalkinQr.mutate({ data: { qr_token: token, venue_id: venueId } }, handlers);
       return;
     }
@@ -295,8 +329,15 @@ function ManualForm({
       {
         onSuccess: (res) => {
           checkinSuccessToast(t, tCommon, memberById, res.data.member_id);
-          void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
-          void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
+          // Invalidate the venue the server resolved the check-in against
+          // (authoritative), not the closure's selected venue — see QrForm.
+          const checkedInVenueId = res.data.venue_id;
+          void queryClient.invalidateQueries({
+            queryKey: getListCheckInsQueryKey(checkedInVenueId),
+          });
+          void queryClient.invalidateQueries({
+            queryKey: getGetAttendanceQueryKey(checkedInVenueId),
+          });
           form.reset({ member_id: '', booking_id: '' });
         },
         onError: (err) => {
@@ -412,8 +453,15 @@ function WalkinForm({
       {
         onSuccess: (res) => {
           checkinSuccessToast(t, tCommon, memberById, res.data.member_id);
-          void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
-          void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
+          // Invalidate the venue the server resolved the check-in against
+          // (authoritative), not the closure's selected venue — see QrForm.
+          const checkedInVenueId = res.data.venue_id;
+          void queryClient.invalidateQueries({
+            queryKey: getListCheckInsQueryKey(checkedInVenueId),
+          });
+          void queryClient.invalidateQueries({
+            queryKey: getGetAttendanceQueryKey(checkedInVenueId),
+          });
           form.reset({ member_id: '' });
         },
         onError: (err) => {
@@ -490,15 +538,15 @@ export function RegisterPanel({
       <CardContent>
         <Tabs defaultValue="qr" className="gap-4">
           <TabsList aria-label={t('register.tabsLabel')} className="grid w-full grid-cols-3">
-            <TabsTrigger value="qr" className="h-11 gap-1.5 lg:h-9">
-              <QrCodeIcon className="size-4" aria-hidden="true" />
-              {t('register.tabQr')}
+            <TabsTrigger value="qr" className="h-11 min-w-0 gap-1.5 lg:h-9">
+              <QrCodeIcon className="size-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">{t('register.tabQr')}</span>
             </TabsTrigger>
-            <TabsTrigger value="manual" className="h-11 lg:h-9">
-              {t('register.tabManual')}
+            <TabsTrigger value="manual" className="h-11 min-w-0 lg:h-9">
+              <span className="truncate">{t('register.tabManual')}</span>
             </TabsTrigger>
-            <TabsTrigger value="walkin" className="h-11 lg:h-9">
-              {t('register.tabWalkin')}
+            <TabsTrigger value="walkin" className="h-11 min-w-0 lg:h-9">
+              <span className="truncate">{t('register.tabWalkin')}</span>
             </TabsTrigger>
           </TabsList>
 

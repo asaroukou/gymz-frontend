@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeQrToken } from './qr-token';
+import { checkinRouteFor, decodeQrToken, type DecodedQrToken } from './qr-token';
 
 /** Builds a token the way the backend does: iwp1.<b64url(json)>.<b64url(mac)>. */
 function makeToken(payload: unknown, { prefix = 'iwp1', mac = 'c2ln' } = {}): string {
@@ -84,5 +84,32 @@ describe('decodeQrToken — optional fields', () => {
   it('ignores non-string venue_id and non-number exp', () => {
     const got = decodeQrToken(makeToken({ kind: 'booking', venue_id: 7, exp: 'soon' }));
     expect(got).toEqual({ kind: 'booking', venueId: null, expiresAt: null });
+  });
+});
+
+function decoded(kind: DecodedQrToken['kind']): DecodedQrToken {
+  return { kind, venueId: null, expiresAt: null };
+}
+
+describe('checkinRouteFor — the branch’s central routing decision', () => {
+  it('routes a pass_booking token to the pass endpoint', () => {
+    expect(checkinRouteFor(decoded('pass_booking'))).toBe('pass');
+  });
+
+  it('routes a walkin token to the walkin endpoint', () => {
+    expect(checkinRouteFor(decoded('walkin'))).toBe('walkin');
+  });
+
+  it('routes a booking token to the booking endpoint', () => {
+    expect(checkinRouteFor(decoded('booking'))).toBe('booking');
+  });
+
+  // Deliberate degrade-to-today's-behaviour rule: an undecodable/unknown token
+  // must fall back to the booking endpoint (never be refused client-side), so
+  // a future token format keeps scanning exactly as it does today. Flipping
+  // this default is the one change in this file that would silently pass
+  // every other gate while quietly breaking every unrecognized scan.
+  it('falls back to the booking endpoint for an undecodable token (null)', () => {
+    expect(checkinRouteFor(null)).toBe('booking');
   });
 });

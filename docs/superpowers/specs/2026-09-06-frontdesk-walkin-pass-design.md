@@ -8,13 +8,13 @@
 Close the three unconsumed check-in endpoints so the front desk can admit
 everyone who shows up, not just members with a booking:
 
-| Endpoint | Who it admits |
-|---|---|
-| `POST /gms/v1/checkins/walkin` | An existing member with **no booking** (by member id) |
-| `POST /gms/v1/checkins/walkin/qr` | The same, via the member's walk-in QR |
-| `POST /platform/v1/checkins/pass` | A **marketplace pass-holder** with a pass booking |
+| Endpoint                          | Who it admits                                         |
+| --------------------------------- | ----------------------------------------------------- |
+| `POST /gms/v1/checkins/walkin`    | An existing member with **no booking** (by member id) |
+| `POST /gms/v1/checkins/walkin/qr` | The same, via the member's walk-in QR                 |
+| `POST /platform/v1/checkins/pass` | A **marketplace pass-holder** with a pass booking     |
 
-The last one is the sharpest gap today: the check-in feed already *displays*
+The last one is the sharpest gap today: the check-in feed already _displays_
 pass visitors («Visiteur pass»), but staff have no way to actually admit one.
 
 ## Context
@@ -30,11 +30,11 @@ server will not accept a token at the wrong endpoint
 Three kinds exist, each minted by a different endpoint and consumed by exactly
 one check-in endpoint:
 
-| `kind` in payload | Minted by | Consumed by |
-|---|---|---|
-| `booking` | `POST /gms/v1/me/bookings/{bid}/qr` | `check_in_via_qr` |
-| `walkin` | `POST /gms/v1/me/qr` | `check_in_walkin_qr` |
-| `pass_booking` | `POST /platform/v1/pass/bookings/{bid}/qr` | `pass_checkin` |
+| `kind` in payload | Minted by                                  | Consumed by          |
+| ----------------- | ------------------------------------------ | -------------------- |
+| `booking`         | `POST /gms/v1/me/bookings/{bid}/qr`        | `check_in_via_qr`    |
+| `walkin`          | `POST /gms/v1/me/qr`                       | `check_in_walkin_qr` |
+| `pass_booking`    | `POST /platform/v1/pass/bookings/{bid}/qr` | `pass_checkin`       |
 
 Tokens are valid for 300 seconds.
 
@@ -42,16 +42,16 @@ Tokens are valid for 300 seconds.
 
 The middle segment is base64url-encoded JSON carrying `kind`, `tenant_id`,
 `venue_id`, `jti`, `iat`, `exp`, and (for `walkin` only) `member_id`. No secret
-is required to read it — only to *verify* it. This is what makes a single
+is required to read it — only to _verify_ it. This is what makes a single
 self-routing scan field possible.
 
 ### Capability gates (verified in `lambdas/checkin/src/main.rs`)
 
-| Route | Gate |
-|---|---|
-| `check_in_walkin` | none — works on **free** tier |
+| Route                | Gate                                                       |
+| -------------------- | ---------------------------------------------------------- |
+| `check_in_walkin`    | none — works on **free** tier                              |
 | `check_in_walkin_qr` | `Capability::QrCheckin` (starter+), same as today's QR tab |
-| `pass_checkin` | none — works on **free** tier |
+| `pass_checkin`       | none — works on **free** tier                              |
 
 No new tier surface: the QR tab already requires `QrCheckin` today.
 
@@ -74,7 +74,7 @@ export type QrTokenKind = 'booking' | 'walkin' | 'pass_booking';
 export interface DecodedQrToken {
   kind: QrTokenKind;
   venueId: string | null;
-  expiresAt: number | null;   // Unix seconds
+  expiresAt: number | null; // Unix seconds
 }
 /** Returns null for anything not confidently decodable. */
 export function decodeQrToken(raw: string): DecodedQrToken | null;
@@ -90,12 +90,12 @@ derived key on every call. Decoding only chooses which endpoint to call.
 
 **Routing rule in the QR tab:**
 
-| `decodeQrToken` result | Call |
-|---|---|
-| `kind: 'booking'` | `check_in_via_qr({ qr_token, venue_id })` |
-| `kind: 'walkin'` | `check_in_walkin_qr({ qr_token, venue_id })` |
-| `kind: 'pass_booking'` | `pass_checkin({ qr_token })` |
-| `null` (unknown prefix, kind, or malformed) | **fall back to `check_in_via_qr`** |
+| `decodeQrToken` result                      | Call                                         |
+| ------------------------------------------- | -------------------------------------------- |
+| `kind: 'booking'`                           | `check_in_via_qr({ qr_token, venue_id })`    |
+| `kind: 'walkin'`                            | `check_in_walkin_qr({ qr_token, venue_id })` |
+| `kind: 'pass_booking'`                      | `pass_checkin({ qr_token })`                 |
+| `null` (unknown prefix, kind, or malformed) | **fall back to `check_in_via_qr`**           |
 
 The fallback is deliberate: a future `iwp2` format, or any token this decoder
 does not understand, degrades to exactly today's behaviour rather than
@@ -141,12 +141,22 @@ loaded page) → «Visiteur pass» (`member_id` null, i.e. a pass check-in).
 
 ### 5. Error copy
 
-| Case | Copy |
-|---|---|
-| Walk-in `409` | Member already walked in at this venue inside the dedupe window (`walkin_dedupe_minutes`, default 1440 = 24h) |
-| Pass `409` | Pass booking not settleable — not found for this venue, already used, or cancelled |
-| Walk-in QR `403` | Feature unavailable on this plan (QR check-in is starter+) |
-| Any `404` | Venue or member not found |
+| Case             | Copy                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| Walk-in `409`    | Member already walked in at this venue inside the dedupe window (`walkin_dedupe_minutes`, default 1440 = 24h) |
+| Pass `409`       | Pass booking not settleable — not found for this venue, already used, or cancelled                            |
+| Walk-in QR `403` | Feature unavailable on this plan (QR check-in is starter+)                                                    |
+| Any `404`        | Venue or member not found                                                                                     |
+
+> **Final fix wave note (2026-09-07):** the "Walk-in QR `403`" copy above ("Feature
+> unavailable on this plan") was deliberately NOT implemented. That 403 is not
+> specific to plan-gating — the same status also covers the caller lacking
+> `checkin:write`, a venue-scoped staff member not assigned to the venue, and an
+> inactive membership. Rendering it as "feature unavailable on this plan" would
+> mislabel those other cases and send staff down the wrong troubleshooting path.
+> `qrErrorMessage`/`apiErrorMessage`'s generic fallback (with the `(CODE) · ref:`
+> suffix) is used instead until the 403 cases can be told apart. The Pass `409`
+> copy above (`frontdesk.qr.errorPassNotSettleable`) was implemented as specified.
 
 ## Testing
 

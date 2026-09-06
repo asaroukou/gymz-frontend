@@ -240,7 +240,8 @@
       "cameraError": "Accès à la caméra refusé — utilisez le champ de texte.",
       "dialogDescription": "Pointez la caméra vers le QR code du membre.",
       "errorExpired": "Ce code a expiré. Demandez au membre d'en générer un nouveau.",
-      "errorWrongVenue": "Ce code a été généré pour un autre établissement."
+      "errorWrongVenue": "Ce code a été généré pour un autre établissement.",
+      "errorPassNotSettleable": "Cette réservation pass ne peut pas être validée ici — elle concerne peut-être un autre jour, a déjà été utilisée ou a été annulée. Demandez au visiteur de vérifier sa réservation."
     },
     "manual": {
       "member": "Membre",
@@ -258,9 +259,9 @@
     "walkin": {
       "hint": "Enregistrez un membre présent sans réservation.",
       "member": "Membre",
-      "memberPlaceholder": "Rechercher un membre",
-      "memberSearch": "Nom ou e-mail",
-      "noMembers": "Aucun membre trouvé",
+      "memberPlaceholder": "Choisir un membre",
+      "memberSearch": "Rechercher un membre",
+      "noMembers": "Aucun membre",
       "submit": "Enregistrer l'entrée",
       "submitting": "Enregistrement…",
       "errorDuplicate": "Ce membre a déjà été enregistré ici récemment."
