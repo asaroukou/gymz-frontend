@@ -227,7 +227,8 @@
       "title": "Enregistrer un passage",
       "tabsLabel": "Mode d'enregistrement",
       "tabQr": "QR / code",
-      "tabManual": "Manuel"
+      "tabManual": "Manuel",
+      "tabWalkin": "Sans réservation"
     },
     "qr": {
       "label": "Code QR ou jeton",
@@ -253,6 +254,16 @@
       "submit": "Enregistrer",
       "submitting": "Enregistrement…",
       "membersError": "Impossible de charger les membres"
+    },
+    "walkin": {
+      "hint": "Enregistrez un membre présent sans réservation.",
+      "member": "Membre",
+      "memberPlaceholder": "Rechercher un membre",
+      "memberSearch": "Nom ou e-mail",
+      "noMembers": "Aucun membre trouvé",
+      "submit": "Enregistrer l'entrée",
+      "submitting": "Enregistrement…",
+      "errorDuplicate": "Ce membre a déjà été enregistré ici récemment."
     },
     "feed": {
       "title": "Derniers passages",

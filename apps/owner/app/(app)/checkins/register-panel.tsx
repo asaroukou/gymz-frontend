@@ -9,11 +9,13 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { ApiError } from '@iziwellpass/api/client';
 import {
   getGetAttendanceQueryKey,
   getListCheckInsQueryKey,
   useCheckInManual,
   useCheckInViaQr,
+  useCheckInWalkin,
   useCheckInWalkinQr,
   usePassCheckin,
 } from '@iziwellpass/api/generated';
@@ -365,6 +367,107 @@ function ManualForm({
 }
 
 // ---------------------------------------------------------------------------
+// Walk-in (bookingless) check-in
+// ---------------------------------------------------------------------------
+
+interface WalkinValues {
+  member_id: string;
+}
+
+function WalkinForm({
+  venueId,
+  members,
+  memberById,
+}: {
+  venueId: string;
+  members: Member[];
+  memberById: Map<string, Member>;
+}) {
+  const t = useTranslations('frontdesk');
+  const tCommon = useTranslations('common');
+  const queryClient = useQueryClient();
+  const checkInWalkin = useCheckInWalkin();
+
+  const schema = useMemo(
+    () => z.object({ member_id: z.string().min(1, t('validation.memberRequired')) }),
+    [t],
+  );
+
+  const form = useForm<WalkinValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { member_id: '' },
+  });
+
+  const memberOptions = useMemo(
+    () => members.map((m) => ({ value: m.id, label: memberName(m) })),
+    [members],
+  );
+
+  const onSubmit = (values: WalkinValues) => {
+    // Same in-flight guard as the other tabs: native Enter bypasses a disabled
+    // button, and a double check-in trips the dedupe 409.
+    if (checkInWalkin.isPending) return;
+    checkInWalkin.mutate(
+      { data: { member_id: values.member_id, venue_id: venueId } },
+      {
+        onSuccess: (res) => {
+          checkinSuccessToast(t, tCommon, memberById, res.data.member_id);
+          void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
+          form.reset({ member_id: '' });
+        },
+        onError: (err) => {
+          if (!applyFieldErrors(form, err)) {
+            // 409 here means the member already walked in at this venue inside
+            // the venue's dedupe window (walkin_dedupe_minutes, default 24h).
+            // It is the error staff will hit most, so it gets its own copy
+            // rather than the generic fallback.
+            const fallback =
+              err instanceof ApiError && err.status === 409
+                ? t('walkin.errorDuplicate')
+                : t('error');
+            toast.error(apiErrorMessage(err, fallback));
+          }
+        },
+      },
+    );
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+        <p className="text-sm text-muted-foreground">{t('walkin.hint')}</p>
+        <FormField
+          control={form.control}
+          name="member_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('walkin.member')}</FormLabel>
+              <FormControl>
+                <Combobox
+                  options={memberOptions}
+                  value={field.value || undefined}
+                  onValueChange={field.onChange}
+                  placeholder={t('walkin.memberPlaceholder')}
+                  searchPlaceholder={t('walkin.memberSearch')}
+                  emptyText={t('walkin.noMembers')}
+                  disabled={checkInWalkin.isPending}
+                  className="h-11"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={checkInWalkin.isPending} className="h-11 w-full">
+          {checkInWalkin.isPending ? t('walkin.submitting') : t('walkin.submit')}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Panel
 // ---------------------------------------------------------------------------
 
@@ -386,13 +489,16 @@ export function RegisterPanel({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="qr" className="gap-4">
-          <TabsList aria-label={t('register.tabsLabel')} className="grid w-full grid-cols-2">
+          <TabsList aria-label={t('register.tabsLabel')} className="grid w-full grid-cols-3">
             <TabsTrigger value="qr" className="h-11 gap-1.5 lg:h-9">
               <QrCodeIcon className="size-4" aria-hidden="true" />
               {t('register.tabQr')}
             </TabsTrigger>
             <TabsTrigger value="manual" className="h-11 lg:h-9">
               {t('register.tabManual')}
+            </TabsTrigger>
+            <TabsTrigger value="walkin" className="h-11 lg:h-9">
+              {t('register.tabWalkin')}
             </TabsTrigger>
           </TabsList>
 
@@ -416,6 +522,24 @@ export function RegisterPanel({
               </Alert>
             ) : (
               <ManualForm venueId={venueId} members={list} memberById={memberById} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="walkin">
+            {members.isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-11 w-full rounded-full" />
+                <Skeleton className="h-11 w-full rounded-full" />
+              </div>
+            ) : members.isError ? (
+              <Alert variant="destructive">
+                <AlertTitle>{t('errorTitle')}</AlertTitle>
+                <AlertDescription>
+                  {apiErrorMessage(members.error, t('manual.membersError'))}
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <WalkinForm venueId={venueId} members={list} memberById={memberById} />
             )}
           </TabsContent>
         </Tabs>

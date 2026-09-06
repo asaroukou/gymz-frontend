@@ -227,7 +227,8 @@
       "title": "Record a check-in",
       "tabsLabel": "Check-in mode",
       "tabQr": "QR / code",
-      "tabManual": "Manual"
+      "tabManual": "Manual",
+      "tabWalkin": "No booking"
     },
     "qr": {
       "label": "QR code or token",
@@ -253,6 +254,16 @@
       "submit": "Check in",
       "submitting": "Checking in…",
       "membersError": "Could not load members"
+    },
+    "walkin": {
+      "hint": "Check in a member who is here without a booking.",
+      "member": "Member",
+      "memberPlaceholder": "Search for a member",
+      "memberSearch": "Name or email",
+      "noMembers": "No member found",
+      "submit": "Check in",
+      "submitting": "Checking in…",
+      "errorDuplicate": "This member was already checked in here recently."
     },
     "feed": {
       "title": "Recent check-ins",
