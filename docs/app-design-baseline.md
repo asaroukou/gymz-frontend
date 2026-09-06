@@ -116,3 +116,29 @@ After Phase 2 + 3: `$impeccable extract` to fold any new one-offs into the syste
 ## Recommended start
 
 Phase 2, items 1 + 7 + 2 first (control sizing, shell gaps, responsive Table) — they touch every screen, are pure system-layer wins, and clear the P0/P1 accessibility + front-desk failures in one pass.
+
+---
+
+## Phase 3 findings (from /design)
+
+**Date:** 2026-09-06
+**Method:** built the `/design` preview surface (foundations, primitives, compositions, shell), then walked all five routes in both themes at 1280px and 375px. Findings below are recorded, not fixed; each is separate work.
+
+### Drift between the documented system and the shipped one
+
+- **[P2] Motion scale has no shared values.** `DESIGN.json` `extensions.motion` documents exactly two durations: `state-change` at 120ms and `progress` at 250ms. `packages/ui` uses five (`duration-150`, `duration-200`, `duration-300`, `duration-500`, `duration-1000`), and none of the five is either documented value. The documented motion scale and the shipped one share no values at all.
+- **`DESIGN.md` still contradicts itself on the Label size.** The frontmatter (`typography.label.fontSize`) says `14px`; the prose still says "**Label** (500, 12px, 1.3)". Batch D (Phase 2) recorded reconciling this to 14px, but only the frontmatter was updated: the prose line is the one still wrong.
+- **Capacity's full-class color needs B2 reconciled to it, not the other way round.** B2 above says "Map `full`->`destructive` so badge + capacity bar agree on 'Complet'." The shipped `capacityLevel` in `packages/ui/src/components/capacity.tsx` returns `tight` (amber) when `booked === capacity`, and reserves `over` (red) for a genuine overbook (`booked > capacity`); the code comment explains why: a full class is expected, not an error, so red would be an alarm the brand does not raise. This is the more considered behavior. It's a doc/backlog reconciliation, not a code defect: B2's text should be updated to match the shipped rule, not the reverse.
+- **Stale contrast figure in a token comment.** `packages/ui/src/styles/globals.css` comments that `--backdrop-foreground` (neutral-600) on `--backdrop` "clears AA (~4.9:1)". Measured live on `/design/foundations`, that pair is 5.07:1. Still AA, still correct in substance; the number in the comment is stale.
+
+### What the audit confirmed as healthy
+
+- **Every token pair on the foundations page passes AA in both themes.** 18 measured pairs on `/design/foundations`, band tally AA 7 / AAA 11, zero failures. Notably the three status tints, which are what Batch B2 was about, measure: success 5.99:1, warning 6.28:1, info 5.39:1 on the light `/15` tint; success 8.75:1, warning 9.00:1, info 6.36:1 on the dark. **Batch B2's AA remediation is confirmed effective**, which was previously asserted but never measured.
+- **Batch A1's responsive touch sizing works as intended.** Measured on `/design/primitives`: default-size buttons render 44px at a 375px viewport and 36px at 1280px. The `md`-breakpoint shell collapse and its 44px menu trigger also check out on `/design/shell`.
+
+### Defects the preview had in itself, now fixed
+
+- `parseCssColor` didn't handle the `oklab()` form Chrome returns for `color-mix(in oklab, ...)`, so the three status-tint contrast rows rendered a no-data glyph in both themes: the audit surface was silently blind at exactly the pairs that mattered most. Fixed in `apps/admin/lib/contrast.ts` (commit `78f31cb`). The general lesson: a measuring instrument that renders "no data" identically to "cannot parse" hides its own failures.
+- The six status-tint figures above were first measured from a stand-in: `tint()` on `/design/foundations` built its swatch by interpolating in OKLab against the pane background, but Tailwind v4 actually compiles a `/15` opacity modifier to an alpha-0.15 color composited over the surface in gamma-encoded sRGB, a different operation. The preview and its tests were corrected to measure the real composite; the figures above are the corrected values, still AA/AAA throughout. This is the second time this surface's own instrument was wrong in a way that looked like data.
+- The design route bar overflowed at 375px, putting two of five routes off-screen and giving every page a horizontal scrollbar. Fixed by wrapping (commit `4d5fa0c`).
+- Specimen panes had the default `min-width: auto` as grid items, so wide specimen content was clipped and unreachable instead of scrolling inside the `Table` primitive's own scroller. Fixed with `min-w-0` (commit `f01a777`).

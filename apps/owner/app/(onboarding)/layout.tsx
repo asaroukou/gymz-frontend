@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { Wordmark } from '@/components/wordmark';
 
-// Centered-card layout on the greige desk, same shape as (auth) — deliberately
+// Centered-card layout on the paper surface, same shape as (auth) — deliberately
 // NOT the AppShell: a signed-in-but-role-less user has nothing to navigate to
 // yet. Session presence is enforced by middleware (see apps/owner/middleware.ts);
 // the page itself re-checks client-side for the loading/signed-out/has-role branches.

@@ -4,9 +4,24 @@
   "title": "Design System: IziWellPass Owner App",
   "extensions": {
     "colorMeta": {
-      "encre-chaude": {
+      "encre-verte": {
         "role": "primary",
-        "displayName": "Encre chaude",
+        "displayName": "Encre verte (the one accent)",
+        "canonical": "oklch(0.32 0.07 155)",
+        "tonalRamp": [
+          "#032110",
+          "#0c3d22",
+          "#19482c",
+          "#285f3f",
+          "#528865",
+          "#81b292",
+          "#b8dbc3",
+          "#e5f3e9"
+        ]
+      },
+      "encre-chaude": {
+        "role": "text",
+        "displayName": "Encre chaude (text ink)",
         "canonical": "oklch(0.2161 0.0061 56)",
         "tonalRamp": [
           "#0c0a09",
@@ -17,21 +32,6 @@
           "#a8a29e",
           "#d6d3d1",
           "#fafaf9"
-        ]
-      },
-      "grege": {
-        "role": "neutral",
-        "displayName": "Grège (the desk)",
-        "canonical": "oklch(0.8653 0.0093 78)",
-        "tonalRamp": [
-          "#3d3a35",
-          "#57534e",
-          "#78716c",
-          "#a8a29e",
-          "#c4c0ba",
-          "#d6d2cc",
-          "#e7e4df",
-          "#f5f3f0"
         ]
       },
       "pierre-200": {
@@ -111,17 +111,17 @@
       },
       "chart-ink": {
         "role": "chart",
-        "displayName": "Chart ink (single series)",
-        "canonical": "oklch(0.2161 0.0061 56)",
+        "displayName": "Chart ink (single series, encre verte)",
+        "canonical": "oklch(0.32 0.07 155)",
         "tonalRamp": [
-          "#0c0a09",
-          "#1c1917",
-          "#292524",
-          "#44403c",
-          "#78716c",
-          "#a8a29e",
-          "#d6d3d1",
-          "#f5f5f4"
+          "#032110",
+          "#0c3d22",
+          "#19482c",
+          "#285f3f",
+          "#528865",
+          "#81b292",
+          "#b8dbc3",
+          "#e5f3e9"
         ]
       },
       "chart-stone": {
@@ -145,7 +145,10 @@
         "displayName": "Display",
         "purpose": "Page titles only — one per screen, −0.6px tracking."
       },
-      "title": { "displayName": "Title", "purpose": "Card and section headings." },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and section headings."
+      },
       "body": {
         "displayName": "Body",
         "purpose": "The app-wide 14px default. Cap prose at 65–75ch."
@@ -189,8 +192,14 @@
       }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "lg", "value": "1024px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
     ]
   },
   "components": [
