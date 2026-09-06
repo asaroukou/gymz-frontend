@@ -1,8 +1,6 @@
-'use client';
-
 import Link from 'next/link';
 
-import { DESIGN_ROUTES } from './route-bar';
+import { DESIGN_ROUTES } from './routes';
 
 const SECTION_SUMMARIES: Record<string, string> = {
   '/design/foundations':
