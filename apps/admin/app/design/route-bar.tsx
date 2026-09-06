@@ -13,7 +13,7 @@ export function RouteBar() {
       aria-label="Sections du système de design"
       className="sticky top-0 z-30 border-b border-border bg-backdrop"
     >
-      <ul className="mx-auto flex max-w-[1600px] items-stretch px-4 sm:px-8">
+      <ul className="mx-auto flex max-w-[1600px] flex-wrap items-stretch px-4 sm:px-8">
         {DESIGN_ROUTES.map((route) => {
           const isActive =
             route.href === '/design' ? pathname === '/design' : pathname.startsWith(route.href);
