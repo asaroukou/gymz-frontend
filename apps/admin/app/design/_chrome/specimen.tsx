@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
  */
 function Pane({ label, dark, children }: { label: string; dark?: boolean; children: ReactNode }) {
   return (
-    <div className={dark ? 'dark' : undefined}>
+    <div className={dark ? 'dark min-w-0' : 'min-w-0'}>
       <div className="flex h-full flex-col bg-background">
         <p className="border-b border-border px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
           {label}
