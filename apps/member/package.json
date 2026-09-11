@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "expo start",
     "dev:proxy": "node scripts/dev-proxy.mjs",
+    "dev:mock": "node scripts/mock-server.mjs",
     "build": "tsc --noEmit && expo export --platform web --output-dir dist",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
