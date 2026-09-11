@@ -30,6 +30,7 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.81.0",
     "react-native": "0.86.3",
+    "react-native-css-interop": "0.2.6",
     "react-native-get-random-values": "^2.0.0",
     "react-native-qrcode-svg": "^6.3.24",
     "react-native-reanimated": "4.5.1",
