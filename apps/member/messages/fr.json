@@ -1,6 +1,7 @@
 {
   "login": {
     "title": "Connexion",
+    "welcome": "Votre carte de membre, toujours à portée de main.",
     "email": "E-mail",
     "password": "Mot de passe",
     "passwordRequired": "Saisissez votre mot de passe.",
@@ -9,9 +10,11 @@
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "submit": "Se connecter",
     "newPasswordTitle": "Choisir un mot de passe",
+    "newPasswordHint": "Créez votre mot de passe pour terminer l'activation.",
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmer le mot de passe",
-    "newPasswordSubmit": "Valider"
+    "newPasswordSubmit": "Valider",
+    "back": "Retour"
   },
   "auth": {
     "error": {
@@ -30,10 +33,22 @@
     "status": "Statut",
     "venue": "Salle",
     "validUntil": "Valable jusqu'au {date}",
+    "validLabel": "Valable jusqu'au",
     "entriesRemaining": { "one": "{count} entrée restante", "other": "{count} entrées restantes" },
+    "entriesUnit": { "one": "entrée restante", "other": "entrées restantes" },
     "noSubscription": "Aucun abonnement actif",
+    "showQr": "Afficher mon QR",
+    "memberNo": "Nº membre",
+    "memberSince": "Membre depuis {date}",
+    "detailsTitle": "Coordonnées",
     "signOut": "Se déconnecter",
     "error": "Impossible de charger votre profil",
+    "type": {
+      "monthly": "Mensuel",
+      "annual": "Annuel",
+      "drop_in": "À la séance",
+      "trial": "Essai"
+    },
     "membershipStatus": {
       "active": "Actif",
       "expired": "Expiré",
@@ -51,16 +66,22 @@
   },
   "qr": {
     "title": "Mon QR d'entrée",
-    "subtitle": "Présentez ce code à l'accueil",
+    "subtitle": "Présentez ce code à l'accueil.",
     "expiresIn": "Expire dans {seconds} s",
     "expired": "QR expiré",
+    "expiredHint": "Régénérez-le pour entrer.",
     "refresh": "Régénérer",
     "generate": "Générer mon QR",
-    "error": "Impossible de générer le QR"
+    "error": "Impossible de générer le QR",
+    "unavailable": "QR indisponible",
+    "unavailableHint": "Le QR d'entrée n'est pas activé pour votre salle."
   },
   "bookings": {
     "title": "Mes réservations",
+    "upcoming": "À venir",
+    "past": "Passées",
     "empty": "Aucune réservation",
+    "emptyHint": "Vos prochaines séances apparaîtront ici.",
     "cancel": "Annuler",
     "cancelConfirmTitle": "Annuler la réservation ?",
     "cancelConfirmBody": "Cette action est définitive.",

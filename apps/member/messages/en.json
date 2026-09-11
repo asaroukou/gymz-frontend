@@ -1,6 +1,7 @@
 {
   "login": {
     "title": "Sign in",
+    "welcome": "Your membership card, always within reach.",
     "email": "Email",
     "password": "Password",
     "passwordRequired": "Enter your password.",
@@ -9,16 +10,18 @@
     "passwordMismatch": "Passwords do not match.",
     "submit": "Sign in",
     "newPasswordTitle": "Choose a password",
+    "newPasswordHint": "Create your password to finish activating your account.",
     "newPassword": "New password",
     "confirmPassword": "Confirm password",
-    "newPasswordSubmit": "Confirm"
+    "newPasswordSubmit": "Confirm",
+    "back": "Back"
   },
   "auth": {
     "error": {
       "invalidCredentials": "Incorrect email or password.",
       "notConfirmed": "Account not confirmed.",
       "tooMany": "Too many attempts. Try again later.",
-      "network": "Could not connect. Check your network.",
+      "network": "Cannot connect. Check your network.",
       "generic": "Something went wrong."
     }
   },
@@ -30,10 +33,22 @@
     "status": "Status",
     "venue": "Venue",
     "validUntil": "Valid until {date}",
+    "validLabel": "Valid until",
     "entriesRemaining": { "one": "{count} entry left", "other": "{count} entries left" },
+    "entriesUnit": { "one": "entry left", "other": "entries left" },
     "noSubscription": "No active subscription",
+    "showQr": "Show my QR",
+    "memberNo": "Member no.",
+    "memberSince": "Member since {date}",
+    "detailsTitle": "Contact",
     "signOut": "Sign out",
     "error": "Could not load your profile",
+    "type": {
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "drop_in": "Drop-in",
+      "trial": "Trial"
+    },
     "membershipStatus": {
       "active": "Active",
       "expired": "Expired",
@@ -51,16 +66,22 @@
   },
   "qr": {
     "title": "My entry QR",
-    "subtitle": "Show this code at the front desk",
+    "subtitle": "Show this code at the front desk.",
     "expiresIn": "Expires in {seconds}s",
     "expired": "QR expired",
+    "expiredHint": "Refresh it to get in.",
     "refresh": "Refresh",
     "generate": "Generate my QR",
-    "error": "Could not generate the QR"
+    "error": "Could not generate the QR",
+    "unavailable": "QR unavailable",
+    "unavailableHint": "The entry QR is not enabled for your venue."
   },
   "bookings": {
     "title": "My bookings",
+    "upcoming": "Upcoming",
+    "past": "Past",
     "empty": "No bookings",
+    "emptyHint": "Your upcoming sessions will show up here.",
     "cancel": "Cancel",
     "cancelConfirmTitle": "Cancel this booking?",
     "cancelConfirmBody": "This action cannot be undone.",

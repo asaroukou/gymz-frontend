@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { membershipStatusLabelKey, subscriptionStatusLabelKey } from './card-status';
+import {
+  membershipStatusLabelKey,
+  membershipTypeLabelKey,
+  subscriptionStatusLabelKey,
+} from './card-status';
 
 describe('membershipStatusLabelKey', () => {
   it('maps known statuses to i18n keys', () => {
@@ -22,5 +26,17 @@ describe('subscriptionStatusLabelKey', () => {
   });
   it('falls back to unknown for unrecognized statuses', () => {
     expect(subscriptionStatusLabelKey('mystery')).toBe('card.subscriptionStatus.unknown');
+  });
+});
+
+describe('membershipTypeLabelKey', () => {
+  it('maps known types to i18n keys', () => {
+    expect(membershipTypeLabelKey('monthly')).toBe('card.type.monthly');
+    expect(membershipTypeLabelKey('annual')).toBe('card.type.annual');
+    expect(membershipTypeLabelKey('drop_in')).toBe('card.type.drop_in');
+    expect(membershipTypeLabelKey('trial')).toBe('card.type.trial');
+  });
+  it('returns null for an unknown type so the chip is omitted', () => {
+    expect(membershipTypeLabelKey('mystery')).toBeNull();
   });
 });
