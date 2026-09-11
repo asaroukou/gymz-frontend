@@ -59,9 +59,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     void (async () => {
-      await hydrate();
-      const token = await client.getIdToken();
-      if (active) dispatch({ type: 'resolved', claims: token ? parseClaims(token) : null });
+      try {
+        await hydrate();
+        const token = await client.getIdToken();
+        if (active) dispatch({ type: 'resolved', claims: token ? parseClaims(token) : null });
+      } catch (err) {
+        // Corrupted storage or a malformed stored JWT must not strand the app
+        // on the loading screen: fail open to signed-out (a fresh login heals it).
+        console.error('[auth] session hydration failed — treating as signed out:', err);
+        if (active) dispatch({ type: 'resolved', claims: null });
+      }
     })();
     return () => {
       active = false;
