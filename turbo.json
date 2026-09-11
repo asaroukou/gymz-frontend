@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": ["NEXT_PUBLIC_*"],
+  "globalEnv": ["NEXT_PUBLIC_*", "EXPO_PUBLIC_*"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
