@@ -87,7 +87,7 @@ export function RecentCheckins({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('checkins.title')}</CardTitle>
+        <CardTitle className="text-lg">{t('checkins.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         {checkIns.isLoading ? (

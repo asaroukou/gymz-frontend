@@ -102,7 +102,7 @@ export function TodaySchedule({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('schedule.title')}</CardTitle>
+        <CardTitle className="text-lg">{t('schedule.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         {slots.isLoading ? (

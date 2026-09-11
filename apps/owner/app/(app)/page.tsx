@@ -131,8 +131,11 @@ export default function DashboardPage() {
   const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = useVenueContext();
   const timeZone = selectedVenue?.timezone;
 
+  // Varied vertical rhythm: a wider gap after the greeting header (space-y-8)
+  // sets the "who/when" apart from the work, while the body's own sections stay
+  // at the tighter space-y-6 — rhythm, not one uniform gap everywhere.
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">{greeting}</h1>

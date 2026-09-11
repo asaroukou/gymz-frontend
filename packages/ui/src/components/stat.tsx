@@ -35,12 +35,12 @@ export function Stat({
   className?: string;
 }) {
   return (
-    <div className={cn('bg-card px-4 py-4', className)}>
+    <div className={cn('bg-card px-4 py-5', className)}>
       <p className="truncate text-xs text-muted-foreground">{label}</p>
       {isLoading ? (
-        <Skeleton className="mt-2 h-7 w-14" />
+        <Skeleton className="mt-2.5 h-9 w-16" />
       ) : (
-        <p className="mt-1 font-mono text-2xl font-semibold tabular-nums tracking-tight">
+        <p className="mt-1.5 font-mono text-3xl font-semibold tabular-nums tracking-tight">
           {value ?? '—'}
         </p>
       )}
