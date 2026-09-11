@@ -95,7 +95,13 @@ export default function Login() {
           keyboardType="email-address"
           errorText={creds.formState.errors.email ? t('auth.error.invalidCredentials') : undefined}
         />
-        <TextField control={creds.control} name="password" label={t('login.password')} secure />
+        <TextField
+          control={creds.control}
+          name="password"
+          label={t('login.password')}
+          secure
+          errorText={creds.formState.errors.password ? t('login.passwordRequired') : undefined}
+        />
         {formError ? <AppText className="text-destructive">{formError}</AppText> : null}
         <Button
           label={t('login.submit')}

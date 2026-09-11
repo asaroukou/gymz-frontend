@@ -6,9 +6,7 @@ describe('credentialsSchema', () => {
     expect(credentialsSchema.safeParse({ email: 'nope', password: 'x' }).success).toBe(false);
   });
   it('accepts a valid pair', () => {
-    expect(credentialsSchema.safeParse({ email: 'a@b.co', password: 'secret' }).success).toBe(
-      true,
-    );
+    expect(credentialsSchema.safeParse({ email: 'a@b.co', password: 'secret' }).success).toBe(true);
   });
 });
 

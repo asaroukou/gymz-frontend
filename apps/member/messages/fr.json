@@ -3,6 +3,7 @@
     "title": "Connexion",
     "email": "E-mail",
     "password": "Mot de passe",
+    "passwordRequired": "Saisissez votre mot de passe.",
     "submit": "Se connecter",
     "newPasswordTitle": "Choisir un mot de passe",
     "newPassword": "Nouveau mot de passe",

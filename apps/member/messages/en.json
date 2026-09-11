@@ -3,6 +3,7 @@
     "title": "Sign in",
     "email": "Email",
     "password": "Password",
+    "passwordRequired": "Enter your password.",
     "submit": "Sign in",
     "newPasswordTitle": "Choose a password",
     "newPassword": "New password",
