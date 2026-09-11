@@ -28,6 +28,10 @@ export default function QrScreen() {
   const regenerate = () => {
     if (venueId) {
       mint.mutate({ data: { venue_id: venueId } });
+    } else {
+      // No venue id means the venues fetch failed (or returned nothing):
+      // retry THAT, and the mount-mint effect re-mints once venueId resolves.
+      void venues.refetch();
     }
   };
 
