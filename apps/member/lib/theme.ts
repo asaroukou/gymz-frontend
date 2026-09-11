@@ -18,7 +18,7 @@ export const colors = {
     950: '#0c0a09',
   },
   primary: { DEFAULT: '#0c3d22', hover: '#19482c', foreground: '#fafaf9' },
-  destructive: { DEFAULT: '#dc2626', foreground: '#166534' },
+  destructive: { DEFAULT: '#dc2626', foreground: '#991b1b' },
   success: { DEFAULT: '#16a34a', foreground: '#166534' },
   warning: { DEFAULT: '#f59e0b', foreground: '#92400e' },
   info: { DEFAULT: '#2563eb', foreground: '#1d4ed8' },

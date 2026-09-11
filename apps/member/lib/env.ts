@@ -1,8 +1,7 @@
 // EXPO_PUBLIC_* are inlined at build time by Expo; read them once here.
 function required(name: string, value: string | undefined): string {
   if (!value) {
-    console.error(`[env] ${name} is not set — check apps/member/.env.local`);
-    return '';
+    throw new Error(`[env] ${name} is not set — copy apps/member/.env.example to .env.local`);
   }
   return value;
 }

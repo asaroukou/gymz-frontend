@@ -3,14 +3,13 @@ const LABELS: Record<string, string> = {
   cancelled: 'bookings.status.cancelled',
   canceled: 'bookings.status.cancelled',
   checked_in: 'bookings.status.checked_in',
-  pending: 'bookings.status.pending',
+  no_show: 'bookings.status.no_show',
 };
 
 export function bookingStatusLabelKey(status: string): string {
-  return LABELS[status.toLowerCase()] ?? 'bookings.status.pending';
+  return LABELS[status.toLowerCase()] ?? 'bookings.status.unknown';
 }
 
 export function isCancellable(status: string): boolean {
-  const s = status.toLowerCase();
-  return s === 'confirmed' || s === 'pending';
+  return status.toLowerCase() === 'confirmed';
 }

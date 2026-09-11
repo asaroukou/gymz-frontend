@@ -10,6 +10,7 @@ import { QueryBoundary } from '@/components/ui/query-boundary';
 import { useAuth } from '@/lib/auth/context';
 import { t } from '@/lib/i18n';
 import { formatDate } from '@/lib/format';
+import { membershipStatusLabelKey, subscriptionStatusLabelKey } from '@/lib/card-status';
 
 export default function CardScreen() {
   const { claims, signOut } = useAuth();
@@ -38,7 +39,7 @@ export default function CardScreen() {
             <View className="mt-2 flex-row items-center gap-2">
               <AppText variant="label">{t('card.status')}</AppText>
               <StatusBadge
-                label={profile.data.membership_status}
+                label={t(membershipStatusLabelKey(profile.data.membership_status))}
                 variant={statusBadgeVariant(profile.data.membership_status)}
               />
             </View>
@@ -63,7 +64,7 @@ export default function CardScreen() {
             <>
               <View className="mt-1 flex-row items-center gap-2">
                 <StatusBadge
-                  label={subscription.status}
+                  label={t(subscriptionStatusLabelKey(subscription.status))}
                   variant={statusBadgeVariant(subscription.status)}
                 />
               </View>

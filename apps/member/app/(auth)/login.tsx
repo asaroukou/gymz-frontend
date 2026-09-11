@@ -64,14 +64,20 @@ export default function Login() {
             name="newPassword"
             label={t('login.newPassword')}
             secure
-            errorText={pw.formState.errors.newPassword ? t('auth.error.generic') : undefined}
+            errorText={pw.formState.errors.newPassword ? t('login.passwordTooShort') : undefined}
           />
           <TextField
             control={pw.control}
             name="confirmPassword"
             label={t('login.confirmPassword')}
             secure
-            errorText={pw.formState.errors.confirmPassword ? t('auth.error.generic') : undefined}
+            errorText={
+              pw.formState.errors.confirmPassword
+                ? pw.formState.errors.confirmPassword.message === 'mismatch'
+                  ? t('login.passwordMismatch')
+                  : t('login.passwordTooShort')
+                : undefined
+            }
           />
           {formError ? <AppText className="text-destructive">{formError}</AppText> : null}
           <Button
@@ -93,7 +99,7 @@ export default function Login() {
           name="email"
           label={t('login.email')}
           keyboardType="email-address"
-          errorText={creds.formState.errors.email ? t('auth.error.invalidCredentials') : undefined}
+          errorText={creds.formState.errors.email ? t('login.emailInvalid') : undefined}
         />
         <TextField
           control={creds.control}

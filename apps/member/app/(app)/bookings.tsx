@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge, statusBadgeVariant } from '@/components/ui/status-badge';
 import { QueryBoundary } from '@/components/ui/query-boundary';
 import { t } from '@/lib/i18n';
-import { formatDate } from '@/lib/format';
+import { formatDateTime } from '@/lib/format';
 import { bookingStatusLabelKey, isCancellable } from '@/lib/bookings';
 
 export default function BookingsScreen() {
@@ -23,9 +23,13 @@ export default function BookingsScreen() {
     mutation: {
       onSuccess: () => qc.invalidateQueries({ queryKey: getMeListBookingsQueryKey() }),
       onError: (err) => {
+        if (err instanceof ApiError && err.status === 409) {
+          Alert.alert(t('bookings.cancelWindowClosedTitle'), t('bookings.cancelWindowClosed'));
+          return;
+        }
         const ref =
           err instanceof ApiError && err.requestId ? ` · ref: ${err.requestId.slice(0, 8)}` : '';
-        Alert.alert(t('bookings.cancelError') + ref);
+        Alert.alert(t('bookings.cancelError'), ref ? ref.replace(' · ', '') : undefined);
       },
     },
   });
@@ -55,7 +59,7 @@ export default function BookingsScreen() {
           (list.data ?? []).map((b) => (
             <Card key={b.id}>
               <View className="flex-row items-center justify-between">
-                <AppText>{formatDate(b.booked_at)}</AppText>
+                <AppText>{formatDateTime(b.booked_at)}</AppText>
                 <StatusBadge
                   label={t(bookingStatusLabelKey(b.status))}
                   variant={statusBadgeVariant(b.status)}

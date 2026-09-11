@@ -11,6 +11,10 @@ describe('statusBadgeVariant', () => {
     expect(statusBadgeVariant('expired')).toBe('destructive');
     expect(statusBadgeVariant('pending')).toBe('warning');
   });
+  it('maps exhausted and no_show to warning', () => {
+    expect(statusBadgeVariant('exhausted')).toBe('warning');
+    expect(statusBadgeVariant('no_show')).toBe('warning');
+  });
   it('falls back to neutral for unknown states', () => {
     expect(statusBadgeVariant('whatever')).toBe('neutral');
   });

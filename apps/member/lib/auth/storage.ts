@@ -12,6 +12,10 @@ export interface AsyncKV {
   removeItem(key: string): Promise<void>;
 }
 
+function logMirrorFailure(err: unknown): void {
+  console.error('[auth-storage] mirror failed:', err);
+}
+
 export function createMemoryBackedStorage(kv: AsyncKV): {
   storage: ICognitoStorageLike;
   hydrate: () => Promise<void>;
@@ -30,16 +34,16 @@ export function createMemoryBackedStorage(kv: AsyncKV): {
     getItem: (key) => (mem.has(key) ? (mem.get(key) as string) : null),
     setItem: (key, value) => {
       mem.set(key, value);
-      void kv.setItem(key, value); // fire-and-forget mirror
+      void kv.setItem(key, value).catch(logMirrorFailure); // fire-and-forget mirror
     },
     removeItem: (key) => {
       mem.delete(key);
-      void kv.removeItem(key);
+      void kv.removeItem(key).catch(logMirrorFailure);
     },
     clear: () => {
       for (const key of [...mem.keys()]) {
         mem.delete(key);
-        void kv.removeItem(key);
+        void kv.removeItem(key).catch(logMirrorFailure);
       }
     },
   };

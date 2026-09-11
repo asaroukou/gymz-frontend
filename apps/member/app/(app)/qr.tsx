@@ -45,9 +45,10 @@ export default function QrScreen() {
   }, [venueId]);
 
   useEffect(() => {
+    if (!data || expired) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [data, expired]);
 
   return (
     <Screen>

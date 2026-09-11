@@ -13,5 +13,8 @@ describe('colors', () => {
     expect(colors.success.DEFAULT).toBe('#16a34a');
     expect(colors.success.foreground).toBe('#166534');
     expect(colors.destructive.DEFAULT).toBe('#dc2626');
+    expect(colors.destructive.foreground).toBe('#991b1b');
+    expect(colors.warning.foreground).toBe('#92400e');
+    expect(colors.info.foreground).toBe('#1d4ed8');
   });
 });

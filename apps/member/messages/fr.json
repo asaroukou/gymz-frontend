@@ -4,6 +4,9 @@
     "email": "E-mail",
     "password": "Mot de passe",
     "passwordRequired": "Saisissez votre mot de passe.",
+    "emailInvalid": "Adresse e-mail invalide.",
+    "passwordTooShort": "8 caractères minimum.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "submit": "Se connecter",
     "newPasswordTitle": "Choisir un mot de passe",
     "newPassword": "Nouveau mot de passe",
@@ -27,10 +30,24 @@
     "status": "Statut",
     "venue": "Salle",
     "validUntil": "Valable jusqu'au {date}",
-    "entriesRemaining": "{count} entrées restantes",
+    "entriesRemaining": { "one": "{count} entrée restante", "other": "{count} entrées restantes" },
     "noSubscription": "Aucun abonnement actif",
     "signOut": "Se déconnecter",
-    "error": "Impossible de charger votre profil"
+    "error": "Impossible de charger votre profil",
+    "membershipStatus": {
+      "active": "Actif",
+      "expired": "Expiré",
+      "suspended": "Suspendu",
+      "cancelled": "Annulé",
+      "unknown": "Inconnu"
+    },
+    "subscriptionStatus": {
+      "active": "Actif",
+      "expired": "Expiré",
+      "exhausted": "Épuisé",
+      "cancelled": "Annulé",
+      "unknown": "Inconnu"
+    }
   },
   "qr": {
     "title": "Mon QR d'entrée",
@@ -51,11 +68,14 @@
     "keep": "Garder",
     "error": "Impossible de charger vos réservations",
     "cancelError": "Impossible d'annuler la réservation",
+    "cancelWindowClosedTitle": "Annulation impossible",
+    "cancelWindowClosed": "Le délai d'annulation est dépassé.",
     "status": {
       "confirmed": "Confirmée",
       "cancelled": "Annulée",
       "checked_in": "Enregistrée",
-      "pending": "En attente"
+      "no_show": "Absent",
+      "unknown": "Inconnu"
     }
   },
   "common": { "retry": "Réessayer", "loading": "Chargement…" }

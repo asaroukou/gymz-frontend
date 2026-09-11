@@ -4,6 +4,9 @@
     "email": "Email",
     "password": "Password",
     "passwordRequired": "Enter your password.",
+    "emailInvalid": "Invalid email address.",
+    "passwordTooShort": "8 characters minimum.",
+    "passwordMismatch": "Passwords do not match.",
     "submit": "Sign in",
     "newPasswordTitle": "Choose a password",
     "newPassword": "New password",
@@ -27,10 +30,24 @@
     "status": "Status",
     "venue": "Venue",
     "validUntil": "Valid until {date}",
-    "entriesRemaining": "{count} entries remaining",
+    "entriesRemaining": { "one": "{count} entry left", "other": "{count} entries left" },
     "noSubscription": "No active subscription",
     "signOut": "Sign out",
-    "error": "Could not load your profile"
+    "error": "Could not load your profile",
+    "membershipStatus": {
+      "active": "Active",
+      "expired": "Expired",
+      "suspended": "Suspended",
+      "cancelled": "Cancelled",
+      "unknown": "Unknown"
+    },
+    "subscriptionStatus": {
+      "active": "Active",
+      "expired": "Expired",
+      "exhausted": "Exhausted",
+      "cancelled": "Cancelled",
+      "unknown": "Unknown"
+    }
   },
   "qr": {
     "title": "My entry QR",
@@ -51,11 +68,14 @@
     "keep": "Keep",
     "error": "Could not load your bookings",
     "cancelError": "Could not cancel the booking",
+    "cancelWindowClosedTitle": "Cannot cancel",
+    "cancelWindowClosed": "The cancellation window has closed.",
     "status": {
       "confirmed": "Confirmed",
       "cancelled": "Cancelled",
       "checked_in": "Checked in",
-      "pending": "Pending"
+      "no_show": "No show",
+      "unknown": "Unknown"
     }
   },
   "common": { "retry": "Retry", "loading": "Loading…" }

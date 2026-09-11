@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatMoney } from './format';
+import { formatDate, formatDateTime, formatMoney } from './format';
 
 describe('formatDate', () => {
   it('formats an ISO date as a fr day-month-year', () => {
@@ -7,6 +7,17 @@ describe('formatDate', () => {
   });
   it('returns an em-dash-free placeholder for empty input', () => {
     expect(formatDate('')).toBe('—');
+  });
+});
+
+describe('formatDateTime', () => {
+  it('formats an ISO timestamp with the year and a time-of-day', () => {
+    const out = formatDateTime('2026-09-11T14:30:00Z');
+    expect(out).toMatch(/2026/);
+    expect(out).toContain(':');
+  });
+  it('returns an em-dash placeholder for empty input', () => {
+    expect(formatDateTime('')).toBe('—');
   });
 });
 

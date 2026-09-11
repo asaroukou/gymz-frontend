@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
 import { configureApi } from '@iziwellpass/api/client';
 import { parseClaims, type SessionClaims } from '@iziwellpass/auth/claims';
 import { createMemoryBackedStorage, type AsyncKV } from './storage';
@@ -27,11 +28,13 @@ const asyncKV: AsyncKV = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reduceSession, initialSession);
+  const qc = useQueryClient();
 
-  // Build ONE storage adapter and ONE auth client for the app's lifetime, in a
-  // useState initializer (runs once). The effect hydrates *this* storage before
-  // the client's first token read — the ordering hazard is why they must be the
-  // same instance.
+  // Build ONE storage adapter, ONE auth client, and configure the shared api
+  // client for the app's lifetime, all in a useState initializer (runs once,
+  // synchronously during first render — before any child screen can render
+  // or fire a query). Doing this here rather than in an effect closes the gap
+  // where a screen could mount and call the (unconfigured) api client first.
   const [{ client, hydrate }] = useState(() => {
     const { storage, hydrate } = createMemoryBackedStorage(asyncKV);
     const client = createMemberAuthClient({
@@ -39,13 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clientId: env.cognitoClientId,
       storage,
     });
-    return { client, hydrate };
-  });
-
-  useEffect(() => {
-    let active = true;
-    // Configure the shared api client: real gateway, this session's token,
-    // refresh-once-then-sign-out on 401. controlPlaneBaseUrl stays empty.
+    // Real gateway, this session's token, refresh-once-then-sign-out on 401.
+    // controlPlaneBaseUrl stays empty. onUnauthorized closes over `client`
+    // and `qc` (declared above) to drop the session and any cached data.
     configureApi({
       baseUrl: env.apiBaseUrl,
       getToken: () => client.getIdToken(),
@@ -53,11 +52,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const fresh = await client.forceRefreshSession();
         if (!fresh) {
           client.signOut();
-          if (active) dispatch({ type: 'signed-out' });
+          qc.clear();
+          dispatch({ type: 'signed-out' });
         }
         return fresh;
       },
     });
+    return { client, hydrate };
+  });
+
+  useEffect(() => {
+    let active = true;
     void (async () => {
       try {
         await hydrate();
@@ -82,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSignedIn: (idToken) => dispatch({ type: 'signed-in', claims: parseClaims(idToken) }),
     signOut: () => {
       client.signOut();
+      qc.clear();
       dispatch({ type: 'signed-out' });
     },
     getToken: () => client.getIdToken(),
