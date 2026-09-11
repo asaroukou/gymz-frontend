@@ -1,9 +1,15 @@
-import { Text, View } from 'react-native';
+import { Screen } from '@/components/ui/screen';
+import { AppText } from '@/components/ui/text';
+import { Card } from '@/components/ui/card';
 
 export default function Index() {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>IziWellPass</Text>
-    </View>
+    <Screen>
+      <AppText variant="title">IziWellPass</AppText>
+      <Card>
+        <AppText variant="label">Aperçu</AppText>
+        <AppText>Carte membre</AppText>
+      </Card>
+    </Screen>
   );
 }

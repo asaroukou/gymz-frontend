@@ -1,6 +1,7 @@
 // Metro must watch the workspace root and resolve hoisted deps, and honor the
 // package "exports" maps that point @iziwellpass/* at their .ts source.
 const { getDefaultConfig } = require('expo/metro-config');
+const { withNativeWind } = require('nativewind/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -14,4 +15,4 @@ config.resolver.nodeModulesPaths = [
 ];
 config.resolver.unstable_enablePackageExports = true;
 
-module.exports = config;
+module.exports = withNativeWind(config, { input: './global.css' });
