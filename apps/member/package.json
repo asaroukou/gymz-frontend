@@ -31,8 +31,10 @@
     "react-hook-form": "^7.81.0",
     "react-native": "0.86.3",
     "react-native-get-random-values": "^2.0.0",
+    "react-native-qrcode-svg": "^6.3.24",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
+    "react-native-svg": "15.15.4",
     "react-native-web": "^0.21.2",
     "zod": "^4.4.3"
   },
