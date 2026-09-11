@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   MoreHorizontalIcon,
   SearchIcon,
+  SearchXIcon,
   Trash2Icon,
   UserCogIcon,
   UsersRoundIcon,
@@ -609,7 +610,11 @@ function StaffRowActions({ staff, isSelf }: { staff: Staff; isSelf: boolean }) {
         </DropdownMenuContent>
       </DropdownMenu>
       <ChangeRoleDialog staff={staff} open={changeRoleOpen} onOpenChange={setChangeRoleOpen} />
-      <ManageVenuesDialog staff={staff} open={manageVenuesOpen} onOpenChange={setManageVenuesOpen} />
+      <ManageVenuesDialog
+        staff={staff}
+        open={manageVenuesOpen}
+        onOpenChange={setManageVenuesOpen}
+      />
       <RemoveStaffDialog staff={staff} open={removeOpen} onOpenChange={setRemoveOpen} />
     </>
   );
@@ -651,6 +656,9 @@ function StaffTable({ staff, selfUserId }: { staff: Staff[]; selfUserId: string 
 
       {filtered.length === 0 ? (
         <Empty>
+          <EmptyMedia>
+            <SearchXIcon />
+          </EmptyMedia>
           <EmptyTitle>{t('noResults.title')}</EmptyTitle>
           <EmptyDescription>{t('noResults.body')}</EmptyDescription>
         </Empty>

@@ -10,6 +10,7 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   SearchIcon,
+  SearchXIcon,
   UsersRoundIcon,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -584,7 +585,6 @@ function MemberRow({
 }) {
   const t = useTranslations('members');
   const locale = useLocale();
-  const scopeLabel = useAccessScopeLabel();
   const expiringSoon = isExpiringSoon(member);
 
   return (
@@ -609,12 +609,7 @@ function MemberRow({
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="outline">{t(`type.${member.membership_type}`)}</Badge>
-          <Badge variant={accessScopeBadgeVariant(member.access_scope)}>
-            {scopeLabel(member.access_scope)}
-          </Badge>
-        </div>
+        <Badge variant="outline">{t(`type.${member.membership_type}`)}</Badge>
       </TableCell>
       <TableCell>
         <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
@@ -698,6 +693,9 @@ function MembersDirectory({ members, canManage }: { members: Member[]; canManage
 
       {filtered.length === 0 ? (
         <Empty>
+          <EmptyMedia>
+            <SearchXIcon />
+          </EmptyMedia>
           <EmptyTitle>{t('noResults.title')}</EmptyTitle>
           <EmptyDescription>{t('noResults.body')}</EmptyDescription>
         </Empty>
