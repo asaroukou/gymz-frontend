@@ -216,3 +216,26 @@
     }
   }
 }
+
+/* A newly recorded check-in easing into the live feed: a short fade-and-lift
+   settles the row, then a faint ink wash decays to transparent so the eye
+   catches which row just arrived. Functional, not celebratory (PRODUCT.md);
+   the global reduced-motion guard above near-zeroes it. */
+@keyframes checkin-arrive {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+    background-color: color-mix(in oklch, var(--primary) 9%, transparent);
+  }
+  16% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(0);
+    background-color: transparent;
+  }
+}
+.animate-checkin-arrive {
+  animation: checkin-arrive 1100ms ease-out;
+}

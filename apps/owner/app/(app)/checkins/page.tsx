@@ -46,11 +46,19 @@ function LoadingState() {
 function FrontdeskBody({ venueId, timeZone }: { venueId: string; timeZone: string | undefined }) {
   const { attendance, checkIns, members, staff } = useFrontdeskData(venueId, timeZone);
 
+  // Front-desk-first ordering: on a phone the capture panel comes before the
+  // stats so the receptionist reaches the QR field without scrolling; the
+  // day-stats strip drops just below it. On a wide screen the stats span the
+  // top and the capture panel + live feed sit side by side.
   return (
-    <div className="space-y-6">
-      <DayStats attendance={attendance} />
-      <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="order-2 lg:order-1 lg:col-span-2">
+        <DayStats attendance={attendance} />
+      </div>
+      <div className="order-1 lg:order-2">
         <RegisterPanel venueId={venueId} members={members} />
+      </div>
+      <div className="order-3">
         <RecentCheckins checkIns={checkIns} members={members} staff={staff} timeZone={timeZone} />
       </div>
     </div>
@@ -59,8 +67,7 @@ function FrontdeskBody({ venueId, timeZone }: { venueId: string; timeZone: strin
 
 function FrontdeskContent() {
   const t = useTranslations('frontdesk');
-  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } =
-    useVenueContext();
+  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = useVenueContext();
   const timeZone = selectedVenue?.timezone;
 
   return (

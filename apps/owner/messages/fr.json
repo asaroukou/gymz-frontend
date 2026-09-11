@@ -227,7 +227,6 @@
       "title": "Enregistrer un passage",
       "tabsLabel": "Mode d'enregistrement",
       "tabQr": "QR / code",
-      "tabManual": "Manuel",
       "tabWalkin": "Sans réservation"
     },
     "qr": {
@@ -243,19 +242,6 @@
       "errorWrongVenue": "Ce code a été généré pour un autre établissement.",
       "errorPassNotSettleable": "Cette réservation pass ne peut pas être validée ici — elle concerne peut-être un autre jour, a déjà été utilisée ou a été annulée. Demandez au visiteur de vérifier sa réservation."
     },
-    "manual": {
-      "member": "Membre",
-      "memberPlaceholder": "Choisir un membre",
-      "memberSearch": "Rechercher un membre",
-      "noMembers": "Aucun membre",
-      "memberHint": "Recherchez le membre pour retrouver sa réservation.",
-      "booking": "Identifiant de réservation",
-      "bookingPlaceholder": "ID de la réservation du jour",
-      "bookingHint": "Réservation confirmée du jour, copiée depuis le planning.",
-      "submit": "Enregistrer",
-      "submitting": "Enregistrement…",
-      "membersError": "Impossible de charger les membres"
-    },
     "walkin": {
       "hint": "Enregistrez un membre présent sans réservation.",
       "member": "Membre",
@@ -264,7 +250,8 @@
       "noMembers": "Aucun membre",
       "submit": "Enregistrer l'entrée",
       "submitting": "Enregistrement…",
-      "errorDuplicate": "Ce membre a déjà été enregistré ici récemment."
+      "errorDuplicate": "Ce membre a déjà été enregistré ici récemment.",
+      "membersError": "Impossible de charger les membres"
     },
     "feed": {
       "title": "Derniers passages",
@@ -280,8 +267,7 @@
     },
     "validation": {
       "qrRequired": "Scannez ou saisissez le code",
-      "memberRequired": "Choisissez un membre",
-      "bookingRequired": "L'identifiant de réservation est requis"
+      "memberRequired": "Choisissez un membre"
     },
     "success": "Passage enregistré — {name}",
     "successNoName": "Passage enregistré",
@@ -678,7 +664,10 @@
     "empty": "Aucune offre pour le moment.",
     "showArchived": "Afficher les archivées",
     "archivedBadge": "Archivée",
-    "kind": { "subscription": "Abonnement", "entry_pack": "Carnet d'entrées" },
+    "kind": {
+      "subscription": "Abonnement",
+      "entry_pack": "Carnet d'entrées"
+    },
     "durationDays": "{count, plural, one {# jour} other {# jours}}",
     "entryCount": "{count, plural, one {# entrée} other {# entrées}}",
     "allActivities": "Toutes les activités",

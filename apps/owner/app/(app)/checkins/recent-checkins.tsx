@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import type { CheckIn, Member, Staff } from '@iziwellpass/api/schemas';
@@ -11,6 +11,7 @@ import { Badge } from '@iziwellpass/ui/components/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/components/card';
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from '@iziwellpass/ui/components/empty';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+import { cn } from '@iziwellpass/ui/lib/utils';
 import { ScanLineIcon } from 'lucide-react';
 
 import { apiErrorMessage } from '@/lib/api-error';
@@ -38,11 +39,13 @@ function CheckInRow({
   member,
   staffByUserId,
   timeZone,
+  justArrived,
 }: {
   checkIn: CheckIn;
   member: Member | undefined;
   staffByUserId: Map<string, Staff>;
   timeZone: string | undefined;
+  justArrived: boolean;
 }) {
   const t = useTranslations('frontdesk');
   const tCommon = useTranslations('common');
@@ -68,7 +71,12 @@ function CheckInRow({
   }
 
   return (
-    <div className="flex items-center gap-3 border-t py-3 first:border-t-0 first:pt-0">
+    <div
+      className={cn(
+        'flex items-center gap-3 border-t py-3 first:border-t-0 first:pt-0',
+        justArrived && 'animate-checkin-arrive',
+      )}
+    >
       <Avatar>
         <AvatarFallback aria-label={name}>{initials(member)}</AvatarFallback>
       </Avatar>
@@ -120,6 +128,23 @@ export function RecentCheckins({
     [checkIns.data],
   );
 
+  // Animate only a genuinely new arrival: when the newest check-in id changes
+  // to one we haven't shown, flash that row once. The first populated render
+  // seeds the ref without flashing, so the feed doesn't animate on load.
+  const topId = rows[0]?.id;
+  const lastTopId = useRef<string | undefined>(undefined);
+  const [arrivedId, setArrivedId] = useState<string | null>(null);
+  useEffect(() => {
+    if (topId === undefined) return;
+    if (lastTopId.current !== undefined && topId !== lastTopId.current) {
+      setArrivedId(topId);
+      const timer = setTimeout(() => setArrivedId(null), 1200);
+      lastTopId.current = topId;
+      return () => clearTimeout(timer);
+    }
+    lastTopId.current = topId;
+  }, [topId]);
+
   return (
     <Card>
       <CardHeader>
@@ -156,6 +181,7 @@ export function RecentCheckins({
                 member={checkIn.member_id ? memberById.get(checkIn.member_id) : undefined}
                 staffByUserId={staffByUserId}
                 timeZone={timeZone}
+                justArrived={checkIn.id === arrivedId}
               />
             ))}
           </div>

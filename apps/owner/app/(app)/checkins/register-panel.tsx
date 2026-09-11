@@ -13,7 +13,6 @@ import { ApiError } from '@iziwellpass/api/client';
 import {
   getGetAttendanceQueryKey,
   getListCheckInsQueryKey,
-  useCheckInManual,
   useCheckInViaQr,
   useCheckInWalkin,
   useCheckInWalkinQr,
@@ -269,145 +268,6 @@ function QrForm({ venueId, memberById }: { venueId: string; memberById: Map<stri
 }
 
 // ---------------------------------------------------------------------------
-// Manual (booking-driven) check-in
-// ---------------------------------------------------------------------------
-
-interface ManualValues {
-  member_id: string;
-  booking_id: string;
-}
-
-/**
- * `ManualCheckinRequest` requires a `booking_id` (UUID) + `venue_id` — the
- * backend resolves the member/method/record from the booking (which must be
- * today's, `confirmed`, at this venue). There is no member→today's-booking
- * lookup endpoint in scope, so the member combobox is only a lookup aid: pick
- * who you're checking in, then paste their booking id (from the planning
- * screen's slot participants). A friendlier member-first flow is tracked as an
- * open backend ticket; this is the cleanest UI over the current calls.
- */
-function ManualForm({
-  venueId,
-  members,
-  memberById,
-}: {
-  venueId: string;
-  members: Member[];
-  memberById: Map<string, Member>;
-}) {
-  const t = useTranslations('frontdesk');
-  const tCommon = useTranslations('common');
-  const queryClient = useQueryClient();
-  const checkInManual = useCheckInManual();
-
-  const schema = useMemo(
-    () =>
-      z.object({
-        member_id: z.string().min(1, t('validation.memberRequired')),
-        booking_id: z.string().min(1, t('validation.bookingRequired')),
-      }),
-    [t],
-  );
-
-  const form = useForm<ManualValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { member_id: '', booking_id: '' },
-  });
-
-  const memberOptions = useMemo(
-    () => members.map((m) => ({ value: m.id, label: memberName(m) })),
-    [members],
-  );
-
-  const onSubmit = (values: ManualValues) => {
-    // Guard against a double-submit during the in-flight window (native Enter
-    // bypasses the disabled button).
-    if (checkInManual.isPending) return;
-    // Payload kept byte-identical to the pre-redesign page: { booking_id, venue_id }.
-    checkInManual.mutate(
-      { data: { booking_id: values.booking_id, venue_id: venueId } },
-      {
-        onSuccess: (res) => {
-          checkinSuccessToast(t, tCommon, memberById, res.data.member_id);
-          // Invalidate the venue the server resolved the check-in against
-          // (authoritative), not the closure's selected venue — see QrForm.
-          const checkedInVenueId = res.data.venue_id;
-          void queryClient.invalidateQueries({
-            queryKey: getListCheckInsQueryKey(checkedInVenueId),
-          });
-          void queryClient.invalidateQueries({
-            queryKey: getGetAttendanceQueryKey(checkedInVenueId),
-          });
-          form.reset({ member_id: '', booking_id: '' });
-        },
-        onError: (err) => {
-          if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, t('error')));
-          }
-        },
-      },
-    );
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
-        <FormField
-          control={form.control}
-          name="member_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('manual.member')}</FormLabel>
-              <FormControl>
-                <Combobox
-                  options={memberOptions}
-                  value={field.value || undefined}
-                  onValueChange={field.onChange}
-                  placeholder={t('manual.memberPlaceholder')}
-                  searchPlaceholder={t('manual.memberSearch')}
-                  emptyText={t('manual.noMembers')}
-                  disabled={checkInManual.isPending}
-                  className="h-11"
-                />
-              </FormControl>
-              <p className="text-xs text-muted-foreground">{t('manual.memberHint')}</p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="booking_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('manual.booking')}</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  inputMode="text"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  disabled={checkInManual.isPending}
-                  placeholder={t('manual.bookingPlaceholder')}
-                  className="h-11"
-                />
-              </FormControl>
-              <p className="text-xs text-muted-foreground">{t('manual.bookingHint')}</p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={checkInManual.isPending} className="h-11 w-full">
-          {checkInManual.isPending ? t('manual.submitting') : t('manual.submit')}
-        </Button>
-      </form>
-    </Form>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Walk-in (bookingless) check-in
 // ---------------------------------------------------------------------------
 
@@ -537,13 +397,10 @@ export function RegisterPanel({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="qr" className="gap-4">
-          <TabsList aria-label={t('register.tabsLabel')} className="grid w-full grid-cols-3">
+          <TabsList aria-label={t('register.tabsLabel')} className="grid w-full grid-cols-2">
             <TabsTrigger value="qr" className="h-11 min-w-0 gap-1.5 lg:h-9">
               <QrCodeIcon className="size-4 shrink-0" aria-hidden="true" />
               <span className="truncate">{t('register.tabQr')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="manual" className="h-11 min-w-0 lg:h-9">
-              <span className="truncate">{t('register.tabManual')}</span>
             </TabsTrigger>
             <TabsTrigger value="walkin" className="h-11 min-w-0 lg:h-9">
               <span className="truncate">{t('register.tabWalkin')}</span>
@@ -552,25 +409,6 @@ export function RegisterPanel({
 
           <TabsContent value="qr">
             <QrForm venueId={venueId} memberById={memberById} />
-          </TabsContent>
-
-          <TabsContent value="manual">
-            {members.isLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-11 w-full rounded-full" />
-                <Skeleton className="h-11 w-full rounded-full" />
-                <Skeleton className="h-11 w-full rounded-full" />
-              </div>
-            ) : members.isError ? (
-              <Alert variant="destructive">
-                <AlertTitle>{t('errorTitle')}</AlertTitle>
-                <AlertDescription>
-                  {apiErrorMessage(members.error, t('manual.membersError'))}
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <ManualForm venueId={venueId} members={list} memberById={memberById} />
-            )}
           </TabsContent>
 
           <TabsContent value="walkin">
@@ -583,7 +421,7 @@ export function RegisterPanel({
               <Alert variant="destructive">
                 <AlertTitle>{t('errorTitle')}</AlertTitle>
                 <AlertDescription>
-                  {apiErrorMessage(members.error, t('manual.membersError'))}
+                  {apiErrorMessage(members.error, t('walkin.membersError'))}
                 </AlertDescription>
               </Alert>
             ) : (

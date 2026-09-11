@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import type { AttendanceStats } from '@iziwellpass/api/schemas';
 import { Stat, StatPanel } from '@iziwellpass/ui/components/stat';
 
+import { useCountUp } from '@/lib/use-count-up';
+
 import type { QueryLike } from './use-frontdesk-data';
 
 /**
@@ -16,6 +18,9 @@ import type { QueryLike } from './use-frontdesk-data';
 export function DayStats({ attendance }: { attendance: QueryLike<AttendanceStats> }) {
   const t = useTranslations('frontdesk');
   const stats = attendance.isError ? undefined : attendance.data;
+  // Occupancy eases up when a check-in lands (see useCountUp); the other two
+  // figures snap. Tabular mono numerals keep the digits from jittering.
+  const occupancy = useCountUp(stats ? Math.round(stats.occupancy_pct) : 0);
 
   return (
     <StatPanel className="grid-cols-2 sm:grid-cols-3">
@@ -31,7 +36,7 @@ export function DayStats({ attendance }: { attendance: QueryLike<AttendanceStats
       />
       <Stat
         label={t('stats.occupancy')}
-        value={stats ? `${Math.round(stats.occupancy_pct)} %` : null}
+        value={stats ? `${occupancy} %` : null}
         isLoading={attendance.isLoading}
         className="col-span-2 sm:col-span-1"
       />

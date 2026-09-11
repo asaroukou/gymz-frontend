@@ -227,7 +227,6 @@
       "title": "Record a check-in",
       "tabsLabel": "Check-in mode",
       "tabQr": "QR / code",
-      "tabManual": "Manual",
       "tabWalkin": "No booking"
     },
     "qr": {
@@ -243,19 +242,6 @@
       "errorWrongVenue": "This code was issued for a different venue.",
       "errorPassNotSettleable": "This pass booking can't be settled here — it may be for another day, already used, or cancelled. Ask the visitor to check their booking."
     },
-    "manual": {
-      "member": "Member",
-      "memberPlaceholder": "Choose a member",
-      "memberSearch": "Search a member",
-      "noMembers": "No members",
-      "memberHint": "Look up the member to find their booking.",
-      "booking": "Booking ID",
-      "bookingPlaceholder": "Today's booking ID",
-      "bookingHint": "Today's confirmed booking, copied from planning.",
-      "submit": "Check in",
-      "submitting": "Checking in…",
-      "membersError": "Could not load members"
-    },
     "walkin": {
       "hint": "Check in a member who is here without a booking.",
       "member": "Member",
@@ -264,7 +250,8 @@
       "noMembers": "No members",
       "submit": "Check in",
       "submitting": "Checking in…",
-      "errorDuplicate": "This member was already checked in here recently."
+      "errorDuplicate": "This member was already checked in here recently.",
+      "membersError": "Could not load members"
     },
     "feed": {
       "title": "Recent check-ins",
@@ -280,8 +267,7 @@
     },
     "validation": {
       "qrRequired": "Scan or enter the code",
-      "memberRequired": "Choose a member",
-      "bookingRequired": "Booking ID is required"
+      "memberRequired": "Choose a member"
     },
     "success": "Check-in recorded — {name}",
     "successNoName": "Check-in recorded",
@@ -678,7 +664,10 @@
     "empty": "No plans yet.",
     "showArchived": "Show archived",
     "archivedBadge": "Archived",
-    "kind": { "subscription": "Subscription", "entry_pack": "Entry pack" },
+    "kind": {
+      "subscription": "Subscription",
+      "entry_pack": "Entry pack"
+    },
     "durationDays": "{count, plural, one {# day} other {# days}}",
     "entryCount": "{count, plural, one {# entry} other {# entries}}",
     "allActivities": "All activities",
