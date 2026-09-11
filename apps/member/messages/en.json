@@ -1,0 +1,61 @@
+{
+  "login": {
+    "title": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "newPasswordTitle": "Choose a password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "newPasswordSubmit": "Confirm"
+  },
+  "auth": {
+    "error": {
+      "invalidCredentials": "Incorrect email or password.",
+      "notConfirmed": "Account not confirmed.",
+      "tooMany": "Too many attempts. Try again later.",
+      "network": "Could not connect. Check your network.",
+      "generic": "Something went wrong."
+    }
+  },
+  "tabs": { "card": "Card", "qr": "QR", "bookings": "Bookings" },
+  "card": {
+    "greeting": "Hello {name}",
+    "greetingNoName": "Hello",
+    "plan": "Plan",
+    "status": "Status",
+    "venue": "Venue",
+    "validUntil": "Valid until {date}",
+    "entriesRemaining": "{count} entries remaining",
+    "noSubscription": "No active subscription",
+    "signOut": "Sign out",
+    "error": "Could not load your profile"
+  },
+  "qr": {
+    "title": "My entry QR",
+    "subtitle": "Show this code at the front desk",
+    "expiresIn": "Expires in {seconds}s",
+    "expired": "QR expired",
+    "refresh": "Refresh",
+    "generate": "Generate my QR",
+    "error": "Could not generate the QR"
+  },
+  "bookings": {
+    "title": "My bookings",
+    "empty": "No bookings",
+    "cancel": "Cancel",
+    "cancelConfirmTitle": "Cancel this booking?",
+    "cancelConfirmBody": "This action cannot be undone.",
+    "cancelConfirm": "Cancel booking",
+    "keep": "Keep",
+    "error": "Could not load your bookings",
+    "cancelError": "Could not cancel the booking",
+    "status": {
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled",
+      "checked_in": "Checked in",
+      "pending": "Pending"
+    }
+  },
+  "common": { "retry": "Retry", "loading": "Loading…" }
+}

@@ -1,0 +1,61 @@
+{
+  "login": {
+    "title": "Connexion",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "newPasswordTitle": "Choisir un mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "newPasswordSubmit": "Valider"
+  },
+  "auth": {
+    "error": {
+      "invalidCredentials": "E-mail ou mot de passe incorrect.",
+      "notConfirmed": "Compte non confirmé.",
+      "tooMany": "Trop de tentatives. Réessayez plus tard.",
+      "network": "Connexion impossible. Vérifiez votre réseau.",
+      "generic": "Une erreur est survenue."
+    }
+  },
+  "tabs": { "card": "Carte", "qr": "QR", "bookings": "Réservations" },
+  "card": {
+    "greeting": "Bonjour {name}",
+    "greetingNoName": "Bonjour",
+    "plan": "Abonnement",
+    "status": "Statut",
+    "venue": "Salle",
+    "validUntil": "Valable jusqu'au {date}",
+    "entriesRemaining": "{count} entrées restantes",
+    "noSubscription": "Aucun abonnement actif",
+    "signOut": "Se déconnecter",
+    "error": "Impossible de charger votre profil"
+  },
+  "qr": {
+    "title": "Mon QR d'entrée",
+    "subtitle": "Présentez ce code à l'accueil",
+    "expiresIn": "Expire dans {seconds} s",
+    "expired": "QR expiré",
+    "refresh": "Régénérer",
+    "generate": "Générer mon QR",
+    "error": "Impossible de générer le QR"
+  },
+  "bookings": {
+    "title": "Mes réservations",
+    "empty": "Aucune réservation",
+    "cancel": "Annuler",
+    "cancelConfirmTitle": "Annuler la réservation ?",
+    "cancelConfirmBody": "Cette action est définitive.",
+    "cancelConfirm": "Annuler la réservation",
+    "keep": "Garder",
+    "error": "Impossible de charger vos réservations",
+    "cancelError": "Impossible d'annuler la réservation",
+    "status": {
+      "confirmed": "Confirmée",
+      "cancelled": "Annulée",
+      "checked_in": "Enregistrée",
+      "pending": "En attente"
+    }
+  },
+  "common": { "retry": "Réessayer", "loading": "Chargement…" }
+}
