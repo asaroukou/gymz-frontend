@@ -51,4 +51,19 @@ describe('parseClaims', () => {
     const token = fakeJwt({ sub: 'u', role: 'superadmin', exp: 1 });
     expect(parseClaims(token).role).toBeNull();
   });
+
+  it('prefers the given_name claim for the display name', () => {
+    const token = fakeJwt({ sub: 'u', given_name: 'Awa', name: 'Awa Diallo', exp: 1 });
+    expect(parseClaims(token).name).toBe('Awa');
+  });
+
+  it('falls back to the first word of the name claim', () => {
+    const token = fakeJwt({ sub: 'u', name: 'Kofi Mensah', exp: 1 });
+    expect(parseClaims(token).name).toBe('Kofi');
+  });
+
+  it('leaves the display name null when the token carries no name', () => {
+    const token = fakeJwt({ sub: 'u', email: 'owner@example.com', exp: 1 });
+    expect(parseClaims(token).name).toBeNull();
+  });
 });

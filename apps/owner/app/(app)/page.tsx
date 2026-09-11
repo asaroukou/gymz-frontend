@@ -122,12 +122,13 @@ export default function DashboardPage() {
   const locale = useLocale();
   const session = useSession();
 
-  const email = session.status === 'signed-in' ? session.claims.email : null;
-  const name = email ? (email.split('@')[0] ?? email) : null;
+  // Greet by real given name when the token carries one; otherwise a warm
+  // name-less "Bonjour" rather than the email local-part (which reads as a
+  // machine id, e.g. "Bonjour abdelsaroukou").
+  const name = session.status === 'signed-in' ? session.claims.name : null;
   const greeting = name ? t('greeting', { name }) : t('greetingNoName');
 
-  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } =
-    useVenueContext();
+  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = useVenueContext();
   const timeZone = selectedVenue?.timezone;
 
   return (

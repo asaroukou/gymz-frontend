@@ -13,11 +13,29 @@ function isRole(value: unknown): value is Role {
 export interface SessionClaims {
   sub: string;
   email: string | null;
+  /**
+   * The signed-in person's given name for greetings, from the Cognito
+   * `given_name` claim (or the first word of `name`). Null when the token
+   * carries neither — callers greet without a name rather than falling back to
+   * the email local-part, which reads as a machine id.
+   */
+  name: string | null;
   orgId: string | null;
   role: Role | null;
   permissions: string[];
   /** Unix seconds. */
   expiresAt: number;
+}
+
+function pickDisplayName(payload: Record<string, unknown>): string | null {
+  if (typeof payload.given_name === 'string' && payload.given_name.trim()) {
+    return payload.given_name.trim();
+  }
+  if (typeof payload.name === 'string' && payload.name.trim()) {
+    // A full name in the `name` claim: greet with just the first word.
+    return payload.name.trim().split(/\s+/)[0] ?? null;
+  }
+  return null;
 }
 
 function parsePermissions(raw: unknown): string[] {
@@ -53,6 +71,7 @@ export function parseClaims(idToken: string): SessionClaims {
   return {
     sub: typeof payload.sub === 'string' ? payload.sub : '',
     email: typeof payload.email === 'string' ? payload.email : null,
+    name: pickDisplayName(payload),
     orgId: typeof payload.org_id === 'string' ? payload.org_id : null,
     role: isRole(payload.role) ? payload.role : null,
     permissions: parsePermissions(payload.permissions),

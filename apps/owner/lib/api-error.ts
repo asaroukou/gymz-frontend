@@ -5,15 +5,19 @@ import type { FieldErrorSchema } from '@iziwellpass/api/schemas';
 
 /**
  * Shared error-to-toast message for every mutation/query error in the app.
- * Includes the machine-readable error code, and — when the server sent a
- * request id — a short `ref:` suffix support can grep logs for.
+ * Surfaces the caller's plain-language fallback and, when the server sent a
+ * request id, a short `ref:` suffix support can grep logs for. The raw
+ * machine code (FORBIDDEN, CONFLICT, …) is deliberately NOT shown: a
+ * non-technical operator at the counter should never have to decode an enum
+ * (PRODUCT.md principle 5). The code still travels in the ApiError for logging
+ * and for callers that map a specific code to bespoke copy at the call site.
  */
 export function apiErrorMessage(err: unknown, fallback: string): string {
   if (!(err instanceof ApiError)) {
     return fallback;
   }
   const ref = err.requestId ? ` · ref: ${err.requestId.slice(0, 8)}` : '';
-  return `${fallback} (${err.code})${ref}`;
+  return `${fallback}${ref}`;
 }
 
 /**
