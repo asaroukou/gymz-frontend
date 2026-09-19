@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { configureApi } from '@iziwellpass/api/client';
 import { ApiProvider } from '@iziwellpass/api/provider';
 import { createAuthClient, type AuthClient } from '@iziwellpass/auth/client';
+import { createMockAuthClient } from '@iziwellpass/auth/mock';
 import { AuthProvider, useAuth } from '@iziwellpass/auth/provider';
 import { clearSessionCookie } from '@iziwellpass/auth/session-cookie';
 import { Toaster } from '@iziwellpass/ui/components/sonner';
@@ -65,6 +66,13 @@ export function Providers({ children }: { children: ReactNode }) {
   // initializer still runs only once per mount, matching the "one client for the
   // app lifetime" recipe.
   const [authClient] = useState<AuthClient>(() => {
+    // Offline dev: NEXT_PUBLIC_AUTH_MOCK=1 swaps Cognito for the mock client
+    // (any email; the password picks the role/scenario — see @iziwellpass/auth/mock).
+    // Pair with the mock API server (`pnpm dev:mock` + API_PROXY_TARGET).
+    if (process.env.NEXT_PUBLIC_AUTH_MOCK === '1') {
+      console.warn('[auth] NEXT_PUBLIC_AUTH_MOCK=1 — Cognito is mocked, dev only');
+      return createMockAuthClient();
+    }
     try {
       return createAuthClient({
         userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID ?? '',

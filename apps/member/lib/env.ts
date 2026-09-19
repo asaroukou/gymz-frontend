@@ -6,14 +6,17 @@ function required(name: string, value: string | undefined): string {
   return value;
 }
 
+// '1' swaps Cognito for the offline mock auth client (dev only). With the mock
+// on, the Cognito ids are unused, so they are not required either.
+const AUTH_MOCK = process.env.EXPO_PUBLIC_AUTH_MOCK === '1';
+
 export const env = {
+  authMock: AUTH_MOCK,
   apiBaseUrl: required('EXPO_PUBLIC_API_BASE_URL', process.env.EXPO_PUBLIC_API_BASE_URL),
-  cognitoUserPoolId: required(
-    'EXPO_PUBLIC_COGNITO_USER_POOL_ID',
-    process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID,
-  ),
-  cognitoClientId: required(
-    'EXPO_PUBLIC_COGNITO_CLIENT_ID',
-    process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID,
-  ),
+  cognitoUserPoolId: AUTH_MOCK
+    ? (process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID ?? 'mock')
+    : required('EXPO_PUBLIC_COGNITO_USER_POOL_ID', process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID),
+  cognitoClientId: AUTH_MOCK
+    ? (process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID ?? 'mock')
+    : required('EXPO_PUBLIC_COGNITO_CLIENT_ID', process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID),
 } as const;

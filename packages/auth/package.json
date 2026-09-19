@@ -9,7 +9,8 @@
     "./claims": "./src/claims.ts",
     "./provider": "./src/provider.tsx",
     "./middleware": "./src/middleware.ts",
-    "./session-cookie": "./src/session-cookie.ts"
+    "./session-cookie": "./src/session-cookie.ts",
+    "./mock": "./src/mock.ts"
   },
   "scripts": {
     "lint": "eslint .",
