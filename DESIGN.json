@@ -8,42 +8,128 @@
         "role": "primary",
         "displayName": "Encre",
         "canonical": "#141512",
-        "tonalRamp": ["#0b0c0a", "#141512", "#2a2c27", "#42453e", "#5d6156", "#878b7e", "#b5b8ac", "#e4e5dd"]
+        "tonalRamp": [
+          "#0b0c0a",
+          "#141512",
+          "#2a2c27",
+          "#42453e",
+          "#5d6156",
+          "#878b7e",
+          "#b5b8ac",
+          "#e4e5dd"
+        ]
       },
       "os": {
         "role": "neutral",
         "displayName": "Os",
         "canonical": "#f2eee5",
-        "tonalRamp": ["#3d3a30", "#5c5847", "#7d785f", "#9e987b", "#beb89c", "#d9d4bf", "#e8e4d6", "#f2eee5"]
+        "tonalRamp": [
+          "#3d3a30",
+          "#5c5847",
+          "#7d785f",
+          "#9e987b",
+          "#beb89c",
+          "#d9d4bf",
+          "#e8e4d6",
+          "#f2eee5"
+        ]
       },
       "foret": {
         "role": "secondary",
         "displayName": "Forêt",
         "canonical": "#244f3c",
-        "tonalRamp": ["#12281e", "#1b3c2d", "#244f3c", "#33684f", "#4a8367", "#6ea189", "#9cc1af", "#cfe2d8"]
+        "tonalRamp": [
+          "#12281e",
+          "#1b3c2d",
+          "#244f3c",
+          "#33684f",
+          "#4a8367",
+          "#6ea189",
+          "#9cc1af",
+          "#cfe2d8"
+        ]
       },
       "argile": {
         "role": "secondary",
         "displayName": "Argile",
         "canonical": "#c66f50",
-        "tonalRamp": ["#4f2a1e", "#743e2b", "#985238", "#c66f50", "#d78a6d", "#e4a78f", "#eec5b4", "#f7e1d8"]
+        "tonalRamp": [
+          "#4f2a1e",
+          "#743e2b",
+          "#985238",
+          "#c66f50",
+          "#d78a6d",
+          "#e4a78f",
+          "#eec5b4",
+          "#f7e1d8"
+        ]
       },
-      "ocre": { "role": "tertiary", "displayName": "Ocre", "canonical": "#d9b84b" },
-      "sauge": { "role": "tertiary", "displayName": "Sauge", "canonical": "#b9c9a4" },
-      "eucalyptus": { "role": "tertiary", "displayName": "Eucalyptus", "canonical": "#9fc0bb" },
-      "eau": { "role": "tertiary", "displayName": "Eau", "canonical": "#8ebbd2" },
-      "statut-succes": { "role": "status", "displayName": "Statut succès", "canonical": "#257a4e" },
-      "statut-attention": { "role": "status", "displayName": "Statut attention", "canonical": "#d9b84b" },
-      "statut-erreur": { "role": "status", "displayName": "Statut erreur", "canonical": "#b23a2a" },
-      "statut-info": { "role": "status", "displayName": "Statut info", "canonical": "#8ebbd2" }
+      "ocre": {
+        "role": "tertiary",
+        "displayName": "Ocre",
+        "canonical": "#d9b84b"
+      },
+      "sauge": {
+        "role": "tertiary",
+        "displayName": "Sauge",
+        "canonical": "#b9c9a4"
+      },
+      "eucalyptus": {
+        "role": "tertiary",
+        "displayName": "Eucalyptus",
+        "canonical": "#9fc0bb"
+      },
+      "eau": {
+        "role": "tertiary",
+        "displayName": "Eau",
+        "canonical": "#8ebbd2"
+      },
+      "statut-succes": {
+        "role": "status",
+        "displayName": "Statut succès",
+        "canonical": "#257a4e"
+      },
+      "statut-attention": {
+        "role": "status",
+        "displayName": "Statut attention",
+        "canonical": "#d9b84b"
+      },
+      "statut-erreur": {
+        "role": "status",
+        "displayName": "Statut erreur",
+        "canonical": "#b23a2a"
+      },
+      "statut-info": {
+        "role": "status",
+        "displayName": "Statut info",
+        "canonical": "#8ebbd2"
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Hero moments only: one per surface (page title, pass face)." },
-      "headline": { "displayName": "Headline", "purpose": "Section heads inside a page." },
-      "title": { "displayName": "Title", "purpose": "Card, panel, and row titles." },
-      "body": { "displayName": "Body", "purpose": "Default reading size; cap prose at 65–75ch." },
-      "label": { "displayName": "Eyebrow", "purpose": "Tracked uppercase overline; the only uppercase in the system." },
-      "numeric": { "displayName": "Numeric", "purpose": "Tabular figures ('tnum') for times, capacities, amounts, codes." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero moments only: one per surface (page title, pass face)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section heads inside a page."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card, panel, and row titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default reading size; cap prose at 65–75ch."
+      },
+      "label": {
+        "displayName": "Eyebrow",
+        "purpose": "Tracked uppercase overline; the only uppercase in the system."
+      },
+      "numeric": {
+        "displayName": "Numeric",
+        "purpose": "Tabular figures ('tnum') for times, capacities, amounts, codes."
+      }
     },
     "shadows": [],
     "motion": [
@@ -54,8 +140,14 @@
       }
     ],
     "breakpoints": [
-      { "name": "stack", "value": "47.99rem" },
-      { "name": "header-collapse", "value": "52rem" }
+      {
+        "name": "stack",
+        "value": "47.99rem"
+      },
+      {
+        "name": "header-collapse",
+        "value": "52rem"
+      }
     ]
   },
   "components": [
@@ -129,14 +221,46 @@
       "French-first, sentence case, operational; 2.75rem minimum touch targets; 3px currentColor focus outlines."
     ],
     "rules": [
-      { "name": "The Flat Ink Rule", "body": "Encre is the only control color. If a screen needs a second brand color on a button, the design is wrong, not the palette.", "section": "colors" },
-      { "name": "The Two Places Rule", "body": "Forêt and argile are places, not paint: forêt = member side, argile = operator side. They appear drenched (a full surface) or not at all; never as borders, icons, or text accents.", "section": "colors" },
-      { "name": "The Documentary Color Rule", "body": "Color states a fact: whose side a surface belongs to, what category a thing is, what status it holds. Decorative color, and every gradient, is prohibited (recorded decision E-008).", "section": "colors" },
-      { "name": "The One Family Rule", "body": "Inter Variable is the entire typographic system. A second font is a bug.", "section": "typography" },
-      { "name": "The Eyebrow Rule", "body": "Uppercase exists only as the tracked 0.75rem eyebrow. Headings, buttons, and body are French sentence case, always.", "section": "typography" },
-      { "name": "The Tabular Rule", "body": "Any value someone compares, counts, or reads back renders with tabular figures at weight 650. No exceptions.", "section": "typography" },
-      { "name": "The No-Shadow Rule", "body": "box-shadow is prohibited. If a boundary needs asserting, use the hairline; if a layer needs separating, use a surface step or scrim.", "section": "elevation" },
-      { "name": "The Hairline Rule", "body": "Every border is 1px and derived from currentColor, so it recolors correctly on bone, white, forêt, and argile without new tokens.", "section": "elevation" }
+      {
+        "name": "The Flat Ink Rule",
+        "body": "Encre is the only control color. If a screen needs a second brand color on a button, the design is wrong, not the palette.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Places Rule",
+        "body": "Forêt and argile are places, not paint: forêt = member side, argile = operator side. They appear drenched (a full surface) or not at all; never as borders, icons, or text accents.",
+        "section": "colors"
+      },
+      {
+        "name": "The Documentary Color Rule",
+        "body": "Color states a fact: whose side a surface belongs to, what category a thing is, what status it holds. Decorative color, and every gradient, is prohibited (recorded decision E-008).",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Inter Variable is the entire typographic system. A second font is a bug.",
+        "section": "typography"
+      },
+      {
+        "name": "The Eyebrow Rule",
+        "body": "Uppercase exists only as the tracked 0.75rem eyebrow. Headings, buttons, and body are French sentence case, always.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Any value someone compares, counts, or reads back renders with tabular figures at weight 650. No exceptions.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Shadow Rule",
+        "body": "box-shadow is prohibited. If a boundary needs asserting, use the hairline; if a layer needs separating, use a surface step or scrim.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Hairline Rule",
+        "body": "Every border is 1px and derived from currentColor, so it recolors correctly on bone, white, forêt, and argile without new tokens.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do ground every screen in os (#f2eee5) with encre (#141512) ink; panels are blanc, hairlines are 18% currentColor mixes.",
@@ -151,7 +275,7 @@
       "Don't use box-shadow, glassmorphism, or blur-as-decoration: the system is flat (see The No-Shadow Rule).",
       "Don't build the \"generic SaaS dashboard\" PRODUCT.md forbids: no cream-and-blurple, no hero-metric cards, no identical icon+heading grids.",
       "Don't drift toward the \"loud consumer fitness app\" (neon, gamified badges, hype copy) or \"playful/gamified\" (mascots, confetti, emoji).",
-      "Don't compress into the \"dense enterprise admin\": body never drops below 1rem, rows breathe with hairlines, screens survive a 375px phone.",
+      " compress into the \"dense enterprise admin\": reading text stays at 1rem, dense tables and rows may use 0.875rem and never less, rows breathe with hairlines, screens survive a 375px phone.",
       "Don't go \"cold corporate minimalism\": no pure-white grounds, no cool greys, no timid 400-weight headings; the studio is warm and inked.",
       "Don't uppercase anything except the eyebrow, use a second font family, put forêt/argile on borders/icons/text, or use border-left/border-right thicker than 1px as a colored stripe."
     ]

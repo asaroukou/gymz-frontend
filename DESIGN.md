@@ -244,6 +244,6 @@ Charts stay in the family: encre for the primary series, the documentary accents
 - **Don't** use `box-shadow`, glassmorphism, or blur-as-decoration: the system is flat (see The No-Shadow Rule).
 - **Don't** build the "generic SaaS dashboard" PRODUCT.md forbids: no cream-and-blurple, no hero-metric cards, no identical icon+heading grids.
 - **Don't** drift toward the "loud consumer fitness app" (neon, gamified badges, hype copy) or "playful/gamified" (mascots, confetti, emoji).
-- **Don't** compress into the "dense enterprise admin": body never drops below 1rem, rows breathe with hairlines, screens survive a 375px phone.
+- **Don't** compress into the "dense enterprise admin": reading text stays at 1rem, dense tables and rows may use 0.875rem and never less, rows breathe with hairlines, screens survive a 375px phone.
 - **Don't** go "cold corporate minimalism": no pure-white grounds, no cool greys, no timid 400-weight headings; the studio is warm and inked.
 - **Don't** uppercase anything except the eyebrow, use a second font family, put forêt/argile on borders/icons/text, or use `border-left`/`border-right` thicker than 1px as a colored stripe.
