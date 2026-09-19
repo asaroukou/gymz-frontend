@@ -18,9 +18,9 @@ const HARD_RULES = [
   'La couleur ne sert qu’au sens : badges de statut, capacité.',
   'Ni dégradé, ni glassmorphisme, ni emoji.',
   'Chiffres en font-numeric : 06:30, 14/18.',
-  'Filets de 1px avant toute ombre.',
+  'Filets de 1px, jamais d’ombre.',
   'Cibles tactiles d’au moins 44px sur les écrans d’accueil.',
-  'Contraste AA dans les deux thèmes.',
+  'Contraste AA sur os et sur blanc.',
 ];
 
 export default function DesignIndexPage() {
@@ -34,10 +34,9 @@ export default function DesignIndexPage() {
           Système de design
         </h1>
         <p className="mt-3 text-sm">
-          Chaque spécimen est rendu deux fois, en clair et en sombre, côte à côte. La page elle-même
-          reste en clair et n’utilise aucune couleur : toute couleur visible ici sort d’un spécimen.
-          Les états pilotés par props sont réels ; le survol et le focus clavier sont annotés, pas
-          simulés.
+          Chaque spécimen est rendu une fois, en clair. La page elle-même reste en clair et
+          n’utilise aucune couleur : toute couleur visible ici sort d’un spécimen. Les états pilotés
+          par props sont réels ; le survol et le focus clavier sont annotés, pas simulés.
         </p>
       </header>
 

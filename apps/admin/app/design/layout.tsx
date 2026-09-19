@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-import { ForceLight } from './force-light';
 import { RouteBar } from './route-bar';
 
 export const metadata: Metadata = {
@@ -12,8 +11,7 @@ export const metadata: Metadata = {
 
 export default function DesignLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-muted text-[color:var(--neutral-600)]">
-      <ForceLight />
+    <div className="min-h-screen bg-muted text-muted-foreground">
       <RouteBar />
       {children}
     </div>

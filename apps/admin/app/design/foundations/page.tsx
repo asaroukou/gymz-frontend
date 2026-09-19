@@ -15,20 +15,6 @@ const SECTIONS: readonly TocEntry[] = [
   { id: 'icones', label: 'Icônes' },
 ];
 
-const NEUTRAL_RAMP = [
-  '--neutral-50',
-  '--neutral-100',
-  '--neutral-200',
-  '--neutral-300',
-  '--neutral-400',
-  '--neutral-500',
-  '--neutral-600',
-  '--neutral-700',
-  '--neutral-800',
-  '--neutral-900',
-  '--neutral-950',
-];
-
 const SURFACE_TOKENS = [
   '--background',
   '--card',
@@ -54,8 +40,8 @@ const CHART_TOKENS = [
   '--chart-track',
 ];
 
-/** A Tailwind `/15` opacity modifier, as Tailwind v4 actually compiles it. */
-const tint = (token: string) => `color-mix(in oklab, var(${token}) 15%, transparent)`;
+/** A Tailwind `/18` opacity modifier, as Tailwind v4 actually compiles it. */
+const tint = (token: string) => `color-mix(in oklab, var(${token}) 18%, transparent)`;
 
 const TYPE_STEPS = [
   {
@@ -149,18 +135,6 @@ export default function FoundationsPage() {
         note="Une seule encre, une échelle de gris chaude, quatre couleurs de statut réservées au sens. Les ratios sont mesurés après composition de l’alpha, pas déduits de la source."
       >
         <Specimen
-          name="Échelle stone"
-          signature="--neutral-50 → --neutral-950"
-          note="Les deux pas les plus clairs portent une chroma imperceptible, épinglée sur la famille chaude pour que l’échelle ne dérive jamais vers le froid."
-        >
-          <div className="flex w-full flex-wrap gap-2">
-            {NEUTRAL_RAMP.map((token) => (
-              <Swatch key={token} token={token} label={token.replace('--neutral-', '')} />
-            ))}
-          </div>
-        </Specimen>
-
-        <Specimen
           name="Surfaces"
           signature="--background, --card, --popover, --muted, --secondary, --accent"
         >
@@ -239,19 +213,19 @@ export default function FoundationsPage() {
             <ContrastRow
               foreground="var(--success-foreground)"
               background={tint('--success')}
-              label="--success-foreground sur --success/15"
+              label="--success-foreground sur --success/18"
               sample="Payé"
             />
             <ContrastRow
               foreground="var(--warning-foreground)"
               background={tint('--warning')}
-              label="--warning-foreground sur --warning/15"
+              label="--warning-foreground sur --warning/18"
               sample="En attente"
             />
             <ContrastRow
               foreground="var(--info-foreground)"
               background={tint('--info')}
-              label="--info-foreground sur --info/15"
+              label="--info-foreground sur --info/18"
               sample="Invité"
             />
             <ContrastRow
@@ -365,7 +339,7 @@ export default function FoundationsPage() {
           note="Tabulez jusqu’au champ pour déclencher l’état réel."
         >
           <input
-            className="h-11 rounded-full border border-input bg-background px-4 text-sm text-foreground lg:h-9"
+            className="h-11 rounded-lg border border-input bg-background px-4 text-sm text-foreground lg:h-9"
             placeholder="Rechercher un membre"
             aria-label="Rechercher un membre"
           />
