@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3011",
+    "dev:mock": "node scripts/mock-server.mjs",
     "build": "next build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
