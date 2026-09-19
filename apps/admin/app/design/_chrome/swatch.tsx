@@ -23,8 +23,8 @@ export function Swatch({ token, label }: { token: string; label?: string }) {
         className="h-14 w-full rounded-md border border-border"
         style={{ backgroundColor: `var(${token})` }}
       />
-      <p className="mt-1.5 font-mono text-[10px] text-foreground">{label ?? token}</p>
-      <p className="font-mono text-[10px] text-muted-foreground">{hex ?? '—'}</p>
+      <p className="mt-1.5 font-numeric text-[10px] text-foreground">{label ?? token}</p>
+      <p className="font-numeric text-[10px] text-muted-foreground">{hex ?? '—'}</p>
     </div>
   );
 }
@@ -86,12 +86,12 @@ export function ContrastRow({
         >
           {sample}
         </p>
-        <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+        <p className="mt-1 font-numeric text-[10px] text-muted-foreground">
           {label ?? `${foreground} sur ${background}`}
         </p>
       </div>
 
-      <p className="shrink-0 text-right font-mono text-[10px]">
+      <p className="shrink-0 text-right font-numeric text-[10px]">
         <span className="block text-foreground">
           {reading ? `${reading.ratio.toFixed(2)}:1` : '—'}
         </span>

@@ -60,8 +60,8 @@ const tint = (token: string) => `color-mix(in oklab, var(${token}) 15%, transpar
 const TYPE_STEPS = [
   {
     name: 'display',
-    spec: '24px / 600 / 1.2 / -0.6px',
-    className: 'text-2xl font-semibold tracking-tight leading-[1.2]',
+    spec: '24px / 750 / 1.2 / -0.035em',
+    className: 'text-2xl font-[750] tracking-[-0.035em] leading-[1.2]',
     sample: 'Planning de la semaine',
   },
   {
@@ -83,9 +83,9 @@ const TYPE_STEPS = [
     sample: 'Moyen de paiement',
   },
   {
-    name: 'mono',
-    spec: '14px / 400 / 1.4, tabular-nums',
-    className: 'font-mono text-sm tabular-nums leading-[1.4]',
+    name: 'numeric',
+    spec: '14px / 650 / 1.4, tabular-nums',
+    className: 'font-numeric text-sm leading-[1.4]',
     sample: '06:30 · 14/18 · 25 000 FCFA',
   },
 ];
@@ -98,20 +98,6 @@ const RADII = [
   { name: '--radius-lg', spec: '10px', className: 'rounded-lg' },
   { name: '--radius-xl', spec: '16px', className: 'rounded-xl' },
   { name: '--radius-pill', spec: '9999px', className: 'rounded-full' },
-];
-
-const SHADOWS = [
-  { name: 'shadow-xs', purpose: 'Cartes, boutons, champs au repos.', className: 'shadow-xs' },
-  {
-    name: 'shadow-popover',
-    purpose: 'Menus, listes déroulantes, infobulles.',
-    className: 'shadow-popover',
-  },
-  {
-    name: 'shadow-lg',
-    purpose: 'Boîtes de dialogue, panneaux, toasts.',
-    className: 'shadow-lg',
-  },
 ];
 
 const ICONS = [
@@ -282,7 +268,7 @@ export default function FoundationsPage() {
         id="typographie"
         number={number('typographie')}
         title="Typographie"
-        note="Hanken Grotesk pour le texte, Geist Mono pour tout ce qui se compte. Prose limitée à 65–75 caractères par ligne."
+        note="Inter pour le texte, font-numeric pour tout ce qui se compte. Prose limitée à 65–75 caractères par ligne."
       >
         {TYPE_STEPS.map((step) => (
           <Specimen key={step.name} name={step.name} signature={step.spec}>
@@ -292,8 +278,8 @@ export default function FoundationsPage() {
 
         <Specimen
           name="Chiffres tabulaires"
-          signature="font-mono tabular-nums"
-          note="Les colonnes de chiffres doivent s’aligner verticalement. Si les unités dansent d’une ligne à l’autre, tabular-nums manque quelque part."
+          signature="font-numeric"
+          note="Les colonnes de chiffres doivent s’aligner verticalement. Si les unités dansent d’une ligne à l’autre, font-numeric manque quelque part."
         >
           <table className="w-full text-sm">
             <tbody className="text-foreground">
@@ -304,7 +290,7 @@ export default function FoundationsPage() {
               ].map((row) => (
                 <tr key={row[0]}>
                   {row.map((cell) => (
-                    <td key={cell} className="py-0.5 pr-6 text-right font-mono tabular-nums">
+                    <td key={cell} className="py-0.5 pr-6 text-right font-numeric">
                       {cell}
                     </td>
                   ))}
@@ -325,9 +311,9 @@ export default function FoundationsPage() {
           <div className="flex w-full flex-col gap-1.5">
             {SPACING_STEPS.map((step) => (
               <div key={step} className="flex items-center gap-3">
-                <span className="w-8 font-mono text-[10px] text-muted-foreground">{step}</span>
+                <span className="w-8 font-numeric text-[10px] text-muted-foreground">{step}</span>
                 <div className="h-2 bg-foreground" style={{ width: `${Number(step) * 0.25}rem` }} />
-                <span className="font-mono text-[10px] text-muted-foreground">
+                <span className="font-numeric text-[10px] text-muted-foreground">
                   {Number(step) * 4}px
                 </span>
               </div>
@@ -343,7 +329,9 @@ export default function FoundationsPage() {
             {RADII.map((radius) => (
               <div key={radius.name} className="text-center">
                 <div className={`size-16 border border-border bg-muted ${radius.className}`} />
-                <p className="mt-1.5 font-mono text-[10px] text-muted-foreground">{radius.spec}</p>
+                <p className="mt-1.5 font-numeric text-[10px] text-muted-foreground">
+                  {radius.spec}
+                </p>
               </div>
             ))}
           </div>
@@ -354,7 +342,7 @@ export default function FoundationsPage() {
         id="elevation"
         number={number('elevation')}
         title="Élévation"
-        note="Le filet de 1px vient toujours en premier ; l’ombre n’intervient que si l’élément flotte vraiment. Toutes les ombres sont teintées d’encre, jamais d’un noir froid."
+        note="Règle du zéro-ombre : box-shadow est interdit. Le filet de 1px est l’unique niveau de profondeur ; un palier de surface ou un voile séparent les calques qui en ont vraiment besoin."
       >
         <Specimen
           name="Filet seul"
@@ -363,45 +351,35 @@ export default function FoundationsPage() {
         >
           <div className="size-24 rounded-xl border border-border bg-card" />
         </Specimen>
-
-        {SHADOWS.map((shadow) => (
-          <Specimen
-            key={shadow.name}
-            name={shadow.name}
-            signature={shadow.className}
-            note={shadow.purpose}
-          >
-            <div
-              className={`size-24 rounded-xl border border-border bg-card ${shadow.className}`}
-            />
-          </Specimen>
-        ))}
       </Section>
 
       <Section
         id="focus"
         number={number('focus')}
         title="Focus et états"
-        note="Une seule convention d’anneau dans toute l’application. Le survol et le focus clavier ne peuvent pas être simulés honnêtement : tabulez dans les volets ci-dessous pour les voir."
+        note="Un seul contour de focus dans toute l’application. Le survol et le focus clavier ne peuvent pas être simulés honnêtement : tabulez dans les volets ci-dessous pour les voir."
       >
         <Specimen
-          name="Anneau de focus"
-          signature="focus-visible:ring-[3px] focus-visible:ring-ring/15 focus-visible:border-ring"
+          name="Contour de focus"
+          signature=":focus-visible { outline: 3px solid currentColor; outline-offset: 0.25rem }"
           note="Tabulez jusqu’au champ pour déclencher l’état réel."
         >
           <input
-            className="h-11 rounded-full border border-input bg-background px-4 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/15 lg:h-9"
+            className="h-11 rounded-full border border-input bg-background px-4 text-sm text-foreground lg:h-9"
             placeholder="Rechercher un membre"
             aria-label="Rechercher un membre"
           />
         </Specimen>
 
         <Specimen
-          name="Anneau, forcé"
-          signature="ring-[3px] ring-ring/15 border-ring"
-          note="Le même anneau, appliqué en permanence, pour le comparer entre les deux thèmes sans avoir à tabuler dans chaque volet."
+          name="Contour, forcé"
+          signature="outline: 3px solid currentColor; outline-offset: 0.25rem"
+          note="Le même contour, appliqué en permanence, pour le comparer entre les deux thèmes sans avoir à tabuler dans chaque volet."
         >
-          <div className="h-11 w-56 rounded-full border border-ring bg-background px-4 text-sm leading-11 text-muted-foreground ring-[3px] ring-ring/15 lg:h-9 lg:leading-9">
+          <div
+            className="h-11 w-56 rounded-full border border-input bg-background px-4 text-sm leading-11 text-muted-foreground lg:h-9 lg:leading-9"
+            style={{ outline: '3px solid currentColor', outlineOffset: '0.25rem' }}
+          >
             Rechercher un membre
           </div>
         </Specimen>
@@ -410,7 +388,7 @@ export default function FoundationsPage() {
           <button
             type="button"
             disabled
-            className="h-11 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground disabled:pointer-events-none disabled:opacity-50 lg:h-9"
+            className="h-11 rounded-full bg-primary px-4 text-sm font-[800] text-primary-foreground disabled:pointer-events-none disabled:opacity-50 lg:h-9"
           >
             Valider
           </button>
@@ -456,7 +434,7 @@ export default function FoundationsPage() {
           <ul className="flex w-full flex-wrap gap-x-4 gap-y-3">
             {ICONS.map((name) => (
               <li key={name} className="w-28 text-center">
-                <span className="font-mono text-[10px] break-words text-muted-foreground">
+                <span className="font-numeric text-[10px] break-words text-muted-foreground">
                   {name}
                 </span>
               </li>

@@ -48,9 +48,9 @@ function ShellFrame({ currentPath }: { currentPath: string }) {
         }
       >
         <div className="p-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Membres</h2>
+          <h2 className="text-2xl font-[750] tracking-[-0.035em] text-foreground">Membres</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            <span className="font-mono tabular-nums">248</span> membres
+            <span className="font-numeric">248</span> membres
           </p>
         </div>
       </AppShell>

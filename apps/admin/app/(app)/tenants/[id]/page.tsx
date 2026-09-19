@@ -105,7 +105,7 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
     <div className="space-y-8">
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{tenant.name}</h1>
+          <h1 className="text-2xl font-[750] tracking-[-0.035em]">{tenant.name}</h1>
           <Badge variant={planBadgeVariant(tenant.plan)}>{t(`plan.${tenant.plan}`)}</Badge>
           <Badge variant={statusBadgeVariant(tenant.status)}>{t(`status.${tenant.status}`)}</Badge>
         </div>
@@ -229,11 +229,11 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">{t('billingCustomer')}</dt>
-                <dd className="font-mono text-xs">{billing.external_customer_id ?? '—'}</dd>
+                <dd className="font-numeric text-xs">{billing.external_customer_id ?? '—'}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">{t('billingSubscription')}</dt>
-                <dd className="font-mono text-xs">{billing.external_subscription_id ?? '—'}</dd>
+                <dd className="font-numeric text-xs">{billing.external_subscription_id ?? '—'}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">{t('billingPeriod')}</dt>

@@ -53,7 +53,7 @@ export default function TenantsPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-[750] tracking-[-0.035em]">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
       </div>
 
@@ -107,10 +107,7 @@ export default function TenantsPage() {
                 className={tenant.status === 'purged' ? 'opacity-50' : undefined}
               >
                 <TableCell className="font-medium">
-                  <Link
-                    href={`/tenants/${tenant.id}`}
-                    className="rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15"
-                  >
+                  <Link href={`/tenants/${tenant.id}`} className="rounded-md">
                     {tenant.name}
                   </Link>
                 </TableCell>

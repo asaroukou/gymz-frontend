@@ -16,8 +16,8 @@ export function Section({
   return (
     <section id={id} className="scroll-mt-24 border-t border-border pt-6 pb-16">
       <header className="mb-8 flex flex-wrap items-baseline gap-x-3 gap-y-2">
-        <span className="font-mono text-xs">{number}</span>
-        <h2 className="text-sm font-medium tracking-wide text-foreground uppercase">{title}</h2>
+        <span className="font-numeric text-xs">{number}</span>
+        <h2 className="eyebrow text-foreground">{title}</h2>
         {note ? <p className="w-full max-w-[70ch] text-xs leading-5">{note}</p> : null}
       </header>
       <div className="space-y-12">{children}</div>

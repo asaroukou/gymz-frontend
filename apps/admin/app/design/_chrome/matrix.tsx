@@ -22,18 +22,18 @@ export function Matrix<R extends string, C extends string>({
       className="grid w-full items-center gap-x-4 gap-y-3"
       style={{ gridTemplateColumns: `auto repeat(${columns.length}, minmax(0, 1fr))` }}
     >
-      <span className="font-mono text-[10px] text-muted-foreground">
+      <span className="font-numeric text-[10px] text-muted-foreground">
         {rowAxis && columnAxis ? `${rowAxis} / ${columnAxis}` : (rowAxis ?? columnAxis ?? '')}
       </span>
       {columns.map((column) => (
-        <span key={column} className="font-mono text-[10px] text-muted-foreground">
+        <span key={column} className="font-numeric text-[10px] text-muted-foreground">
           {column}
         </span>
       ))}
 
       {rows.map((row) => (
         <Fragment key={row}>
-          <span className="font-mono text-[10px] text-muted-foreground">{row}</span>
+          <span className="font-numeric text-[10px] text-muted-foreground">{row}</span>
           {columns.map((column) => (
             <div key={`${row}-${column}`} className="min-w-0">
               {render(row, column)}

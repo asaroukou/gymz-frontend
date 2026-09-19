@@ -34,12 +34,12 @@ export function PageFrame({
           <ol className="space-y-1.5">
             {entries.map((entry) => (
               <li key={entry.id} className="flex gap-2">
-                <span className="font-mono text-[10px] leading-5">
+                <span className="font-numeric text-[10px] leading-5">
                   {sectionNumber(entries, entry.id)}
                 </span>
                 <a
                   href={`#${entry.id}`}
-                  className="rounded-sm text-xs leading-5 underline-offset-2 outline-none hover:text-foreground hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/15"
+                  className="rounded-sm text-xs leading-5 underline-offset-2 hover:text-foreground hover:underline"
                 >
                   {entry.label}
                 </a>

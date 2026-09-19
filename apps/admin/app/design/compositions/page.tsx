@@ -141,10 +141,10 @@ export default function CompositionsPage() {
         <Specimen name="En-tête de liste" signature="titre + compte + action">
           <div className="flex w-full flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-foreground">Membres</h2>
+              <h2 className="text-2xl font-[750] tracking-[-0.035em] text-foreground">Membres</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                <span className="font-mono tabular-nums">248</span> membres, dont{' '}
-                <span className="font-mono tabular-nums">3</span> en attente de paiement
+                <span className="font-numeric">248</span> membres, dont{' '}
+                <span className="font-numeric">3</span> en attente de paiement
               </p>
             </div>
             <Button>
@@ -234,7 +234,7 @@ export default function CompositionsPage() {
                 </div>
                 <div className="text-right">
                   <Badge variant={member.status}>{member.label}</Badge>
-                  <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
+                  <p className="mt-1 font-numeric text-xs text-muted-foreground">
                     {member.due} FCFA
                   </p>
                 </div>
@@ -258,10 +258,10 @@ export default function CompositionsPage() {
                 <div key={slot.time} className="bg-background py-3">
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="flex items-baseline gap-2 text-sm text-foreground">
-                      <span className="font-mono tabular-nums">{slot.time}</span>
+                      <span className="font-numeric">{slot.time}</span>
                       {slot.name}
                     </p>
-                    <Badge variant={LEVEL_BADGE_VARIANT[level]} className="font-mono tabular-nums">
+                    <Badge variant={LEVEL_BADGE_VARIANT[level]} className="font-numeric">
                       {slot.booked}/{slot.capacity}
                     </Badge>
                   </div>

@@ -104,7 +104,7 @@ const ALERT_VARIANTS = ['default', 'destructive', 'success', 'warning', 'info'] 
 function OffPortal({ children }: { children: ReactNode }) {
   return (
     <div className="w-full">
-      <p className="mb-2 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+      <p className="mb-2 font-numeric text-[10px] tracking-wider text-muted-foreground uppercase">
         contenu, hors portail
       </p>
       <div className="grid gap-4 border border-border p-4">{children}</div>

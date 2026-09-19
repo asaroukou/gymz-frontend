@@ -195,7 +195,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="input"
         number={number('input')}
         title="Champ de saisie"
-        note="Les champs numériques passent en Geist Mono automatiquement (règle des chiffres mono)."
+        note="Les champs numériques passent en font-numeric automatiquement (règle des chiffres mono)."
       >
         <Specimen name="Input" signature="défaut, avec valeur, désactivé, aria-invalid">
           <div className="grid w-full gap-3">
