@@ -3,154 +3,83 @@
 /* Scan this package's own source for class names when imported by an app. */
 @source '../';
 
-@custom-variant dark (&:is(.dark *));
-
 /* ============================================================
-   IziWellPass — v3 token layer
-   Green ink primary, warm stone neutrals, a single paper
-   surface, fully-rounded pill controls.
-
-   Color space: OKLCH throughout. The stone ramp and status
-   colors are the exact hex values round-tripped to OKLCH, so
-   the documented AA ratios still hold; OKLCH keeps chroma low
-   at the light/dark extremes and the whole neutral family warm.
+   IziWellPass — « Le studio documentaire » token layer
+   Ink on bone, forêt/argile identity surfaces, documentary
+   accents, one family (Inter), flat: no shadows, no gradients.
+   Hex is canonical (matches DESIGN.md and the public landing);
+   neutrals are color-mix() of encre into the surface, so there
+   is no grey scale to maintain.
    ============================================================ */
 
-:root,
-.light {
-  /* Warm "stone" neutral ramp. The two lightest steps carry
-     imperceptible chroma; their hue is pinned to the warm family
-     (~75) so the ramp never drifts cool/green if chroma is raised. */
-  --neutral-50: oklch(0.9848 0.0013 75);
-  --neutral-100: oklch(0.9699 0.0013 75);
-  --neutral-200: oklch(0.9232 0.0026 49);
-  --neutral-300: oklch(0.8687 0.0043 56);
-  --neutral-400: oklch(0.7161 0.0091 56);
-  --neutral-500: oklch(0.5534 0.0116 58);
-  --neutral-600: oklch(0.4444 0.0096 74);
-  --neutral-700: oklch(0.3741 0.0087 68);
-  --neutral-800: oklch(0.2685 0.0063 34);
-  --neutral-900: oklch(0.2161 0.0061 56);
-  --neutral-950: oklch(0.1469 0.0041 49);
+:root {
+  /* Ground and ink */
+  --background: #f2eee5; /* os */
+  --foreground: #141512; /* encre */
+  --card: #ffffff; /* blanc */
+  --card-foreground: #141512;
+  --popover: #ffffff;
+  --popover-foreground: #141512;
+  --overlay: rgb(10 13 11 / 34%);
 
-  /* The desk is retired: the app is a single sheet of paper. `--backdrop` is
-     kept as an alias so the layouts that painted the desk keep compiling; new
-     code should use --background directly. */
-  --backdrop: var(--background);
-  --backdrop-foreground: var(--muted-foreground);
-  /* Modal/sheet scrim: warm ink tint (encre alpha), never raw cool black. */
-  --overlay: oklch(0.2161 0.0061 56 / 0.5);
-  /* The sheet of paper: a whisper-warm near-white, not raw #fff — keeps the
-     surface in the same warm family as the stone hairlines and the green ink. */
-  --background: oklch(0.9971 0.0018 78);
-  --foreground: var(--neutral-900);
-  --card: oklch(0.9971 0.0018 78);
-  --card-foreground: var(--neutral-900);
-  --popover: oklch(0.9971 0.0018 78);
-  --popover-foreground: var(--neutral-900);
-  /* Encre verte: the one accent, a near-black green at low chroma. An ink that
-     happens to be green, not "a green". Papier reads on it at 11.8:1, and it
-     sits far enough from --success-foreground (a text stop at L 0.45, never a
-     solid) that a "Payé" badge does not read as brand. Hover is one L step
-     lighter, the same rule the warm ink followed. */
-  --primary: oklch(0.32 0.07 155);
-  --primary-foreground: var(--neutral-50);
-  --primary-hover: oklch(0.36 0.07 155);
-  --secondary: var(--neutral-100);
-  --secondary-foreground: var(--neutral-900);
-  --muted: var(--neutral-100);
-  --muted-foreground: var(--neutral-500);
-  --accent: var(--neutral-100);
-  --accent-foreground: var(--neutral-900);
-  --destructive: oklch(0.5771 0.2152 27.33);
-  --destructive-foreground: oklch(0.9971 0.0018 78);
-  --success: oklch(0.6271 0.1699 149.21);
-  --warning: oklch(0.7686 0.1647 70.08);
-  --info: oklch(0.5461 0.2152 262.88);
-  /* Darker text stops for status text on a /15 tint. The base status colors
-     (amber/green especially) fail AA as text on their own light tint; the tint
-     is near-white so 700 only reaches ~4.2:1, 800 clears 4.5 with margin
-     (green ~6:1, amber ~6.3:1). Blue-700 already clears it. Flip lighter in
-     dark mode, where the tint is dark. */
-  --success-foreground: oklch(0.4479 0.1083 151.33);
-  --warning-foreground: oklch(0.4732 0.1247 46.2);
-  --info-foreground: oklch(0.4882 0.2172 264.38);
-  --border: var(--neutral-200);
-  --input: var(--neutral-200);
-  --ring: var(--primary);
+  /* The one control color (The Flat Ink Rule) */
+  --primary: #141512;
+  --primary-foreground: #ffffff;
+  --primary-hover: color-mix(in srgb, #141512 85%, transparent);
 
-  /* Data-viz. Single-series occupancy/attendance uses the ink-anchored
-     ramp (chart-1 → chart-2); categorical breakdowns (by status/method)
-     map to the statut-* colors. No decorative hues — this holds the
-     One Ink Rule and the Meaning-Only Color Rule. */
-  --chart-1: var(--primary); /* ink — the default single series */
-  --chart-2: var(--neutral-500); /* stone — comparison / second series */
-  --chart-3: var(--info);
-  --chart-4: var(--success);
-  --chart-5: var(--warning);
-  --chart-grid: var(--neutral-200); /* hairline gridlines / axes */
-  --chart-track: var(--neutral-100); /* unfilled bar/progress track */
+  /* Neutral washes: encre mixed into the surface */
+  --secondary: color-mix(in srgb, var(--foreground) 6%, var(--background));
+  --secondary-foreground: #141512;
+  --muted: color-mix(in srgb, var(--foreground) 6%, var(--background));
+  --muted-foreground: color-mix(in srgb, var(--foreground) 62%, transparent);
+  --accent: color-mix(in srgb, var(--foreground) 8%, var(--background));
+  --accent-foreground: #141512;
+  --border: color-mix(in srgb, currentColor 18%, transparent);
+  --input: color-mix(in srgb, currentColor 18%, transparent);
+  --ring: #141512;
 
-  --radius: 10px;
-  --radius-xl: 16px;
-  --radius-pill: 9999px;
-  --shadow-xs: 0 1px 2px 0 rgba(28, 25, 23, 0.05);
-  --shadow-popover: 0 8px 24px -6px rgba(28, 25, 23, 0.16), 0 2px 8px -3px rgba(28, 25, 23, 0.08);
-  --shadow-lg: 0 12px 28px -6px rgba(28, 25, 23, 0.16), 0 4px 10px -4px rgba(28, 25, 23, 0.1);
-}
+  /* Status (18% tint under the text stop in badges) */
+  --destructive: #b23a2a;
+  --destructive-foreground: #8f2f22;
+  --success: #257a4e;
+  --success-foreground: #1d5c3c;
+  --warning: #d9b84b;
+  --warning-foreground: #7a5c10;
+  --info: #8ebbd2;
+  --info-foreground: #2c6a8a;
 
-.dark {
-  --backdrop: var(--background);
-  --backdrop-foreground: var(--muted-foreground);
-  --overlay: oklch(0.1469 0.0041 49 / 0.66);
-  --background: var(--neutral-950);
-  --foreground: var(--neutral-50);
-  --card: var(--neutral-900);
-  --card-foreground: var(--neutral-50);
-  --popover: var(--neutral-800);
-  --popover-foreground: var(--neutral-50);
-  /* Dark mode inverts ink to papier rather than introducing a hue: no light
-     green passes AA as a fill while staying distinct from the dark success
-     green. The green ink is a daylight colour. */
-  --primary: var(--neutral-50);
-  --primary-foreground: var(--neutral-900);
-  --primary-hover: var(--neutral-200);
-  --secondary: var(--neutral-800);
-  --secondary-foreground: var(--neutral-50);
-  --muted: var(--neutral-800);
-  --muted-foreground: var(--neutral-400);
-  --accent: var(--neutral-700);
-  --accent-foreground: var(--neutral-50);
-  --destructive: oklch(0.7106 0.1661 22.22);
-  --destructive-foreground: var(--neutral-950);
-  --success: oklch(0.8003 0.1821 151.71);
-  --warning: oklch(0.8369 0.1644 84.43);
-  --info: oklch(0.7137 0.1434 254.62);
-  --success-foreground: oklch(0.8003 0.1821 151.71);
-  --warning-foreground: oklch(0.8369 0.1644 84.43);
-  --info-foreground: oklch(0.7137 0.1434 254.62);
-  --border: var(--neutral-700);
-  --input: var(--neutral-800);
-  --ring: var(--neutral-300);
+  /* Identity surfaces (The Two Places Rule) and documentary accents */
+  --foret: #244f3c;
+  --argile: #c66f50;
+  --ocre: #d9b84b;
+  --sauge: #b9c9a4;
+  --eucalyptus: #9fc0bb;
+  --eau: #8ebbd2;
 
-  /* chart-1 inverts to papier ink; chart-2 lifts to a mid stone that reads
-     on the dark card. Status series inherit the dark status colors above. */
+  /* Charts: ink first, documentary accents for categories */
   --chart-1: var(--primary);
-  --chart-2: var(--neutral-400);
-  --chart-grid: var(--neutral-700);
-  --chart-track: var(--neutral-800);
+  --chart-2: var(--muted-foreground);
+  --chart-3: var(--eau);
+  --chart-4: var(--sauge);
+  --chart-5: var(--ocre);
+  --chart-grid: var(--border);
+  --chart-track: var(--muted);
+
+  /* Shape and motion */
+  --radius: 0.75rem; /* fields */
+  --radius-xl: 1.25rem; /* panels */
+  --radius-pill: 9999px; /* controls */
+  --motion-standard: 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
-  --color-backdrop: var(--backdrop);
-  --color-backdrop-foreground: var(--backdrop-foreground);
-  --color-overlay: var(--overlay);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-overlay: var(--overlay);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -170,7 +99,12 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-
+  --color-foret: var(--foret);
+  --color-argile: var(--argile);
+  --color-ocre: var(--ocre);
+  --color-sauge: var(--sauge);
+  --color-eucalyptus: var(--eucalyptus);
+  --color-eau: var(--eau);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -185,26 +119,44 @@
   --radius-xl: var(--radius-xl);
   --radius-pill: var(--radius-pill);
 
-  --shadow-xs: var(--shadow-xs);
-  --shadow-popover: var(--shadow-popover);
-  --shadow-lg: var(--shadow-lg);
+  --font-sans: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+}
 
-  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+/* The signature overline: the only uppercase in the system. */
+@utility eyebrow {
+  font-size: 0.75rem;
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Every figure someone compares or reads back (The Tabular Rule). */
+@utility font-numeric {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-weight: 650;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-  /* Focus convention: rings are
-     focus-visible:ring-[3px] focus-visible:ring-ring/15 focus-visible:border-ring */
+  html {
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  }
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+  /* One focus convention for everything: a solid outline in the element's own
+     color, offset so it never fights a pill's border. */
+  :focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 0.25rem;
+  }
   /* Motion is functional, never decorative (PRODUCT.md): honor the OS
-     preference app-wide. Near-zeroes transitions and stops looping animations
-     (e.g. skeleton pulse) without removing state changes entirely. */
+     preference app-wide. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -219,13 +171,12 @@
 
 /* A newly recorded check-in easing into the live feed: a short fade-and-lift
    settles the row, then a faint ink wash decays to transparent so the eye
-   catches which row just arrived. Functional, not celebratory (PRODUCT.md);
-   the global reduced-motion guard above near-zeroes it. */
+   catches which row just arrived. Functional, not celebratory. */
 @keyframes checkin-arrive {
   0% {
     opacity: 0;
     transform: translateY(6px);
-    background-color: color-mix(in oklch, var(--primary) 9%, transparent);
+    background-color: color-mix(in srgb, var(--primary) 9%, transparent);
   }
   16% {
     opacity: 1;
@@ -237,5 +188,5 @@
   }
 }
 .animate-checkin-arrive {
-  animation: checkin-arrive 1100ms ease-out;
+  animation: checkin-arrive 1100ms cubic-bezier(0.22, 1, 0.36, 1);
 }
