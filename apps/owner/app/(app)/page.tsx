@@ -138,7 +138,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{greeting}</h1>
+          <h1 className="text-2xl font-[750] tracking-[-0.035em]">{greeting}</h1>
           <p className="text-sm text-muted-foreground">{todayLabel(locale, timeZone)}</p>
         </div>
       </div>

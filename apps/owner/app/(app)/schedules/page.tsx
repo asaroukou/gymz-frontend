@@ -23,8 +23,7 @@ function PlanningContent() {
   const canManageSchedules = role === 'owner' || role === 'admin';
   const canManageBookings = role === 'owner' || role === 'admin' || role === 'receptionist';
 
-  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } =
-    useVenueContext();
+  const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = useVenueContext();
   const timeZone = selectedVenue?.timezone;
 
   const [tab, setTab] = useState<PlanningTab>('courses');
@@ -33,7 +32,7 @@ function PlanningContent() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <h1 className="text-2xl font-[750] tracking-[-0.035em]">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
       </div>

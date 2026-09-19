@@ -169,7 +169,7 @@ function SlotRow({
 
   return (
     <div className="flex items-center gap-4 border-t px-4 py-3 first:border-t-0">
-      <span className="w-11 shrink-0 font-mono text-sm tabular-nums">
+      <span className="w-11 shrink-0 font-numeric text-sm">
         {formatTime(slot.start_time, timeZone)}
       </span>
       <div className="min-w-0 flex-1">

@@ -21,7 +21,7 @@ interface Step {
 }
 
 const STEP_CARD_CLASS =
-  'flex items-start gap-3 rounded-2xl border bg-card p-4 text-card-foreground shadow-xs';
+  'flex items-start gap-3 rounded-2xl border bg-card p-4 text-card-foreground';
 
 function StepBody({ step, canAccess }: { step: Step; canAccess: boolean }) {
   return (
@@ -31,7 +31,7 @@ function StepBody({ step, canAccess }: { step: Step; canAccess: boolean }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs tabular-nums text-muted-foreground">{step.index}</span>
+          <span className="font-numeric text-xs text-muted-foreground">{step.index}</span>
           <p className="text-sm font-medium">{step.title}</p>
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground">{step.body}</p>
@@ -55,13 +55,7 @@ function StepCard({ step, canAccess }: { step: Step; canAccess: boolean }) {
   }
 
   return (
-    <Link
-      href={step.href}
-      className={cn(
-        STEP_CARD_CLASS,
-        'transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none',
-      )}
-    >
+    <Link href={step.href} className={cn(STEP_CARD_CLASS, 'transition-colors hover:bg-accent')}>
       <StepBody step={step} canAccess={canAccess} />
     </Link>
   );

@@ -114,7 +114,7 @@ function CourseCard({
         <p className="truncate font-medium">{schedule.title}</p>
         <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
           <span>{formatRecurrence(schedule.recurrence_rule)}</span>
-          <span className="font-mono tabular-nums">{scheduleClock(schedule)}</span>
+          <span className="font-numeric">{scheduleClock(schedule)}</span>
         </div>
         <p className="mt-1 truncate text-xs text-muted-foreground">
           {resourceName}
@@ -167,7 +167,7 @@ function CourseRow({
       </TableCell>
       <TableCell>
         <div className="text-sm">{formatRecurrence(schedule.recurrence_rule)}</div>
-        <div className="font-mono text-xs tabular-nums text-muted-foreground">{clock}</div>
+        <div className="font-numeric text-xs text-muted-foreground">{clock}</div>
       </TableCell>
       <TableCell>{resourceName}</TableCell>
       <TableCell className={instructorName ? undefined : 'text-muted-foreground'}>

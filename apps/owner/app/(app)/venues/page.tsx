@@ -30,10 +30,7 @@ function VenueCard({ venue }: { venue: Venue }) {
   const activityLabel = useActivityTypeLabel();
 
   return (
-    <Link
-      href={`/venues/${venue.id}`}
-      className="rounded-2xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15"
-    >
+    <Link href={`/venues/${venue.id}`} className="rounded-2xl">
       <Card className="h-full rounded-2xl transition-colors hover:bg-accent/40">
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
@@ -76,7 +73,7 @@ function VenuesContent() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <h1 className="text-2xl font-[750] tracking-[-0.035em]">{t('title')}</h1>
           {venuesQuery.isLoading ? (
             <Skeleton className="h-4 w-32" />
           ) : venuesQuery.isError ? null : (

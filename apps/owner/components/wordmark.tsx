@@ -8,11 +8,11 @@ export function Wordmark() {
     <div className="flex items-center justify-center gap-2.5">
       <span
         aria-hidden
-        className="grid size-8 place-items-center rounded-lg bg-primary font-mono text-sm font-semibold text-primary-foreground"
+        className="grid size-8 place-items-center rounded-lg bg-primary font-numeric text-sm font-semibold text-primary-foreground"
       >
         iW
       </span>
-      <span className="text-base font-semibold tracking-tight">IziWellPass</span>
+      <span className="text-base font-[800] tracking-tight">IziWellPass</span>
     </div>
   );
 }

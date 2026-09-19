@@ -545,7 +545,7 @@ function MemberCard({
     <div className="flex items-start gap-3 p-4">
       <Link
         href={`/members/${member.id}`}
-        className="flex min-w-0 flex-1 items-start gap-3 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15"
+        className="flex min-w-0 flex-1 items-start gap-3 rounded-md"
       >
         <Avatar size="sm">
           <AvatarFallback aria-hidden>{initials(member)}</AvatarFallback>
@@ -555,7 +555,7 @@ function MemberCard({
           {member.email ? (
             <p className="truncate text-xs text-muted-foreground">{member.email}</p>
           ) : member.phone ? (
-            <p className="truncate font-mono text-xs text-muted-foreground">{member.phone}</p>
+            <p className="truncate font-numeric text-xs text-muted-foreground">{member.phone}</p>
           ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
@@ -590,10 +590,7 @@ function MemberRow({
   return (
     <TableRow>
       <TableCell>
-        <Link
-          href={`/members/${member.id}`}
-          className="flex items-center gap-3 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15"
-        >
+        <Link href={`/members/${member.id}`} className="flex items-center gap-3 rounded-md">
           <Avatar size="sm">
             <AvatarFallback aria-hidden>{initials(member)}</AvatarFallback>
           </Avatar>
@@ -604,7 +601,7 @@ function MemberRow({
         <div className="flex flex-col">
           <span>{member.email ?? '—'}</span>
           {member.phone ? (
-            <span className="font-mono text-xs text-muted-foreground">{member.phone}</span>
+            <span className="font-numeric text-xs text-muted-foreground">{member.phone}</span>
           ) : null}
         </div>
       </TableCell>
@@ -787,7 +784,7 @@ function MembersContent() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-[750] tracking-[-0.035em]">{t('title')}</h1>
         {membersQuery.isLoading ? (
           <Skeleton className="h-4 w-28" />
         ) : membersQuery.isError ? null : (

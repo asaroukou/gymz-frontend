@@ -41,7 +41,7 @@ export default function Error({
           <EmptyTitle>{t('title')}</EmptyTitle>
           <EmptyDescription>{t('body')}</EmptyDescription>
           {error.digest ? (
-            <p className="mt-1 font-mono text-xs text-muted-foreground">
+            <p className="mt-1 font-numeric text-xs text-muted-foreground">
               {t('ref', { digest: error.digest })}
             </p>
           ) : null}

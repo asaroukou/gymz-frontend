@@ -410,7 +410,7 @@ function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: Resour
                       <Input
                         type="number"
                         min={1}
-                        className="font-mono"
+                        className="font-numeric"
                         name={field.name}
                         ref={field.ref}
                         onBlur={field.onBlur}
@@ -432,7 +432,7 @@ function NewResourceTypeDialog({ onCreated }: { onCreated: (resourceType: Resour
                       <Input
                         type="number"
                         min={1}
-                        className="font-mono"
+                        className="font-numeric"
                         name={field.name}
                         ref={field.ref}
                         onBlur={field.onBlur}
@@ -551,7 +551,7 @@ function ResourceFormFields({
               <Input
                 type="number"
                 min={1}
-                className="font-mono"
+                className="font-numeric"
                 name={field.name}
                 ref={field.ref}
                 onBlur={field.onBlur}
@@ -877,7 +877,7 @@ function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
                     {resourceTypeById.get(resource.resource_type_id)?.name ??
                       t('detail.resources.unknownType')}
                   </TableCell>
-                  <TableCell className="font-mono">{resource.capacity}</TableCell>
+                  <TableCell className="font-numeric">{resource.capacity}</TableCell>
                   {canEdit ? (
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -1153,7 +1153,7 @@ function VenueDetailContent() {
     <div className="space-y-6">
       {backLink}
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{venue.name}</h1>
+        <h1 className="text-2xl font-[750] tracking-[-0.035em]">{venue.name}</h1>
         <Badge variant="outline">{activityLabel(venue.venue_type)}</Badge>
         <Badge variant={venue.is_active ? 'success' : 'secondary'}>
           {venue.is_active ? t('status.active') : t('status.inactive')}

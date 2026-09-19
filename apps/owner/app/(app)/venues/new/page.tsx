@@ -98,7 +98,7 @@ function CreateVenueContent() {
         <ArrowLeftIcon className="size-4" />
         {t('detail.back')}
       </Link>
-      <h1 className="text-2xl font-semibold tracking-tight">{t('create.title')}</h1>
+      <h1 className="text-2xl font-[750] tracking-[-0.035em]">{t('create.title')}</h1>
       <Card className="rounded-2xl">
         <CardHeader>
           <CardTitle>{t('create.formTitle')}</CardTitle>

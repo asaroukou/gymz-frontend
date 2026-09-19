@@ -89,7 +89,7 @@ function CheckInRow({
       <Badge variant={isQr ? 'info' : 'secondary'}>
         {isQr ? t('feed.methodQr') : t('feed.methodManual')}
       </Badge>
-      <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+      <span className="shrink-0 font-numeric text-xs text-muted-foreground">
         {formatTime(checkIn.checked_in_at, timeZone)}
       </span>
     </div>

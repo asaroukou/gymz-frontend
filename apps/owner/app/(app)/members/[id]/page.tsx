@@ -134,7 +134,7 @@ function IdentityCard({ member, canManage }: { member: Member; canManage: boolea
           <div>
             <dt className="text-muted-foreground">{t('columns.contact')}</dt>
             <dd className="font-medium">{member.email ?? t('detail.noEmail')}</dd>
-            <dd className="font-mono text-xs text-muted-foreground">
+            <dd className="font-numeric text-xs text-muted-foreground">
               {member.phone ?? t('detail.noPhone')}
             </dd>
           </div>
