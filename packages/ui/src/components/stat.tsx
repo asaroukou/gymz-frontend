@@ -36,7 +36,7 @@ export function Stat({
 }) {
   return (
     <div className={cn('bg-card px-4 py-5', className)}>
-      <p className="eyebrow truncate text-muted-foreground">{label}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
       {isLoading ? (
         <Skeleton className="mt-2.5 h-9 w-16" />
       ) : (
