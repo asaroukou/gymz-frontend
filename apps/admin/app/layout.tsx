@@ -1,23 +1,16 @@
 import './globals.css';
 
 import type { Metadata } from 'next';
-import { Hanken_Grotesk, Geist_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
-import { ThemeProvider } from 'next-themes';
 import type { ReactNode } from 'react';
 
 import { Providers } from './providers';
 
-const hanken = Hanken_Grotesk({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-hanken',
-  display: 'swap',
-});
-
-const geistMono = Geist_Mono({
-  subsets: ['latin'],
-  variable: '--font-geist-mono',
+  variable: '--font-inter',
   display: 'swap',
 });
 
@@ -31,22 +24,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const messages = await getMessages();
 
   return (
-    <html
-      lang={locale}
-      className={`${hanken.variable} ${geistMono.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang={locale} className={inter.variable}>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <NextIntlClientProvider locale={locale} messages={messages}>
-            <Providers>{children}</Providers>
-          </NextIntlClientProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

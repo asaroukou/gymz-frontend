@@ -51,11 +51,7 @@
   "shell": {
     "openMenu": "Ouvrir le menu",
     "account": "Compte",
-    "signOut": "Se déconnecter",
-    "theme": "Thème",
-    "themeLight": "Clair",
-    "themeDark": "Sombre",
-    "themeSystem": "Système"
+    "signOut": "Se déconnecter"
   },
   "common": {
     "add": "Ajouter",

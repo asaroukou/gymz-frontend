@@ -14,7 +14,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useTheme } from 'next-themes';
 
 import { useAuth, useSession } from '@iziwellpass/auth/provider';
 import { AppShell, type NavGroup } from '@iziwellpass/ui/app-shell';
@@ -23,10 +22,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@iziwellpass/ui/components/dropdown-menu';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
@@ -63,7 +58,6 @@ function UserMenu() {
   const { signOut } = useAuth();
   const session = useSession();
   const t = useTranslations('shell');
-  const { theme, setTheme } = useTheme();
   const email = session.status === 'signed-in' ? session.claims.email : null;
 
   const handleSignOut = () => {
@@ -79,13 +73,6 @@ function UserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{t('theme')}</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
-          <DropdownMenuRadioItem value="light">{t('themeLight')}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">{t('themeDark')}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="system">{t('themeSystem')}</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleSignOut}>{t('signOut')}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
