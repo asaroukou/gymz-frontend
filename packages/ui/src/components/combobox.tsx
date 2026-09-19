@@ -68,13 +68,13 @@ function Combobox({
       >
         <CommandPrimitive
           data-slot="combobox-command"
-          className="flex flex-col overflow-hidden rounded-xl bg-popover text-popover-foreground"
+          className="flex flex-col overflow-hidden rounded-lg bg-popover text-popover-foreground"
         >
           <div className="flex items-center gap-2 border-b px-3">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
             <CommandPrimitive.Input
               placeholder={searchPlaceholder}
-              className="flex h-9 w-full bg-transparent py-2 text-sm placeholder:text-muted-foreground"
+              className="flex h-9 w-full bg-transparent py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-offset-[-3px]"
             />
           </div>
           <CommandPrimitive.List className="max-h-56 overflow-y-auto p-1">

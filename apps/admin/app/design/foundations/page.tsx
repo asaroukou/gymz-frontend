@@ -67,7 +67,7 @@ const TYPE_STEPS = [
   {
     name: 'title',
     spec: '16px / 600 / 1.4',
-    className: 'text-base font-semibold leading-[1.4]',
+    className: 'text-base font-[650] leading-[1.4]',
     sample: 'Abonnements actifs',
   },
   {

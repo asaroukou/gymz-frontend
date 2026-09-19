@@ -11,6 +11,10 @@ const patterns = [
   'next-themes',
   'Hanken',
   'Geist',
+  // The OKLCH neutral ramp is gone; a reference to it paints transparent.
+  '--neutral-',
+  // Focus is one global `:focus-visible` outline, never a per-component ring.
+  'focus-visible:ring',
 ];
 const roots = [
   'packages/ui/src',
@@ -27,17 +31,27 @@ for (const r of roots)
   }
 let failed = false;
 for (const p of patterns) {
+  let out = '';
   try {
-    const out = execSync(
-      `grep -rn --include='*.ts' --include='*.tsx' --include='*.css' -F ${JSON.stringify(p)} ${roots.join(' ')}`,
+    out = execSync(
+      // `-e` (not a positional pattern): `--neutral-` would otherwise be read
+      // as an option.
+      `grep -rn --include='*.ts' --include='*.tsx' --include='*.css' -F -e ${JSON.stringify(p)} ${roots.join(' ')}`,
       { encoding: 'utf8' },
     );
-    if (out.trim()) {
-      failed = true;
-      console.error(`forbidden pattern "${p}":\n${out}`);
+  } catch (err) {
+    // grep exit 1 = no match = good. Anything else (2 = bad usage or an
+    // unreadable path, 127 = no grep, a signal) means the sweep never ran, so
+    // failing loud beats reporting a clean tree we did not actually search.
+    if (err.status !== 1) {
+      console.error(`grep failed for pattern "${p}" (status ${err.status ?? '?'}):`);
+      console.error(err.stderr?.toString() || err.message);
+      process.exit(2);
     }
-  } catch {
-    // grep exit 1 = no match = good
+  }
+  if (out.trim()) {
+    failed = true;
+    console.error(`forbidden pattern "${p}":\n${out}`);
   }
 }
 if (failed) process.exit(1);

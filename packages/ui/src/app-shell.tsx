@@ -66,7 +66,7 @@ function Wordmark({ title }: { title: string }) {
     <div className="flex items-center gap-2.5 px-2">
       <span
         aria-hidden="true"
-        className="grid size-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+        className="grid size-8 place-items-center rounded-full bg-primary text-xs font-[650] text-primary-foreground"
       >
         iW
       </span>

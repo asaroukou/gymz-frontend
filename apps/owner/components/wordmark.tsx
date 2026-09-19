@@ -8,7 +8,7 @@ export function Wordmark() {
     <div className="flex items-center justify-center gap-2.5">
       <span
         aria-hidden
-        className="grid size-8 place-items-center rounded-lg bg-primary font-numeric text-sm font-semibold text-primary-foreground"
+        className="grid size-8 place-items-center rounded-lg bg-primary font-numeric text-sm text-primary-foreground"
       >
         iW
       </span>
