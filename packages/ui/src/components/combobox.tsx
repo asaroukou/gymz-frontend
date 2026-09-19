@@ -54,7 +54,7 @@ function Combobox({
         role="combobox"
         aria-expanded={open}
         className={cn(
-          'flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-input bg-card px-4 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 lg:h-9',
+          'flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-input bg-card px-4 text-sm whitespace-nowrap transition-[color,box-shadow] hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 lg:h-9',
           !current && 'text-muted-foreground',
           className,
         )}
@@ -74,7 +74,7 @@ function Combobox({
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
             <CommandPrimitive.Input
               placeholder={searchPlaceholder}
-              className="flex h-9 w-full bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground"
+              className="flex h-9 w-full bg-transparent py-2 text-sm placeholder:text-muted-foreground"
             />
           </div>
           <CommandPrimitive.List className="max-h-56 overflow-y-auto p-1">
@@ -91,7 +91,7 @@ function Combobox({
                   onValueChange?.(option.value);
                   setOpen(false);
                 }}
-                className="flex cursor-default items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm outline-none select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
+                className="flex cursor-default items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
               >
                 <span className="truncate">{option.label}</span>
                 {option.hint ? (

@@ -106,7 +106,7 @@ function NavGroupList({
                 data-active={active || undefined}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex h-11 items-center gap-2 px-4 text-sm transition-colors outline-none lg:h-9',
+                  'flex h-11 items-center gap-2 px-4 text-sm transition-colors lg:h-9',
                   active
                     ? 'relative font-[800] text-foreground after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-pill after:bg-current after:content-[""]'
                     : 'font-[650] text-foreground opacity-[0.62] transition-opacity duration-[360ms] hover:opacity-100',
