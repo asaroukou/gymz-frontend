@@ -54,7 +54,7 @@ function Combobox({
         role="combobox"
         aria-expanded={open}
         className={cn(
-          'flex h-11 w-full items-center justify-between gap-2 rounded-full border border-input bg-transparent px-4 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none hover:bg-accent focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/15 disabled:cursor-not-allowed disabled:opacity-50 lg:h-9 dark:bg-input/30 dark:hover:bg-input/50',
+          'flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-input bg-card px-4 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 lg:h-9',
           !current && 'text-muted-foreground',
           className,
         )}

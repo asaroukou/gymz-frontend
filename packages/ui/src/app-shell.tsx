@@ -70,7 +70,7 @@ function Wordmark({ title }: { title: string }) {
       >
         iW
       </span>
-      <span className="text-base font-semibold tracking-[-0.3px]">{title}</span>
+      <span className="font-[800] text-base tracking-[-0.04em]">{title}</span>
     </div>
   );
 }
@@ -94,7 +94,7 @@ function NavGroupList({
           className={cn('flex flex-col gap-1', i > 0 && 'mt-3 border-t border-border pt-3')}
         >
           {group.label ? (
-            <p className="px-4 pb-1 text-xs font-medium text-muted-foreground">{group.label}</p>
+            <p className="eyebrow px-4 pb-1 text-muted-foreground">{group.label}</p>
           ) : null}
           {group.items.map((item) => {
             const active = isActivePath(item.href, currentPath);
@@ -106,10 +106,10 @@ function NavGroupList({
                 data-active={active || undefined}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/15 lg:h-9',
+                  'flex h-11 items-center gap-2 px-4 text-sm transition-colors outline-none lg:h-9',
                   active
-                    ? 'bg-primary text-primary-foreground shadow-xs'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                    ? 'relative font-[800] text-foreground after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-pill after:bg-current after:content-[""]'
+                    : 'font-[650] text-foreground opacity-[0.62] transition-opacity duration-[360ms] hover:opacity-100',
                 )}
               >
                 {item.icon}

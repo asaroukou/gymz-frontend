@@ -45,7 +45,7 @@ export function Capacity({ booked, capacity, label, hideCount, className }: Capa
   return (
     <div className={cn('grid gap-1', className)}>
       {hideCount ? null : (
-        <p className="text-right font-mono text-xs tabular-nums text-muted-foreground">
+        <p className="text-right font-numeric text-xs text-muted-foreground">
           {booked}/{capacity}
         </p>
       )}

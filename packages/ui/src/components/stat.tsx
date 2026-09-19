@@ -12,7 +12,7 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
  */
 export function StatPanel({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn('grid gap-px overflow-hidden rounded-2xl border bg-border', className)}>
+    <div className={cn('grid gap-px overflow-hidden rounded-xl border bg-border', className)}>
       {children}
     </div>
   );
@@ -36,13 +36,11 @@ export function Stat({
 }) {
   return (
     <div className={cn('bg-card px-4 py-5', className)}>
-      <p className="truncate text-xs text-muted-foreground">{label}</p>
+      <p className="eyebrow truncate text-muted-foreground">{label}</p>
       {isLoading ? (
         <Skeleton className="mt-2.5 h-9 w-16" />
       ) : (
-        <p className="mt-1.5 font-mono text-3xl font-semibold tabular-nums tracking-tight">
-          {value ?? '—'}
-        </p>
+        <p className="mt-1.5 font-numeric text-3xl tracking-tight">{value ?? '—'}</p>
       )}
     </div>
   );

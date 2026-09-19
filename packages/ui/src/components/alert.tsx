@@ -61,15 +61,16 @@ function AlertDescription({ className, ...props }: React.ComponentProps<'div'>) 
 }
 
 /**
- * Support reference line for error alerts (a request/trace id), set in Geist
- * Mono per the DESIGN "calm error carries a mono support reference" rule so an
- * operator can quote it. Renders in the description column, quiet.
+ * Support reference line for error alerts (a request/trace id), set in Inter
+ * via `font-numeric` per the DESIGN "calm error carries a numeric support
+ * reference" rule so an operator can quote it. Renders in the description
+ * column, quiet.
  */
 function AlertReference({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="alert-reference"
-      className={cn('col-start-2 mt-1 font-mono text-xs text-muted-foreground', className)}
+      className={cn('col-start-2 mt-1 font-numeric text-xs text-muted-foreground', className)}
       {...props}
     />
   );

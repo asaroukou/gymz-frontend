@@ -10,6 +10,8 @@ describe('Checkbox', () => {
 
   it('reflects the checked prop', () => {
     render(<Checkbox aria-label="pick" checked />);
-    expect(screen.getByRole('checkbox', { name: 'pick' }).getAttribute('data-state')).toBe('checked');
+    expect(screen.getByRole('checkbox', { name: 'pick' }).getAttribute('data-state')).toBe(
+      'checked',
+    );
   });
 });

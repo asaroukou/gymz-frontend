@@ -83,7 +83,7 @@ function TableCell({
       data-slot="table-cell"
       className={cn(
         'p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
-        numeric && 'text-right font-mono tabular-nums',
+        numeric && 'text-right font-numeric',
         className,
       )}
       {...props}

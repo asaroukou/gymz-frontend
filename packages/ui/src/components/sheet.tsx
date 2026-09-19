@@ -63,7 +63,7 @@ function SheetContent({
           onInteractOutside?.(event);
         }}
         className={cn(
-          'fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
+          'fixed z-50 flex flex-col gap-4 bg-background transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
           side === 'right' &&
             'inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm',
           side === 'left' &&
@@ -78,7 +78,7 @@ function SheetContent({
       >
         {children}
         {showCloseButton && (
-          <SheetPrimitive.Close className="absolute top-3 right-3 grid size-11 place-items-center rounded-full text-muted-foreground opacity-70 transition-opacity outline-none hover:bg-accent hover:opacity-100 focus-visible:ring-[3px] focus-visible:ring-ring/15 disabled:pointer-events-none lg:size-8">
+          <SheetPrimitive.Close className="absolute top-3 right-3 grid size-11 place-items-center rounded-full text-muted-foreground opacity-70 transition-opacity outline-none hover:bg-accent hover:opacity-100 disabled:pointer-events-none lg:size-8">
             <XIcon className="size-4" />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
