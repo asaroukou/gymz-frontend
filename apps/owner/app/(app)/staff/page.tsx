@@ -492,7 +492,9 @@ function ManageVenuesDialog({
             }}
           />
           {venuesError ? (
-            <p className="text-sm text-destructive">{t('venuesDialog.venuesRequired')}</p>
+            <p className="text-sm text-destructive-foreground">
+              {t('venuesDialog.venuesRequired')}
+            </p>
           ) : null}
         </div>
         <DialogFooter>

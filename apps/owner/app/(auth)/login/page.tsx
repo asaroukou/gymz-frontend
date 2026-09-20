@@ -125,7 +125,7 @@ function NewPasswordCard({
             )}
           />
           {form.formState.errors.root ? (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-destructive-foreground">
               {form.formState.errors.root.message}
             </p>
           ) : null}
@@ -289,7 +289,7 @@ function CredentialsCard({
             </Tooltip>
           </div>
           {form.formState.errors.root ? (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-destructive-foreground">
               {form.formState.errors.root.message}
             </p>
           ) : null}

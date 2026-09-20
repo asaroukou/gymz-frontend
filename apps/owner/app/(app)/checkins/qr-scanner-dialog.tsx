@@ -62,7 +62,11 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
             setOpen(false);
             onDetectedRef.current(token);
           },
-          { returnDetailedScanResult: true, highlightScanRegion: true, preferredCamera: 'environment' },
+          {
+            returnDetailedScanResult: true,
+            highlightScanRegion: true,
+            preferredCamera: 'environment',
+          },
         );
 
         scanner
@@ -120,14 +124,11 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
           <DialogDescription>{t('qr.dialogDescription')}</DialogDescription>
         </DialogHeader>
         {cameraError ? (
-          <p className="text-sm text-destructive">{cameraError}</p>
+          <p className="text-sm text-destructive-foreground">{cameraError}</p>
         ) : (
           <>
             {loading && <div className="aspect-video w-full animate-pulse rounded-lg bg-muted" />}
-            <video
-              ref={videoRef}
-              className={loading ? 'hidden' : 'w-full rounded-lg'}
-            />
+            <video ref={videoRef} className={loading ? 'hidden' : 'w-full rounded-lg'} />
           </>
         )}
       </DialogContent>

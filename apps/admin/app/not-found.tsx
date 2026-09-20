@@ -16,7 +16,7 @@ export default async function NotFound() {
   const t = await getTranslations('system.notFound');
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-backdrop p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <Empty>
           <EmptyMedia>

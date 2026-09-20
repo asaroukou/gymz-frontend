@@ -168,11 +168,11 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
           </form>
 
           {usageQuery.isError ? (
-            <p className="text-sm text-destructive">
+            <p className="text-sm text-destructive-foreground">
               {apiErrorMessage(usageQuery.error, t('usageError'))}
             </p>
           ) : (
-            <StatPanel className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+            <StatPanel>
               <Stat
                 label={t('usageVenues')}
                 isLoading={usageQuery.isLoading}

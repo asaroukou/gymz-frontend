@@ -598,7 +598,9 @@ function EditAccessDialog({
                 }}
               />
               {venuesError ? (
-                <p className="text-sm text-destructive">{t('detail.access.venuesRequired')}</p>
+                <p className="text-sm text-destructive-foreground">
+                  {t('detail.access.venuesRequired')}
+                </p>
               ) : null}
             </div>
           ) : null}

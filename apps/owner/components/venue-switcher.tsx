@@ -88,7 +88,10 @@ export function VenueSwitcher({
         >
           <Building2Icon aria-hidden className="shrink-0 text-muted-foreground" />
           <span className="truncate text-md font-medium">{triggerLabel}</span>
-          <ChevronsUpDownIcon aria-hidden className="ml-auto size-4 shrink-0 text-muted-foreground" />
+          <ChevronsUpDownIcon
+            aria-hidden
+            className="ml-auto size-4 shrink-0 text-muted-foreground"
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[236px]">

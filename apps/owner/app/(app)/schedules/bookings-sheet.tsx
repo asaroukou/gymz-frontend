@@ -194,7 +194,7 @@ function AddParticipant({
   };
 
   return (
-    <div className="space-y-1.5 border p-3">
+    <div className="space-y-1.5 rounded-lg bg-side p-3">
       <Label id="add-participant-label">{t('addBooking.label')}</Label>
       <div className="flex items-center gap-2">
         <Combobox
@@ -320,7 +320,7 @@ export function BookingsSheet({
               </AlertDescription>
             </Alert>
           ) : bookings.length === 0 ? (
-            <div className="border border-dashed py-10 text-center">
+            <div className="rounded-lg bg-side py-10 text-center">
               <p className="text-sm font-medium">{t('bookings.emptyTitle')}</p>
               <p className="mt-1 text-sm text-muted-foreground">{t('bookings.emptyBody')}</p>
             </div>

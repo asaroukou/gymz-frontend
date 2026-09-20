@@ -33,7 +33,7 @@ export function KpiRow({
     : (members.data ?? []).filter((m) => m.membership_status === MembershipStatus.active).length;
 
   return (
-    <StatPanel className="grid-cols-2 xl:grid-cols-4">
+    <StatPanel>
       <Stat
         label={t('kpi.checkins')}
         isLoading={attendance.isLoading}

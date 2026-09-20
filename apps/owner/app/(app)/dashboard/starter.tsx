@@ -20,7 +20,7 @@ interface Step {
   body: string;
 }
 
-const STEP_CARD_CLASS = 'flex items-start gap-3 border bg-card p-4 text-card-foreground';
+const STEP_CARD_CLASS = 'flex items-start gap-3 rounded-lg bg-side p-4 text-card-foreground';
 
 function StepBody({ step, canAccess }: { step: Step; canAccess: boolean }) {
   return (

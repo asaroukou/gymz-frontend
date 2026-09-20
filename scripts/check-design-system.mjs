@@ -34,7 +34,17 @@ const patterns = [
   'ocre',
   'sauge',
   'eucalyptus',
+  'font-extrabold',
+  'font-black',
+  'font-[600]',
+  'font-[700]',
+  // Le comptoir clair is opaque: no frosted surfaces.
+  'backdrop-blur',
 ];
+// Patterns that need a boundary a fixed string cannot express. `([^-]|$)` keeps
+// the legitimate `-foreground` stops out of the match: the pale status tints are
+// backgrounds, so using one as a text colour is invisible (~1.1:1).
+const regexPatterns = ['text-(destructive|success|warning|info)([^-]|$)'];
 const roots = [
   'packages/ui/src',
   'apps/owner/app',
@@ -71,6 +81,26 @@ for (const p of patterns) {
   if (out.trim()) {
     failed = true;
     console.error(`forbidden pattern "${p}":\n${out}`);
+  }
+}
+for (const p of regexPatterns) {
+  let out = '';
+  try {
+    out = execSync(
+      `grep -rnE --include='*.ts' --include='*.tsx' --include='*.css' -e ${JSON.stringify(p)} ${roots.join(' ')}`,
+      { encoding: 'utf8' },
+    );
+  } catch (err) {
+    // Same exit-code handling as the fixed-string sweep: only 1 (no match) is good.
+    if (err.status !== 1) {
+      console.error(`grep failed for pattern (regex) "${p}" (status ${err.status ?? '?'}):`);
+      console.error(err.stderr?.toString() || err.message);
+      process.exit(2);
+    }
+  }
+  if (out.trim()) {
+    failed = true;
+    console.error(`forbidden pattern (regex) "${p}":\n${out}`);
   }
 }
 if (failed) process.exit(1);

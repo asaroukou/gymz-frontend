@@ -42,7 +42,7 @@ export function RecurrenceEditor({
   };
 
   return (
-    <div className="space-y-4 border p-4">
+    <div className="space-y-4 rounded-lg bg-side p-4">
       <div className="space-y-1.5">
         <Label>{t('form.repeats')}</Label>
         <Select

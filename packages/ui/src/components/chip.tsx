@@ -3,14 +3,18 @@ import { X } from 'lucide-react';
 
 import { cn } from '@iziwellpass/ui/lib/utils';
 
-/** A pilule label with an optional dismiss (filters, selected values). */
-export function Chip({
-  children,
-  onRemove,
-  removeLabel,
-  className,
-  ...props
-}: React.ComponentProps<'span'> & { onRemove?: () => void; removeLabel?: string }) {
+/**
+ * A pilule label with an optional dismiss (filters, selected values).
+ * `onRemove` and `removeLabel` travel together: a dismiss button without an
+ * accessible name is unreachable, so the union makes the pair mandatory.
+ */
+export type ChipProps = React.ComponentProps<'span'> &
+  (
+    | { onRemove?: undefined; removeLabel?: undefined }
+    | { onRemove: () => void; removeLabel: string }
+  );
+
+export function Chip({ children, onRemove, removeLabel, className, ...props }: ChipProps) {
   return (
     <span
       data-slot="chip"

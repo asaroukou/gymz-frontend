@@ -31,7 +31,7 @@ export function PasswordChecklist({ value }: { value: string }) {
               aria-hidden
               className={cn(
                 'size-4 shrink-0 transition-colors',
-                satisfied ? 'text-success' : 'text-muted-foreground/40',
+                satisfied ? 'text-success-foreground' : 'text-muted-foreground/40',
               )}
             />
             {t(rule.key)}

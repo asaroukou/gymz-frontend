@@ -23,7 +23,7 @@ export function DayStats({ attendance }: { attendance: QueryLike<AttendanceStats
   const occupancy = useCountUp(stats ? Math.round(stats.occupancy_pct) : 0);
 
   return (
-    <StatPanel className="grid-cols-2 sm:grid-cols-3">
+    <StatPanel>
       <Stat
         label={t('stats.checkins')}
         value={stats ? String(stats.total_check_ins) : null}

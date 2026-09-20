@@ -127,7 +127,7 @@ function Column({
   onNavigate?: () => void;
 }) {
   return (
-    <div className="flex h-full flex-col gap-0.5 px-3 py-4">
+    <div className="flex h-full flex-col gap-0.5 overflow-y-auto px-3 py-4">
       <div className="px-2.5 pt-2 pb-5">
         <Wordmark name={title} />
       </div>
@@ -181,7 +181,9 @@ export function AppShell({
   return (
     <div className="flex min-h-screen bg-background">
       {/* Desktop: the côté column is the only frame — a tone, not a border */}
-      <aside className="hidden w-[260px] shrink-0 bg-side md:block">{column}</aside>
+      <aside className="hidden w-[260px] shrink-0 bg-side md:sticky md:top-0 md:block md:h-screen">
+        {column}
+      </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar; there is no desktop header */}

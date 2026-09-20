@@ -87,7 +87,6 @@ function UserMenu({ variant = 'avatar' }: { variant?: 'avatar' | 'row' }) {
         {variant === 'row' ? (
           <button
             type="button"
-            aria-label={t('account')}
             className="flex h-12 w-full items-center gap-2.5 rounded-xl py-1.5 pr-3.5 pl-2 text-left transition-colors hover:bg-accent/60"
           >
             {avatar}
@@ -97,7 +96,11 @@ function UserMenu({ variant = 'avatar' }: { variant?: 'avatar' | 'row' }) {
             </span>
           </button>
         ) : (
-          <button type="button" aria-label={t('account')} className="rounded-full">
+          <button
+            type="button"
+            aria-label={t('account')}
+            className="grid size-11 place-items-center rounded-full"
+          >
             {avatar}
           </button>
         )}

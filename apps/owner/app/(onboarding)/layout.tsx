@@ -8,7 +8,7 @@ import { Wordmark } from '@iziwellpass/ui/components/wordmark';
 // the page itself re-checks client-side for the loading/signed-out/has-role branches.
 export default function OnboardingLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-backdrop p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-[560px] space-y-6">
         <div className="flex justify-center">
           <Wordmark name="IziWellPass" />

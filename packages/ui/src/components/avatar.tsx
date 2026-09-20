@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Avatar as AvatarPrimitive } from 'radix-ui';
 
+import { tintClass, tintForIndex, type TintName } from '@iziwellpass/ui/lib/tints';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
 function Avatar({
@@ -35,15 +36,19 @@ function AvatarImage({ className, ...props }: React.ComponentProps<typeof Avatar
   );
 }
 
+/** The initials plate. Its pastel rotates by index so adjacent rows differ. */
 function AvatarFallback({
   className,
+  tint = 0,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+}: React.ComponentProps<typeof AvatarPrimitive.Fallback> & { tint?: TintName | number }) {
+  const name = typeof tint === 'number' ? tintForIndex(tint) : tint;
   return (
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        'flex size-full items-center justify-center rounded-full bg-tint-bleu text-xs font-semibold text-foreground',
+        'flex size-full items-center justify-center rounded-full text-xs font-semibold text-foreground',
+        tintClass(name),
         className,
       )}
       {...props}

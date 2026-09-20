@@ -169,7 +169,7 @@ export default function FoundationsPage() {
         id="couleur"
         number={number('couleur')}
         title="Couleur"
-        note="Trois neutres pour la structure, cinq teintes pour le contenu, quatre paires de statut pour le sens. Tout est mesuré en APCA/WCAG contre la surface qui le porte."
+        note="Trois neutres pour la structure, cinq teintes pour le contenu, quatre paires de statut pour le sens. Tout est mesuré en WCAG contre la surface qui le porte."
       >
         <Specimen
           name="Neutres"
@@ -400,9 +400,7 @@ export default function FoundationsPage() {
         number={number('elevation')}
         title="Élévation"
         note="Aucune élévation : tons, espace, filet entre les lignes, scrim pour les overlays."
-      >
-        {null}
-      </Section>
+      />
 
       <Section
         id="focus"

@@ -77,7 +77,7 @@ function Combobox({
               className="flex h-11 w-full bg-transparent py-2 text-base placeholder:text-muted-foreground focus-visible:outline-offset-[-3px]"
             />
           </div>
-          <CommandPrimitive.List className="max-h-56 overflow-y-auto p-1">
+          <CommandPrimitive.List className="max-h-56 overflow-y-auto p-2">
             <CommandPrimitive.Empty className="py-6 text-center text-sm text-muted-foreground">
               {emptyText}
             </CommandPrimitive.Empty>

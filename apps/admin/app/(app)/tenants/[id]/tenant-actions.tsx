@@ -151,7 +151,7 @@ export function TenantActions({ tenant }: { tenant: TenantSummary }) {
             </DialogDescription>
           </DialogHeader>
           {error ? (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-destructive-foreground">
               {error}
             </p>
           ) : null}
@@ -184,7 +184,7 @@ export function TenantActions({ tenant }: { tenant: TenantSummary }) {
             </DialogDescription>
           </DialogHeader>
           {error ? (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-destructive-foreground">
               {error}
             </p>
           ) : null}

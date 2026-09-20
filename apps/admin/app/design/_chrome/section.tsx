@@ -11,7 +11,8 @@ export function Section({
   number: string;
   title: string;
   note?: string;
-  children: ReactNode;
+  /** Optional: a note-only section (Élévation) carries no specimen. */
+  children?: ReactNode;
 }) {
   return (
     <section id={id} className="scroll-mt-24 border-t border-border pt-6 pb-16">

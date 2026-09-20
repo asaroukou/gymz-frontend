@@ -15,6 +15,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="light"
       position="bottom-right"
       className="toaster group"
+      toastOptions={{
+        classNames: {
+          toast: 'h-[52px] px-5 text-base',
+          description: 'text-primary-foreground/60 font-numeric',
+        },
+      }}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,

@@ -33,7 +33,7 @@ export function VenueChecklist({
     );
   }
   if (isError) {
-    return <p className="text-sm text-destructive">{t('loadError')}</p>;
+    return <p className="text-sm text-destructive-foreground">{t('loadError')}</p>;
   }
   if (venues.length === 0) {
     return <p className="text-sm text-muted-foreground">{t('empty')}</p>;
