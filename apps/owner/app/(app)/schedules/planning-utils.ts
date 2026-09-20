@@ -13,14 +13,6 @@ import type {
 
 import { summarizeRecurrenceRule, type Weekday } from '@/lib/recurrence';
 
-export type BadgeVariant =
-  'default' | 'secondary' | 'destructive' | 'success' | 'warning' | 'info' | 'outline';
-
-export interface BadgeSpec {
-  variant: BadgeVariant;
-  label: string;
-}
-
 // ---------------------------------------------------------------------------
 // Pure helpers (no i18n)
 // ---------------------------------------------------------------------------
@@ -52,22 +44,7 @@ export function resolveBookingActorLabel(
   return booking.pass_holder_id ?? '—';
 }
 
-// Capacity bar colour now lives in the shared `Capacity` component
-// (`@iziwellpass/ui/components/capacity`), which co-decides the bar fill and
-// the badge level so they can't drift. A full slot reads as amber ("complet",
-// no more room) rather than red; red is reserved for genuine overbooking.
-const SLOT_STATUS_VARIANT: Record<SlotStatus, BadgeVariant> = {
-  available: 'success',
-  full: 'warning',
-  cancelled: 'outline',
-};
-
-const BOOKING_STATUS_VARIANT: Record<BookingStatus, BadgeVariant> = {
-  confirmed: 'success',
-  checked_in: 'info',
-  no_show: 'warning',
-  cancelled: 'outline',
-};
+// Badge colours live in lib/slot-status.ts (slotBadgeVariant, bookingBadgeVariant).
 
 // ---------------------------------------------------------------------------
 // i18n-bound label helpers
@@ -78,8 +55,8 @@ export interface PlanningLabels {
   weekdayShort: (day: Weekday) => string;
   weekdayLong: (day: Weekday) => string;
   formatRecurrence: (rule: string | null | undefined) => string;
-  slotStatusBadge: (status: SlotStatus) => BadgeSpec;
-  bookingStatusBadge: (status: BookingStatus) => BadgeSpec;
+  slotStatusLabel: (status: SlotStatus) => string;
+  bookingStatusLabel: (status: BookingStatus) => string;
   bookingSourceLabel: (source: BookingSource) => string;
 }
 
@@ -118,19 +95,9 @@ export function usePlanningLabels(): PlanningLabels {
     [t, weekdayAbbr],
   );
 
-  const slotStatusBadge = useCallback(
-    (status: SlotStatus): BadgeSpec => ({
-      variant: SLOT_STATUS_VARIANT[status],
-      label: t(`slotStatus.${status}`),
-    }),
-    [t],
-  );
-
-  const bookingStatusBadge = useCallback(
-    (status: BookingStatus): BadgeSpec => ({
-      variant: BOOKING_STATUS_VARIANT[status],
-      label: t(`bookingStatus.${status}`),
-    }),
+  const slotStatusLabel = useCallback((status: SlotStatus) => t(`slotStatus.${status}`), [t]);
+  const bookingStatusLabel = useCallback(
+    (status: BookingStatus) => t(`bookingStatus.${status}`),
     [t],
   );
 
@@ -144,8 +111,8 @@ export function usePlanningLabels(): PlanningLabels {
     weekdayShort,
     weekdayLong,
     formatRecurrence,
-    slotStatusBadge,
-    bookingStatusBadge,
+    slotStatusLabel,
+    bookingStatusLabel,
     bookingSourceLabel,
   };
 }

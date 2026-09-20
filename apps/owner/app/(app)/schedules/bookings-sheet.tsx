@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { MoreHorizontalIcon, PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -25,12 +26,19 @@ import { Button } from '@iziwellpass/ui/components/button';
 import { Combobox } from '@iziwellpass/ui/components/combobox';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@iziwellpass/ui/components/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@iziwellpass/ui/components/dropdown-menu';
 import { Label } from '@iziwellpass/ui/components/label';
 import {
   Sheet,
@@ -39,11 +47,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@iziwellpass/ui/components/sheet';
-import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { Textarea } from '@iziwellpass/ui/components/textarea';
 
+import { RowsSkeleton } from '@/components/rows-skeleton';
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatTime } from '@/lib/datetime';
+import { bookingBadgeVariant } from '@/lib/slot-status';
 
 import {
   memberInitials,
@@ -90,12 +99,12 @@ function CancelBookingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>{t('cancelBooking.title')}</DialogTitle>
           <DialogDescription>{t('cancelBooking.description')}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="cancel-booking-reason">{t('cancelBooking.reason')}</Label>
           <Textarea
             id="cancel-booking-reason"
@@ -105,9 +114,9 @@ function CancelBookingDialog({
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {tCommon('close')}
-          </Button>
+          <DialogClose asChild>
+            <Button variant="ghost">{tCommon('close')}</Button>
+          </DialogClose>
           <Button variant="destructive" onClick={handleCancel} disabled={cancelBooking.isPending}>
             {cancelBooking.isPending ? t('cancelBooking.confirming') : t('cancelBooking.confirm')}
           </Button>
@@ -117,6 +126,7 @@ function CancelBookingDialog({
   );
 }
 
+/** Canvas `skmEM`: a search pill and a 48px dark round « + ». Logic unchanged. */
 function AddParticipant({
   slotId,
   venueId,
@@ -194,8 +204,10 @@ function AddParticipant({
   };
 
   return (
-    <div className="space-y-1.5 rounded-lg bg-side p-3">
-      <Label id="add-participant-label">{t('addBooking.label')}</Label>
+    <div className="flex flex-col gap-2">
+      <Label id="add-participant-label" className="sr-only">
+        {t('addBooking.label')}
+      </Label>
       <div className="flex items-center gap-2">
         <Combobox
           options={options}
@@ -207,11 +219,16 @@ function AddParticipant({
           disabled={full}
           className="flex-1"
         />
-        <Button onClick={handleAdd} disabled={full || !memberId || createBooking.isPending}>
-          {createBooking.isPending ? t('addBooking.adding') : t('addBooking.add')}
+        <Button
+          size="icon"
+          aria-label={createBooking.isPending ? t('addBooking.adding') : t('addBooking.add')}
+          onClick={handleAdd}
+          disabled={full || !memberId || createBooking.isPending}
+        >
+          <PlusIcon />
         </Button>
       </div>
-      {full ? <p className="text-xs text-muted-foreground">{t('addBooking.slotFull')}</p> : null}
+      {full ? <p className="text-sm text-muted-foreground">{t('addBooking.slotFull')}</p> : null}
     </div>
   );
 }
@@ -221,6 +238,8 @@ export function BookingsSheet({
   venueId,
   timeZone,
   title,
+  dayLabel,
+  resourceName,
   members,
   canManageBookings,
   open,
@@ -230,13 +249,16 @@ export function BookingsSheet({
   venueId: string;
   timeZone: string | undefined;
   title: string;
+  /** « Aujourd'hui », « Demain », « Lundi 21 septembre » — the group heading of the slot. */
+  dayLabel: string;
+  resourceName: string;
   members: Member[];
   canManageBookings: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations('planning');
-  const { bookingStatusBadge, bookingSourceLabel } = usePlanningLabels();
+  const { bookingStatusLabel, bookingSourceLabel } = usePlanningLabels();
   const queryClient = useQueryClient();
 
   const bookingsQuery = useListBookingsForSlot(slot.id, { query: { select: unwrap } });
@@ -283,35 +305,35 @@ export function BookingsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full gap-0 sm:max-w-md">
-        <SheetHeader className="border-b">
+      <SheetContent side="right">
+        <SheetHeader>
+          <p className="text-md text-muted-foreground">
+            {t('bookings.dateLine', { day: dayLabel, room: resourceName })}
+          </p>
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>
             {t('bookings.subtitle', {
               start: formatTime(slot.start_time, timeZone),
               end: formatTime(slot.end_time, timeZone),
-              booked: slot.booked_count,
+              booked: bookedCount,
               cap: slot.capacity,
             })}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 space-y-3 overflow-y-auto p-4">
-          {canManageBookings ? (
-            <AddParticipant
-              slotId={slot.id}
-              venueId={venueId}
-              members={members}
-              bookedMemberIds={bookedMemberIds}
-              full={isFull}
-            />
-          ) : null}
+        {canManageBookings ? (
+          <AddParticipant
+            slotId={slot.id}
+            venueId={venueId}
+            members={members}
+            bookedMemberIds={bookedMemberIds}
+            full={isFull}
+          />
+        ) : null}
 
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {bookingsQuery.isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
+            <RowsSkeleton rows={3} />
           ) : bookingsQuery.isError ? (
             <Alert variant="destructive">
               <AlertTitle>{t('errorTitle')}</AlertTitle>
@@ -320,14 +342,13 @@ export function BookingsSheet({
               </AlertDescription>
             </Alert>
           ) : bookings.length === 0 ? (
-            <div className="rounded-lg bg-side py-10 text-center">
-              <p className="text-sm font-medium">{t('bookings.emptyTitle')}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{t('bookings.emptyBody')}</p>
+            <div className="py-10 text-center">
+              <p className="text-base font-medium">{t('bookings.emptyTitle')}</p>
+              <p className="mt-1 text-base text-muted-foreground">{t('bookings.emptyBody')}</p>
             </div>
           ) : (
-            <ul className="space-y-1">
-              {bookings.map((booking) => {
-                const badge = bookingStatusBadge(booking.status);
+            <ul className="flex flex-col">
+              {bookings.map((booking, index) => {
                 const canCancel =
                   canManageBookings &&
                   (booking.status === 'confirmed' || booking.status === 'checked_in');
@@ -335,27 +356,26 @@ export function BookingsSheet({
                 return (
                   <li
                     key={booking.id}
-                    className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-accent/50"
+                    className="flex items-center gap-3 border-b border-border py-3 last:border-0"
                   >
-                    <Avatar size="sm">
-                      <AvatarFallback aria-hidden>
+                    <Avatar>
+                      <AvatarFallback aria-hidden tint={index}>
                         {member ? memberInitials(member) : '—'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
+                      <p className="truncate text-base font-medium">
                         {resolveBookingActorLabel(booking, memberById)}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground">
+                      <p className="truncate text-sm text-muted-foreground">
                         {bookingSourceLabel(booking.source)}
                       </p>
                     </div>
-                    <Badge variant={badge.variant} className="shrink-0">
-                      {badge.label}
+                    <Badge variant={bookingBadgeVariant(booking.status)} className="shrink-0">
+                      {bookingStatusLabel(booking.status)}
                     </Badge>
                     {canManageBookings && booking.status === 'confirmed' ? (
                       <Button
-                        variant="ghost"
                         size="sm"
                         disabled={validatingBookingId === booking.id}
                         onClick={() => handleValidate(booking)}
@@ -366,13 +386,26 @@ export function BookingsSheet({
                       </Button>
                     ) : null}
                     {canCancel ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCancellingBooking(booking)}
-                      >
-                        {t('bookings.cancel')}
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="size-11 md:size-9"
+                            aria-label={t('slots.rowMenu')}
+                          >
+                            <MoreHorizontalIcon />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => setCancellingBooking(booking)}
+                          >
+                            {t('cancelBooking.confirm')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     ) : null}
                   </li>
                 );
