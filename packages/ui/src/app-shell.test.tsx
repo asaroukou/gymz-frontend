@@ -39,7 +39,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Dashboard' }).getAttribute('aria-current')).toBeNull();
   });
 
-  it('renders topbar actions slot', () => {
+  it('renders the actions slot in the mobile top bar', () => {
     render(
       <AppShell nav={nav} title="IziWellPass" actions={<button>Sign out</button>}>
         <p>x</p>
@@ -48,7 +48,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy();
   });
 
-  it('renders the leading slot in the topbar', () => {
+  it('renders the leading slot in the mobile top bar', () => {
     render(
       <AppShell nav={nav} title="IziWellPass" leading={<span>venue-switcher</span>}>
         <p>content</p>
@@ -121,5 +121,27 @@ describe('AppShell', () => {
     expect(screen.getAllByText('Organisation').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: 'Dashboard' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: 'Members' }).length).toBeGreaterThan(0);
+  });
+
+  it('renders the navFooter slot in the sidebar column', () => {
+    render(
+      <AppShell nav={nav} title="IziWellPass" navFooter={<span>venue-and-user</span>}>
+        <p>x</p>
+      </AppShell>,
+    );
+    expect(screen.getByText('venue-and-user')).toBeTruthy();
+  });
+
+  it('marks the active item with the pill classes and keeps the rest bare', () => {
+    render(
+      <AppShell nav={nav} title="IziWellPass" currentPath="/members">
+        <p>x</p>
+      </AppShell>,
+    );
+    const active = screen.getByRole('link', { name: 'Members' });
+    const idle = screen.getByRole('link', { name: 'Dashboard' });
+    expect(active.className).toContain('bg-secondary');
+    expect(active.className).toContain('font-semibold');
+    expect(idle.className).not.toContain('bg-secondary');
   });
 });
