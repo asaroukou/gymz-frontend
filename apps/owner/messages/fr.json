@@ -70,7 +70,7 @@
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
     "login": {
-      "title": "Connexion",
+      "title": "Bon retour",
       "subtitle": "Connectez-vous pour accéder à votre espace.",
       "email": "E-mail",
       "password": "Mot de passe",
@@ -95,14 +95,14 @@
     },
     "signup": {
       "title": "Créer un compte",
-      "subtitle": "Indiquez vos coordonnées — vous recevrez un mot de passe provisoire par e-mail.",
+      "subtitle": "Vous recevrez un mot de passe provisoire par e-mail.",
       "email": "E-mail",
       "firstName": "Prénom",
       "lastName": "Nom",
       "submit": "Créer un compte",
       "submitting": "Création du compte…",
       "sentTitle": "Vérifiez votre boîte mail",
-      "sentBody": "Si un compte peut être créé pour {email}, un e-mail avec un mot de passe provisoire vient d'être envoyé. Connectez-vous avec ce mot de passe pour continuer.",
+      "sentBody": "Si un compte peut être créé pour {email}, un e-mail avec un mot de passe provisoire vient d'être envoyé.",
       "haveAccount": "Vous avez déjà un compte ?",
       "signin": "Se connecter",
       "error": "Impossible de créer le compte"
@@ -163,8 +163,9 @@
     }
   },
   "dashboard": {
-    "greeting": "Bonjour {name}",
+    "greeting": "Bonjour, {name}",
     "greetingNoName": "Bonjour",
+    "eyebrow": "{date} · {venue}",
     "venuePlaceholder": "Choisir un établissement",
     "venueNone": "Aucun établissement pour le moment.",
     "venuePrompt": "Sélectionnez un établissement pour voir son tableau de bord.",
@@ -174,30 +175,33 @@
       "occupancy": "Occupation",
       "activeMembers": "Membres actifs"
     },
+    "tabs": {
+      "label": "Sections du tableau de bord",
+      "schedule": "Planning du jour",
+      "checkins": "Derniers passages"
+    },
     "schedule": {
-      "title": "Planning du jour",
-      "capacityLabel": "Capacité {booked}/{cap}",
       "full": "Complet",
       "cancelled": "Annulé",
+      "seeAll": "{count, plural, one {Voir la séance du jour} other {Voir les # séances du jour}}",
       "emptyTitle": "Aucun créneau aujourd'hui",
       "emptyBody": "Créez un planning pour générer les créneaux de la journée.",
       "emptyCta": "Créer un planning"
     },
-    "checkins": {
-      "title": "Derniers passages",
-      "empty": "Aucun passage pour le moment.",
-      "methodQr": "QR",
-      "methodManual": "Manuel"
-    },
     "starter": {
-      "title": "Configurons votre établissement",
-      "body": "Trois étapes pour démarrer avec IziWellPass.",
+      "title": "Bienvenue, {name}",
+      "titleNoName": "Bienvenue",
+      "body": "Trois étapes pour démarrer. Chacune prend moins d'une minute.",
       "step1Title": "Créer un planning",
       "step1Body": "Définissez vos cours et vos créneaux.",
+      "step1Cta": "Créer un cours",
       "step2Title": "Ajouter un membre",
       "step2Body": "Enregistrez vos premiers adhérents.",
+      "step2Cta": "Ajouter",
       "step3Title": "Premier passage",
-      "step3Body": "Enregistrez une entrée à l'accueil."
+      "step3Body": "Enregistrez une entrée à l'accueil.",
+      "step3Cta": "Ouvrir l'accueil",
+      "placeholder": "Le planning du jour et les derniers passages apparaîtront ici."
     },
     "errors": {
       "venues": "Impossible de charger les établissements",
@@ -208,7 +212,9 @@
   },
   "frontdesk": {
     "title": "Accueil",
-    "subtitle": "Enregistrez les entrées et suivez la fréquentation du jour.",
+    "eyebrow": "Accueil · {date}",
+    "question": "Qui entre ?",
+    "questionWalkin": "Qui entre sans réservation ?",
     "venuePlaceholder": "Choisir un établissement",
     "venueNone": "Aucun établissement pour le moment.",
     "venuePrompt": "Sélectionnez un établissement pour enregistrer les passages.",
@@ -217,20 +223,25 @@
     "stats": {
       "checkins": "Passages",
       "uniqueMembers": "Membres uniques",
+      "uniqueMembersShort": "Uniques",
       "occupancy": "Occupation"
     },
-    "register": {
-      "title": "Enregistrer un passage",
-      "tabsLabel": "Mode d'enregistrement",
-      "tabQr": "QR / code",
-      "tabWalkin": "Sans réservation"
+    "command": {
+      "placeholderQr": "Scanner un QR ou saisir un code",
+      "placeholderQrShort": "Scanner ou saisir",
+      "placeholderWalkin": "Rechercher un membre",
+      "submit": "Valider",
+      "modeQr": "Accueil",
+      "modeWalkin": "Sans réservation",
+      "modeMenuLabel": "Mode d'enregistrement",
+      "results": "Membres correspondants"
+    },
+    "modes": {
+      "qr": "QR / code",
+      "walkin": "Sans réservation"
     },
     "qr": {
-      "label": "Code QR ou jeton",
-      "placeholder": "Scannez ou saisissez le code",
-      "hint": "Présentez le QR au lecteur, ou saisissez le jeton, puis validez. Réservations, entrées libres et pass marketplace sont acceptés.",
-      "submit": "Valider",
-      "submitting": "Validation…",
+      "hint": "Présentez le QR au lecteur ou saisissez le jeton. Réservations, entrées libres et pass marketplace sont acceptés.",
       "scanButton": "Scanner avec la caméra",
       "cameraError": "Accès à la caméra refusé — utilisez le champ de texte.",
       "dialogDescription": "Pointez la caméra vers le QR code du membre.",
@@ -239,31 +250,23 @@
       "errorPassNotSettleable": "Cette réservation pass ne peut pas être validée ici — elle concerne peut-être un autre jour, a déjà été utilisée ou a été annulée. Demandez au visiteur de vérifier sa réservation."
     },
     "walkin": {
-      "hint": "Enregistrez un membre présent sans réservation.",
-      "member": "Membre",
-      "memberPlaceholder": "Choisir un membre",
-      "memberSearch": "Rechercher un membre",
+      "hint": "Choisissez un membre présent, puis validez l'entrée.",
       "noMembers": "Aucun membre",
-      "submit": "Enregistrer l'entrée",
-      "submitting": "Enregistrement…",
+      "selectPrompt": "Choisissez un membre dans la liste",
       "errorDuplicate": "Ce membre a déjà été enregistré ici récemment.",
       "membersError": "Impossible de charger les membres"
     },
     "feed": {
       "title": "Derniers passages",
+      "live": "En direct",
       "methodQr": "QR",
       "methodManual": "Manuel",
       "self": "Auto (QR)",
       "unknownMember": "Membre",
       "unknownStaff": "l'équipe",
       "byLabel": "par {name}",
-      "emptyTitle": "Aucun passage pour le moment",
-      "emptyBody": "Les entrées enregistrées apparaîtront ici en direct.",
+      "empty": "Aucun passage pour le moment.",
       "loadError": "Impossible de charger les passages"
-    },
-    "validation": {
-      "qrRequired": "Scannez ou saisissez le code",
-      "memberRequired": "Choisissez un membre"
     },
     "success": "Passage enregistré — {name}",
     "successNoName": "Passage enregistré",

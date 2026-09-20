@@ -70,7 +70,7 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "login": {
-      "title": "Sign in",
+      "title": "Welcome back",
       "subtitle": "Sign in to reach your workspace.",
       "email": "Email",
       "password": "Password",
@@ -95,14 +95,14 @@
     },
     "signup": {
       "title": "Create an account",
-      "subtitle": "Enter your details — you'll receive a temporary password by email.",
+      "subtitle": "You'll receive a temporary password by email.",
       "email": "Email",
       "firstName": "First name",
       "lastName": "Last name",
       "submit": "Create an account",
       "submitting": "Creating account…",
       "sentTitle": "Check your inbox",
-      "sentBody": "If an account can be created for {email}, an email with a temporary password has just been sent. Sign in with that password to continue.",
+      "sentBody": "If an account can be created for {email}, an email with a temporary password has just been sent.",
       "haveAccount": "Already have an account?",
       "signin": "Sign in",
       "error": "Could not create account"
@@ -163,8 +163,9 @@
     }
   },
   "dashboard": {
-    "greeting": "Hello {name}",
+    "greeting": "Hello, {name}",
     "greetingNoName": "Hello",
+    "eyebrow": "{date} · {venue}",
     "venuePlaceholder": "Choose a venue",
     "venueNone": "No venues yet.",
     "venuePrompt": "Select a venue to view its dashboard.",
@@ -174,30 +175,33 @@
       "occupancy": "Occupancy",
       "activeMembers": "Active members"
     },
+    "tabs": {
+      "label": "Dashboard sections",
+      "schedule": "Today's schedule",
+      "checkins": "Recent check-ins"
+    },
     "schedule": {
-      "title": "Today's schedule",
-      "capacityLabel": "Capacity {booked}/{cap}",
       "full": "Full",
       "cancelled": "Cancelled",
+      "seeAll": "{count, plural, one {See today's session} other {See today's # sessions}}",
       "emptyTitle": "No slots today",
       "emptyBody": "Create a schedule to generate the day's slots.",
       "emptyCta": "Create a schedule"
     },
-    "checkins": {
-      "title": "Recent check-ins",
-      "empty": "No check-ins yet.",
-      "methodQr": "QR",
-      "methodManual": "Manual"
-    },
     "starter": {
-      "title": "Let's set up your venue",
-      "body": "Three steps to get started with IziWellPass.",
+      "title": "Welcome, {name}",
+      "titleNoName": "Welcome",
+      "body": "Three steps to get started. Each takes under a minute.",
       "step1Title": "Create a schedule",
       "step1Body": "Define your classes and time slots.",
+      "step1Cta": "Create a class",
       "step2Title": "Add a member",
       "step2Body": "Enroll your first members.",
+      "step2Cta": "Add",
       "step3Title": "First check-in",
-      "step3Body": "Record an entry at the front desk."
+      "step3Body": "Record an entry at the front desk.",
+      "step3Cta": "Open the front desk",
+      "placeholder": "Today's schedule and recent check-ins will appear here."
     },
     "errors": {
       "venues": "Could not load venues",
@@ -208,7 +212,9 @@
   },
   "frontdesk": {
     "title": "Front desk",
-    "subtitle": "Record entries and track today's attendance.",
+    "eyebrow": "Front desk · {date}",
+    "question": "Who's coming in?",
+    "questionWalkin": "Who's coming in without a booking?",
     "venuePlaceholder": "Choose a venue",
     "venueNone": "No venues yet.",
     "venuePrompt": "Select a venue to record check-ins.",
@@ -217,20 +223,25 @@
     "stats": {
       "checkins": "Check-ins",
       "uniqueMembers": "Unique members",
+      "uniqueMembersShort": "Unique",
       "occupancy": "Occupancy"
     },
-    "register": {
-      "title": "Record a check-in",
-      "tabsLabel": "Check-in mode",
-      "tabQr": "QR / code",
-      "tabWalkin": "No booking"
+    "command": {
+      "placeholderQr": "Scan a QR or enter a code",
+      "placeholderQrShort": "Scan or enter",
+      "placeholderWalkin": "Search a member",
+      "submit": "Validate",
+      "modeQr": "Front desk",
+      "modeWalkin": "No booking",
+      "modeMenuLabel": "Check-in mode",
+      "results": "Matching members"
+    },
+    "modes": {
+      "qr": "QR / code",
+      "walkin": "No booking"
     },
     "qr": {
-      "label": "QR code or token",
-      "placeholder": "Scan or enter the code",
-      "hint": "Scan the QR or type the token, then submit. Bookings, walk-ins, and marketplace passes are all accepted.",
-      "submit": "Validate",
-      "submitting": "Validating…",
+      "hint": "Show the QR to the reader or type the token. Bookings, walk-ins and marketplace passes are accepted.",
       "scanButton": "Scan with camera",
       "cameraError": "Camera access denied — use the text field instead.",
       "dialogDescription": "Point the camera at the member's QR code.",
@@ -239,31 +250,23 @@
       "errorPassNotSettleable": "This pass booking can't be settled here — it may be for another day, already used, or cancelled. Ask the visitor to check their booking."
     },
     "walkin": {
-      "hint": "Check in a member who is here without a booking.",
-      "member": "Member",
-      "memberPlaceholder": "Choose a member",
-      "memberSearch": "Search a member",
+      "hint": "Pick a member who is here, then confirm the entry.",
       "noMembers": "No members",
-      "submit": "Check in",
-      "submitting": "Checking in…",
+      "selectPrompt": "Pick a member from the list",
       "errorDuplicate": "This member was already checked in here recently.",
       "membersError": "Could not load members"
     },
     "feed": {
       "title": "Recent check-ins",
+      "live": "Live",
       "methodQr": "QR",
       "methodManual": "Manual",
       "self": "Self (QR)",
       "unknownMember": "Member",
       "unknownStaff": "staff",
       "byLabel": "by {name}",
-      "emptyTitle": "No check-ins yet",
-      "emptyBody": "Recorded entries will appear here live.",
+      "empty": "No check-ins yet.",
       "loadError": "Could not load check-ins"
-    },
-    "validation": {
-      "qrRequired": "Scan or enter the code",
-      "memberRequired": "Choose a member"
     },
     "success": "Check-in recorded — {name}",
     "successNoName": "Check-in recorded",
