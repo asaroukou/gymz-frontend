@@ -142,7 +142,7 @@ export function MemberStack({ member, index, canManage, onSuspend }: MemberRowPr
             {memberInitials(member)}
           </AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate font-medium">{memberName(member)}</p>
           <p className="truncate text-sm text-muted-foreground">
             {member.email ?? member.phone ?? t('detail.noEmail')}

@@ -111,7 +111,7 @@ export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm">
+        <Button variant="outline" size="sm">
           <PlusIcon />
           {t('detail.subscriptions.assign')}
         </Button>

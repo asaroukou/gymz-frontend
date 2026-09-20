@@ -187,7 +187,7 @@ function SlotRow({
       <span className="font-numeric text-[1.125rem] font-medium">
         {formatTime(slot.start_time, timeZone)}
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 leading-tight">
         <p className="truncate text-base font-medium">{title}</p>
         <p className="truncate text-sm text-muted-foreground">{resourceName}</p>
       </div>
@@ -211,7 +211,7 @@ function SlotRow({
       <div className="col-start-3 row-start-1 flex items-center gap-1 md:col-start-auto md:row-start-auto">
         {/* 44px touch targets below md, the canvas 36px from md up. */}
         <Button
-          variant="secondary"
+          variant="outline"
           size="sm"
           className="h-11 md:h-9"
           onClick={() => onOpenParticipants(slot)}

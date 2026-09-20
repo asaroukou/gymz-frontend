@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
+import { PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -162,7 +163,10 @@ export function AddMemberDialog({ variant = 'default' }: { variant?: 'default' |
       }}
     >
       <DialogTrigger asChild>
-        <Button variant={variant}>{t('add')}</Button>
+        <Button variant={variant}>
+          <PlusIcon />
+          {t('add')}
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>

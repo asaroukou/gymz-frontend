@@ -154,7 +154,7 @@ function CourseStack({
 
   return (
     <div className="flex items-start gap-3 border-b border-border py-3 last:border-0">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 leading-tight">
         <p className="truncate font-medium">{schedule.title}</p>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
           <span>{formatRecurrence(schedule.recurrence_rule)}</span>
@@ -258,7 +258,7 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
       </div>
       {/* Tablet/desktop: the hairline table at the canvas column widths. */}
       <div className="hidden md:block">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[204px]">{t('courses.columns.course')}</TableHead>

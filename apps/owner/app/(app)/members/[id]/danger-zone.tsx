@@ -34,7 +34,7 @@ export function DangerZone({ member }: { member: Member }) {
         <Tooltip>
           <TooltipTrigger asChild>
             <span tabIndex={0}>
-              <Button variant="secondary" disabled aria-disabled className="pointer-events-none">
+              <Button variant="outline" disabled aria-disabled className="pointer-events-none">
                 {t('detail.danger.reactivate')}
               </Button>
             </span>

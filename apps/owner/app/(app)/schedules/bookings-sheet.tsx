@@ -364,7 +364,7 @@ export function BookingsSheet({
                         {member ? memberInitials(member) : '—'}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 leading-tight">
                       <p className="truncate text-base font-medium">
                         {resolveBookingActorLabel(booking, memberById)}
                       </p>

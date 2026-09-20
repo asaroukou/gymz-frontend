@@ -124,7 +124,7 @@ export function MembersDirectory({
           </div>
           {/* Tablet/desktop: the hairline table at the canvas column widths. */}
           <div className="hidden md:block">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[244px]">{t('columns.member')}</TableHead>
