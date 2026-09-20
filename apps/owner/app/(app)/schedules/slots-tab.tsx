@@ -191,23 +191,25 @@ function SlotRow({
         <p className="truncate text-base font-medium">{title}</p>
         <p className="truncate text-sm text-muted-foreground">{resourceName}</p>
       </div>
-      {isCancelled ? (
-        <div className="hidden md:block" />
-      ) : (
-        <Capacity
-          hideCount
-          booked={slot.booked_count}
-          capacity={slot.capacity}
-          className="col-start-2 md:col-start-auto md:w-[120px]"
-          label={t('slots.capacityLabel', { booked: slot.booked_count, cap: slot.capacity })}
-        />
-      )}
-      <span className="col-start-2 font-numeric text-md font-medium text-muted-foreground md:col-start-auto">
-        {isCancelled ? '' : `${slot.booked_count}/${slot.capacity}`}
-      </span>
-      <Badge variant={slotBadgeVariant(slot.status)} className="col-start-2 md:col-start-auto">
-        {slotStatusLabel(slot.status)}
-      </Badge>
+      <div className="col-start-2 flex items-center gap-3 md:contents">
+        {isCancelled ? (
+          <div className="hidden md:block" />
+        ) : (
+          <Capacity
+            hideCount
+            booked={slot.booked_count}
+            capacity={slot.capacity}
+            className="w-[120px]"
+            label={t('slots.capacityLabel', { booked: slot.booked_count, cap: slot.capacity })}
+          />
+        )}
+        {isCancelled ? (
+          <span className="hidden md:block" />
+        ) : (
+          <span className="font-numeric text-md font-medium text-muted-foreground">{`${slot.booked_count}/${slot.capacity}`}</span>
+        )}
+        <Badge variant={slotBadgeVariant(slot.status)}>{slotStatusLabel(slot.status)}</Badge>
+      </div>
       <div className="col-start-3 row-start-1 flex items-center gap-1 md:col-start-auto md:row-start-auto">
         {/* 44px touch targets below md, the canvas 36px from md up. */}
         <Button
