@@ -65,7 +65,13 @@
     "search": "Rechercher",
     "loading": "Chargement…",
     "retry": "Réessayer",
-    "passVisitor": "Visiteur pass"
+    "passVisitor": "Visiteur pass",
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Page précédente",
+      "next": "Page suivante",
+      "page": "Page {n}"
+    }
   },
   "auth": {
     "footer": "Besoin d'aide ? Contactez la personne qui vous a donné accès.",
@@ -279,6 +285,7 @@
     "add": "Ajouter un membre",
     "errorTitle": "Une erreur est survenue",
     "loadError": "Impossible de charger les membres",
+    "footer": "{shown, plural, one {# membre} other {# membres}} sur {total}",
     "filters": {
       "all": "Tous",
       "active": "Actifs",
@@ -614,6 +621,7 @@
       "error": "Impossible d'annuler la séance"
     },
     "bookings": {
+      "eyebrow": "{day} · {room}",
       "subtitle": "{start}–{end} · {booked}/{cap} inscrits",
       "loadError": "Impossible de charger les participants",
       "emptyTitle": "Aucun participant",

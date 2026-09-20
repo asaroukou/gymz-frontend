@@ -63,7 +63,7 @@ function SheetContent({
           onInteractOutside?.(event);
         }}
         className={cn(
-          'fixed z-50 flex flex-col gap-4 bg-card transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
+          'fixed z-50 flex flex-col gap-6 bg-card p-8 transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
           side === 'right' &&
             'inset-y-0 right-0 h-full w-[460px] max-w-full data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right',
           side === 'left' &&
@@ -78,7 +78,7 @@ function SheetContent({
       >
         {children}
         {showCloseButton && (
-          <SheetPrimitive.Close className="absolute top-6 right-6 grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-side disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]">
+          <SheetPrimitive.Close className="absolute top-7 right-7 grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-side disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]">
             <XIcon />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
@@ -92,7 +92,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn('flex flex-col gap-1.5 p-8 pb-0', className)}
+      className={cn('flex flex-col gap-2 pr-10', className)}
       {...props}
     />
   );
@@ -102,7 +102,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="sheet-footer"
-      className={cn('mt-auto flex flex-col gap-2 p-8 pt-0', className)}
+      className={cn('mt-auto flex flex-col gap-2', className)}
       {...props}
     />
   );
@@ -112,7 +112,7 @@ function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPr
   return (
     <SheetPrimitive.Title
       data-slot="sheet-title"
-      className={cn('text-[1.5rem] leading-[1.2] font-medium text-foreground', className)}
+      className={cn('text-[1.75rem] leading-[1.2] font-normal text-foreground', className)}
       {...props}
     />
   );
@@ -125,7 +125,7 @@ function SheetDescription({
   return (
     <SheetPrimitive.Description
       data-slot="sheet-description"
-      className={cn('text-base text-muted-foreground', className)}
+      className={cn('text-base font-medium text-muted-foreground', className)}
       {...props}
     />
   );

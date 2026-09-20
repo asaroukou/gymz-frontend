@@ -45,7 +45,9 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
     <tr
       data-slot="table-row"
       className={cn(
-        'border-b border-border transition-colors data-[state=selected]:bg-side',
+        // Hairline between rows; a selected row (participants sheet open) turns
+        // into a grey pill with no hairline, rounded on its outer cells.
+        'border-b border-border transition-colors data-[state=selected]:border-transparent data-[state=selected]:bg-secondary data-[state=selected]:[&>td:first-child]:rounded-l-lg data-[state=selected]:[&>td:last-child]:rounded-r-lg',
         className,
       )}
       {...props}
@@ -62,7 +64,7 @@ function TableHead({
     <th
       data-slot="table-head"
       className={cn(
-        'h-11 px-3 text-left align-middle text-sm font-medium whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+        'h-9 px-3 text-left align-middle text-sm font-medium whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
         // Numeric columns align right and use the mono tabular figures the
         // Mono Numbers rule calls for, so digits line up across rows.
         numeric && 'text-right',
@@ -82,7 +84,7 @@ function TableCell({
     <td
       data-slot="table-cell"
       className={cn(
-        'px-3 py-3 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+        'px-3 py-[14px] align-middle text-base whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
         numeric && 'text-right font-numeric',
         className,
       )}
