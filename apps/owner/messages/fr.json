@@ -621,7 +621,7 @@
       "error": "Impossible d'annuler la séance"
     },
     "bookings": {
-      "eyebrow": "{day} · {room}",
+      "dateLine": "{day} · {room}",
       "subtitle": "{start}–{end} · {booked}/{cap} inscrits",
       "loadError": "Impossible de charger les participants",
       "emptyTitle": "Aucun participant",
