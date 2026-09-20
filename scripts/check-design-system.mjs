@@ -4,8 +4,11 @@ import { existsSync } from 'node:fs';
 
 const patterns = [
   'shadow-xs',
+  'shadow-sm',
+  'shadow-md',
   'shadow-popover',
   'shadow-lg',
+  'box-shadow',
   'font-mono',
   'dark:',
   'next-themes',
@@ -15,6 +18,22 @@ const patterns = [
   '--neutral-',
   // Focus is one global `:focus-visible` outline, never a per-component ring.
   'focus-visible:ring',
+  // « Le comptoir clair »: no uppercase, no tracked labels, no heavy weights,
+  // none of the retired studio documentaire surfaces.
+  'eyebrow',
+  'font-[650]',
+  'font-[750]',
+  'font-[800]',
+  'font-bold',
+  'uppercase',
+  'tracking-wide',
+  'bg-argile',
+  'bg-foret',
+  'text-foret',
+  'text-argile',
+  'ocre',
+  'sauge',
+  'eucalyptus',
 ];
 const roots = [
   'packages/ui/src',

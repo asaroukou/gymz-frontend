@@ -4,72 +4,76 @@
 @source '../';
 
 /* ============================================================
-   IziWellPass — « Le studio documentaire » token layer
-   Ink on bone, forêt/argile identity surfaces, documentary
-   accents, one family (Inter), flat: no shadows, no gradients.
-   Hex is canonical (matches DESIGN.md and the public landing);
-   neutrals are color-mix() of encre into the surface, so there
-   is no grey scale to maintain.
+   IziWellPass — « Le comptoir clair » token layer
+   White page, côté side column, one dark control, grey pills,
+   five pastel tints, hairlines never boxes, Inter 400/500/600,
+   zero elevation. Hex is canonical (DESIGN.md, screens.pen).
    ============================================================ */
 
 :root {
-  /* Ground and ink */
-  --background: #f2eee5; /* os */
-  --foreground: #141512; /* encre */
-  --card: #ffffff; /* blanc */
-  --card-foreground: #141512;
+  /* Page and ink */
+  --background: #ffffff; /* fond */
+  --card: #ffffff;
+  --card-foreground: #1f1f1f;
   --popover: #ffffff;
-  --popover-foreground: #141512;
-  --overlay: rgb(10 13 11 / 34%);
+  --popover-foreground: #1f1f1f;
+  --side: #fafafa; /* côté: side column, drawer, floating menus */
+  --foreground: #1f1f1f; /* encre */
 
-  /* The one control color (The Flat Ink Rule) */
-  --primary: #141512;
+  /* The one dark control (The One Dark Rule) */
+  --primary: #1f1f1f;
   --primary-foreground: #ffffff;
-  --primary-hover: color-mix(in srgb, #141512 85%, transparent);
+  --primary-hover: #333333;
 
-  /* Neutral washes: encre mixed into the surface */
-  --secondary: color-mix(in srgb, var(--foreground) 6%, var(--background));
-  --secondary-foreground: #141512;
-  --muted: color-mix(in srgb, var(--foreground) 6%, var(--background));
-  --muted-foreground: color-mix(in srgb, var(--foreground) 62%, transparent);
-  --accent: color-mix(in srgb, var(--foreground) 8%, var(--background));
-  --accent-foreground: #141512;
-  --border: color-mix(in srgb, currentColor 18%, transparent);
-  --input: color-mix(in srgb, currentColor 18%, transparent);
-  --ring: #141512;
+  /* Pills and secondary text */
+  --secondary: #eceef2; /* pilule */
+  --secondary-foreground: #1f1f1f;
+  --muted: #eceef2;
+  --muted-foreground: #5f6368; /* atténué */
+  --muted-strong: #4d5156; /* atténué fort: on tints and pills */
+  --accent: #e3e6ec; /* pilule survol */
+  --accent-foreground: #1f1f1f;
+  --border: #dcdcdc; /* filet */
+  --input: #dcdcdc;
+  --ring: #1f1f1f;
+  --overlay: rgb(31 31 31 / 25%); /* scrim */
+  --danger: #b23a2a; /* invalid field outline only */
 
-  /* Status (18% tint under the text stop in badges) */
-  --destructive: #b23a2a;
-  --destructive-foreground: #8f2f22;
-  --success: #257a4e;
+  /* Status: pale tint under the text stop, never a solid fill */
+  --success: #e9f3ee;
   --success-foreground: #1d5c3c;
-  --warning: #d9b84b;
+  --warning: #fbf1dc;
   --warning-foreground: #7a5c10;
-  --info: #8ebbd2;
-  --info-foreground: #2c6a8a;
+  --destructive: #fbe9e7;
+  --destructive-foreground: #8f2f22;
+  --info: #e8eefb;
+  --info-foreground: #2c4f8a;
 
-  /* Identity surfaces (The Two Places Rule) and documentary accents */
-  --foret: #244f3c;
-  --argile: #c66f50;
-  --ocre: #d9b84b;
-  --sauge: #b9c9a4;
-  --eucalyptus: #9fc0bb;
-  --eau: #8ebbd2;
+  /* Tints for glanceable content (The Tile Rule), rotating by position */
+  --tint-bleu: #e8eefb;
+  --tint-vert: #e9f3ee;
+  --tint-sable: #fbf1dc;
+  --tint-rose: #f6ecf2;
+  --tint-lavande: #eee9f8;
+  --wash: #dfe8fa; /* lavis: the one radial wash behind a hub heading */
 
-  /* Charts: ink first, documentary accents for categories */
+  /* Charts: ink first, then the dark status stops (readable on white) */
   --chart-1: var(--primary);
   --chart-2: var(--muted-foreground);
-  --chart-3: var(--eau);
-  --chart-4: var(--sauge);
-  --chart-5: var(--ocre);
+  --chart-3: var(--info-foreground);
+  --chart-4: var(--success-foreground);
+  --chart-5: var(--warning-foreground);
   --chart-grid: var(--border);
-  --chart-track: var(--muted);
+  --chart-track: var(--secondary);
 
   /* Shape and motion */
-  --radius: 0.75rem; /* fields */
-  --radius-xl: 1.25rem; /* panels */
-  --radius-pill: 9999px; /* controls */
-  --motion-standard: 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  --radius-sm: 0.375rem; /* checkbox */
+  --radius-md: 0.5rem; /* wordmark square */
+  --radius-lg: 1.25rem; /* textarea, floating menus, alert rows */
+  --radius-xl: 1.5rem; /* tiles */
+  --radius-2xl: 1.75rem; /* dialog */
+  --radius-pill: 9999px; /* every control */
+  --motion-standard: 200ms ease-out;
 }
 
 @theme inline {
@@ -79,32 +83,36 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-side: var(--side);
   --color-overlay: var(--overlay);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-muted-strong: var(--muted-strong);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-danger: var(--danger);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-foret: var(--foret);
-  --color-argile: var(--argile);
-  --color-ocre: var(--ocre);
-  --color-sauge: var(--sauge);
-  --color-eucalyptus: var(--eucalyptus);
-  --color-eau: var(--eau);
+  --color-tint-bleu: var(--tint-bleu);
+  --color-tint-vert: var(--tint-vert);
+  --color-tint-sable: var(--tint-sable);
+  --color-tint-rose: var(--tint-rose);
+  --color-tint-lavande: var(--tint-lavande);
+  --color-wash: var(--wash);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -113,47 +121,55 @@
   --color-chart-grid: var(--chart-grid);
   --color-chart-track: var(--chart-track);
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
-  --radius-2xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-xl);
   --radius-pill: var(--radius-pill);
+
+  /* Canvas type scale (px at the 16px root): 12 13 14 15 16 22 32 44 */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.3;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.3;
+  --text-md: 0.875rem;
+  --text-md--line-height: 1.4;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.5;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.3;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.2;
+  --text-xl--letter-spacing: -0.02em;
+  --text-2xl: 2rem;
+  --text-2xl--line-height: 1.1;
+  --text-2xl--letter-spacing: -0.03em;
+  --text-3xl: 2.75rem;
+  --text-3xl--line-height: 1.1;
+  --text-3xl--letter-spacing: -0.03em;
 
   --font-sans: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
-/* The signature overline: the only uppercase in the system. */
-@utility eyebrow {
-  font-size: 0.75rem;
-  font-weight: 750;
-  line-height: 1.3;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
 /* Every figure someone compares or reads back (The Tabular Rule). */
 @utility font-numeric {
-  font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
-  font-weight: 650;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-  html {
-    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-  }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-base text-foreground font-sans antialiased;
   }
-  /* One focus convention for everything: a solid outline in the element's own
-     color, offset so it never fights a pill's border. */
+  /* One focus convention for everything: a 3px ink outline, offset so it
+     never fights a pill's outline and stays visible on the dark pill. */
   :focus-visible {
-    outline: 3px solid currentColor;
+    outline: 3px solid var(--ring);
     outline-offset: 0.25rem;
   }
   /* Motion is functional, never decorative (PRODUCT.md): honor the OS
@@ -189,5 +205,5 @@
   }
 }
 .animate-checkin-arrive {
-  animation: checkin-arrive 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: checkin-arrive 1100ms ease-out;
 }
