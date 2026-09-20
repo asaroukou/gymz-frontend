@@ -285,7 +285,7 @@ A 60 px white pill, filet outline, max width 720 px, centred under the hub headi
 - **Tile:** 24 px radius, one of the five tints, 20 px padding. Time or number top-left, count top-right, title and meta bottom-left. Square on the dashboard, tall on plans and venues.
 - **Table:** 13 px atténué headers over hairline rows at 15 px; the first column carries an avatar when it is a person. No outer border, no header fill.
 - **Progress:** 6 px pilule track with an encre fill. Full sessions switch the fill to statut-attention-texte.
-- **Avatar:** a tinted circle with 12/600 initials; tints rotate.
+- **Avatar:** a tinted circle with 12/600 initials; the tint rotates by index (`tint` on the fallback).
 
 ### Overlays
 

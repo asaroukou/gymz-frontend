@@ -79,7 +79,7 @@ Map every `:root` colour to `--color-*` (including `side`, `muted-strong`, `dang
 | `text-2xl` | 2rem (32) | page title, stat number |
 | `text-3xl` | 2.75rem (44) | display (hub greeting) |
 
-Line heights: 1.5 for body and below, 1.3 for label and title, 1.2 for section, 1.1 for 2xl/3xl. Letter spacing: `-0.03em` on 2xl/3xl, `-0.02em` on xl, none below.
+Line heights: 1.5 for body and below, 1.3 for label and title, 1.2 for section, 1.1 for 2xl/3xl. `text-md` is the one exception: `--text-md--line-height: 1.4` (amended after final review — chips and tile counts sit tighter than body). Letter spacing: `-0.03em` on 2xl/3xl, `-0.02em` on xl, none below.
 
 `--font-sans` stays `var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif`. Weights in use: 400, 500, 600 only.
 
@@ -115,7 +115,7 @@ All values are the canvas components sheet. "Tone step" = `secondary` → `accen
 - **Alert**: `rounded-lg px-4 py-3 gap-3` on the status tint with the status text stop; `default` variant uses `bg-secondary text-foreground`; no border. `AlertReference` keeps `font-numeric`.
 - **Skeleton**: `bg-secondary rounded-lg` with `animate-none` (No pulse).
 - **Progress**: `h-1.5 rounded-full bg-secondary`, indicator `bg-primary`; `full` prop switches the indicator to `bg-warning-foreground`.
-- **Avatar**: `size-9 rounded-full` tinted via `tintForIndex`, fallback initials `text-xs font-semibold text-foreground`.
+- **Avatar**: `size-9 rounded-full`, tinted via `tint` on `AvatarFallback` (`tintForIndex`; amended after final review — the prop lives on the fallback, not the root), fallback initials `text-xs font-semibold text-foreground`.
 - **Separator**: `bg-border`.
 - **Empty**: heading `text-xl font-medium`, body `text-base text-muted-foreground`, no box, no icon circle; action slot unchanged.
 - **Capacity**: count `font-numeric`, threshold colours use `text-success-foreground` / `text-warning-foreground` / `text-destructive-foreground`; bar uses Progress.
@@ -123,7 +123,7 @@ All values are the canvas components sheet. "Tone step" = `secondary` → `accen
 
 ## 5. New primitives
 
-- **`components/tile.tsx`** — `Tile` (`tint?: TintName | number`, `aspect?: 'square' | 'tall'`, `asChild`), `TileTop` (flex row space-between), `TileTime` (`text-xl font-medium tracking-[-0.02em] font-numeric`), `TileCount` (`text-md font-medium text-muted-strong font-numeric`), `TileTitle` (`text-lg font-semibold`), `TileMeta` (`text-sm text-muted-strong`). Base: `flex flex-col justify-between rounded-xl p-5 text-foreground` with `aspect-square` or `min-h-[14rem]`. No border, no shadow. A number tint rotates through the five tints via `tintForIndex`.
+- **`components/tile.tsx`** — `Tile` (`tint?: TintName | number`, `aspect?: 'square' | 'tall'`), `TileTop` (flex row space-between), `TileTime` (`text-xl font-medium tracking-[-0.02em] font-numeric`), `TileCount` (`text-md font-medium text-muted-strong font-numeric`), `TileTitle` (`text-lg font-semibold`), `TileMeta` (`text-sm text-muted-strong`). Base: `flex flex-col justify-between rounded-xl p-5 text-foreground` with `aspect-square` or `min-h-[14rem]`. No border, no shadow. A number tint rotates through the five tints via `tintForIndex`.
 - **`components/command-bar.tsx`** — `CommandBar` (`<form>`): `flex h-[60px] max-w-[45rem] items-center gap-3.5 rounded-full border border-input bg-card pr-2.5 pl-[22px]` (`h-14 pl-[18px] pr-2` below `md`). Props: `icon` (ReactNode, 20px ink), `placeholder`, `value`, `onChange`, `onSubmit`, `mode` (ReactNode slot rendered as a 36px ghost pill before the submit, e.g. a DropdownMenu trigger), `submitLabel` (aria-label), `inputProps`. The submit is `Button variant="default" size="icon-md"` with an `arrow-up` icon. The bar is the only place two dark controls may coexist on a hub screen with a primary button; SP-B decides which one stays.
 - **`components/chip.tsx`** — `Chip`: `inline-flex items-center gap-1.5 rounded-full bg-secondary py-1.5 pr-1.5 pl-3.5 text-md font-medium`; optional `onRemove` renders a 14px `x` icon button with `removeLabel`.
 - **`lib/tints.ts`** — `TINTS = ['bleu','vert','sable','rose','lavande'] as const`, `tintForIndex(i: number): TintName`, `tintClass(t: TintName): string` (`bg-tint-<t>`).
@@ -149,7 +149,7 @@ Props: existing (`title`, `nav`, `navGroups`, `navHeader`, `leading`, `actions`,
 - `UserMenu` (in the layout): new `variant="row"` renders a 48px `rounded-3xl` row with `Avatar` 36px tinted, name `text-md font-medium`, role `text-xs text-muted-foreground`, opening the same dropdown.
 - `components/auth-card.tsx`: no `Card`, no band. `Wordmark` (from ui), `h1` `text-2xl font-normal tracking-[-0.03em]`, subtitle `text-base text-muted-foreground`, children, footer. Width stays as today; the wash and full layout are SP-B.
 - `components/wordmark.tsx` deleted; imports point at `@iziwellpass/ui/components/wordmark`.
-- Sweep (mechanical, grep-verified): `font-[650]` → `font-semibold`; `font-[750]` on headlines → `font-normal` with `tracking-[-0.03em]`; `font-[800]` → `font-semibold`; `eyebrow` → `text-sm font-medium text-muted-foreground`; `rounded-2xl` removed where it overrides Card/containers; `bg-argile|bg-foret|text-foret|argile|foret|ocre|sauge|eucalyptus|eau` gone; `StatPanel`/`Stat` call sites untouched.
+- Sweep (mechanical, grep-verified): `font-[650]` → `font-semibold`; `font-[750]` on headlines → `font-normal` with `tracking-[-0.03em]`; `font-[800]` → `font-semibold`; `eyebrow` → `text-sm font-medium text-muted-foreground`; `rounded-2xl` removed where it overrides Card/containers; `bg-argile|bg-foret|text-foret|argile|foret|ocre|sauge|eucalyptus|eau` gone; `text-destructive|success|warning|info` → `*-foreground` (amended after final review — the bare tokens are pale tints, invisible as text); `StatPanel`/`Stat` call sites untouched.
 
 ### 7.2 Admin
 
