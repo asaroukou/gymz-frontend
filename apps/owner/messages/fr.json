@@ -165,7 +165,7 @@
   "dashboard": {
     "greeting": "Bonjour, {name}",
     "greetingNoName": "Bonjour",
-    "eyebrow": "{date} · {venue}",
+    "dateLine": "{date} · {venue}",
     "venuePlaceholder": "Choisir un établissement",
     "venueNone": "Aucun établissement pour le moment.",
     "venuePrompt": "Sélectionnez un établissement pour voir son tableau de bord.",
@@ -212,7 +212,7 @@
   },
   "frontdesk": {
     "title": "Accueil",
-    "eyebrow": "Accueil · {date}",
+    "dateLine": "Accueil · {date}",
     "question": "Qui entre ?",
     "questionWalkin": "Qui entre sans réservation ?",
     "venuePlaceholder": "Choisir un établissement",

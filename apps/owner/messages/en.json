@@ -165,7 +165,7 @@
   "dashboard": {
     "greeting": "Hello, {name}",
     "greetingNoName": "Hello",
-    "eyebrow": "{date} · {venue}",
+    "dateLine": "{date} · {venue}",
     "venuePlaceholder": "Choose a venue",
     "venueNone": "No venues yet.",
     "venuePrompt": "Select a venue to view its dashboard.",
@@ -212,7 +212,7 @@
   },
   "frontdesk": {
     "title": "Front desk",
-    "eyebrow": "Front desk · {date}",
+    "dateLine": "Front desk · {date}",
     "question": "Who's coming in?",
     "questionWalkin": "Who's coming in without a booking?",
     "venuePlaceholder": "Choose a venue",

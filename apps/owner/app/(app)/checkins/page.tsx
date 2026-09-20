@@ -31,15 +31,9 @@ function Hero({ mode, children }: { mode: CheckinMode; children?: ReactNode }) {
   const t = useTranslations('frontdesk');
   const locale = useLocale();
   const { selectedVenue } = useVenueContext();
-  // The `frontdesk` message namespace names this key with the retired
-  // kicker-label spelling that trips the design guard's fixed-string sweep
-  // (scripts/check-design-system.mjs — the same sweep `HubEyebrow`'s
-  // data-slot had to dodge in Task 1); built in two pieces so the guard's
-  // grep can't see it while next-intl still resolves the real key.
-  const kickerKey = 'eye' + 'brow';
   return (
     <HubHero>
-      <HubEyebrow>{t(kickerKey, { date: todayLabel(locale, selectedVenue?.timezone) })}</HubEyebrow>
+      <HubEyebrow>{t('dateLine', { date: todayLabel(locale, selectedVenue?.timezone) })}</HubEyebrow>
       <HubTitle>{mode === 'walkin' ? t('questionWalkin') : t('question')}</HubTitle>
       {children}
     </HubHero>
