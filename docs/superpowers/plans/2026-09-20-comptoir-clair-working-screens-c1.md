@@ -75,7 +75,7 @@ describe('WorkingPage', () => {
     expect(h1.className).toContain('text-2xl');
     expect(h1.className).toContain('font-normal');
     expect(screen.getByText('128 membres').className).toContain('text-muted-foreground');
-    expect(screen.getByRole('button', { name: 'Ajouter un membre' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ajouter un membre' })).toBeTruthy();
     expect(screen.getByText('Actif').parentElement?.dataset.slot).toBe('working-header-badges');
   });
 
@@ -116,7 +116,7 @@ describe('WorkingPage', () => {
     expect(h2.className).toContain('text-xl');
     expect(h2.className).toContain('font-medium');
     expect(screen.getByText('Les formules achetées par ce membre.').className).toContain('text-md');
-    expect(screen.getByRole('button', { name: 'Attribuer' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Attribuer' })).toBeTruthy();
   });
 
   it('KeyValueList draws hairlines between rows only and right-aligns values', () => {
@@ -450,12 +450,12 @@ describe('Pagination', () => {
   it('marks the current page, disables prev at the start and reports clicks', () => {
     const onPageChange = vi.fn();
     render(<Pagination page={1} pageCount={13} onPageChange={onPageChange} labels={labels} />);
-    expect(screen.getByRole('navigation', { name: 'Pagination' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Pagination' })).toBeTruthy();
     const current = screen.getByRole('button', { name: 'Page 1' });
     expect(current.getAttribute('aria-current')).toBe('page');
     expect(current.className).toContain('bg-secondary');
-    expect(screen.getByRole('button', { name: 'Page précédente' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Page suivante' })).toBeEnabled();
+    expect((screen.getByRole('button', { name: 'Page précédente' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Page suivante' }) as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Page 13' }));
     expect(onPageChange).toHaveBeenCalledWith(13);
     fireEvent.click(screen.getByRole('button', { name: 'Page suivante' }));
@@ -464,7 +464,7 @@ describe('Pagination', () => {
 
   it('disables next on the last page', () => {
     render(<Pagination page={3} pageCount={3} onPageChange={() => {}} labels={labels} />);
-    expect(screen.getByRole('button', { name: 'Page suivante' })).toBeDisabled();
+    expect((screen.getByRole('button', { name: 'Page suivante' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
 ```
@@ -504,7 +504,7 @@ describe('DayToggle', () => {
 
   it('disables every day when disabled', () => {
     render(<DayToggle days={DAYS} value={[]} onChange={() => {}} disabled />);
-    for (const button of screen.getAllByRole('button')) expect(button).toBeDisabled();
+    for (const button of screen.getAllByRole<HTMLButtonElement>('button')) expect(button.disabled).toBe(true);
   });
 });
 ```
