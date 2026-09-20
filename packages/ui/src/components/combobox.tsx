@@ -54,7 +54,7 @@ function Combobox({
         role="combobox"
         aria-expanded={open}
         className={cn(
-          'flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-input bg-card px-4 text-sm whitespace-nowrap transition-[color,box-shadow] hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 lg:h-9',
+          'flex h-12 w-full items-center justify-between gap-2 rounded-full border border-input bg-card px-[18px] text-base whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50',
           !current && 'text-muted-foreground',
           className,
         )}
@@ -68,13 +68,13 @@ function Combobox({
       >
         <CommandPrimitive
           data-slot="combobox-command"
-          className="flex flex-col overflow-hidden rounded-lg bg-popover text-popover-foreground"
+          className="flex flex-col overflow-hidden rounded-lg bg-side text-foreground"
         >
-          <div className="flex items-center gap-2 border-b px-3">
+          <div className="flex items-center gap-2 px-3">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
             <CommandPrimitive.Input
               placeholder={searchPlaceholder}
-              className="flex h-9 w-full bg-transparent py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-offset-[-3px]"
+              className="flex h-11 w-full bg-transparent py-2 text-base placeholder:text-muted-foreground focus-visible:outline-offset-[-3px]"
             />
           </div>
           <CommandPrimitive.List className="max-h-56 overflow-y-auto p-1">
@@ -91,7 +91,7 @@ function Combobox({
                   onValueChange?.(option.value);
                   setOpen(false);
                 }}
-                className="flex cursor-default items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
+                className="flex h-10 cursor-default items-center justify-between gap-2 rounded-full px-3.5 text-base select-none data-[selected=true]:bg-secondary data-[selected=true]:text-accent-foreground data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
               >
                 <span className="truncate">{option.label}</span>
                 {option.hint ? (

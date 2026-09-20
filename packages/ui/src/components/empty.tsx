@@ -19,10 +19,7 @@ function EmptyMedia({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="empty-media"
-      className={cn(
-        "mb-1 grid size-12 place-items-center rounded-full bg-secondary text-muted-foreground [&_svg:not([class*='size-'])]:size-6",
-        className,
-      )}
+      className={cn("mb-1 text-muted-foreground [&_svg:not([class*='size-'])]:size-6", className)}
       {...props}
     />
   );
@@ -32,7 +29,7 @@ function EmptyTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="empty-title"
-      className={cn('text-base font-[650] text-foreground', className)}
+      className={cn('text-xl font-medium text-foreground', className)}
       {...props}
     />
   );
@@ -42,7 +39,7 @@ function EmptyDescription({ className, ...props }: React.ComponentProps<'p'>) {
   return (
     <p
       data-slot="empty-description"
-      className={cn('max-w-sm text-sm text-muted-foreground', className)}
+      className={cn('max-w-sm text-base text-muted-foreground', className)}
       {...props}
     />
   );

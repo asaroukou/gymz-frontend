@@ -18,8 +18,8 @@ export function capacityLevel(booked: number, capacity: number): CapacityLevel {
 
 const INDICATOR: Record<CapacityLevel, string> = {
   ok: '', // primary ink
-  tight: 'bg-warning',
-  over: 'bg-destructive',
+  tight: 'bg-warning-foreground',
+  over: 'bg-destructive-foreground',
 };
 
 export interface CapacityProps {
