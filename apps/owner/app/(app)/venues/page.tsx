@@ -93,7 +93,9 @@ function VenuesContent() {
             </p>
           )}
         </div>
-        {venues.length > 0 ? <div className="pt-1">{createAction}</div> : null}
+        {venuesQuery.isError || venues.length > 0 ? (
+          <div className="pt-1">{createAction}</div>
+        ) : null}
       </div>
 
       {venuesQuery.isLoading ? (

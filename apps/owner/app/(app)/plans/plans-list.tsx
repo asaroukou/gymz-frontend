@@ -91,7 +91,7 @@ function PlanTile({
               : plan.activities.map(activityLabel).join(' · ')}
           </p>
           {canManage && !archived ? (
-            <div className="-ml-3 flex gap-1">
+            <div className="-ml-4 flex gap-1">
               <PlanDialog venueId={venueId} venueActivities={venueActivities} plan={plan} />
               <ArchivePlanDialog venueId={venueId} plan={plan} />
             </div>
