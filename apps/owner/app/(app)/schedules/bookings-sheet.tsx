@@ -221,6 +221,7 @@ function AddParticipant({
         />
         <Button
           size="icon"
+          className="size-12 shrink-0"
           aria-label={createBooking.isPending ? t('addBooking.adding') : t('addBooking.add')}
           onClick={handleAdd}
           disabled={full || !memberId || createBooking.isPending}
