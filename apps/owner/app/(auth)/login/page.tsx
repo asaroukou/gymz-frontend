@@ -4,11 +4,13 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeftIcon, CircleCheckIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { useAuth } from '@iziwellpass/auth/provider';
+import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Form,
@@ -96,7 +98,7 @@ function NewPasswordCard({
   return (
     <AuthCard title={t('newPassword.title')} subtitle={t('newPassword.subtitle')}>
       <Form {...form}>
-        <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+        <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-[18px]">
           <FormField
             control={form.control}
             name="newPassword"
@@ -104,7 +106,7 @@ function NewPasswordCard({
               <FormItem>
                 <FormLabel>{t('newPassword.newPassword')}</FormLabel>
                 <FormControl>
-                  <PasswordInput autoComplete="new-password" className="h-11" {...field} />
+                  <PasswordInput autoComplete="new-password" {...field} />
                 </FormControl>
                 <PasswordChecklist value={passwordValue} />
                 <FormMessage />
@@ -118,7 +120,7 @@ function NewPasswordCard({
               <FormItem>
                 <FormLabel>{t('newPassword.confirmPassword')}</FormLabel>
                 <FormControl>
-                  <PasswordInput autoComplete="new-password" className="h-11" {...field} />
+                  <PasswordInput autoComplete="new-password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -129,16 +131,17 @@ function NewPasswordCard({
               {form.formState.errors.root.message}
             </p>
           ) : null}
-          <Button type="submit" disabled={pending} className="h-11 w-full">
+          <Button type="submit" disabled={pending} className="w-full">
             {pending ? t('newPassword.submitting') : t('newPassword.submit')}
           </Button>
           <Button
             type="button"
             variant="ghost"
-            className="h-11 w-full"
+            className="w-full"
             onClick={onBack}
             disabled={pending}
           >
+            <ArrowLeftIcon aria-hidden="true" />
             {t('newPassword.back')}
           </Button>
         </form>
@@ -211,7 +214,7 @@ function CredentialsCard({
       title={t('login.title')}
       subtitle={t('login.subtitle')}
       footer={
-        <p className="text-sm text-muted-foreground">
+        <p>
           {t('login.noAccount')}{' '}
           <Link
             href="/signup"
@@ -223,11 +226,12 @@ function CredentialsCard({
       }
     >
       <Form {...form}>
-        <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+        <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-[18px]">
           {onboarded ? (
-            <p className="rounded-xl bg-secondary p-3 text-sm text-secondary-foreground">
-              {t('login.onboardedNotice')}
-            </p>
+            <Alert variant="success">
+              <CircleCheckIcon aria-hidden="true" />
+              <AlertDescription>{t('login.onboardedNotice')}</AlertDescription>
+            </Alert>
           ) : null}
           <FormField
             control={form.control}
@@ -239,7 +243,6 @@ function CredentialsCard({
                   <Input
                     type="email"
                     autoComplete="email"
-                    className="h-11"
                     {...field}
                     ref={(el) => {
                       field.ref(el);
@@ -258,7 +261,7 @@ function CredentialsCard({
               <FormItem>
                 <FormLabel>{t('login.password')}</FormLabel>
                 <FormControl>
-                  <PasswordInput autoComplete="current-password" className="h-11" {...field} />
+                  <PasswordInput autoComplete="current-password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -293,7 +296,7 @@ function CredentialsCard({
               {form.formState.errors.root.message}
             </p>
           ) : null}
-          <Button type="submit" disabled={pending} className="h-11 w-full">
+          <Button type="submit" disabled={pending} className="w-full">
             {pending ? t('login.submitting') : t('login.submit')}
           </Button>
         </form>

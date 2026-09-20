@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckIcon } from 'lucide-react';
+import { CircleCheckIcon, CircleIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { cn } from '@iziwellpass/ui/lib/utils';
@@ -23,17 +23,15 @@ export function PasswordChecklist({ value }: { value: string }) {
           <li
             key={rule.key}
             className={cn(
-              'flex items-center gap-2 text-sm transition-colors',
+              'flex items-center gap-2 text-base transition-colors',
               satisfied ? 'text-foreground' : 'text-muted-foreground',
             )}
           >
-            <CheckIcon
-              aria-hidden
-              className={cn(
-                'size-4 shrink-0 transition-colors',
-                satisfied ? 'text-success-foreground' : 'text-muted-foreground/40',
-              )}
-            />
+            {satisfied ? (
+              <CircleCheckIcon aria-hidden className="size-4 shrink-0 text-success-foreground" />
+            ) : (
+              <CircleIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+            )}
             {t(rule.key)}
           </li>
         );
