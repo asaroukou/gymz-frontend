@@ -281,7 +281,7 @@ export function AddScheduleDialog({
   venueId: string;
   resources: Resource[];
   staff: Staff[];
-  variant?: 'default' | 'outline';
+  variant?: 'default' | 'secondary';
 }) {
   const t = useTranslations('planning');
   const schema = useScheduleSchema();
