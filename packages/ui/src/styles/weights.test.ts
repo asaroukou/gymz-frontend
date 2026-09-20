@@ -2,8 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// The Light Heading Rule: Inter at 400, 500 or 600 only. Arbitrary weights
-// (`font-[750]`) and Tailwind's bold tiers are design errors in this system.
+// The Light Heading Rule: Inter at 400, 500 or 600 only. Arbitrary bracket
+// weights and Tailwind's bold tiers are design errors in this system.
 const SRC_ROOT = join(__dirname, '..');
 const FILES = [
   ...readdirSync(join(SRC_ROOT, 'components'))

@@ -25,7 +25,7 @@ const patterns = [
   'font-[750]',
   'font-[800]',
   'font-bold',
-  'uppercase',
+  // 'uppercase' is not listed: the word is the password-rule vocabulary; uppercase-as-a-class is caught in review.
   'tracking-wide',
   'bg-argile',
   'bg-foret',
