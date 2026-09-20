@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2Icon, MapPinIcon, PlusIcon } from 'lucide-react';
+import { Building2Icon, PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
@@ -11,52 +11,54 @@ import { useRole } from '@iziwellpass/auth/provider';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/components/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyMedia,
-  EmptyTitle,
-} from '@iziwellpass/ui/components/empty';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+import { Tile, TileMeta, TileTitle, TileTop } from '@iziwellpass/ui/components/tile';
+import { cn } from '@iziwellpass/ui/lib/utils';
 
 import { RequirePageAccess } from '@/components/page-access';
 import { useActivityTypeLabel } from '@/lib/activity-type';
 import { apiErrorMessage } from '@/lib/api-error';
 
-function VenueCard({ venue }: { venue: Venue }) {
+/**
+ * One venue as a tall tinted tile that links to its page: the building mark
+ * and the status badge on top, the name and « type · ville » at the bottom.
+ * An inactive venue takes the côté tone (canvas `EjThs`).
+ */
+function VenueTile({ venue, index }: { venue: Venue; index: number }) {
   const t = useTranslations('venues');
   const activityLabel = useActivityTypeLabel();
 
   return (
-    <Link href={`/venues/${venue.id}`}>
-      <Card className="h-full transition-colors hover:bg-accent/40">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-base">{venue.name}</CardTitle>
-            <Badge variant={venue.is_active ? 'success' : 'secondary'}>
+    <li className="contents">
+      <Link href={`/venues/${venue.id}`} className="block rounded-xl">
+        <Tile
+          aspect="tall"
+          tint={index}
+          className={cn('min-h-[13.75rem] gap-8 p-6', !venue.is_active && 'bg-side')}
+        >
+          <TileTop className="items-center">
+            <Building2Icon className="size-[22px] text-muted-strong" aria-hidden="true" />
+            <Badge variant={venue.is_active ? 'success' : 'default'}>
               {venue.is_active ? t('status.active') : t('status.inactive')}
             </Badge>
+          </TileTop>
+          <div>
+            <TileTitle className="text-[1.25rem]">{venue.name}</TileTitle>
+            <TileMeta className="text-md">
+              {activityLabel(venue.venue_type)} · {venue.city || t('noAddress')}
+            </TileMeta>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Badge variant="outline">{activityLabel(venue.venue_type)}</Badge>
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPinIcon className="size-4 shrink-0" aria-hidden />
-            <span>{venue.city || t('noAddress')}</span>
-          </p>
-        </CardContent>
-      </Card>
-    </Link>
+        </Tile>
+      </Link>
+    </li>
   );
 }
 
 function VenuesGridSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
       {Array.from({ length: 3 }).map((_, i) => (
-        <Skeleton key={i} className="h-40 w-full" />
+        <Skeleton key={i} className="h-[13.75rem] w-full rounded-xl" />
       ))}
     </div>
   );
@@ -69,27 +71,29 @@ function VenuesContent() {
   const venuesQuery = useListVenues({ query: { select: unwrap } });
   const venues = venuesQuery.data ?? [];
 
+  const createAction = canManage ? (
+    <Button asChild>
+      <Link href="/venues/new">
+        <PlusIcon aria-hidden="true" />
+        {t('create.cta')}
+      </Link>
+    </Button>
+  ) : null;
+
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
+        <div className="flex flex-col gap-1.5">
           <h1 className="text-2xl font-normal">{t('title')}</h1>
           {venuesQuery.isLoading ? (
-            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-5 w-32" />
           ) : venuesQuery.isError ? null : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               {t('subtitle', { count: venues.length })}
             </p>
           )}
         </div>
-        {canManage ? (
-          <Button asChild>
-            <Link href="/venues/new">
-              <PlusIcon aria-hidden />
-              {t('create.cta')}
-            </Link>
-          </Button>
-        ) : null}
+        {venues.length > 0 ? <div className="pt-1">{createAction}</div> : null}
       </div>
 
       {venuesQuery.isLoading ? (
@@ -100,31 +104,19 @@ function VenuesContent() {
           <AlertDescription>{apiErrorMessage(venuesQuery.error, t('loadError'))}</AlertDescription>
         </Alert>
       ) : venues.length === 0 ? (
-        <Card>
-          <Empty>
-            <EmptyMedia>
-              <Building2Icon />
-            </EmptyMedia>
-            <EmptyTitle>{t('empty.title')}</EmptyTitle>
-            <EmptyDescription>{t('empty.body')}</EmptyDescription>
-            {canManage ? (
-              <EmptyContent>
-                <Button asChild>
-                  <Link href="/venues/new">
-                    <PlusIcon aria-hidden />
-                    {t('create.cta')}
-                  </Link>
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {venues.map((venue) => (
-            <VenueCard key={venue.id} venue={venue} />
-          ))}
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
+          <div className="flex flex-col gap-1">
+            <p className="text-base">{t('empty.title')}</p>
+            <p className="max-w-[28rem] text-base text-muted-foreground">{t('empty.body')}</p>
+          </div>
+          {createAction}
         </div>
+      ) : (
+        <ul className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {venues.map((venue, index) => (
+            <VenueTile key={venue.id} venue={venue} index={index} />
+          ))}
+        </ul>
       )}
     </div>
   );

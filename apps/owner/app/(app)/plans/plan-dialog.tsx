@@ -165,7 +165,7 @@ export function PlanDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant={isEdit ? 'outline' : 'default'} size={isEdit ? 'sm' : 'default'}>
+        <Button variant={isEdit ? 'ghost' : 'default'} size={isEdit ? 'sm' : 'default'}>
           {isEdit ? null : <PlusIcon />}
           {isEdit ? t('edit') : t('add')}
         </Button>
