@@ -44,16 +44,18 @@ function CourseActions({
   schedule,
   onEdit,
   onDelete,
+  size = 'icon-sm',
 }: {
   schedule: Schedule;
   onEdit: (schedule: Schedule) => void;
   onDelete: (schedule: Schedule) => void;
+  size?: 'icon' | 'icon-sm';
 }) {
   const t = useTranslations('planning');
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={t('courses.rowMenu')}>
+        <Button variant="ghost" size={size} aria-label={t('courses.rowMenu')}>
           <MoreHorizontalIcon />
         </Button>
       </DropdownMenuTrigger>
@@ -164,7 +166,9 @@ function CourseStack({
         </p>
         <p className="mt-0.5 text-sm text-muted-foreground">{periodLabel(schedule)}</p>
       </div>
-      {canManage ? <CourseActions schedule={schedule} onEdit={onEdit} onDelete={onDelete} /> : null}
+      {canManage ? (
+        <CourseActions schedule={schedule} onEdit={onEdit} onDelete={onDelete} size="icon" />
+      ) : null}
     </div>
   );
 }
@@ -261,7 +265,7 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
               <TableHead className="w-[300px]">{t('courses.columns.recurrence')}</TableHead>
               <TableHead className="w-[120px]">{t('courses.columns.resource')}</TableHead>
               <TableHead className="w-[160px]">{t('courses.columns.instructor')}</TableHead>
-              <TableHead>{t('courses.columns.period')}</TableHead>
+              <TableHead className="w-[220px]">{t('courses.columns.period')}</TableHead>
               <TableHead className="w-16 text-right">
                 <span className="sr-only">{t('courses.columns.actions')}</span>
               </TableHead>
