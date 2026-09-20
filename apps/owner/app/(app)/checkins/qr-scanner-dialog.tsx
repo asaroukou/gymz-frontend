@@ -104,12 +104,12 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
       <DialogTrigger asChild>
         <Button
           type="button"
-          variant="outline"
-          size="icon"
+          variant="ghost"
           disabled={disabled}
-          aria-label={t('qr.scanButton')}
+          className="h-10 rounded-full px-[18px] text-base font-normal text-muted-foreground hover:text-foreground"
         >
-          <CameraIcon className="size-5" aria-hidden="true" />
+          <CameraIcon aria-hidden="true" />
+          {t('qr.scanButton')}
         </Button>
       </DialogTrigger>
       <DialogContent
