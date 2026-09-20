@@ -816,7 +816,7 @@ git commit -m "feat(ui): Pagination and DayToggle primitives + /design specimens
 - Modify: `apps/owner/messages/fr.json`, `apps/owner/messages/en.json`
 
 **Interfaces:**
-- Produces: `paginate<T>(items, page, pageSize): { items, page, pageCount, total }`; `roleBadgeVariant(role): 'info' | 'default'`; `slotBadgeVariant(status)`, `bookingBadgeVariant(status)`: `'success' | 'warning' | 'info' | 'outline'`; `subscriptionTone(status, index): 'side' | number`; `isExpiringSoon(member): boolean`. Message keys `common.pagination.{label,previous,next,page}`, `members.footer`, `planning.bookings.eyebrow`.
+- Produces: `paginate<T>(items, page, pageSize): { items, page, pageCount, total }`; `roleBadgeVariant(role): 'info' | 'default'`; `slotBadgeVariant(status)`, `bookingBadgeVariant(status)`: `'success' | 'warning' | 'info' | 'outline'`; `subscriptionTone(status, index): 'side' | number`; `isExpiringSoon(member): boolean`. Message keys `common.pagination.{label,previous,next,page}`, `members.footer`, `planning.bookings.dateLine`.
 - Nothing in `apps/owner/app` changes in this task; `planning-utils.ts` keeps its `BadgeSpec` helpers until Task 5 replaces their consumers.
 
 - [ ] **Step 1: Write the failing ui table test**
@@ -1189,7 +1189,7 @@ Expected: PASS.
 `apps/owner/messages/en.json`:
 - `common.pagination`: `{ "label": "Pagination", "previous": "Previous page", "next": "Next page", "page": "Page {n}" }`
 - `members.footer`: `"{shown, plural, one {# member} other {# members}} of {total}"`
-- `planning.bookings.eyebrow`: `"{day} · {room}"`
+- `planning.bookings.dateLine`: `"{day} · {room}"`
 
 Edit the JSON in place (keep the file's 2-space formatting and key order; do not re-serialize the whole file). Then run the parity check:
 
@@ -2435,7 +2435,7 @@ export function BookingsSheet({
       <SheetContent side="right">
         <SheetHeader>
           <p className="text-md text-muted-foreground">
-            {t('bookings.eyebrow', { day: dayLabel, room: resourceName })}
+            {t('bookings.dateLine', { day: dayLabel, room: resourceName })}
           </p>
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>
