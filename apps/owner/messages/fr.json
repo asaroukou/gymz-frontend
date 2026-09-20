@@ -50,6 +50,8 @@
   },
   "shell": {
     "openMenu": "Ouvrir le menu",
+    "collapseMenu": "Réduire le menu",
+    "expandMenu": "Déplier le menu",
     "account": "Compte",
     "signOut": "Se déconnecter"
   },

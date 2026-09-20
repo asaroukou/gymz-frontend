@@ -3,7 +3,7 @@
 import { useEffect, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Building2 } from 'lucide-react';
+import { Building2, LogOut } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { useAuth, useSession } from '@iziwellpass/auth/provider';
@@ -16,25 +16,31 @@ function NavLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return <Link href={props.href ?? '#'} {...props} />;
 }
 
-function UserMenu() {
+function UserMenu({ variant = 'row' }: { variant?: 'row' | 'icon' }) {
   const router = useRouter();
   const { signOut } = useAuth();
   const session = useSession();
   const t = useTranslations('shell');
   const email = session.status === 'signed-in' ? session.claims.email : null;
 
+  const handleSignOut = () => {
+    signOut();
+    router.replace('/login');
+  };
+
+  if (variant === 'icon') {
+    // The rail: one 44px round sign-out control, labelled for screen readers.
+    return (
+      <Button variant="ghost" size="icon" aria-label={t('signOut')} onClick={handleSignOut}>
+        <LogOut aria-hidden />
+      </Button>
+    );
+  }
+
   return (
     <div className="flex w-full flex-col gap-1 px-2">
       {email ? <span className="truncate text-sm text-muted-foreground">{email}</span> : null}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="justify-start px-2"
-        onClick={() => {
-          signOut();
-          router.replace('/login');
-        }}
-      >
+      <Button variant="ghost" size="sm" className="justify-start px-2" onClick={handleSignOut}>
         {t('signOut')}
       </Button>
     </div>
@@ -80,10 +86,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       title={t('title')}
       nav={[{ title: t('navClients'), href: '/', icon: <Building2 aria-hidden /> }]}
       navFooter={<UserMenu />}
+      navFooterCollapsed={<UserMenu variant="icon" />}
       actions={<UserMenu />}
       currentPath={pathname}
       linkComponent={NavLink}
       openMenuLabel={t('openMenu')}
+      collapseLabel={t('collapseMenu')}
+      expandLabel={t('expandMenu')}
     >
       {children}
     </AppShell>

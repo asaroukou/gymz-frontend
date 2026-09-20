@@ -183,6 +183,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <UserMenu variant="row" />
           </>
         }
+        navFooterCollapsed={
+          <>
+            <VenueSwitcher iconOnly />
+            <UserMenu />
+          </>
+        }
+        collapseLabel={tShell('collapseMenu')}
+        expandLabel={tShell('expandMenu')}
         linkComponent={NavLink}
         currentPath={pathname}
         openMenuLabel={tShell('openMenu')}

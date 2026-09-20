@@ -53,7 +53,9 @@
     "title": "IziWellPass Admin",
     "navClients": "Clients",
     "signOut": "Sign out",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "collapseMenu": "Collapse menu",
+    "expandMenu": "Expand menu"
   },
   "common": {
     "back": "Back"

@@ -1,10 +1,18 @@
 'use client';
 
-import { Menu } from 'lucide-react';
-import { useState, type AnchorHTMLAttributes, type ComponentType, type ReactNode } from 'react';
+import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type AnchorHTMLAttributes,
+  type ComponentType,
+  type ReactNode,
+} from 'react';
 
 import { Button } from '@iziwellpass/ui/components/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@iziwellpass/ui/components/sheet';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/components/tooltip';
 import { Wordmark } from '@iziwellpass/ui/components/wordmark';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
@@ -26,10 +34,15 @@ export interface AppShellProps {
   nav?: NavItem[];
   /** Grouped nav; takes precedence over `nav`. */
   navGroups?: NavGroup[];
-  /** Column slot rendered under the brand row, above the nav. */
+  /** Column slot rendered under the brand row, above the nav. Hidden on the rail. */
   navHeader?: ReactNode;
   /** Column slot pinned at the bottom (venue switcher, user menu). */
   navFooter?: ReactNode;
+  /**
+   * Footer for the collapsed 72px rail (icon-only switcher, avatar). When
+   * omitted, the rail shows no footer.
+   */
+  navFooterCollapsed?: ReactNode;
   /** Mobile top bar, left of the actions (e.g. the compact venue switcher). Desktop has no top bar. */
   leading?: ReactNode;
   /** Mobile top bar, right-aligned (e.g. the avatar menu). Desktop has no top bar. */
@@ -45,8 +58,16 @@ export interface AppShellProps {
   onNavigate?: () => void;
   /** Accessible label for the mobile menu trigger. Defaults to "Open menu". */
   openMenuLabel?: string;
+  /** Accessible label for the brand-row toggle when the column is expanded. */
+  collapseLabel?: string;
+  /** Accessible label for the brand-row toggle when the column is a rail. */
+  expandLabel?: string;
+  /** localStorage key remembering the collapsed state. */
+  storageKey?: string;
   children: ReactNode;
 }
+
+const DEFAULT_STORAGE_KEY = 'iziwellpass.shell.collapsed';
 
 function DefaultLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return <a {...props} />;
@@ -61,11 +82,13 @@ function isActivePath(href: string, currentPath?: string): boolean {
 
 function NavGroupList({
   groups,
+  collapsed,
   currentPath,
   linkComponent: LinkComponent = DefaultLink,
   onNavigate,
 }: {
   groups: NavGroup[];
+  collapsed: boolean;
   currentPath?: string;
   linkComponent?: ComponentType<AnchorHTMLAttributes<HTMLAnchorElement>>;
   onNavigate?: () => void;
@@ -75,13 +98,19 @@ function NavGroupList({
       {groups.map((group, i) => (
         <div key={group.label ?? `group-${i}`} className="flex flex-col gap-0.5">
           {group.label ? (
-            <p className="px-3.5 pt-5 pb-1.5 text-sm font-medium text-muted-foreground">
+            <p
+              className={cn(
+                'text-sm font-medium text-muted-foreground',
+                collapsed ? 'sr-only' : 'px-3.5 pt-5 pb-1.5',
+              )}
+            >
               {group.label}
             </p>
           ) : null}
+          {collapsed && group.label ? <div aria-hidden="true" className="h-5" /> : null}
           {group.items.map((item) => {
             const active = isActivePath(item.href, currentPath);
-            return (
+            const link = (
               <LinkComponent
                 key={item.href}
                 href={item.href}
@@ -89,13 +118,23 @@ function NavGroupList({
                 data-active={active || undefined}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex h-[42px] items-center gap-3 rounded-full px-3.5 text-base text-foreground transition-colors duration-200 [&_svg]:size-[18px] [&_svg]:shrink-0',
+                  'flex h-[42px] items-center rounded-full text-base text-foreground transition-colors duration-200 [&_svg]:size-[18px] [&_svg]:shrink-0',
+                  collapsed ? 'w-11 justify-center' : 'gap-3 px-3.5',
                   active ? 'bg-secondary font-semibold' : 'font-normal hover:bg-accent/60',
                 )}
               >
                 {item.icon}
-                {item.title}
+                <span className={collapsed ? 'sr-only' : undefined}>{item.title}</span>
               </LinkComponent>
+            );
+            if (!collapsed) return link;
+            // On the rail the label lives in a tooltip; the sr-only span keeps
+            // the accessible name for screen readers.
+            return (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>{link}</TooltipTrigger>
+                <TooltipContent side="right">{item.title}</TooltipContent>
+              </Tooltip>
             );
           })}
         </div>
@@ -109,11 +148,46 @@ function toGroups(navGroups?: NavGroup[], nav?: NavItem[]): NavGroup[] {
   return nav ? [{ items: nav }] : [];
 }
 
+function CollapseToggle({
+  collapsed,
+  label,
+  onToggle,
+}: {
+  collapsed: boolean;
+  label: string;
+  onToggle: () => void;
+}) {
+  const button = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label={label}
+      aria-expanded={!collapsed}
+      onClick={onToggle}
+      className="text-muted-foreground hover:text-foreground"
+    >
+      {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+    </Button>
+  );
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function Column({
   title,
   navHeader,
   navFooter,
+  navFooterCollapsed,
   groups,
+  collapsed,
+  onToggleCollapsed,
+  collapseLabel,
+  expandLabel,
   currentPath,
   linkComponent,
   onNavigate,
@@ -121,25 +195,55 @@ function Column({
   title: string;
   navHeader?: ReactNode;
   navFooter?: ReactNode;
+  navFooterCollapsed?: ReactNode;
   groups: NavGroup[];
+  collapsed: boolean;
+  /** Undefined in the mobile drawer, which never collapses. */
+  onToggleCollapsed?: () => void;
+  collapseLabel: string;
+  expandLabel: string;
   currentPath?: string;
   linkComponent?: ComponentType<AnchorHTMLAttributes<HTMLAnchorElement>>;
   onNavigate?: () => void;
 }) {
+  const footer = collapsed ? navFooterCollapsed : navFooter;
   return (
-    <div className="flex h-full flex-col gap-0.5 overflow-y-auto px-3 py-4">
-      <div className="px-2.5 pt-2 pb-5">
-        <Wordmark name={title} />
+    <div
+      className={cn(
+        'flex h-full flex-col gap-0.5 overflow-y-auto py-4',
+        collapsed ? 'items-center px-3.5' : 'px-3',
+      )}
+    >
+      {/* Brand row: 52px, wordmark left, the panel toggle right (18px atténué), as drawn */}
+      <div
+        className={cn(
+          'flex items-center pt-2 pb-5',
+          collapsed ? 'justify-center' : 'justify-between pl-2.5',
+        )}
+      >
+        {collapsed ? null : <Wordmark name={title} />}
+        {onToggleCollapsed ? (
+          <CollapseToggle
+            collapsed={collapsed}
+            label={collapsed ? expandLabel : collapseLabel}
+            onToggle={onToggleCollapsed}
+          />
+        ) : null}
       </div>
-      {navHeader ? <div className="pb-2">{navHeader}</div> : null}
+      {navHeader && !collapsed ? <div className="pb-2">{navHeader}</div> : null}
       <NavGroupList
         groups={groups}
+        collapsed={collapsed}
         currentPath={currentPath}
         linkComponent={linkComponent}
         onNavigate={onNavigate}
       />
       <div className="flex-1" />
-      {navFooter ? <div className="flex flex-col gap-0.5">{navFooter}</div> : null}
+      {footer ? (
+        <div className={cn('flex flex-col gap-0.5', collapsed && 'items-center gap-1')}>
+          {footer}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -150,39 +254,73 @@ export function AppShell({
   navGroups,
   navHeader,
   navFooter,
+  navFooterCollapsed,
   actions,
   leading,
   currentPath,
   linkComponent,
   onNavigate,
   openMenuLabel = 'Open menu',
+  collapseLabel = 'Collapse menu',
+  expandLabel = 'Expand menu',
+  storageKey = DEFAULT_STORAGE_KEY,
   children,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Starts expanded on the server and the first client render (no hydration
+  // mismatch), then follows the remembered preference.
+  const [collapsed, setCollapsed] = useState(false);
   const groups = toGroups(navGroups, nav);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(storageKey) === '1') setCollapsed(true);
+    } catch {
+      // Storage unavailable (private mode, quota): stay expanded.
+    }
+  }, [storageKey]);
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem(storageKey, next ? '1' : '0');
+      } catch {
+        // Not persisted; the session still toggles.
+      }
+      return next;
+    });
+  }, [storageKey]);
 
   const handleNavigate = () => {
     setMobileOpen(false);
     onNavigate?.();
   };
 
-  const column = (
-    <Column
-      title={title}
-      navHeader={navHeader}
-      navFooter={navFooter}
-      groups={groups}
-      currentPath={currentPath}
-      linkComponent={linkComponent}
-      onNavigate={handleNavigate}
-    />
-  );
+  const columnProps = {
+    title,
+    navHeader,
+    navFooter,
+    navFooterCollapsed,
+    groups,
+    collapseLabel,
+    expandLabel,
+    currentPath,
+    linkComponent,
+    onNavigate: handleNavigate,
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
       {/* Desktop: the côté column is the only frame — a tone, not a border */}
-      <aside className="hidden w-[260px] shrink-0 bg-side md:sticky md:top-0 md:block md:h-screen">
-        {column}
+      <aside
+        data-collapsed={collapsed || undefined}
+        className={cn(
+          'hidden shrink-0 bg-side transition-[width] duration-200 ease-out md:sticky md:top-0 md:block md:h-screen',
+          collapsed ? 'w-[72px]' : 'w-[260px]',
+        )}
+      >
+        <Column {...columnProps} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -200,7 +338,7 @@ export function AppShell({
               aria-describedby={undefined}
             >
               <SheetTitle className="sr-only">{title}</SheetTitle>
-              {column}
+              <Column {...columnProps} collapsed={false} />
             </SheetContent>
           </Sheet>
           {leading}
