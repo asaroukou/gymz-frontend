@@ -30,8 +30,8 @@ function VenueCard({ venue }: { venue: Venue }) {
   const activityLabel = useActivityTypeLabel();
 
   return (
-    <Link href={`/venues/${venue.id}`} className="rounded-2xl">
-      <Card className="h-full rounded-2xl transition-colors hover:bg-accent/40">
+    <Link href={`/venues/${venue.id}`}>
+      <Card className="h-full transition-colors hover:bg-accent/40">
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-base">{venue.name}</CardTitle>
@@ -56,7 +56,7 @@ function VenuesGridSkeleton() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <Skeleton key={i} className="h-40 w-full rounded-2xl" />
+        <Skeleton key={i} className="h-40 w-full" />
       ))}
     </div>
   );
@@ -73,7 +73,7 @@ function VenuesContent() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-[750] tracking-[-0.035em]">{t('title')}</h1>
+          <h1 className="text-2xl font-normal">{t('title')}</h1>
           {venuesQuery.isLoading ? (
             <Skeleton className="h-4 w-32" />
           ) : venuesQuery.isError ? null : (
@@ -100,7 +100,7 @@ function VenuesContent() {
           <AlertDescription>{apiErrorMessage(venuesQuery.error, t('loadError'))}</AlertDescription>
         </Alert>
       ) : venues.length === 0 ? (
-        <Card className="rounded-2xl">
+        <Card>
           <Empty>
             <EmptyMedia>
               <Building2Icon />

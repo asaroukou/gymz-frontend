@@ -113,7 +113,7 @@ function IdentityCard({ member, canManage }: { member: Member; canManage: boolea
             </AvatarFallback>
           </Avatar>
           <div className="space-y-1">
-            <h2 className="text-lg font-[650]">{memberName(member)}</h2>
+            <h2 className="text-lg font-semibold">{memberName(member)}</h2>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{t(`type.${member.membership_type}`)}</Badge>
               <Badge variant={memberStatusBadgeVariant(member.membership_status)}>

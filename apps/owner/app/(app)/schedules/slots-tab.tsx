@@ -331,7 +331,7 @@ export function SlotsTab({
           const heading = first ? dayHeading(key, first.start_time) : key;
           return (
             <section key={key} className="space-y-2">
-              <h2 className="sticky top-0 z-10 -mx-1 bg-background/95 px-1 py-1 text-sm font-[650] backdrop-blur supports-[backdrop-filter]:bg-background/80">
+              <h2 className="sticky top-0 z-10 -mx-1 bg-background/95 px-1 py-1 text-sm font-semibold backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 {heading}
               </h2>
               <Card className="gap-0 py-0">

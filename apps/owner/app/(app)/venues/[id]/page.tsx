@@ -202,7 +202,7 @@ function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) 
   };
 
   return (
-    <Card className="rounded-2xl">
+    <Card>
       <CardHeader>
         <CardTitle>{t('detail.profile.title')}</CardTitle>
       </CardHeader>
@@ -826,7 +826,7 @@ function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: bool
   const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
 
   return (
-    <Card className="rounded-2xl">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <CardTitle>{t('detail.resources.title')}</CardTitle>
         {canEdit && resources.length > 0 ? (
@@ -996,7 +996,7 @@ function ActivitiesSection({ venueId, canEdit }: { venueId: string; canEdit: boo
   };
 
   return (
-    <Card className="rounded-2xl">
+    <Card>
       <CardHeader>
         <CardTitle>{t('detail.activities.title')}</CardTitle>
         <p className="text-sm text-muted-foreground">{t('detail.activities.subtitle')}</p>
@@ -1120,7 +1120,7 @@ function VenueDetailContent() {
       <div className="space-y-6">
         {backLink}
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-96 w-full rounded-2xl" />
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
@@ -1153,7 +1153,7 @@ function VenueDetailContent() {
     <div className="space-y-6">
       {backLink}
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-[750] tracking-[-0.035em]">{venue.name}</h1>
+        <h1 className="text-2xl font-normal">{venue.name}</h1>
         <Badge variant="outline">{activityLabel(venue.venue_type)}</Badge>
         <Badge variant={venue.is_active ? 'success' : 'secondary'}>
           {venue.is_active ? t('status.active') : t('status.inactive')}

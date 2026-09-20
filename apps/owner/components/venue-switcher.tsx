@@ -32,7 +32,10 @@ function venueDetailId(pathname: string): string | null {
   return id;
 }
 
-export function VenueSwitcher({ className }: { className?: string } = {}) {
+export function VenueSwitcher({
+  className,
+  compact = false,
+}: { className?: string; compact?: boolean } = {}) {
   const t = useTranslations('venueSwitcher');
   const router = useRouter();
   const pathname = usePathname();
@@ -42,7 +45,9 @@ export function VenueSwitcher({ className }: { className?: string } = {}) {
     useVenueContext();
 
   if (isLoading) {
-    return <Skeleton className={cn('h-9 w-44 rounded-full', className)} />;
+    return (
+      <Skeleton className={cn(compact ? 'h-10 w-40' : 'h-11 w-full', 'rounded-full', className)} />
+    );
   }
 
   // No venues yet: offer creation to owner/admin, otherwise show nothing.
@@ -50,9 +55,9 @@ export function VenueSwitcher({ className }: { className?: string } = {}) {
     return canAddVenue ? (
       <Button
         variant="outline"
-        size="sm"
+        size={compact ? 'sm' : 'default'}
         onClick={() => router.push('/venues/new')}
-        className={cn('justify-start', className)}
+        className={cn('justify-start gap-2.5', compact ? 'max-w-full' : 'w-full', className)}
       >
         <PlusIcon aria-hidden />
         {t('addVenue')}
@@ -76,17 +81,17 @@ export function VenueSwitcher({ className }: { className?: string } = {}) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
+          size={compact ? 'sm' : 'default'}
           disabled={isError}
           aria-label={t('label')}
-          className={cn('gap-2', className)}
+          className={cn('justify-start gap-2.5', compact ? 'max-w-full' : 'w-full', className)}
         >
-          <Building2Icon aria-hidden className="shrink-0" />
-          <span className="truncate">{triggerLabel}</span>
-          <ChevronsUpDownIcon aria-hidden className="ml-auto shrink-0 opacity-60" />
+          <Building2Icon aria-hidden className="shrink-0 text-muted-foreground" />
+          <span className="truncate text-md font-medium">{triggerLabel}</span>
+          <ChevronsUpDownIcon aria-hidden className="ml-auto size-4 shrink-0 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[220px]">
+      <DropdownMenuContent align="start" className="min-w-[236px]">
         <DropdownMenuRadioGroup value={selectedVenueId ?? undefined} onValueChange={onSelect}>
           {venues.map((venue) => (
             <DropdownMenuRadioItem key={venue.id} value={venue.id}>

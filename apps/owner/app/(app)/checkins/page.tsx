@@ -29,8 +29,8 @@ function LoadingState() {
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <Skeleton className="h-64 w-full rounded-2xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     </div>
   );
@@ -74,7 +74,7 @@ function FrontdeskContent() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-[750] tracking-[-0.035em]">{t('title')}</h1>
+          <h1 className="text-2xl font-normal">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
       </div>

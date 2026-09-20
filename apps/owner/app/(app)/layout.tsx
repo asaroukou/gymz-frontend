@@ -17,7 +17,7 @@ import { useTranslations } from 'next-intl';
 
 import { useAuth, useSession } from '@iziwellpass/auth/provider';
 import { AppShell, type NavGroup } from '@iziwellpass/ui/app-shell';
-import { Button } from '@iziwellpass/ui/components/button';
+import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,24 +53,54 @@ function NavLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return <Link href={props.href ?? '#'} {...props} />;
 }
 
-function UserMenu() {
+function initials(nameOrEmail: string): string {
+  const local = nameOrEmail.split('@')[0] ?? '';
+  const parts = local.split(/[\s._+-]+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? '';
+  const second = parts[1]?.[0] ?? '';
+  return (first + second).toUpperCase() || '?';
+}
+
+function UserMenu({ variant = 'avatar' }: { variant?: 'avatar' | 'row' }) {
   const router = useRouter();
   const { signOut } = useAuth();
   const session = useSession();
   const t = useTranslations('shell');
   const email = session.status === 'signed-in' ? session.claims.email : null;
+  const name = session.status === 'signed-in' ? (session.claims.name ?? email) : null;
+  const role = session.status === 'signed-in' ? session.claims.role : null;
 
   const handleSignOut = () => {
     signOut();
     router.replace('/login');
   };
 
+  const avatar = (
+    <Avatar size={variant === 'row' ? 'default' : 'sm'}>
+      <AvatarFallback>{initials(name ?? t('account'))}</AvatarFallback>
+    </Avatar>
+  );
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
-          {email ?? t('account')}
-        </Button>
+        {variant === 'row' ? (
+          <button
+            type="button"
+            aria-label={t('account')}
+            className="flex h-12 w-full items-center gap-2.5 rounded-xl py-1.5 pr-3.5 pl-2 text-left transition-colors hover:bg-accent/60"
+          >
+            {avatar}
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate text-md font-medium">{name ?? t('account')}</span>
+              {role ? <span className="truncate text-xs text-muted-foreground">{role}</span> : null}
+            </span>
+          </button>
+        ) : (
+          <button type="button" aria-label={t('account')} className="rounded-full">
+            {avatar}
+          </button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onSelect={handleSignOut}>{t('signOut')}</DropdownMenuItem>
@@ -106,7 +136,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       return {
         title: tNav(item.labelKey),
         href: item.href,
-        icon: <Icon className="size-4 shrink-0" />,
+        icon: <Icon aria-hidden />,
       };
     }),
   }));
@@ -144,11 +174,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <AppShell
         title="IziWellPass"
         navGroups={navGroups}
-        navHeader={<VenueSwitcher className="w-full" />}
+        navFooter={
+          <>
+            <VenueSwitcher className="w-full" />
+            <UserMenu variant="row" />
+          </>
+        }
         linkComponent={NavLink}
         currentPath={pathname}
         openMenuLabel={tShell('openMenu')}
-        leading={<VenueSwitcher className="max-w-[168px] md:hidden" />}
+        leading={<VenueSwitcher compact className="max-w-[200px]" />}
         actions={<UserMenu />}
       >
         {children}

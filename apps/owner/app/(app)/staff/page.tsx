@@ -737,7 +737,7 @@ function StaffContent() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-[750] tracking-[-0.035em]">{t('title')}</h1>
+        <h1 className="text-2xl font-normal">{t('title')}</h1>
         {staffQuery.isLoading ? (
           <Skeleton className="h-4 w-28" />
         ) : staffQuery.isError ? null : (

@@ -33,7 +33,7 @@ export default function Error({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-backdrop p-4">
-      <Card className="w-full max-w-md rounded-2xl">
+      <Card className="w-full max-w-md">
         <Empty>
           <EmptyMedia>
             <TriangleAlertIcon />
