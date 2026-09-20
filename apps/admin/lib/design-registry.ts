@@ -26,6 +26,8 @@ export const PRIMITIVES: readonly PrimitiveEntry[] = [
   { id: 'input-otp', title: 'Code à usage unique', group: 'controls' },
   { id: 'tabs', title: 'Onglets', group: 'controls' },
   { id: 'dropdown-menu', title: 'Menu déroulant', group: 'controls' },
+  { id: 'pagination', title: 'Pagination', group: 'controls' },
+  { id: 'day-toggle', title: 'Jours', group: 'controls' },
 
   // Display, feedback and overlays
   { id: 'badge', title: 'Badge', group: 'display' },
