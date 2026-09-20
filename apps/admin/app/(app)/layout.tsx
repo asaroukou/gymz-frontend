@@ -24,11 +24,12 @@ function UserMenu() {
   const email = session.status === 'signed-in' ? session.claims.email : null;
 
   return (
-    <div className="flex items-center gap-2">
-      {email ? <span className="text-sm text-muted-foreground">{email}</span> : null}
+    <div className="flex w-full flex-col gap-1 px-2">
+      {email ? <span className="truncate text-sm text-muted-foreground">{email}</span> : null}
       <Button
         variant="ghost"
         size="sm"
+        className="justify-start px-2"
         onClick={() => {
           signOut();
           router.replace('/login');
@@ -77,7 +78,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <AppShell
       title={t('title')}
-      nav={[{ title: t('navClients'), href: '/', icon: <Building2 className="size-4" /> }]}
+      nav={[{ title: t('navClients'), href: '/', icon: <Building2 aria-hidden /> }]}
+      navFooter={<UserMenu />}
       actions={<UserMenu />}
       currentPath={pathname}
       linkComponent={NavLink}

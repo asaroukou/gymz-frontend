@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { CalendarClockIcon, PlusIcon, TriangleAlertIcon, UsersIcon } from 'lucide-react';
+import { CalendarClockIcon, PlusIcon, QrCode, TriangleAlertIcon, UsersIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -26,6 +26,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@iziwellpass/ui/components/card';
+import { Chip } from '@iziwellpass/ui/components/chip';
+import { CommandBar } from '@iziwellpass/ui/components/command-bar';
 import {
   Dialog,
   DialogContent,
@@ -64,11 +66,20 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 import {
+  Tile,
+  TileCount,
+  TileMeta,
+  TileTime,
+  TileTitle,
+  TileTop,
+} from '@iziwellpass/ui/components/tile';
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@iziwellpass/ui/components/tooltip';
+import { Wordmark } from '@iziwellpass/ui/components/wordmark';
 
 import { sectionNumber, type TocEntry } from '../_chrome/page-frame';
 import { Section } from '../_chrome/section';
@@ -104,7 +115,7 @@ const ALERT_VARIANTS = ['default', 'destructive', 'success', 'warning', 'info'] 
 function OffPortal({ children }: { children: ReactNode }) {
   return (
     <div className="w-full">
-      <p className="eyebrow mb-2 text-[10px] text-muted-foreground">contenu, hors portail</p>
+      <p className="mb-2 text-xs text-muted-foreground">contenu, hors portail</p>
       <div className="grid gap-4 border border-border p-4">{children}</div>
     </div>
   );
@@ -119,7 +130,7 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="badge"
         number={number('badge')}
         title="Badge"
-        note="La couleur porte le sens, jamais la décoration. Les variantes de statut posent un texte sombre sur une teinte à 15% ; leurs ratios sont mesurés dans la page Fondations."
+        note="La couleur porte le sens, jamais la décoration. Les variantes de statut posent un texte foncé sur leur teinte pâle ; leurs ratios sont mesurés dans la page Fondations."
       >
         <Specimen name="Badge" signature="variant">
           {BADGE_VARIANTS.map((variant) => (
@@ -373,7 +384,7 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="dialog"
         number={number('dialog')}
         title="Boîte de dialogue"
-        note="Le déclencheur ouvre la vraie boîte, dans un portail, donc en clair. La boîte ci-dessous montre le contenu dans les deux thèmes, sans revendiquer le rayon ni l’ombre réels."
+        note="Le déclencheur ouvre la vraie boîte, dans un portail. La boîte ci-dessous montre le même contenu hors portail, sans revendiquer le rayon réel."
       >
         <Specimen name="Dialog" signature="déclencheur réel">
           <Dialog>
@@ -461,7 +472,7 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="popover"
         number={number('popover')}
         title="Popover"
-        note="Ouvre dans un portail, donc en clair."
+        note="Ouvre dans un portail, au même niveau que la page."
       >
         <Specimen name="Popover" signature="Trigger, Content">
           <Popover>
@@ -482,7 +493,7 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="tooltip"
         number={number('tooltip')}
         title="Infobulle"
-        note="Ombre popover, jamais l’ombre des vrais calques flottants. Ouvre dans un portail, donc en clair."
+        note="Ouvre dans un portail, comme les autres calques flottants."
       >
         <Specimen name="Tooltip" signature="Provider, Trigger, Content">
           <TooltipProvider>
@@ -502,12 +513,72 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="sonner"
         number={number('sonner')}
         title="Notification"
-        note="Le déclencheur fonctionne ici : le Toaster est monté dans les providers de l’application, qui enveloppent aussi cette page. La notification se rend au niveau du document, dans le thème clair ambiant, comme les autres calques portés."
+        note="Le déclencheur fonctionne ici : le Toaster est monté dans les providers de l’application, qui enveloppent aussi cette page. La notification se rend au niveau du document, comme les autres calques portés."
       >
         <Specimen name="toast" signature="déclencheur">
           <Button variant="outline" onClick={() => toast('Passage enregistré à 06:32.')}>
             Déclencher une notification
           </Button>
+        </Specimen>
+      </Section>
+
+      <Section
+        id="tile"
+        number={number('tile')}
+        title="Tuile"
+        note="Le contenu qu’on survole du regard : sessions, forfaits, salles. 24px de rayon, une des cinq teintes, jamais de filet ni d’ombre (la règle de la tuile)."
+      >
+        <Specimen name="Tile" signature="tint (les cinq teintes), Top/Time/Count/Title/Meta">
+          <div className="flex w-full flex-wrap gap-3">
+            {[0, 1, 2, 3, 4].map((index) => (
+              <Tile key={index} tint={index} className="w-36">
+                <TileTop>
+                  <TileTime>06:30</TileTime>
+                  <TileCount>14/18</TileCount>
+                </TileTop>
+                <div>
+                  <TileTitle>CrossFit</TileTitle>
+                  <TileMeta>Salle du Plateau</TileMeta>
+                </div>
+              </Tile>
+            ))}
+          </div>
+        </Specimen>
+      </Section>
+
+      <Section
+        id="command-bar"
+        number={number('command-bar')}
+        title="Barre de commande"
+        note="Le contrôle central du comptoir : une pilule blanche filetée avec une icône, un placeholder et le seul rond d’encre plein de l’écran."
+      >
+        <Specimen name="CommandBar" signature="icon, placeholder, submitLabel">
+          <CommandBar
+            icon={<QrCode />}
+            placeholder="Scanner un QR ou rechercher un membre"
+            submitLabel="Valider"
+          />
+        </Specimen>
+      </Section>
+
+      <Section
+        id="chip"
+        number={number('chip')}
+        title="Puce"
+        note="Une pilule de filtre ou de valeur choisie, avec un retrait optionnel."
+      >
+        <Specimen name="Chip" signature="avec et sans onRemove">
+          <Chip>Adhésion mensuelle</Chip>
+          <Chip onRemove={() => undefined} removeLabel="Retirer le filtre">
+            Salle du Plateau
+          </Chip>
+        </Specimen>
+      </Section>
+
+      <Section id="wordmark" number={number('wordmark')} title="Marque">
+        <Specimen name="Wordmark" signature="name, size=sm | md">
+          <Wordmark name="IziWellPass" />
+          <Wordmark name="IziWellPass" size="sm" />
         </Specimen>
       </Section>
     </>

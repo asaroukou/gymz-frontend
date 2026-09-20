@@ -86,12 +86,9 @@ const LEVEL_BADGE_VARIANT: Record<CapacityLevel, 'secondary' | 'warning' | 'dest
 };
 
 /**
- * `Specimen` renders its children twice (light pane, dark pane) from the same
- * element, so literal `id` strings on the name/amount/renew fields would
- * collide across the two mounts, and `label[for]`/`getElementById` would
- * resolve to the first match only: a label in the dark pane would silently
- * operate the control in the light pane. `useId` returns a distinct value per
- * mount, so this has to be a component, not inlined JSX.
+ * A component, not inlined JSX, so `useId` gives each field a real, unique
+ * id/label pairing instead of a literal string that could collide if this
+ * specimen is ever mounted more than once on the page.
  */
 function FormSpecimen() {
   const nameId = useId();
@@ -141,7 +138,7 @@ export default function CompositionsPage() {
         <Specimen name="En-tête de liste" signature="titre + compte + action">
           <div className="flex w-full flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-[750] tracking-[-0.035em] text-foreground">Membres</h2>
+              <h2 className="text-2xl font-normal text-foreground">Membres</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 <span className="font-numeric">248</span> membres, dont{' '}
                 <span className="font-numeric">3</span> en attente de paiement

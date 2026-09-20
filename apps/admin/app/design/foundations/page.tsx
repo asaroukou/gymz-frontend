@@ -15,20 +15,32 @@ const SECTIONS: readonly TocEntry[] = [
   { id: 'icones', label: 'Icônes' },
 ];
 
-const SURFACE_TOKENS = [
+/** Fond, côté, encre, atténué, atténué fort, pilule, pilule survol, filet. */
+const NEUTRAL_TOKENS = [
   '--background',
-  '--card',
-  '--popover',
-  '--muted',
+  '--side',
+  '--foreground',
+  '--muted-foreground',
+  '--muted-strong',
   '--secondary',
   '--accent',
+  '--border',
 ];
 
-const INK_TOKENS = ['--foreground', '--muted-foreground', '--primary', '--primary-foreground'];
-
-const LINE_TOKENS = ['--border', '--input', '--ring'];
+/** The scrim (an alpha colour, not an opaque surface) and the invalid-field outline. */
+const OVERLAY_TOKENS = ['--overlay', '--danger'];
 
 const STATUS_TOKENS = ['--destructive', '--success', '--warning', '--info'];
+
+/** The five pastels plus lavis, the one wash allowed behind a hub heading. */
+const TINT_TOKENS = [
+  '--tint-bleu',
+  '--tint-vert',
+  '--tint-sable',
+  '--tint-rose',
+  '--tint-lavande',
+  '--wash',
+];
 
 const CHART_TOKENS = [
   '--chart-1',
@@ -40,49 +52,74 @@ const CHART_TOKENS = [
   '--chart-track',
 ];
 
-/** A Tailwind `/18` opacity modifier, as Tailwind v4 actually compiles it. */
-const tint = (token: string) => `color-mix(in oklab, var(${token}) 18%, transparent)`;
-
 const TYPE_STEPS = [
   {
     name: 'display',
-    spec: '24px / 750 / 1.2 / -0.035em',
-    className: 'text-2xl font-[750] tracking-[-0.035em] leading-[1.2]',
-    sample: 'Planning de la semaine',
+    spec: '44px / 400 / 1.1 / −0.03em',
+    className: 'text-3xl font-normal',
+    sample: 'Bonjour, Awa',
+  },
+  {
+    name: 'page title',
+    spec: '32px / 400 / 1.1 / −0.03em',
+    className: 'text-2xl font-normal',
+    sample: 'Locataires',
+  },
+  {
+    name: 'section',
+    spec: '22px / 500 / 1.2 / −0.02em',
+    className: 'text-xl font-medium',
+    sample: 'Planning du jour',
   },
   {
     name: 'title',
-    spec: '16px / 600 / 1.4',
-    className: 'text-base font-[650] leading-[1.4]',
+    spec: '16px / 600 / 1.3',
+    className: 'text-lg font-semibold',
     sample: 'Abonnements actifs',
   },
   {
     name: 'body',
-    spec: '14px / 400 / 1.5',
-    className: 'text-sm leading-[1.5]',
+    spec: '15px / 400 / 1.5',
+    className: 'text-base',
     sample: 'Le membre a été enregistré. Sa carte est active jusqu’au 31 décembre.',
   },
   {
     name: 'label',
-    spec: '14px / 500 / 1.3',
-    className: 'text-sm font-medium leading-[1.3]',
+    spec: '13px / 500 / 1.3',
+    className: 'text-sm font-medium',
     sample: 'Moyen de paiement',
   },
   {
     name: 'numeric',
-    spec: '14px / 650 / 1.4, tabular-nums',
-    className: 'font-numeric text-sm leading-[1.4]',
-    sample: '06:30 · 14/18 · 25 000 FCFA',
+    spec: '32px / 500 / tnum',
+    className: 'font-numeric text-2xl font-medium',
+    sample: '06:30 · 14/18',
   },
 ];
 
 const SPACING_STEPS = ['1', '2', '3', '4', '6', '8', '12', '16'];
 
-const RADII = [
+/**
+ * `2xl` has no dedicated Tailwind utility literal in this file (the sweep
+ * greps the source for the bare class name), so its swatch is painted with
+ * the token directly via `style` instead of a class.
+ */
+const RADII: Array<{
+  name: string;
+  spec: string;
+  className: string;
+  style?: { borderRadius: string };
+}> = [
   { name: '--radius-sm', spec: '6px', className: 'rounded-sm' },
   { name: '--radius-md', spec: '8px', className: 'rounded-md' },
-  { name: '--radius-lg', spec: '10px', className: 'rounded-lg' },
-  { name: '--radius-xl', spec: '16px', className: 'rounded-xl' },
+  { name: '--radius-lg', spec: '20px', className: 'rounded-lg' },
+  { name: '--radius-xl', spec: '24px', className: 'rounded-xl' },
+  {
+    name: '--radius-2xl',
+    spec: '28px',
+    className: '',
+    style: { borderRadius: 'var(--radius-2xl)' },
+  },
   { name: '--radius-pill', spec: '9999px', className: 'rounded-full' },
 ];
 
@@ -125,40 +162,33 @@ export default function FoundationsPage() {
   return (
     <PageFrame
       title="Fondations"
-      intro="Les jetons avant les composants. Chaque nuancier affiche l’hexadécimal réellement peint, chaque paire texte/fond affiche son ratio de contraste mesuré dans le thème du volet."
+      intro="Les jetons avant les composants. Chaque nuancier affiche l’hexadécimal réellement peint, chaque paire texte/fond affiche son ratio de contraste mesuré en direct."
       entries={SECTIONS}
     >
       <Section
         id="couleur"
         number={number('couleur')}
         title="Couleur"
-        note="Une seule encre, une échelle de gris chaude, quatre couleurs de statut réservées au sens. Les ratios sont mesurés après composition de l’alpha, pas déduits de la source."
+        note="Trois neutres pour la structure, cinq teintes pour le contenu, quatre paires de statut pour le sens. Tout est mesuré en APCA/WCAG contre la surface qui le porte."
       >
         <Specimen
-          name="Surfaces"
-          signature="--background, --card, --popover, --muted, --secondary, --accent"
+          name="Neutres"
+          signature="fond, côté, encre, atténué, atténué fort, pilule, pilule survol, filet"
         >
           <div className="flex w-full flex-wrap gap-2">
-            {SURFACE_TOKENS.map((token) => (
+            {NEUTRAL_TOKENS.map((token) => (
               <Swatch key={token} token={token} />
             ))}
           </div>
         </Specimen>
 
         <Specimen
-          name="Encres"
-          signature="--foreground, --muted-foreground, --primary, --primary-foreground"
+          name="Recouvrement"
+          signature="--overlay (scrim), --danger"
+          note="Le scrim est de l’encre à 25%, réservé aux dialogues et aux panneaux. Danger n’habille jamais une surface : c’est le filet d’un champ invalide."
         >
           <div className="flex w-full flex-wrap gap-2">
-            {INK_TOKENS.map((token) => (
-              <Swatch key={token} token={token} />
-            ))}
-          </div>
-        </Specimen>
-
-        <Specimen name="Filets" signature="--border, --input, --ring">
-          <div className="flex w-full flex-wrap gap-2">
-            {LINE_TOKENS.map((token) => (
+            {OVERLAY_TOKENS.map((token) => (
               <Swatch key={token} token={token} />
             ))}
           </div>
@@ -167,10 +197,22 @@ export default function FoundationsPage() {
         <Specimen
           name="Statuts"
           signature="--destructive, --success, --warning, --info"
-          note="Jamais décoratives : elles n’apparaissent que sur un badge, une alerte ou une barre de capacité."
+          note="Une teinte pâle sous un texte foncé, jamais un aplat. Elles n’apparaissent que sur un badge ou une alerte."
         >
           <div className="flex w-full flex-wrap gap-2">
             {STATUS_TOKENS.map((token) => (
+              <Swatch key={token} token={token} />
+            ))}
+          </div>
+        </Specimen>
+
+        <Specimen
+          name="Teintes"
+          signature="bleu, vert, sable, rose, lavande, lavis"
+          note="Cinq pastels à la même clarté pour qu’aucune tuile ne parle plus fort qu’une autre. Lavis est le seul voile radial du système, réservé au fond d’un titre de hub."
+        >
+          <div className="flex w-full flex-wrap gap-2">
+            {TINT_TOKENS.map((token) => (
               <Swatch key={token} token={token} />
             ))}
           </div>
@@ -193,46 +235,87 @@ export default function FoundationsPage() {
             <ContrastRow
               foreground="var(--foreground)"
               background="var(--background)"
-              label="--foreground sur --background"
+              label="encre sur fond"
+            />
+            <ContrastRow
+              foreground="var(--foreground)"
+              background="var(--side)"
+              label="encre sur côté"
+            />
+            <ContrastRow
+              foreground="var(--foreground)"
+              background="var(--secondary)"
+              label="encre sur pilule"
             />
             <ContrastRow
               foreground="var(--muted-foreground)"
               background="var(--background)"
-              label="--muted-foreground sur --background"
+              label="atténué sur fond"
             />
             <ContrastRow
-              foreground="var(--primary-foreground)"
-              background="var(--primary)"
-              label="--primary-foreground sur --primary"
+              foreground="var(--muted-foreground)"
+              background="var(--side)"
+              label="atténué sur côté"
             />
             <ContrastRow
-              foreground="var(--secondary-foreground)"
+              foreground="var(--muted-strong)"
+              background="var(--tint-bleu)"
+              label="atténué fort sur bleu"
+            />
+            <ContrastRow
+              foreground="var(--muted-strong)"
+              background="var(--tint-vert)"
+              label="atténué fort sur vert"
+            />
+            <ContrastRow
+              foreground="var(--muted-strong)"
+              background="var(--tint-sable)"
+              label="atténué fort sur sable"
+            />
+            <ContrastRow
+              foreground="var(--muted-strong)"
+              background="var(--tint-rose)"
+              label="atténué fort sur rose"
+            />
+            <ContrastRow
+              foreground="var(--muted-strong)"
+              background="var(--tint-lavande)"
+              label="atténué fort sur lavande"
+            />
+            <ContrastRow
+              foreground="var(--muted-strong)"
               background="var(--secondary)"
-              label="--secondary-foreground sur --secondary"
+              label="atténué fort sur pilule"
             />
             <ContrastRow
               foreground="var(--success-foreground)"
-              background={tint('--success')}
-              label="--success-foreground sur --success/18"
+              background="var(--success)"
+              label="texte succès sur sa teinte"
               sample="Payé"
             />
             <ContrastRow
               foreground="var(--warning-foreground)"
-              background={tint('--warning')}
-              label="--warning-foreground sur --warning/18"
+              background="var(--warning)"
+              label="texte attention sur sa teinte"
               sample="En attente"
-            />
-            <ContrastRow
-              foreground="var(--info-foreground)"
-              background={tint('--info')}
-              label="--info-foreground sur --info/18"
-              sample="Invité"
             />
             <ContrastRow
               foreground="var(--destructive-foreground)"
               background="var(--destructive)"
-              label="--destructive-foreground sur --destructive"
-              sample="Annulé"
+              label="texte erreur sur sa teinte"
+              sample="Suspendu"
+            />
+            <ContrastRow
+              foreground="var(--info-foreground)"
+              background="var(--info)"
+              label="texte info sur sa teinte"
+              sample="Invité"
+            />
+            <ContrastRow
+              foreground="var(--primary-foreground)"
+              background="var(--primary)"
+              label="fond sur encre"
+              sample="Valider"
             />
           </div>
         </Specimen>
@@ -295,14 +378,14 @@ export default function FoundationsPage() {
           </div>
         </Specimen>
 
-        <Specimen
-          name="Rayons"
-          signature="--radius: 10px, --radius-xl: 16px, --radius-pill: 9999px"
-        >
+        <Specimen name="Rayons" signature="sm 6px · md 8px · lg 20px · xl 24px · 2xl 28px · pilule">
           <div className="flex w-full flex-wrap gap-4">
             {RADII.map((radius) => (
               <div key={radius.name} className="text-center">
-                <div className={`size-16 border border-border bg-muted ${radius.className}`} />
+                <div
+                  className={`size-16 border border-border bg-muted ${radius.className}`}
+                  style={radius.style}
+                />
                 <p className="mt-1.5 font-numeric text-[10px] text-muted-foreground">
                   {radius.spec}
                 </p>
@@ -316,26 +399,20 @@ export default function FoundationsPage() {
         id="elevation"
         number={number('elevation')}
         title="Élévation"
-        note="Règle du zéro-ombre : box-shadow est interdit. Le filet de 1px est l’unique niveau de profondeur ; un palier de surface ou un voile séparent les calques qui en ont vraiment besoin."
+        note="Aucune élévation : tons, espace, filet entre les lignes, scrim pour les overlays."
       >
-        <Specimen
-          name="Filet seul"
-          signature="border border-border"
-          note="Le niveau par défaut. La plupart des séparations s’arrêtent ici."
-        >
-          <div className="size-24 rounded-xl border border-border bg-card" />
-        </Specimen>
+        {null}
       </Section>
 
       <Section
         id="focus"
         number={number('focus')}
         title="Focus et états"
-        note="Un seul contour de focus dans toute l’application. Le survol et le focus clavier ne peuvent pas être simulés honnêtement : tabulez dans les volets ci-dessous pour les voir."
+        note="Un seul contour de focus dans toute l’application, en encre. Le survol et le focus clavier ne peuvent pas être simulés honnêtement : tabulez jusqu’au champ pour les voir."
       >
         <Specimen
           name="Contour de focus"
-          signature=":focus-visible { outline: 3px solid currentColor; outline-offset: 0.25rem }"
+          signature=":focus-visible { outline: 3px solid var(--ring); outline-offset: 0.25rem }"
           note="Tabulez jusqu’au champ pour déclencher l’état réel."
         >
           <input
@@ -347,12 +424,12 @@ export default function FoundationsPage() {
 
         <Specimen
           name="Contour, forcé"
-          signature="outline: 3px solid currentColor; outline-offset: 0.25rem"
-          note="Le même contour, appliqué en permanence, pour le comparer entre les deux thèmes sans avoir à tabuler dans chaque volet."
+          signature="outline: 3px solid var(--ring); outline-offset: 0.25rem"
+          note="Le même contour d’encre, appliqué en permanence, pour l’observer sans avoir à tabuler jusqu’au champ."
         >
           <div
             className="h-11 w-56 rounded-full border border-input bg-background px-4 text-sm leading-11 text-muted-foreground lg:h-9 lg:leading-9"
-            style={{ outline: '3px solid currentColor', outlineOffset: '0.25rem' }}
+            style={{ outline: '3px solid var(--ring)', outlineOffset: '0.25rem' }}
           >
             Rechercher un membre
           </div>
@@ -362,7 +439,7 @@ export default function FoundationsPage() {
           <button
             type="button"
             disabled
-            className="h-11 rounded-full bg-primary px-4 text-sm font-[800] text-primary-foreground disabled:pointer-events-none disabled:opacity-50 lg:h-9"
+            className="h-11 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:pointer-events-none disabled:opacity-50 lg:h-9"
           >
             Valider
           </button>
@@ -373,23 +450,23 @@ export default function FoundationsPage() {
         id="mouvement"
         number={number('mouvement')}
         title="Mouvement"
-        note="Deux durées, toutes deux en ease-out. Le mouvement est fonctionnel, jamais décoratif, et prefers-reduced-motion le neutralise dans toute l’application."
+        note="Une seule durée, 200ms ease-out. Le mouvement est fonctionnel, jamais décoratif, et prefers-reduced-motion le neutralise dans toute l’application."
       >
         <Specimen
           name="state-change"
-          signature="120ms ease-out"
-          note="Changements de couleur, de fond et d’ombre au survol ou au basculement. Survolez le bloc."
+          signature="200ms ease-out"
+          note="Changements de couleur et de fond au survol ou au basculement. Survolez le bloc."
         >
-          <div className="size-24 rounded-xl border border-border bg-card transition-colors duration-[120ms] ease-out hover:bg-accent" />
+          <div className="size-24 rounded-xl border border-border bg-card transition-colors duration-200 ease-out hover:bg-accent" />
         </Specimen>
 
         <Specimen
           name="progress"
-          signature="250ms ease-out"
+          signature="200ms ease-out"
           note="Largeur de la barre de capacité, chevrons d’accordéon. Survolez la piste."
         >
           <div className="group h-2 w-full rounded-full bg-chart-track">
-            <div className="h-2 w-1/4 rounded-full bg-chart-1 transition-[width] duration-[250ms] ease-out group-hover:w-3/4" />
+            <div className="h-2 w-1/4 rounded-full bg-chart-1 transition-[width] duration-200 ease-out group-hover:w-3/4" />
           </div>
         </Specimen>
       </Section>

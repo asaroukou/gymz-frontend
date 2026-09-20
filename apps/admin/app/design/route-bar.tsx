@@ -23,7 +23,7 @@ export function RouteBar() {
               <Link
                 href={route.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`-mb-px inline-flex h-11 items-center rounded-sm border-b px-3 eyebrow ${
+                className={`-mb-px inline-flex h-11 items-center rounded-sm border-b px-3 text-sm font-medium ${
                   isActive
                     ? 'border-foreground text-foreground'
                     : 'border-transparent hover:text-foreground'

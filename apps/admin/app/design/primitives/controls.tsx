@@ -107,10 +107,9 @@ function ComboboxSpecimen() {
 }
 
 /**
- * `Specimen` renders its children twice (light pane, dark pane) from the same
- * element, so a literal `id` string would collide across the two mounts and
- * `label[for]`/`getElementById` would resolve to the first match only. `useId`
- * returns a distinct value per mount, so this must be a component, not raw JSX.
+ * A component, not raw JSX, so `useId` gives the label and field a real,
+ * unique pairing instead of a literal string that could collide if this
+ * specimen is ever mounted more than once on the page.
  */
 function LabelSpecimen() {
   const id = useId();
@@ -154,12 +153,12 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="button"
         number={number('button')}
         title="Bouton"
-        note="Pilule pleine. La taille par défaut fait 44px sur téléphone et redescend à 36px à partir de lg : la règle « comptoir d’abord » est encodée dans la primitive, pas laissée aux appelants."
+        note="Pilule pleine, 44px, sans palier plus étroit sur desktop : la règle « comptoir d’abord » est encodée dans la primitive, pas laissée aux appelants."
       >
         <Specimen
           name="Button"
           signature="variant x size"
-          note="Le survol et le focus clavier ne sont pas simulés : survolez et tabulez dans chaque volet."
+          note="Le survol et le focus clavier ne sont pas simulés : survolez et tabulez dans le volet."
         >
           <Matrix
             rows={BUTTON_VARIANTS}
@@ -232,7 +231,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="label"
         number={number('label')}
         title="Étiquette"
-        note="14px, poids 500, casse phrase. Jamais en majuscules dans le produit ; les majuscules de cette page appartiennent au chrome."
+        note="13px, poids 500, casse phrase. Jamais en majuscules, nulle part dans le produit."
       >
         <Specimen name="Label" signature="associé à un champ">
           <LabelSpecimen />
@@ -257,7 +256,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="select"
         number={number('select')}
         title="Liste déroulante"
-        note="Le contenu s’ouvre dans un portail : il se rend dans le thème ambiant de la page, donc en clair."
+        note="Le contenu s’ouvre dans un portail, au même niveau que la page."
       >
         <Specimen name="Select" signature="défaut, avec valeur, désactivé">
           <div className="grid w-full gap-3">
@@ -299,7 +298,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="combobox"
         number={number('combobox')}
         title="Sélecteur avec recherche"
-        note="Textes par défaut en français. Une option désactivée affiche son motif. Ouvre dans un portail, donc en clair."
+        note="Textes par défaut en français. Une option désactivée affiche son motif. Ouvre dans un portail."
       >
         <Specimen name="Combobox" signature="options, value, onValueChange">
           <ComboboxSpecimen />
@@ -373,7 +372,7 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
         id="dropdown-menu"
         number={number('dropdown-menu')}
         title="Menu déroulant"
-        note="Ouvre dans un portail, donc en clair."
+        note="Ouvre dans un portail, au même niveau que la page."
       >
         <Specimen name="DropdownMenu" signature="Trigger, Label, Item, Separator">
           <DropdownMenu>

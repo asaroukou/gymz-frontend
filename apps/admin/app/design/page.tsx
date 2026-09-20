@@ -14,13 +14,14 @@ const SECTION_SUMMARIES: Record<string, string> = {
 };
 
 const HARD_RULES = [
-  'Une seule encre comme accent.',
-  'La couleur ne sert qu’au sens : badges de statut, capacité.',
-  'Ni dégradé, ni glassmorphisme, ni emoji.',
-  'Chiffres en font-numeric : 06:30, 14/18.',
-  'Filets de 1px, jamais d’ombre.',
-  'Cibles tactiles d’au moins 44px sur les écrans d’accueil.',
-  'Contraste AA sur os et sur blanc.',
+  'Une seule encre solide par écran : la règle de l’encre unique. Une deuxième commande sombre est une erreur.',
+  'L’état actif se pose sur une pilule, jamais sur un soulignement ou du gras : la règle de la pilule.',
+  'Les teintes accueillent ce qu’on survole du regard (sessions, forfaits, salles), jamais un formulaire, un tableau ou une boîte de dialogue : la règle de la tuile.',
+  'Les titres restent en 400 ou 500 ; s’ils ont besoin de plus de poids pour se voir, ils ont besoin de plus d’espace : la règle du titre léger.',
+  'Casse phrase partout, jamais de majuscules : la règle de la casse phrase.',
+  'Toute valeur qu’on compare ou qu’on relit s’affiche en chiffres tabulaires : la règle du tabulaire.',
+  'Ni ombre portée, ni flou, ni bordure de conteneur : l’espace, le ton ou un filet séparent les zones : la règle du zéro-élévation.',
+  'Aucun contenu n’est encadré ni ombré ; un tableau, ce sont des lignes et des filets : la règle du non-encadrement.',
 ];
 
 export default function DesignIndexPage() {
@@ -29,14 +30,14 @@ export default function DesignIndexPage() {
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-10 sm:px-8">
       <header className="max-w-[70ch]">
-        <p className="eyebrow">Le studio documentaire</p>
+        <p className="text-sm font-medium">Le comptoir clair</p>
         <h1 className="mt-2 text-2xl font-medium tracking-tight text-foreground">
           Système de design
         </h1>
         <p className="mt-3 text-sm">
-          Chaque spécimen est rendu une fois, en clair. La page elle-même reste en clair et
-          n’utilise aucune couleur : toute couleur visible ici sort d’un spécimen. Les états pilotés
-          par props sont réels ; le survol et le focus clavier sont annotés, pas simulés.
+          Chaque spécimen est rendu une seule fois. La page elle-même n’utilise aucune couleur :
+          toute couleur visible ici sort d’un spécimen. Les états pilotés par props sont réels ; le
+          survol et le focus clavier sont annotés, pas simulés.
         </p>
       </header>
 
@@ -48,7 +49,7 @@ export default function DesignIndexPage() {
                 href={section.href}
                 className="grid gap-1 rounded-sm py-5 sm:grid-cols-[14rem_1fr] sm:gap-8"
               >
-                <span className="eyebrow text-foreground">{section.label}</span>
+                <span className="text-sm font-medium text-foreground">{section.label}</span>
                 <span className="max-w-[70ch] text-xs">{SECTION_SUMMARIES[section.href]}</span>
               </Link>
             </li>
@@ -57,7 +58,7 @@ export default function DesignIndexPage() {
       </nav>
 
       <section className="mt-16 max-w-[70ch]">
-        <h2 className="eyebrow text-foreground">Règles non négociables</h2>
+        <h2 className="text-sm font-medium text-foreground">Règles non négociables</h2>
         <ul className="mt-4 space-y-2">
           {HARD_RULES.map((rule, index) => (
             <li key={rule} className="flex gap-3 text-xs">

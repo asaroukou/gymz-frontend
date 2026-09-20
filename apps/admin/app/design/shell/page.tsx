@@ -16,9 +16,9 @@ const SECTIONS: readonly TocEntry[] = [
 ];
 
 const NAV: NavItem[] = [
-  { title: 'Membres', href: '/members', icon: <UsersIcon className="size-4" /> },
-  { title: 'Planning', href: '/schedules', icon: <CalendarClockIcon className="size-4" /> },
-  { title: 'Salles', href: '/venues', icon: <Building2Icon className="size-4" /> },
+  { title: 'Membres', href: '/members', icon: <UsersIcon aria-hidden /> },
+  { title: 'Planning', href: '/schedules', icon: <CalendarClockIcon aria-hidden /> },
+  { title: 'Salles', href: '/venues', icon: <Building2Icon aria-hidden /> },
 ];
 
 /** AppShell's linkComponent takes an optional href; anchors here go nowhere. */
@@ -41,6 +41,11 @@ function ShellFrame({ currentPath }: { currentPath: string }) {
         currentPath={currentPath}
         linkComponent={InertLink}
         openMenuLabel="Ouvrir le menu"
+        navFooter={
+          <Button variant="ghost" size="sm" className="justify-start px-2">
+            Se déconnecter
+          </Button>
+        }
         actions={
           <Button variant="ghost" size="sm">
             Se déconnecter
@@ -48,7 +53,7 @@ function ShellFrame({ currentPath }: { currentPath: string }) {
         }
       >
         <div className="p-4">
-          <h2 className="text-2xl font-[750] tracking-[-0.035em] text-foreground">Membres</h2>
+          <h2 className="text-2xl font-normal text-foreground">Membres</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             <span className="font-numeric">248</span> membres
           </p>
@@ -64,16 +69,19 @@ export default function ShellPage() {
   return (
     <PageFrame
       title="Coque"
-      intro="La coque applicative dans les deux thèmes. Les liens sont inertes. Les points de rupture réels se vérifient en redimensionnant la fenêtre : les volets côte à côte montrent le thème, pas la largeur."
+      intro="Colonne côté 260 px, pilule active, pied de colonne. Les liens sont inertes. Il n’y a pas de barre du haut sur desktop ; les points de rupture réels se vérifient en redimensionnant la fenêtre."
       entries={SECTIONS}
     >
       <Section
         id="coque"
         number={number('coque')}
         title="Coque complète"
-        note="En dessous de md, la navigation passe derrière un déclencheur de menu de 44px."
+        note="En dessous de md, la navigation passe derrière un déclencheur de menu de 36px et la colonne devient un tiroir sur scrim."
       >
-        <Specimen name="AppShell" signature="title, nav, actions, currentPath, linkComponent">
+        <Specimen
+          name="AppShell"
+          signature="title, nav, navFooter, actions, currentPath, linkComponent"
+        >
           <ShellFrame currentPath="/members" />
         </Specimen>
       </Section>
@@ -82,7 +90,7 @@ export default function ShellPage() {
         id="navigation"
         number={number('navigation')}
         title="États de navigation"
-        note="L’élément courant porte aria-current. Tabulez dans la navigation pour voir l’anneau de focus : la coque avait un manquement AA sur ce point, corrigé en lot A."
+        note="L’élément courant porte aria-current et prend la pilule à 600. Tabulez dans la navigation pour voir l’anneau de focus d’encre."
       >
         <Specimen name="AppShell" signature="currentPath=/schedules">
           <ShellFrame currentPath="/schedules" />

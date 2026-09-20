@@ -44,10 +44,14 @@ export const PRIMITIVES: readonly PrimitiveEntry[] = [
   { id: 'popover', title: 'Popover', group: 'display' },
   { id: 'tooltip', title: 'Infobulle', group: 'display' },
   { id: 'sonner', title: 'Notification', group: 'display' },
+
+  // The comptoir clair trio (front desk) plus the brand mark
+  { id: 'tile', title: 'Tuile', group: 'display' },
+  { id: 'command-bar', title: 'Barre de commande', group: 'display' },
+  { id: 'chip', title: 'Puce', group: 'display' },
+  { id: 'wordmark', title: 'Marque', group: 'display' },
 ];
 
-export function primitivesInGroup(
-  group: PrimitiveEntry['group'],
-): readonly PrimitiveEntry[] {
+export function primitivesInGroup(group: PrimitiveEntry['group']): readonly PrimitiveEntry[] {
   return PRIMITIVES.filter((entry) => entry.group === group);
 }
