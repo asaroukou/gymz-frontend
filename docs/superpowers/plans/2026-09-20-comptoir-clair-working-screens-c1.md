@@ -1933,13 +1933,24 @@ function SlotRow({
         {slotStatusLabel(slot.status)}
       </Badge>
       <div className="col-start-3 row-start-1 flex items-center gap-1 md:col-start-auto md:row-start-auto">
-        <Button variant="secondary" size="sm" onClick={() => onOpenParticipants(slot)}>
+        {/* 44px touch targets below md, the canvas 36px from md up. */}
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-11 md:h-9"
+          onClick={() => onOpenParticipants(slot)}
+        >
           {t('slots.participants')}
         </Button>
         {canManageSlots && !isCancelled ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={t('slots.rowMenu')}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="size-11 md:size-9"
+                aria-label={t('slots.rowMenu')}
+              >
                 <MoreHorizontalIcon />
               </Button>
             </DropdownMenuTrigger>
@@ -2504,7 +2515,12 @@ export function BookingsSheet({
                     {canCancel ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon-sm" aria-label={t('slots.rowMenu')}>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="size-11 md:size-9"
+                            aria-label={t('slots.rowMenu')}
+                          >
                             <MoreHorizontalIcon />
                           </Button>
                         </DropdownMenuTrigger>
@@ -2973,19 +2989,20 @@ export interface MemberRowProps {
   onSuspend: (member: Member) => void;
 }
 
-/** Row action menu (view, edit, suspend) on a 36px « ··· » button. */
+/** Row action menu (view, edit, suspend): 36px « ··· » in the table, 44px on the phone stack. */
 export function MemberActions({
   member,
   canManage,
   onSuspend,
-}: Omit<MemberRowProps, 'index'>) {
+  size = 'icon-sm',
+}: Omit<MemberRowProps, 'index'> & { size?: 'icon' | 'icon-sm' }) {
   const t = useTranslations('members');
   const canSuspend = canManage && member.membership_status !== 'suspended';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={t('row.menu')}>
+        <Button variant="ghost" size={size} aria-label={t('row.menu')}>
           <MoreHorizontalIcon />
         </Button>
       </DropdownMenuTrigger>
@@ -3101,7 +3118,7 @@ export function MemberStack({ member, index, canManage, onSuspend }: MemberRowPr
           </div>
         </div>
       </Link>
-      <MemberActions member={member} canManage={canManage} onSuspend={onSuspend} />
+      <MemberActions member={member} canManage={canManage} onSuspend={onSuspend} size="icon" />
     </div>
   );
 }
