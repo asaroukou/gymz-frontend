@@ -51,6 +51,14 @@ import {
   HubPage,
   HubTitle,
 } from '@iziwellpass/ui/components/hub-page';
+import {
+  BackLink,
+  KeyValueList,
+  KeyValueRow,
+  SectionHeading,
+  WorkingHeader,
+  WorkingPage,
+} from '@iziwellpass/ui/components/working-page';
 import { Popover, PopoverContent, PopoverTrigger } from '@iziwellpass/ui/components/popover';
 import { Progress } from '@iziwellpass/ui/components/progress';
 import { Separator } from '@iziwellpass/ui/components/separator';
@@ -618,6 +626,51 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
             <Wash className="md:block" />
             <HubTitle className="relative text-center">Le lavis</HubTitle>
           </div>
+        </Specimen>
+      </Section>
+
+      <Section
+        id="working-page"
+        number={number('working-page')}
+        title="Page de travail"
+        note="Les écrans de travail (planning, membres, équipe, établissements) : un titre 32 léger, une action sombre, un lien de retour 14, des titres de section 22 et des lignes clé/valeur entre filets."
+      >
+        <Specimen
+          name="WorkingPage"
+          signature="WorkingHeader, BackLink, SectionHeading, KeyValueList, KeyValueRow"
+        >
+          <WorkingPage className="max-w-[640px]">
+            <BackLink href="#working-page">Retour aux membres</BackLink>
+            <WorkingHeader
+              title="Awa Ndiaye"
+              subtitle="Membre depuis le 3 mars 2026"
+              badges={
+                <>
+                  <Badge variant="success">Actif</Badge>
+                  <Badge>Mensuel</Badge>
+                </>
+              }
+            />
+            <div className="flex flex-col gap-4">
+              <SectionHeading
+                title="Adhésion"
+                description="Ce que le membre a acheté et jusqu'à quand."
+                action={
+                  <Button variant="secondary" size="sm">
+                    <PlusIcon />
+                    Attribuer une formule
+                  </Button>
+                }
+              />
+              <KeyValueList>
+                <KeyValueRow label="Type">Mensuel</KeyValueRow>
+                <KeyValueRow label="Début">1 sept. 2026</KeyValueRow>
+                <KeyValueRow label="Statut">
+                  <Badge variant="success">Actif</Badge>
+                </KeyValueRow>
+              </KeyValueList>
+            </div>
+          </WorkingPage>
         </Specimen>
       </Section>
     </>
