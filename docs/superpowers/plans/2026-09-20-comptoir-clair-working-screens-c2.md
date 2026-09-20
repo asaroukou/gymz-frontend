@@ -799,13 +799,15 @@ git commit -m "feat(owner): venue activities as chips + outline add; resources a
 ### Task 4: Team — page shell and hairline table
 
 **Files:**
-- Modify: `apps/owner/app/(app)/staff/page.tsx` (rewrite; the four dialogs stay in this file until Task 5)
+- Modify: `apps/owner/app/(app)/staff/page.tsx` (rewrite; becomes the page shell)
 - Create: `apps/owner/app/(app)/staff/staff-table.tsx`
+- Create: `apps/owner/app/(app)/staff/staff-dialogs.tsx` (verbatim move of the four dialogs, `StaffRowActions` and the role helpers; only a `size` prop and an invite `variant` prop are added here — Task 5 restyles)
+- Create: `apps/owner/lib/staff-name.ts`, `apps/owner/lib/staff-name.test.ts`
+- Modify: `apps/owner/messages/fr.json`, `apps/owner/messages/en.json` (add `staff.row.you`)
 
 **Interfaces:**
 - Consumes: `roleBadgeVariant` from `@/lib/role-badge` (delete the page-local copy), `WorkingPage`/`WorkingHeader`, restyled `Table`, `RowsSkeleton`.
-- Produces: `StaffTable({ staff, selfUserId })` (toolbar-less: the search pill lives in the page), `StaffRow`/`StaffStack`; `staffName`, `initials`, `ASSIGNABLE_ROLES`, `VENUE_SCOPED_ROLES`, `isVenueScopedRole`, `assignableRoleOrFallback` stay exported from `page.tsx` for now (Task 5 moves them with the dialogs into `staff-dialogs.tsx`; `staff-table.tsx` imports `staffName`/`initials` from `./page`… no: to avoid a page import, move the two name helpers now into `apps/owner/lib/staff-name.ts`).
-- Create: `apps/owner/lib/staff-name.ts` with `staffName(staff)` and `staffInitials(staff)` (+ `staff-name.test.ts`).
+- Produces: `staffName`/`staffInitials` in `apps/owner/lib/staff-name.ts`; `StaffTable({ staff, selfUserId })` (the search pill lives in the page); `StaffRowActions({ staff, isSelf, size? })` and `InviteStaffDialog({ variant? })` exported from `staff-dialogs.tsx`.
 
 - [ ] **Step 1: `apps/owner/lib/staff-name.ts` + test**
 
@@ -960,7 +962,7 @@ export function StaffTable({ staff, selfUserId }: { staff: Staff[]; selfUserId: 
 }
 ```
 
-`StaffRowActions` gains a `size?: 'icon' | 'icon-sm'` prop (default `'icon-sm'`) in Task 5; in this task it is imported from `./page`? No — to keep every commit green, this task also creates `staff-dialogs.tsx` with `StaffRowActions` and the four dialogs moved verbatim (plus the `size` prop and the helpers `ASSIGNABLE_ROLES`, `VENUE_SCOPED_ROLES`, `isVenueScopedRole`, `assignableRoleOrFallback`); Task 5 then restyles them. Do that move now (no styling changes yet, only the `size` prop).
+`StaffRowActions` (with its new `size` prop) comes from `staff-dialogs.tsx`, created in Step 3 of this task so every commit stays green.
 
 - [ ] **Step 3: Create `staff-dialogs.tsx` (verbatim move + `size` prop)**
 
