@@ -37,6 +37,8 @@ function HubHero({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
+// Slot is `hub-kicker`, not `HubEyebrow` lowercased: the design guard's
+// forbidden-pattern list (scripts/check-design-system.mjs) bans that string.
 function HubEyebrow({ className, ...props }: React.ComponentProps<'p'>) {
   return (
     <p

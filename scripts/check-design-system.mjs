@@ -45,10 +45,13 @@ const patterns = [
 // the legitimate `-foreground` stops out of the match: the pale status tints are
 // backgrounds, so using one as a text colour is invisible (~1.1:1).
 const regexPatterns = ['text-(destructive|success|warning|info)([^-]|$)'];
-// Fixed strings forbidden everywhere except one named file (and its test,
-// which asserts on the class the component renders). The lavis wash is the
-// single sanctioned gradient (DESIGN.md §4); it lives in wash.tsx only.
-const excludedPatterns = [{ pattern: 'gradient', exclude: 'wash*.tsx' }];
+// Fixed strings forbidden everywhere except an explicit list of named files.
+// The lavis wash is the single sanctioned gradient (DESIGN.md §4); it lives
+// in wash.tsx only. wash.test.tsx is excluded too, but only because it
+// asserts on the class name the component renders, not because it may itself
+// contain a second gradient. Literal filenames (not a glob) so a future
+// `wash-foo.tsx` can't silently slip past this ban.
+const excludedPatterns = [{ pattern: 'gradient', excludes: ['wash.tsx', 'wash.test.tsx'] }];
 const roots = [
   'packages/ui/src',
   'apps/owner/app',
@@ -107,11 +110,12 @@ for (const p of regexPatterns) {
     console.error(`forbidden pattern (regex) "${p}":\n${out}`);
   }
 }
-for (const { pattern, exclude } of excludedPatterns) {
+for (const { pattern, excludes } of excludedPatterns) {
   let out = '';
   try {
+    const excludeFlags = excludes.map((file) => `--exclude=${JSON.stringify(file)}`).join(' ');
     out = execSync(
-      `grep -rn --include='*.ts' --include='*.tsx' --include='*.css' --exclude=${JSON.stringify(exclude)} -F -e ${JSON.stringify(pattern)} ${roots.join(' ')}`,
+      `grep -rn --include='*.ts' --include='*.tsx' --include='*.css' ${excludeFlags} -F -e ${JSON.stringify(pattern)} ${roots.join(' ')}`,
       { encoding: 'utf8' },
     );
   } catch (err) {
@@ -124,7 +128,9 @@ for (const { pattern, exclude } of excludedPatterns) {
   }
   if (out.trim()) {
     failed = true;
-    console.error(`forbidden pattern "${pattern}" (allowed only in ${exclude}):\n${out}`);
+    console.error(
+      `forbidden pattern "${pattern}" (allowed only in ${excludes.join(', ')}):\n${out}`,
+    );
   }
 }
 if (failed) process.exit(1);
