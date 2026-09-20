@@ -1,30 +1,19 @@
 'use client';
 
 import { unwrap } from '@iziwellpass/api/client';
-import { useListResources, useListSchedules } from '@iziwellpass/api/generated';
+import { useListResources, useListSchedules, useListStaff } from '@iziwellpass/api/generated';
 
 import { useAllMembers } from '@/lib/all-members';
 import { useAttendanceByDate, useCheckInsByDate, useSlotsByDate } from '@/lib/dated-api';
 import { venueToday } from '@/lib/datetime';
 
-/**
- * Structural subset of a react-query result that the dashboard sections
- * consume. Decouples the child components from the exact generated hook
- * return types while staying assignable from `UseQueryResult`.
- */
-export interface QueryLike<T> {
-  data: T | undefined;
-  isLoading: boolean;
-  isError: boolean;
-  error: unknown;
-}
+export type { QueryLike } from '@/components/checkin/query-like';
 
 /**
  * Initiates every venue-scoped dashboard query in one place so they fan out
- * in parallel on the first render of `DashboardBody` — rather than serially
- * waterfalling behind the starter-vs-grid decision. The results are threaded
- * down to the KPI / schedule / check-ins sections as props; the shared member
- * list is fetched once here and reused by both the KPI row and the feed.
+ * in parallel on the first render of `DashboardBody`. The shared member list
+ * is fetched once and reused by the KPI row, the command bar and the feed;
+ * staff resolves instructors on the tiles and « par … » in the feed.
  */
 export function useDashboardData(venueId: string, timeZone: string | undefined) {
   // slots / attendance / checkins require a `date` param the generated client
@@ -37,6 +26,7 @@ export function useDashboardData(venueId: string, timeZone: string | undefined) 
   const schedules = useListSchedules(venueId, { query: { select: unwrap } });
   const resources = useListResources(venueId, { query: { select: unwrap } });
   const checkIns = useCheckInsByDate(venueId, date);
+  const staff = useListStaff({ query: { select: unwrap } });
 
-  return { attendance, members, slots, schedules, resources, checkIns };
+  return { attendance, members, slots, schedules, resources, checkIns, staff };
 }

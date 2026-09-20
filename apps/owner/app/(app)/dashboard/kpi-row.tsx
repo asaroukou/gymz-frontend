@@ -47,7 +47,7 @@ export function KpiRow({
       <Stat
         label={t('kpi.occupancy')}
         isLoading={attendance.isLoading}
-        value={stats ? `${Math.round(stats.occupancy_pct)} %` : null}
+        value={stats && stats.total_check_ins > 0 ? `${Math.round(stats.occupancy_pct)} %` : null}
       />
       <Stat
         label={t('kpi.activeMembers')}

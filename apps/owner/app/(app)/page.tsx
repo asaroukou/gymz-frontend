@@ -1,119 +1,147 @@
 'use client';
 
+import { useCallback, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
+import type { MembershipStatus } from '@iziwellpass/api/schemas';
 import { useSession } from '@iziwellpass/auth/provider';
-import { Card, CardContent, CardHeader } from '@iziwellpass/ui/components/card';
+import {
+  HubEyebrow,
+  HubHero,
+  HubPage,
+  HubSection,
+  HubTitle,
+} from '@iziwellpass/ui/components/hub-page';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iziwellpass/ui/components/tabs';
 
+import { CheckinCommand } from '@/components/checkin/checkin-command';
+import { CheckinFeed } from '@/components/checkin/checkin-feed';
+import type { CheckinMode } from '@/components/checkin/checkin-modes';
+import { useRegisterCheckin } from '@/components/checkin/use-register-checkin';
+import { todayLabel } from '@/lib/datetime';
 import { useVenueContext } from '@/lib/venue-context';
 
 import { KpiRow } from './dashboard/kpi-row';
-import { RecentCheckins } from './dashboard/recent-checkins';
 import { SectionError } from './dashboard/section-error';
 import { Starter } from './dashboard/starter';
-import { TodaySchedule } from './dashboard/today-schedule';
+import { TodayTiles } from './dashboard/today-tiles';
 import { useDashboardData } from './dashboard/use-dashboard-data';
 
-/**
- * Today's date formatted in the active next-intl locale and the venue's
- * timezone (falls back to the runtime zone if the venue tz is
- * missing/invalid). First letter is capitalised for the header — French
- * weekday names are otherwise lowercase.
- */
-function todayLabel(locale: string, timeZone: string | undefined): string {
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  };
-  let text: string;
-  try {
-    text = new Intl.DateTimeFormat(locale, {
-      ...options,
-      timeZone: timeZone && timeZone.trim().length > 0 ? timeZone : undefined,
-    }).format(new Date());
-  } catch {
-    text = new Intl.DateTimeFormat(locale, options).format(new Date());
-  }
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
+type Tab = 'schedule' | 'checkins';
 
-function LoadingGrid() {
+function LoadingHub({ dateLine }: { dateLine: string }) {
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <>
+      <HubHero>
+        <HubEyebrow>{dateLine}</HubEyebrow>
+        <Skeleton className="h-10 w-72 md:h-12 md:w-80" />
+        <Skeleton className="h-14 w-full max-w-[45rem] rounded-full md:h-[60px]" />
+      </HubHero>
+      <HubSection aria-hidden="true">
+        <div className="flex gap-10">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-24" />
+          ))}
+        </div>
+      </HubSection>
+      <div className="grid w-full grid-cols-2 gap-4 md:grid-cols-4" aria-hidden="true">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardContent className="space-y-3">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-16" />
-            </CardContent>
-          </Card>
+          <Skeleton key={i} className="aspect-square w-full rounded-xl" />
         ))}
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <Skeleton className="h-5 w-40" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-5 w-40" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Skeleton className="h-9 w-full" />
-            <Skeleton className="h-9 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </>
   );
 }
 
 /**
- * The body once a venue is selected. `useDashboardData` initiates every
- * venue-scoped query up front so they fan out in parallel — the KPI /
- * schedule / check-ins sections render optimistically from that shared data.
- * Only the starter-vs-grid decision waits, gated on the schedules + members
- * `isLoading` (so the first-week starter never flashes over the grid).
+ * The hub once a venue is selected. Every venue-scoped query fans out from
+ * `useDashboardData`; the starter-vs-hub decision waits on schedules +
+ * members so the first-week starter never flashes over the tiles.
  */
-function DashboardBody({ venueId, timeZone }: { venueId: string; timeZone: string | undefined }) {
+function DashboardBody({
+  venueId,
+  timeZone,
+  dateLine,
+  name,
+}: {
+  venueId: string;
+  timeZone: string | undefined;
+  dateLine: string;
+  name: string | null;
+}) {
+  const t = useTranslations('dashboard');
+  const tMembers = useTranslations('members');
   const data = useDashboardData(venueId, timeZone);
-  const { attendance, members, slots, schedules, resources, checkIns } = data;
+  const { attendance, members, slots, schedules, resources, checkIns, staff } = data;
+
+  const list = useMemo(() => members.data ?? [], [members.data]);
+  const memberById = useMemo(() => new Map(list.map((m) => [m.id, m])), [list]);
+  const register = useRegisterCheckin({ venueId, memberById });
+  const statusLabel = useCallback(
+    (status: MembershipStatus) => tMembers(`status.${status}`),
+    [tMembers],
+  );
+  const [mode, setMode] = useState<CheckinMode>('qr');
+  const [tab, setTab] = useState<Tab>('schedule');
 
   if (schedules.isLoading || members.isLoading) {
-    return <LoadingGrid />;
+    return <LoadingHub dateLine={dateLine} />;
   }
 
   const hasNoSchedules = !schedules.isError && (schedules.data ?? []).length === 0;
-  const hasNoMembers = !members.isError && (members.data ?? []).length === 0;
-
+  const hasNoMembers = !members.isError && list.length === 0;
   if (hasNoSchedules && hasNoMembers) {
-    return <Starter />;
+    return <Starter dateLine={dateLine} name={name} attendance={attendance} members={members} />;
   }
 
   return (
-    <div className="space-y-6">
-      <KpiRow attendance={attendance} members={members} />
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <TodaySchedule
-            slots={slots}
-            schedules={schedules}
-            resources={resources}
-            timeZone={timeZone}
-          />
-        </div>
-        <RecentCheckins checkIns={checkIns} members={members} timeZone={timeZone} />
-      </div>
-    </div>
+    <>
+      <HubHero>
+        <HubEyebrow>{dateLine}</HubEyebrow>
+        <HubTitle>{name ? t('greeting', { name }) : t('greetingNoName')}</HubTitle>
+        <CheckinCommand
+          mode={mode}
+          onModeChange={setMode}
+          members={list}
+          register={register}
+          statusLabel={statusLabel}
+        />
+      </HubHero>
+      <HubSection>
+        <KpiRow attendance={attendance} members={members} />
+      </HubSection>
+      <HubSection>
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as Tab)}
+          className="w-full items-center gap-6"
+        >
+          <TabsList aria-label={t('tabs.label')}>
+            <TabsTrigger value="schedule">{t('tabs.schedule')}</TabsTrigger>
+            <TabsTrigger value="checkins">{t('tabs.checkins')}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="schedule" className="w-full">
+            <TodayTiles
+              slots={slots}
+              schedules={schedules}
+              resources={resources}
+              staff={staff}
+              timeZone={timeZone}
+            />
+          </TabsContent>
+          <TabsContent value="checkins" className="flex w-full justify-center">
+            <CheckinFeed
+              checkIns={checkIns}
+              members={members}
+              staff={staff}
+              timeZone={timeZone}
+              limit={8}
+            />
+          </TabsContent>
+        </Tabs>
+      </HubSection>
+    </>
   );
 }
 
@@ -123,37 +151,44 @@ export default function DashboardPage() {
   const session = useSession();
 
   // Greet by real given name when the token carries one; otherwise a warm
-  // name-less "Bonjour" rather than the email local-part (which reads as a
-  // machine id, e.g. "Bonjour abdelsaroukou").
+  // name-less « Bonjour » rather than the email local-part.
   const name = session.status === 'signed-in' ? session.claims.name : null;
-  const greeting = name ? t('greeting', { name }) : t('greetingNoName');
 
   const { venues, isLoading, isError, error, selectedVenueId, selectedVenue } = useVenueContext();
   const timeZone = selectedVenue?.timezone;
+  const date = todayLabel(locale, timeZone);
+  const dateLine = selectedVenue ? t('dateLine', { date, venue: selectedVenue.name }) : date;
 
-  // Varied vertical rhythm: a wider gap after the greeting header (space-y-8)
-  // sets the "who/when" apart from the work, while the body's own sections stay
-  // at the tighter space-y-6 — rhythm, not one uniform gap everywhere.
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-normal">{greeting}</h1>
-          <p className="text-sm text-muted-foreground">{todayLabel(locale, timeZone)}</p>
-        </div>
-      </div>
-
+    <HubPage wash>
       {isLoading ? (
-        <LoadingGrid />
+        <LoadingHub dateLine={dateLine} />
       ) : isError ? (
-        <SectionError error={error} fallback={t('errors.venues')} />
-      ) : venues.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">{t('venueNone')}</p>
-      ) : !selectedVenueId ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">{t('venuePrompt')}</p>
+        <>
+          <HubHero>
+            <HubEyebrow>{dateLine}</HubEyebrow>
+            <HubTitle>{name ? t('greeting', { name }) : t('greetingNoName')}</HubTitle>
+          </HubHero>
+          <SectionError error={error} fallback={t('errors.venues')} />
+        </>
+      ) : venues.length === 0 || !selectedVenueId ? (
+        <>
+          <HubHero>
+            <HubEyebrow>{dateLine}</HubEyebrow>
+            <HubTitle>{name ? t('greeting', { name }) : t('greetingNoName')}</HubTitle>
+          </HubHero>
+          <p className="py-6 text-center text-base text-muted-foreground">
+            {venues.length === 0 ? t('venueNone') : t('venuePrompt')}
+          </p>
+        </>
       ) : (
-        <DashboardBody venueId={selectedVenueId} timeZone={timeZone} />
+        <DashboardBody
+          venueId={selectedVenueId}
+          timeZone={timeZone}
+          dateLine={dateLine}
+          name={name}
+        />
       )}
-    </div>
+    </HubPage>
   );
 }
