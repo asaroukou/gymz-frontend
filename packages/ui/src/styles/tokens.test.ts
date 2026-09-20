@@ -153,3 +153,12 @@ describe('comptoir clair contrast (WCAG AA ≥ 4.5)', () => {
     );
   });
 });
+
+describe('comptoir clair text scale additions', () => {
+  it('declares the 36px auth title step', () => {
+    const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'globals.css'), 'utf8');
+    expect(css).toMatch(/--text-display-sm:\s*2\.25rem;/);
+    expect(css).toMatch(/--text-display-sm--line-height:\s*1\.15;/);
+    expect(css).toMatch(/--text-display-sm--letter-spacing:\s*-0\.025em;/);
+  });
+});

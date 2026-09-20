@@ -45,6 +45,10 @@ const patterns = [
 // the legitimate `-foreground` stops out of the match: the pale status tints are
 // backgrounds, so using one as a text colour is invisible (~1.1:1).
 const regexPatterns = ['text-(destructive|success|warning|info)([^-]|$)'];
+// Fixed strings forbidden everywhere except one named file (and its test,
+// which asserts on the class the component renders). The lavis wash is the
+// single sanctioned gradient (DESIGN.md §4); it lives in wash.tsx only.
+const excludedPatterns = [{ pattern: 'gradient', exclude: 'wash*.tsx' }];
 const roots = [
   'packages/ui/src',
   'apps/owner/app',
@@ -101,6 +105,26 @@ for (const p of regexPatterns) {
   if (out.trim()) {
     failed = true;
     console.error(`forbidden pattern (regex) "${p}":\n${out}`);
+  }
+}
+for (const { pattern, exclude } of excludedPatterns) {
+  let out = '';
+  try {
+    out = execSync(
+      `grep -rn --include='*.ts' --include='*.tsx' --include='*.css' --exclude=${JSON.stringify(exclude)} -F -e ${JSON.stringify(pattern)} ${roots.join(' ')}`,
+      { encoding: 'utf8' },
+    );
+  } catch (err) {
+    // Same exit-code handling as the fixed-string sweep: only 1 (no match) is good.
+    if (err.status !== 1) {
+      console.error(`grep failed for pattern "${pattern}" (status ${err.status ?? '?'}):`);
+      console.error(err.stderr?.toString() || err.message);
+      process.exit(2);
+    }
+  }
+  if (out.trim()) {
+    failed = true;
+    console.error(`forbidden pattern "${pattern}" (allowed only in ${exclude}):\n${out}`);
   }
 }
 if (failed) process.exit(1);

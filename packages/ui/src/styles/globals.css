@@ -150,6 +150,11 @@
   --text-3xl--line-height: 1.1;
   --text-3xl--letter-spacing: -0.03em;
 
+  /* Auth title: the question on an auth or onboarding screen (canvas 36px). */
+  --text-display-sm: 2.25rem;
+  --text-display-sm--line-height: 1.15;
+  --text-display-sm--letter-spacing: -0.025em;
+
   --font-sans: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
