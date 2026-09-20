@@ -50,6 +50,8 @@ export const PRIMITIVES: readonly PrimitiveEntry[] = [
   { id: 'command-bar', title: 'Barre de commande', group: 'display' },
   { id: 'chip', title: 'Puce', group: 'display' },
   { id: 'wordmark', title: 'Marque', group: 'display' },
+  { id: 'hub-page', title: 'Page de hub', group: 'display' },
+  { id: 'wash', title: 'Lavis', group: 'display' },
 ];
 
 export function primitivesInGroup(group: PrimitiveEntry['group']): readonly PrimitiveEntry[] {

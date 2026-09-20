@@ -44,6 +44,13 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@iziwellpass/ui/components/empty';
+import {
+  HubEyebrow,
+  HubHero,
+  HubLead,
+  HubPage,
+  HubTitle,
+} from '@iziwellpass/ui/components/hub-page';
 import { Popover, PopoverContent, PopoverTrigger } from '@iziwellpass/ui/components/popover';
 import { Progress } from '@iziwellpass/ui/components/progress';
 import { Separator } from '@iziwellpass/ui/components/separator';
@@ -79,6 +86,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@iziwellpass/ui/components/tooltip';
+import { Wash } from '@iziwellpass/ui/components/wash';
 import { Wordmark } from '@iziwellpass/ui/components/wordmark';
 
 import { sectionNumber, type TocEntry } from '../_chrome/page-frame';
@@ -579,6 +587,37 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         <Specimen name="Wordmark" signature="name, size=sm | md">
           <Wordmark name="IziWellPass" />
           <Wordmark name="IziWellPass" size="sm" />
+        </Specimen>
+      </Section>
+
+      <Section
+        id="hub-page"
+        number={number('hub-page')}
+        title="Page de hub"
+        note="La colonne 940px de l’accueil et du tableau de bord : Hero, puis les sections empilées. Sans lavis ici, pour isoler la hiérarchie du titre."
+      >
+        <Specimen name="HubPage" signature="HubHero, HubEyebrow, HubTitle, HubLead">
+          <HubPage className="max-w-none">
+            <HubHero>
+              <HubEyebrow>Samedi 20 septembre · Studio Dakar Plateau</HubEyebrow>
+              <HubTitle>Bonjour, Moussa</HubTitle>
+              <HubLead>Un titre léger, une seule action, rien qui rivalise.</HubLead>
+            </HubHero>
+          </HubPage>
+        </Specimen>
+      </Section>
+
+      <Section
+        id="wash"
+        number={number('wash')}
+        title="Lavis"
+        note="Le seul dégradé du système (DESIGN.md §4) : un radial derrière un titre de hub, cadré 800×640, masqué sous md."
+      >
+        <Specimen name="Wash" signature="derrière un titre de hub">
+          <div className="relative h-[320px] w-full max-w-[640px] overflow-hidden">
+            <Wash className="md:block" />
+            <HubTitle className="relative text-center">Le lavis</HubTitle>
+          </div>
         </Specimen>
       </Section>
     </>

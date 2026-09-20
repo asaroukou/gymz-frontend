@@ -13,7 +13,7 @@ SP-A gave the apps the tokens, primitives and shell. The owner app's hub screens
 
 - **D1 — « À régler » is out.** The dashboard shows two pills (« Planning du jour », « Derniers passages »). The third pill returns with real data in SP-C.
 - **D2 — One check-in control for both hubs.** The dashboard's command bar is the front desk's: it registers the passage in place and the feed and stats refresh. No redirect.
-- **D3 — Owner only.** Nothing under `apps/admin` changes.
+- **D3 — Owner only.** Nothing user-facing under `apps/admin` changes, except the `/design` registry, which must list every ui primitive: it gains `hub-page` and `wash` entries with minimal specimens.
 - **D4 — Structure.** Hub primitives (`Wash`, `HubPage` family) live in `packages/ui`; the check-in logic, command, modes and feed live in one owner module `apps/owner/components/checkin/`. Pages are rebuilt on those pieces. No route-group layout.
 - **D5 — One type-scale addition.** `text-display-sm` (36px) for auth and onboarding titles; the canvas draws them at 36 and the scale has no step between 32 and 44.
 - **D6 — Auth column width is 400 for every auth state**, including « E-mail envoyé » (drawn at 440). Onboarding is 620.
@@ -33,14 +33,14 @@ Geometry is the canvas `Wash` node (800×640, top −260, centred on the column)
 
 ### 3.2 `HubPage` family — `packages/ui/src/components/hub-page.tsx`
 
-| Export | Element and classes | Notes |
-|---|---|---|
+| Export                                    | Element and classes                                                                | Notes                                                                                                                                                      |
+| ----------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `HubPage({ wash?, className, children })` | `div.relative.mx-auto.flex.w-full.max-w-[940px].flex-col.gap-6.md:gap-12.md:pt-10` | Sits inside the shell's `main` (`p-6`), so 24 + 40 = the drawn 64px top. Renders `<Wash />` first when `wash` is true, then children in a `relative` flow. |
-| `HubHero` | `div.flex.flex-col.items-center.gap-3.text-center.md:gap-5` | Eyebrow, title, lead or bar. Canvas gap 20 desktop, 12 mobile. |
-| `HubEyebrow` | `p.text-sm.text-muted-foreground.md:text-md` | 13 mobile, 14 desktop. |
-| `HubTitle` | `h1.text-2xl.font-normal.md:text-3xl` | 32 mobile, 44 desktop (Display). One per screen. |
-| `HubLead` | `p.max-w-[36rem].text-lg.text-muted-foreground` | 16, atténué. |
-| `HubSection({ className, children })` | `div.flex.flex-col.items-center.gap-4` | A centred block: the stat strip, the tab row, the feed. |
+| `HubHero`                                 | `div.flex.flex-col.items-center.gap-3.text-center.md:gap-5`                        | Eyebrow, title, lead or bar. Canvas gap 20 desktop, 12 mobile.                                                                                             |
+| `HubEyebrow`                              | `p.text-sm.text-muted-foreground.md:text-md`                                       | 13 mobile, 14 desktop.                                                                                                                                     |
+| `HubTitle`                                | `h1.text-2xl.font-normal.md:text-3xl`                                              | 32 mobile, 44 desktop (Display). One per screen.                                                                                                           |
+| `HubLead`                                 | `p.max-w-[36rem].text-lg.text-muted-foreground`                                    | 16, atténué.                                                                                                                                               |
+| `HubSection({ className, children })`     | `div.flex.flex-col.items-center.gap-4`                                             | A centred block: the stat strip, the tab row, the feed.                                                                                                    |
 
 Tests (`hub-page.test.tsx`, jsdom): `HubPage` renders no `[data-slot=wash]` by default and one when `wash` is set; `HubTitle` renders an `h1`.
 
@@ -72,10 +72,7 @@ The starter uses `Tile aspect="tall" className="p-6"`; session tiles use the def
 ### 4.2 `useRegisterCheckin` — `components/checkin/use-register-checkin.ts`
 
 ```ts
-export function useRegisterCheckin(args: {
-  venueId: string;
-  memberById: Map<string, Member>;
-}): {
+export function useRegisterCheckin(args: { venueId: string; memberById: Map<string, Member> }): {
   submitToken: (token: string, onSuccess?: () => void) => void;
   submitWalkin: (memberId: string, onSuccess?: () => void) => void;
   isPending: boolean;
@@ -92,9 +89,9 @@ interface CheckinFeedProps {
   members: QueryLike<Member[]>;
   staff: QueryLike<Staff[]>;
   timeZone: string | undefined;
-  title?: string;   // 22/500 heading; omitted under the dashboard tab
-  live?: boolean;   // « En direct » success badge with a dot, right of the title
-  limit?: number;   // dashboard passes 8
+  title?: string; // 22/500 heading; omitted under the dashboard tab
+  live?: boolean; // « En direct » success badge with a dot, right of the title
+  limit?: number; // dashboard passes 8
 }
 ```
 
@@ -285,7 +282,7 @@ Layout: as §7.1 with `max-w-[620px]`, no help footer (the canvas has none). Pag
 
 ## 11. Out of scope
 
-« À régler »; the admin app; the member app; working screens (SP-C); a real forgot-password flow; `/design` hub specimens (parked with the `/design` chrome); the shell (unchanged).
+« À régler »; the admin app; the member app; working screens (SP-C); a real forgot-password flow; richer `/design` hub specimens (parked with the `/design` chrome; the registry entries and minimal specimens land in SP-B); the shell (unchanged).
 
 ## 12. Task shape (for the plan)
 
