@@ -20,6 +20,7 @@ import type { Resource, Schedule, Staff } from '@iziwellpass/api/schemas';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -109,6 +110,11 @@ function emptyScheduleDefaults(): ScheduleValues {
   };
 }
 
+/**
+ * Canvas `jFogY`, top to bottom: Titre · Salle / Intervenant · Description /
+ * « Horaire » / Répétition · Intervalle / Les jours / Heure de début · Heure de
+ * fin / À partir du · Jusqu'au. 18px between rows, 16px gutter.
+ */
 function ScheduleFormFields({
   form,
   resources,
@@ -125,9 +131,8 @@ function ScheduleFormFields({
   const t = useTranslations('planning');
 
   return (
-    <>
-      <section className="grid gap-4">
-        <h3 className="text-sm font-medium">{t('form.sectionCourse')}</h3>
+    <div className="flex flex-col gap-[18px]">
+      <div className="grid gap-4 sm:grid-cols-2">
         <FormField
           control={form.control}
           name="title"
@@ -165,6 +170,8 @@ function ScheduleFormFields({
             </FormItem>
           )}
         />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
         <FormField
           control={form.control}
           name="instructor_staff_id"
@@ -197,74 +204,75 @@ function ScheduleFormFields({
             <FormItem>
               <FormLabel>{t('form.description')}</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} className="min-h-24" />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-      </section>
-      <section className="grid gap-4 border-t pt-5">
-        <h3 className="text-sm font-medium">{t('form.sectionTiming')}</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="start_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('form.startTime')}</FormLabel>
-                <FormControl>
-                  <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="end_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('form.endTime')}</FormLabel>
-                <FormControl>
-                  <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="effective_from"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('form.effectiveFrom')}</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="effective_until"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('form.effectiveUntil')}</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <RecurrenceEditor value={recurrence} onChange={onRecurrenceChange} />
-      </section>
-    </>
+      </div>
+
+      <h3 className="text-lg font-semibold">{t('form.sectionTiming')}</h3>
+
+      <RecurrenceEditor value={recurrence} onChange={onRecurrenceChange} />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField
+          control={form.control}
+          name="start_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('form.startTime')}</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="end_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('form.endTime')}</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField
+          control={form.control}
+          name="effective_from"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('form.effectiveFrom')}</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="effective_until"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('form.effectiveUntil')}</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -284,6 +292,7 @@ export function AddScheduleDialog({
   variant?: 'default' | 'secondary';
 }) {
   const t = useTranslations('planning');
+  const tCommon = useTranslations('common');
   const schema = useScheduleSchema();
   const [open, setOpen] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceEditorState>(() =>
@@ -353,13 +362,16 @@ export function AddScheduleDialog({
           {t('addCourse')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>{t('scheduleDialog.addTitle')}</DialogTitle>
           <DialogDescription>{t('scheduleDialog.addDescription')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+          <form
+            onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
+            className="flex flex-col gap-6"
+          >
             <ScheduleFormFields
               form={form}
               resources={resources}
@@ -367,10 +379,17 @@ export function AddScheduleDialog({
               recurrence={recurrence}
               onRecurrenceChange={setRecurrence}
             />
-            <DialogFooter className="items-center gap-2 sm:gap-3">
+            <DialogFooter className="items-center">
               {weeklyNeedsDay ? (
-                <p className="text-sm text-muted-foreground">{t('form.weekdayRequired')}</p>
+                <p className="text-sm text-muted-foreground sm:mr-auto">
+                  {t('form.weekdayRequired')}
+                </p>
               ) : null}
+              <DialogClose asChild>
+                <Button type="button" variant="ghost">
+                  {tCommon('cancel')}
+                </Button>
+              </DialogClose>
               <Button type="submit" disabled={createSchedule.isPending || weeklyNeedsDay}>
                 {createSchedule.isPending
                   ? t('scheduleDialog.creating')
@@ -404,6 +423,7 @@ export function EditScheduleDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations('planning');
+  const tCommon = useTranslations('common');
   const schema = useScheduleSchema();
   const queryClient = useQueryClient();
   const updateSchedule = useUpdateSchedule();
@@ -456,12 +476,15 @@ export function EditScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>{t('scheduleDialog.editTitle')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+          <form
+            onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
+            className="flex flex-col gap-6"
+          >
             <ScheduleFormFields
               form={form}
               resources={resources}
@@ -469,10 +492,17 @@ export function EditScheduleDialog({
               recurrence={recurrence}
               onRecurrenceChange={setRecurrence}
             />
-            <DialogFooter className="items-center gap-2 sm:gap-3">
+            <DialogFooter className="items-center">
               {weeklyNeedsDay ? (
-                <p className="text-sm text-muted-foreground">{t('form.weekdayRequired')}</p>
+                <p className="text-sm text-muted-foreground sm:mr-auto">
+                  {t('form.weekdayRequired')}
+                </p>
               ) : null}
+              <DialogClose asChild>
+                <Button type="button" variant="ghost">
+                  {tCommon('cancel')}
+                </Button>
+              </DialogClose>
               <Button type="submit" disabled={updateSchedule.isPending || weeklyNeedsDay}>
                 {updateSchedule.isPending ? t('scheduleDialog.saving') : t('scheduleDialog.save')}
               </Button>
@@ -523,7 +553,7 @@ export function DeleteScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>{t('deleteCourse.title')}</DialogTitle>
           <DialogDescription>
@@ -531,9 +561,9 @@ export function DeleteScheduleDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {tCommon('cancel')}
-          </Button>
+          <DialogClose asChild>
+            <Button variant="ghost">{tCommon('cancel')}</Button>
+          </DialogClose>
           <Button variant="destructive" onClick={handleDelete} disabled={cancelSchedule.isPending}>
             {cancelSchedule.isPending ? t('deleteCourse.confirming') : t('deleteCourse.confirm')}
           </Button>
