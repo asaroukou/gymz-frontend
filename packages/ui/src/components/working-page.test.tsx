@@ -36,7 +36,13 @@ describe('WorkingPage', () => {
 
   it('header omits the subtitle node when none is given', () => {
     const { container } = render(<WorkingHeader title="Planning" />);
-    expect(container.querySelectorAll('p')).toHaveLength(0);
+    const header = container.querySelector('[data-slot="working-header"]') as HTMLElement;
+    expect(header.querySelector('p')).toBeNull();
+  });
+
+  it('renders a block subtitle without nesting a div inside a p', () => {
+    render(<WorkingHeader title="x" subtitle={<div data-testid="s" />} />);
+    expect(screen.getByTestId('s').closest('p')).toBeNull();
   });
 
   it('BackLink renders a plain anchor by default and the given link component otherwise', () => {

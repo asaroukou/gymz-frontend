@@ -41,19 +41,23 @@ function WorkingHeader({
     >
       <div className="flex min-w-0 flex-col gap-1.5">
         <h1 className="text-2xl font-normal">{title}</h1>
-        {subtitle ? <p className="text-base text-muted-foreground">{subtitle}</p> : null}
+        {subtitle ? <div className="text-base text-muted-foreground">{subtitle}</div> : null}
       </div>
-      {action ? (
-        <div data-slot="working-header-action" className="flex shrink-0 items-center gap-2">
-          {action}
-        </div>
-      ) : null}
-      {badges ? (
+      {action || badges ? (
         <div
-          data-slot="working-header-badges"
+          data-slot="working-header-side"
           className="flex shrink-0 items-center gap-2 self-end"
         >
-          {badges}
+          {badges ? (
+            <div data-slot="working-header-badges" className="flex items-center gap-2">
+              {badges}
+            </div>
+          ) : null}
+          {action ? (
+            <div data-slot="working-header-action" className="flex items-center gap-2">
+              {action}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </header>
@@ -144,7 +148,7 @@ function KeyValueRow({
   return (
     <div
       data-slot="key-value-row"
-      className={cn('flex min-h-[42px] items-center justify-between gap-6 py-3', className)}
+      className={cn('flex min-h-[42px] items-center justify-between gap-6 py-2', className)}
       {...props}
     >
       <dt className="shrink-0 text-base text-muted-foreground">{label}</dt>
