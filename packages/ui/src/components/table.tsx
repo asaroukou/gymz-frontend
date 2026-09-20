@@ -84,7 +84,7 @@ function TableCell({
     <td
       data-slot="table-cell"
       className={cn(
-        'px-3 py-[14px] align-middle text-base whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+        'px-3 py-[14px] align-middle text-base leading-tight whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
         numeric && 'text-right font-numeric',
         className,
       )}

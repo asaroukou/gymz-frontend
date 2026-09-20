@@ -25,6 +25,7 @@ describe('Table (comptoir clair geometry)', () => {
     const cell = screen.getByText('Awa Ndiaye');
     expect(cell.className).toContain('py-[14px]');
     expect(cell.className).toContain('text-base');
+    expect(cell.className).toContain('leading-tight');
     const row = cell.closest('tr') as HTMLElement;
     expect(row.className).toContain('data-[state=selected]:bg-secondary');
     expect(row.className).toContain('border-b');

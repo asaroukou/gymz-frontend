@@ -362,7 +362,7 @@ export function AddScheduleDialog({
           {t('addCourse')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[620px]">
+      <DialogContent className="sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>{t('scheduleDialog.addTitle')}</DialogTitle>
           <DialogDescription>{t('scheduleDialog.addDescription')}</DialogDescription>
@@ -476,7 +476,7 @@ export function EditScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[620px]">
+      <DialogContent className="sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>{t('scheduleDialog.editTitle')}</DialogTitle>
         </DialogHeader>
