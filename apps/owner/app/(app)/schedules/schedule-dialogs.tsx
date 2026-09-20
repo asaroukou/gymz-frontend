@@ -476,7 +476,7 @@ export function EditScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[620px]">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>{t('scheduleDialog.editTitle')}</DialogTitle>
         </DialogHeader>

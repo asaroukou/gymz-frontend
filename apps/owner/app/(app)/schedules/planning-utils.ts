@@ -90,7 +90,9 @@ export function usePlanningLabels(): PlanningLabels {
       if (summary.interval > 1) {
         return t('recurrence.weeklyEvery', { interval: summary.interval, days });
       }
-      return summary.days.length > 0 ? days : t('recurrence.weekly');
+      return summary.days.length > 0
+        ? `${t('recurrence.weekly')} · ${days}`
+        : t('recurrence.weekly');
     },
     [t, weekdayAbbr],
   );

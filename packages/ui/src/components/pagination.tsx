@@ -82,10 +82,12 @@ export function Pagination({ page, pageCount, onPageChange, labels, className }:
                 aria-label={labels.page(item)}
                 aria-current={item === page ? 'page' : undefined}
                 className={cn(
-                  'h-9 min-w-9 rounded-full px-2 font-numeric text-md text-muted-foreground transition-colors hover:bg-side',
+                  'h-9 min-w-9 rounded-full px-2 font-numeric text-md text-muted-foreground transition-colors hover:bg-secondary/60',
                   item === page && 'bg-secondary font-semibold text-foreground hover:bg-secondary',
                 )}
-                onClick={() => onPageChange(item)}
+                onClick={() => {
+                  if (item !== page) onPageChange(item);
+                }}
               >
                 {item}
               </button>

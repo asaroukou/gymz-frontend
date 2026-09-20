@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@iziwellpass/ui/components/dialog';
+import { Label } from '@iziwellpass/ui/components/label';
 import {
   Select,
   SelectContent,
@@ -94,15 +95,15 @@ export function EditAccessDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{t('detail.access.title')}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-[18px]">
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium">{t('detail.access.scopeLabel')}</span>
+            <Label htmlFor="access-scope">{t('detail.access.scopeLabel')}</Label>
             <Select value={scope} onValueChange={(v) => setScope(v as typeof scope)}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="access-scope" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
