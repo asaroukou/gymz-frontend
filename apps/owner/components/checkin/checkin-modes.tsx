@@ -17,11 +17,14 @@ export function CheckinModes({
   mode,
   onModeChange,
   onScan,
+  onScannerClose,
   disabled = false,
 }: {
   mode: CheckinMode;
   onModeChange: (mode: CheckinMode) => void;
   onScan?: (token: string) => void;
+  /** Called after the scanner dialog closes without Radix restoring focus itself. */
+  onScannerClose?: () => void;
   disabled?: boolean;
 }) {
   const t = useTranslations('frontdesk');
@@ -39,7 +42,7 @@ export function CheckinModes({
       </Tabs>
       {onScan ? (
         <div className="hidden md:block">
-          <QrScannerDialog onDetected={onScan} disabled={disabled} />
+          <QrScannerDialog onDetected={onScan} disabled={disabled} onClose={onScannerClose} />
         </div>
       ) : null}
     </div>

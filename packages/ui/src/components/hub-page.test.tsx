@@ -16,6 +16,11 @@ describe('HubPage', () => {
     expect(el.className).toContain('mx-auto');
     expect(el.className).toContain('relative');
   });
+  it('clips horizontal overflow from the wash without clipping the hero vertically', () => {
+    const { container } = render(<HubPage>x</HubPage>);
+    const el = container.querySelector('[data-slot="hub-page"]') as HTMLElement;
+    expect(el.className).toContain('overflow-x-clip');
+  });
   it('hero pieces render the right elements', () => {
     render(
       <HubHero>

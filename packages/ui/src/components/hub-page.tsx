@@ -17,7 +17,7 @@ function HubPage({
   return (
     <div
       data-slot="hub-page"
-      className={cn('relative mx-auto w-full max-w-[940px] md:pt-10', className)}
+      className={cn('relative mx-auto w-full max-w-[940px] overflow-x-clip md:pt-10', className)}
       {...props}
     >
       {wash ? <Wash /> : null}

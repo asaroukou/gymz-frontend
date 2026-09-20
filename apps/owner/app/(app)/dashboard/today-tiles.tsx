@@ -68,7 +68,7 @@ export function TodayTiles({
 
   if (slots.isLoading) {
     return (
-      <div className="grid w-full grid-cols-2 gap-4 md:grid-cols-4" aria-hidden="true">
+      <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4" aria-hidden="true">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="aspect-square w-full rounded-xl" />
         ))}
@@ -96,7 +96,7 @@ export function TodayTiles({
 
   return (
     <div className="flex w-full flex-col items-center gap-12">
-      <ul className="grid w-full grid-cols-2 gap-4 md:grid-cols-4">
+      <ul className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4">
         {tiles.map((slot, index) => {
           const tone = tileTone(slot, index);
           const isCancelled = slot.status === 'cancelled';

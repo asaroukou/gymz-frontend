@@ -46,6 +46,12 @@ describe('searchMembers', () => {
   it('respects the limit and keeps input order', () => {
     expect(searchMembers(MEMBERS, 'nd', 2).map((m) => m.last_name)).toEqual(['Ndiaye', 'Ndour']);
   });
+  it('strips a trailing « · status » suffix so typing after a selection keeps matching the name', () => {
+    expect(searchMembers(MEMBERS, 'Awa Ndiaye · Actif').map((m) => m.last_name)).toEqual([
+      'Ndiaye',
+    ]);
+    expect(searchMembers(MEMBERS, 'Awa N · Actif').map((m) => m.last_name)).toEqual(['Ndiaye']);
+  });
 });
 
 describe('labels', () => {

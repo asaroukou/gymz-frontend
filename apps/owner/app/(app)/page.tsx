@@ -45,7 +45,7 @@ function LoadingHub({ dateLine }: { dateLine: string }) {
           ))}
         </div>
       </HubSection>
-      <div className="grid w-full grid-cols-2 gap-4 md:grid-cols-4" aria-hidden="true">
+      <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4" aria-hidden="true">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="aspect-square w-full rounded-xl" />
         ))}
@@ -104,6 +104,7 @@ function DashboardBody({
           mode={mode}
           onModeChange={setMode}
           members={list}
+          membersError={members.isError}
           register={register}
           statusLabel={statusLabel}
         />

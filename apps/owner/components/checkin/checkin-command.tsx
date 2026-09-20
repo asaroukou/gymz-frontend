@@ -28,6 +28,8 @@ export interface CheckinCommandProps {
   onModeChange: (mode: CheckinMode) => void;
   /** The loaded member list (walk-in type-ahead). */
   members: readonly Member[];
+  /** True when the member list failed to load — swaps the empty-list row for an error one. */
+  membersError?: boolean;
   register: RegisterCheckin;
   /** « Actif », « Expiré »… from the members namespace. */
   statusLabel: (status: MembershipStatus) => string;
@@ -47,6 +49,7 @@ export function CheckinCommand({
   mode,
   onModeChange,
   members,
+  membersError = false,
   register,
   statusLabel,
 }: CheckinCommandProps) {
@@ -137,18 +140,18 @@ export function CheckinCommand({
   const modeMenu = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="hidden md:inline-flex"
-          aria-label={t('command.modeMenuLabel')}
-        >
+        <Button type="button" variant="ghost" size="sm" className="hidden md:inline-flex">
           {mode === 'qr' ? t('command.modeQr') : t('command.modeWalkin')}
           <ChevronDownIcon aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          inputRef.current?.focus();
+        }}
+      >
         {MODES.map((m) => (
           <DropdownMenuItem key={m} onSelect={() => onModeChange(m)}>
             {m === 'qr' ? t('command.modeQr') : t('command.modeWalkin')}
@@ -170,7 +173,11 @@ export function CheckinCommand({
             placeholder={placeholder}
             value={query}
             onChange={(value) => {
-              setQuery(value);
+              // Editing after a selection: keep only the typed name part, so
+              // continuing to type over « Awa Ndiaye · Actif » still searches
+              // the name instead of matching against the trailing status.
+              const next = selectedId ? value.replace(/\s·\s.*$/, '') : value;
+              setQuery(next);
               setSelectedId(null);
               setOpen(true);
             }}
@@ -214,7 +221,7 @@ export function CheckinCommand({
               aria-selected={false}
               className="px-3 py-3 text-base text-muted-foreground"
             >
-              {t('walkin.noMembers')}
+              {membersError ? t('walkin.membersError') : t('walkin.noMembers')}
             </p>
           ) : (
             results.map((member, index) => (

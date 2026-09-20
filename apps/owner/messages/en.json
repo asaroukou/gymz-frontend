@@ -211,7 +211,6 @@
     }
   },
   "frontdesk": {
-    "title": "Front desk",
     "dateLine": "Front desk · {date}",
     "question": "Who's coming in?",
     "questionWalkin": "Who's coming in without a booking?",
@@ -252,7 +251,6 @@
     "walkin": {
       "hint": "Pick a member who is here, then confirm the entry.",
       "noMembers": "No members",
-      "selectPrompt": "Pick a member from the list",
       "errorDuplicate": "This member was already checked in here recently.",
       "membersError": "Could not load members"
     },

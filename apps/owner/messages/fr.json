@@ -211,7 +211,6 @@
     }
   },
   "frontdesk": {
-    "title": "Accueil",
     "dateLine": "Accueil · {date}",
     "question": "Qui entre ?",
     "questionWalkin": "Qui entre sans réservation ?",
@@ -252,7 +251,6 @@
     "walkin": {
       "hint": "Choisissez un membre présent, puis validez l'entrée.",
       "noMembers": "Aucun membre",
-      "selectPrompt": "Choisissez un membre dans la liste",
       "errorDuplicate": "Ce membre a déjà été enregistré ici récemment.",
       "membersError": "Impossible de charger les membres"
     },

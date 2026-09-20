@@ -33,7 +33,9 @@ function Hero({ mode, children }: { mode: CheckinMode; children?: ReactNode }) {
   const { selectedVenue } = useVenueContext();
   return (
     <HubHero>
-      <HubEyebrow>{t('dateLine', { date: todayLabel(locale, selectedVenue?.timezone) })}</HubEyebrow>
+      <HubEyebrow>
+        {t('dateLine', { date: todayLabel(locale, selectedVenue?.timezone) })}
+      </HubEyebrow>
       <HubTitle>{mode === 'walkin' ? t('questionWalkin') : t('question')}</HubTitle>
       {children}
     </HubHero>
@@ -94,6 +96,7 @@ function FrontdeskBody({
           mode={mode}
           onModeChange={onModeChange}
           members={list}
+          membersError={members.isError}
           register={register}
           statusLabel={statusLabel}
         />
@@ -101,6 +104,10 @@ function FrontdeskBody({
           mode={mode}
           onModeChange={onModeChange}
           onScan={(token) => register.submitToken(token)}
+          onScannerClose={() =>
+            // The command bar is the page's single command input.
+            document.querySelector<HTMLInputElement>('[data-slot="command-bar"] input')?.focus()
+          }
           disabled={register.isPending}
         />
         <p className="max-w-[35rem] text-md text-muted-foreground">

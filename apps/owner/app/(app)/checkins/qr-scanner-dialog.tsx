@@ -115,8 +115,12 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
       <DialogContent
         className="max-w-sm"
         onCloseAutoFocus={(e) => {
+          // Only steal focus back to the command bar when a caller asked for
+          // it; otherwise let Radix restore focus to the trigger it opened
+          // from (the camera pill has no caller-provided close handler).
+          if (!onClose) return;
           e.preventDefault();
-          onClose?.();
+          onClose();
         }}
       >
         <DialogHeader>

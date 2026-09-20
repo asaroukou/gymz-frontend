@@ -27,7 +27,10 @@ export function memberInitials(member: Member | undefined): string {
  * diacritics are ignored. Input order is preserved; `limit` caps the list.
  */
 export function searchMembers(members: readonly Member[], query: string, limit = 8): Member[] {
-  const q = fold(query.trim());
+  // Strip a trailing « · Actif » status suffix before folding: continuing to
+  // type after picking a member (the field then reads « Awa Ndiaye · Actif »)
+  // must keep searching the name, not match against the status text.
+  const q = fold(query.replace(/\s·\s.*$/, '').trim());
   if (!q) return [];
   const out: Member[] = [];
   for (const member of members) {
