@@ -176,7 +176,7 @@ Unchanged. Uppercase was CSS only and is now gone; fr/en parity untouched.
 - SP-B: hub layouts (940px centred column, 64/120 padding, greeting 44/400, command bar under the heading, stat strip, tile grid, lavis wash), auth screens with the wash and the notice row, onboarding, the collapse control on the brand row.
 - SP-C: working-screen layouts (40/56 padding, 32/400 title, toolbar with search pill and tabs, hairline tables with avatars, footers with pagination pills), dialogs and sheets content, tinted plan and venue tiles.
 - Member app (Expo) migration.
-- The `prj-design` skill kit still describes the old shadcn kit; regenerate it after SP-C.
+- The old `prj-design` skill kit (shadcn-era) was deleted on 2026-09-20; the canvas is the reference kit.
 - Parked from SP1 review: Tabs/Popover panel focus outline visual pass; stale prose on admin `/design` (fixed here by the §7.2 rewrite).
 
 ## 10. Task shape for the plan
