@@ -4,8 +4,8 @@ import { Wash } from '@iziwellpass/ui/components/wash';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
 /**
- * The hub column: 940px centred inside the shell's `main` (which pads 24px,
- * so `md:pt-10` lands the drawn 64px top). Sections sit 48px apart on desktop
+ * The hub column: 940px centred inside the shell's `main` (which pads 40px
+ * on desktop, so `md:pt-6` lands the drawn 64px top). Sections sit 48px apart on desktop
  * and 24px on a phone. `wash` draws the lavis behind the heading.
  */
 function HubPage({
@@ -17,7 +17,7 @@ function HubPage({
   return (
     <div
       data-slot="hub-page"
-      className={cn('relative mx-auto w-full max-w-[940px] overflow-x-clip md:pt-10', className)}
+      className={cn('relative mx-auto w-full max-w-[940px] overflow-x-clip md:pt-6', className)}
       {...props}
     >
       {wash ? <Wash /> : null}

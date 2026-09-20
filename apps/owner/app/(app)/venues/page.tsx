@@ -44,7 +44,7 @@ function VenueTile({ venue, index }: { venue: Venue; index: number }) {
           </TileTop>
           <div>
             <TileTitle className="text-[1.25rem]">{venue.name}</TileTitle>
-            <TileMeta className="text-md">
+            <TileMeta className="mt-1.5 text-md">
               {activityLabel(venue.venue_type)} · {venue.city || t('noAddress')}
             </TileMeta>
           </div>
@@ -82,7 +82,7 @@ function VenuesContent() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-2xl font-normal">{t('title')}</h1>
           {venuesQuery.isLoading ? (
@@ -93,9 +93,7 @@ function VenuesContent() {
             </p>
           )}
         </div>
-        {venuesQuery.isError || venues.length > 0 ? (
-          <div className="pt-1">{createAction}</div>
-        ) : null}
+        {venuesQuery.isError || venues.length > 0 ? createAction : null}
       </div>
 
       {venuesQuery.isLoading ? (

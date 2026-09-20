@@ -25,12 +25,12 @@ import { PlanDialog } from './plan-dialog';
 export function PlansHeader({ action }: { action?: ReactNode }) {
   const t = useTranslations('plans');
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="flex flex-col gap-1.5">
         <h1 className="text-2xl font-normal">{t('title')}</h1>
         <p className="text-base text-muted-foreground">{t('subtitle')}</p>
       </div>
-      {action ? <div className="pt-1">{action}</div> : null}
+      {action ?? null}
     </div>
   );
 }

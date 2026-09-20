@@ -207,7 +207,7 @@ export function AppShell({
           <div className="ml-auto flex items-center gap-2">{actions}</div>
         </header>
 
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 px-4 py-6 md:px-14 md:pt-10 md:pb-12">{children}</main>
       </div>
     </div>
   );
