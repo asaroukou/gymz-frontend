@@ -240,15 +240,13 @@ function SlotRow({
           </DropdownMenu>
         ) : null}
       </div>
-      {cancelling ? (
-        <CancelSlotDialog
-          slot={slot}
-          venueId={slot.venue_id}
-          timeZone={timeZone}
-          open={cancelling}
-          onOpenChange={setCancelling}
-        />
-      ) : null}
+      <CancelSlotDialog
+        slot={slot}
+        venueId={slot.venue_id}
+        timeZone={timeZone}
+        open={cancelling}
+        onOpenChange={setCancelling}
+      />
     </div>
   );
 }
@@ -286,7 +284,8 @@ export function SlotsTab({
     [resourcesQuery.data],
   );
 
-  const [participantsSlot, setParticipantsSlot] = useState<ScheduleSlot | null>(null);
+  const [sheetSlot, setSheetSlot] = useState<ScheduleSlot | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const slotsByDate = useMemo(() => {
     const groups = new Map<string, ScheduleSlot[]>();
@@ -366,8 +365,11 @@ export function SlotsTab({
                     resourceName={roomOf(slot)}
                     timeZone={timeZone}
                     canManageSlots={canManageSlots}
-                    selected={participantsSlot?.id === slot.id}
-                    onOpenParticipants={setParticipantsSlot}
+                    selected={sheetOpen && sheetSlot?.id === slot.id}
+                    onOpenParticipants={(opened) => {
+                      setSheetSlot(opened);
+                      setSheetOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -376,23 +378,18 @@ export function SlotsTab({
         })}
       </div>
 
-      {participantsSlot ? (
+      {sheetSlot ? (
         <BookingsSheet
-          slot={participantsSlot}
+          slot={sheetSlot}
           venueId={venueId}
           timeZone={timeZone}
-          title={titleOf(participantsSlot)}
-          dayLabel={dayHeading(
-            venueDateKey(participantsSlot.start_time, timeZone),
-            participantsSlot.start_time,
-          )}
-          resourceName={roomOf(participantsSlot)}
+          title={titleOf(sheetSlot)}
+          dayLabel={dayHeading(venueDateKey(sheetSlot.start_time, timeZone), sheetSlot.start_time)}
+          resourceName={roomOf(sheetSlot)}
           members={members}
           canManageBookings={canManageBookings}
-          open={participantsSlot !== null}
-          onOpenChange={(next) => {
-            if (!next) setParticipantsSlot(null);
-          }}
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
         />
       ) : null}
     </>

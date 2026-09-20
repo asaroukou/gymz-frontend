@@ -191,7 +191,9 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
   const schedules = useMemo(() => schedulesQuery.data ?? [], [schedulesQuery.data]);
 
   const [editing, setEditing] = useState<Schedule | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState<Schedule | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const instructorName = (schedule: Schedule): string => {
     if (!schedule.instructor_staff_id) return '';
@@ -244,8 +246,14 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
     resourceName: resourceById.get(schedule.resource_id)?.name ?? t('courses.unknownResource'),
     instructorName: instructorName(schedule),
     canManage,
-    onEdit: setEditing,
-    onDelete: setDeleting,
+    onEdit: (s) => {
+      setEditing(s);
+      setEditOpen(true);
+    },
+    onDelete: (s) => {
+      setDeleting(s);
+      setDeleteOpen(true);
+    },
   });
 
   return (
@@ -285,20 +293,16 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
           schedule={editing}
           resources={resources}
           staff={staff}
-          open={editing !== null}
-          onOpenChange={(next) => {
-            if (!next) setEditing(null);
-          }}
+          open={editOpen}
+          onOpenChange={setEditOpen}
         />
       ) : null}
       {deleting ? (
         <DeleteScheduleDialog
           venueId={venueId}
           schedule={deleting}
-          open={deleting !== null}
-          onOpenChange={(next) => {
-            if (!next) setDeleting(null);
-          }}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
         />
       ) : null}
     </>

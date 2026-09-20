@@ -265,6 +265,7 @@ export function BookingsSheet({
   const bookingsQuery = useListBookingsForSlot(slot.id, { query: { select: unwrap } });
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const checkIn = useCheckInManual();
   const [validatingBookingId, setValidatingBookingId] = useState<string | null>(null);
 
@@ -401,7 +402,10 @@ export function BookingsSheet({
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             variant="destructive"
-                            onSelect={() => setCancellingBooking(booking)}
+                            onSelect={() => {
+                              setCancellingBooking(booking);
+                              setCancelOpen(true);
+                            }}
                           >
                             {t('cancelBooking.confirm')}
                           </DropdownMenuItem>
@@ -420,10 +424,8 @@ export function BookingsSheet({
         <CancelBookingDialog
           booking={cancellingBooking}
           venueId={venueId}
-          open={cancellingBooking !== null}
-          onOpenChange={(next) => {
-            if (!next) setCancellingBooking(null);
-          }}
+          open={cancelOpen}
+          onOpenChange={setCancelOpen}
         />
       ) : null}
     </Sheet>

@@ -45,6 +45,12 @@ export function MembersDirectory({
   const [status, setStatus] = useState<StatusFilter>('all');
   const [page, setPage] = useState(1);
   const [suspendTarget, setSuspendTarget] = useState<Member | null>(null);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+
+  const handleSuspend = (member: Member) => {
+    setSuspendTarget(member);
+    setSuspendOpen(true);
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -118,7 +124,7 @@ export function MembersDirectory({
                 member={member}
                 index={index}
                 canManage={canManage}
-                onSuspend={setSuspendTarget}
+                onSuspend={handleSuspend}
               />
             ))}
           </div>
@@ -144,7 +150,7 @@ export function MembersDirectory({
                     member={member}
                     index={index}
                     canManage={canManage}
-                    onSuspend={setSuspendTarget}
+                    onSuspend={handleSuspend}
                   />
                 ))}
               </TableBody>
@@ -173,10 +179,8 @@ export function MembersDirectory({
       {suspendTarget ? (
         <SuspendMemberDialog
           member={suspendTarget}
-          open={suspendTarget !== null}
-          onOpenChange={(next) => {
-            if (!next) setSuspendTarget(null);
-          }}
+          open={suspendOpen}
+          onOpenChange={setSuspendOpen}
         />
       ) : null}
     </div>
