@@ -15,13 +15,6 @@ import type { OnboardVenueRequest } from '@iziwellpass/api/schemas';
 import { parseClaims } from '@iziwellpass/auth/claims';
 import { useAuth, useSession } from '@iziwellpass/auth/provider';
 import { Button } from '@iziwellpass/ui/components/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@iziwellpass/ui/components/card';
 import { Combobox } from '@iziwellpass/ui/components/combobox';
 import {
   Form,
@@ -41,6 +34,7 @@ import {
 } from '@iziwellpass/ui/components/select';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
+import { AuthCard } from '@/components/auth-card';
 import { ACTIVITY_TYPE_VALUES, useActivityTypeOptions } from '@/lib/activity-type';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { COUNTRIES, TIMEZONES, withCurrentValue } from '@/lib/locations';
@@ -66,13 +60,11 @@ function detectTimezone(): string {
 
 function LoadingShell() {
   return (
-    <Card>
-      <CardContent className="space-y-3 pt-6">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </CardContent>
-    </Card>
+    <div className="grid w-full gap-[18px]" aria-hidden>
+      <Skeleton className="h-12 w-full rounded-full" />
+      <Skeleton className="h-12 w-full rounded-full" />
+      <Skeleton className="h-12 w-full rounded-full" />
+    </div>
   );
 }
 
@@ -169,7 +161,7 @@ function OnboardingForm() {
     <Form {...form}>
       <form
         onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
-        className="grid gap-4 sm:grid-cols-2"
+        className="grid gap-x-4 gap-y-[18px] sm:grid-cols-2"
       >
         <FormField
           control={form.control}
@@ -290,7 +282,7 @@ function OnboardingForm() {
             </FormItem>
           )}
         />
-        <div className="grid gap-2 sm:col-span-2">
+        <div className="grid gap-4 sm:col-span-2">
           <Button type="submit" disabled={onboard.isPending} className="w-full">
             {onboard.isPending ? t('submitting') : t('submit')}
           </Button>
@@ -330,14 +322,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
-        <CardDescription>{t('subtitle')}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <OnboardingForm />
-      </CardContent>
-    </Card>
+    <AuthCard title={t('title')} subtitle={t('subtitle')}>
+      <OnboardingForm />
+    </AuthCard>
   );
 }
