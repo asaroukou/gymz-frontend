@@ -5,30 +5,28 @@ import { Slot } from 'radix-ui';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-[750] whitespace-nowrap transition-[color,background-color,border-color,opacity] duration-[360ms] ease-[cubic-bezier(0.22,1,0.36,1)] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-base font-medium whitespace-nowrap transition-colors duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]",
   {
     variants: {
       variant: {
-        default:
-          'bg-primary text-primary-foreground font-[800] hover:bg-[color:var(--primary-hover)]',
-        destructive: 'bg-destructive text-white hover:opacity-90',
-        outline: 'border border-current bg-transparent hover:bg-accent',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-accent',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        default: 'bg-primary text-primary-foreground hover:bg-primary-hover',
+        secondary: 'bg-secondary text-foreground hover:bg-accent',
+        outline: 'border border-border bg-transparent text-foreground hover:bg-side',
+        ghost: 'text-foreground hover:bg-side',
+        destructive: 'bg-destructive text-destructive-foreground hover:brightness-95',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        // Front-desk first: touch-sized (44px) on phones, stepping down to the
-        // compact desktop height at lg. Applies to the sizes screens reach for
-        // by default; xs/sm/icon-xs/icon-sm stay explicitly compact.
-        default: 'h-11 px-4 py-2 has-[>svg]:px-3 lg:h-9',
-        xs: "h-6 gap-1 px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: 'h-8 gap-1.5 px-3 has-[>svg]:px-2.5',
-        lg: 'h-11 px-6 has-[>svg]:px-4 lg:h-10',
-        icon: 'size-11 lg:size-9',
-        'icon-xs': "size-6 [&_svg:not([class*='size-'])]:size-3",
-        'icon-sm': 'size-8',
-        'icon-lg': 'size-10',
+        // Front-desk first: 44px pills everywhere, no desktop step-down.
+        default: 'h-11 px-5 has-[>svg]:px-4',
+        lg: 'h-11 px-5 has-[>svg]:px-4',
+        sm: 'h-9 gap-2 px-4 text-md has-[>svg]:px-3',
+        xs: "h-7 gap-1 px-3 text-sm [&_svg:not([class*='size-'])]:size-3.5",
+        icon: 'size-11',
+        'icon-md': 'size-10',
+        'icon-sm': 'size-9',
+        'icon-xs': "size-7 [&_svg:not([class*='size-'])]:size-3.5",
+        'icon-lg': 'size-11',
       },
     },
     defaultVariants: {

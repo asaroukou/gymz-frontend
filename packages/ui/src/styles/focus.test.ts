@@ -10,15 +10,9 @@ import { describe, expect, it } from 'vitest';
 // primitive is covered the day it lands.
 const SRC_ROOT = join(__dirname, '..');
 
-// input-otp.tsx is the one legitimate carrier: its `outline-none` sits on the
-// decorative slot div, the library's real `<input>` is visually hidden with
-// inline styles that already include `outline: 0`, and the focus affordance is
-// the active slot's own indicator (`data-[active=true]` border + ring).
-const EXEMPT = new Set(['input-otp.tsx']);
-
 const FILES = [
   ...readdirSync(join(SRC_ROOT, 'components'))
-    .filter((name) => name.endsWith('.tsx') && !EXEMPT.has(name))
+    .filter((name) => name.endsWith('.tsx'))
     .sort()
     .map((name) => join('components', name)),
   'app-shell.tsx',
