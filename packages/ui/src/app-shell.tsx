@@ -4,6 +4,7 @@ import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useState,
   type AnchorHTMLAttributes,
   type ComponentType,
@@ -68,6 +69,10 @@ export interface AppShellProps {
 }
 
 const DEFAULT_STORAGE_KEY = 'iziwellpass.shell.collapsed';
+
+// Reads the remembered rail before the first paint on the client; a plain
+// effect would paint the 260px column and then animate it shut on every load.
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 function DefaultLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return <a {...props} />;
@@ -165,7 +170,7 @@ function CollapseToggle({
       aria-label={label}
       aria-expanded={!collapsed}
       onClick={onToggle}
-      className="text-muted-foreground hover:text-foreground"
+      className="-my-1.5 text-muted-foreground hover:text-foreground"
     >
       {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
     </Button>
@@ -214,7 +219,8 @@ function Column({
         collapsed ? 'items-center px-3.5' : 'px-3',
       )}
     >
-      {/* Brand row: 52px, wordmark left, the panel toggle right (18px atténué), as drawn */}
+      {/* Brand row: 52px (the 36px toggle carries -my-1.5 so the row keeps the wordmark's
+          24px content height), wordmark left, the panel toggle right (18px atténué), as drawn */}
       <div
         className={cn(
           'flex items-center pt-2 pb-5',
@@ -270,14 +276,18 @@ export function AppShell({
   // Starts expanded on the server and the first client render (no hydration
   // mismatch), then follows the remembered preference.
   const [collapsed, setCollapsed] = useState(false);
+  // The width transition is enabled only after the remembered state is
+  // applied, so a returning user never sees the column slide shut on load.
+  const [animate, setAnimate] = useState(false);
   const groups = toGroups(navGroups, nav);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     try {
       if (window.localStorage.getItem(storageKey) === '1') setCollapsed(true);
     } catch {
       // Storage unavailable (private mode, quota): stay expanded.
     }
+    setAnimate(true);
   }, [storageKey]);
 
   const toggleCollapsed = useCallback(() => {
@@ -316,7 +326,8 @@ export function AppShell({
       <aside
         data-collapsed={collapsed || undefined}
         className={cn(
-          'hidden shrink-0 bg-side transition-[width] duration-200 ease-out md:sticky md:top-0 md:block md:h-screen',
+          'hidden shrink-0 bg-side md:sticky md:top-0 md:block md:h-screen',
+          animate && 'transition-[width] duration-200 ease-out',
           collapsed ? 'w-[72px]' : 'w-[260px]',
         )}
       >

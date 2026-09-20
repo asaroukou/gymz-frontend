@@ -168,12 +168,17 @@ describe('AppShell collapse', () => {
     const aside = document.querySelector('aside') as HTMLElement;
     expect(aside.className).toContain('w-[260px]');
     expect(within(aside).getByText('full footer')).toBeTruthy();
+    const toggle = within(aside).getByRole('button', { name: 'Réduire le menu' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
 
     act(() => {
-      within(aside).getByRole('button', { name: 'Réduire le menu' }).click();
+      toggle.click();
     });
     expect(aside.className).toContain('w-[72px]');
     expect(aside.getAttribute('data-collapsed')).toBe('true');
+    expect(
+      within(aside).getByRole('button', { name: 'Déplier le menu' }).getAttribute('aria-expanded'),
+    ).toBe('false');
     expect(within(aside).getByText('rail footer')).toBeTruthy();
     expect(within(aside).queryByText('full footer')).toBeNull();
     // Links keep their accessible name on the rail (sr-only label).
@@ -187,15 +192,21 @@ describe('AppShell collapse', () => {
     expect(window.localStorage.getItem('test.collapsed')).toBe('0');
   });
 
-  it('restores the remembered rail on mount', () => {
+  it('restores the remembered rail on mount and hides the nav header there', () => {
     window.localStorage.setItem('test.collapsed', '1');
     render(
-      <AppShell nav={nav} title="IziWellPass" storageKey="test.collapsed">
+      <AppShell
+        nav={nav}
+        title="IziWellPass"
+        storageKey="test.collapsed"
+        navHeader={<p>column header</p>}
+      >
         <p>content</p>
       </AppShell>,
     );
     const aside = document.querySelector('aside') as HTMLElement;
     expect(aside.getAttribute('data-collapsed')).toBe('true');
+    expect(within(aside).queryByText('column header')).toBeNull();
   });
 
   it('never collapses the mobile drawer column', () => {

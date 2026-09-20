@@ -62,15 +62,20 @@ export function VenueSwitcher({
   if (!isError && venues.length === 0) {
     if (iconOnly) {
       return canAddVenue ? (
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label={t('addVenue')}
-          onClick={() => router.push('/venues/new')}
-          className={className}
-        >
-          <PlusIcon aria-hidden />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label={t('addVenue')}
+              onClick={() => router.push('/venues/new')}
+              className={className}
+            >
+              <PlusIcon aria-hidden />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t('addVenue')}</TooltipContent>
+        </Tooltip>
       ) : null;
     }
     return canAddVenue ? (
