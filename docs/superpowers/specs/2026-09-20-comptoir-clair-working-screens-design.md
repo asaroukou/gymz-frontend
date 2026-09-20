@@ -48,7 +48,7 @@ interface PaginationProps {
   page: number;              // 1-based
   pageCount: number;
   onPageChange(page: number): void;
-  labels: { label: string; previous: string; next: string; page(n: number): string; ellipsis: string };
+  labels: { label: string; previous: string; next: string; page(n: number): string };
   className?: string;
 }
 ```
@@ -203,7 +203,7 @@ Table columns (1068): Membre 244 · Contact 260 · Type 130 · Statut 130 · Fin
 - Fin: date 15 (or `noEnd` atténué) + `Badge variant="warning"` « Bientôt » (`expiringSoon`) inline to the right, gap 20.
 - Actions: 36px « ··· » menu (Voir / Modifier / Suspendre).
 
-Footer `div.flex.items-center.justify-between.pt-2`: `p.text-md.text-muted-foreground` « {shown} membres sur {total} » (new key `members.footer.count`, ICU) and `Pagination`.
+Footer `div.flex.items-center.justify-between.pt-2`: `p.text-md.text-muted-foreground` « {shown} membres sur {total} » (new key `members.footer`, ICU) and `Pagination`.
 
 Data flow: `members` → `filtered` (query + status, existing `useMemo`) → `paginate(filtered, page, PAGE_SIZE)`. `useEffect` resets `page` to 1 when `query` or `status` changes. Empty (`empty.*`) and no-results (`noResults.*`) states use `Empty`, no card. `DirectorySkeleton` renders 8 rows of 64px.
 
@@ -257,7 +257,7 @@ Data flow: `members` → `filtered` (query + status, existing `useMemo`) → `pa
 ## 9. Guard, copy and tests
 
 - Design guard: no new banned strings. `rounded-[1.75rem]`, `rounded-[20px]`, `py-[14px]`, `size-11`, `text-[1.5rem]`, `text-[1.75rem]` are arbitrary values the guard does not police. No `shadow-*`, no `border` around groups, no `Card` on any SP-C page after C2.
-- fr/en keys added: `members.count` (ICU « {count, plural, one {# membre} other {# membres}} »), `members.footer.count` (« {shown} membres sur {total} » with plural on `total`), `staff.count`, `plans.dialog.allActivitiesHint`, `planning.slots.count` (« {booked}/{capacity} inscrits ») , `planning.bookings.eyebrow` (« {day} · {room} »). Keys removed with their consumers: none required; orphans found during the final review are deleted in the fix wave, never before. Parity gate:
+- fr/en keys reused: `members.subtitle` and `staff.subtitle` (already ICU plurals) for the header counts, `planning.bookings.subtitle` for the sheet description. Keys added: `members.footer` (« {shown} membres sur {total} », plural on `total`), `planning.bookings.eyebrow` (« {day} · {room} »), `plans.dialog.allActivitiesHint`, `members.detail.subscriptions.assignDialog.paidHint` (« Le paiement a été encaissé à l'attribution. »), and `common.pagination.{label,previous,next,page}` (« Pagination », « Page précédente », « Page suivante », « Page {n} »). Keys removed with their consumers: none required; orphans found during the final review are deleted in the fix wave, never before. Parity gate:
   `node -e 'const f=require("./apps/owner/messages/fr.json"),e=require("./apps/owner/messages/en.json");const k=(o,p="")=>Object.entries(o).flatMap(([a,b])=>typeof b==="string"?[p+a]:k(b,p+a+"."));const F=new Set(k(f)),E=new Set(k(e));const d=[...F].filter(x=>!E.has(x)).concat([...E].filter(x=>!F.has(x)));if(d.length){console.error(d);process.exit(1)}'`
 - Tests: ui (`working-page`, `pagination`, `day-toggle`, plus a `table` test asserting the head/cell classes and selected-row class); owner lib (`paginate`, `role-badge`, `slot-status`, `subscription-tone`); existing owner lib tests untouched. Admin `design-registry.test.ts` stays green with the new entries.
 
