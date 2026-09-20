@@ -399,6 +399,7 @@
           "noPlans": "Aucune offre active dans cet établissement.",
           "startsOn": "Début",
           "paid": "Réglé",
+          "paidHint": "Le paiement a été encaissé à l'attribution.",
           "submit": "Attribuer",
           "submitting": "Attribution…",
           "success": "Abonnement attribué",

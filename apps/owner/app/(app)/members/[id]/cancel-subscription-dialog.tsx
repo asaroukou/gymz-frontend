@@ -10,6 +10,7 @@ import type { MemberSubscription } from '@iziwellpass/api/schemas';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -59,11 +60,11 @@ export function CancelSubscriptionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="ghost" size="sm">
           {t('detail.subscriptions.cancel')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>{t('detail.subscriptions.cancelDialog.title')}</DialogTitle>
           <DialogDescription>
@@ -77,9 +78,9 @@ export function CancelSubscriptionDialog({
             control saying the same word would be read as a fourth way to
             cancel the subscription.
           */}
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            {tCommon('close')}
-          </Button>
+          <DialogClose asChild>
+            <Button variant="ghost">{tCommon('close')}</Button>
+          </DialogClose>
           <Button variant="destructive" onClick={onConfirm} disabled={updateSubscription.isPending}>
             {updateSubscription.isPending
               ? t('detail.subscriptions.cancelDialog.submitting')

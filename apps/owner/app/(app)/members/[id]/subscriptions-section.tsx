@@ -6,44 +6,37 @@ import { useLocale, useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
 import { getListPlansQueryOptions, useListSubscriptions } from '@iziwellpass/api/generated';
-import type { MemberSubscription, SubscriptionStatus } from '@iziwellpass/api/schemas';
+import type { MemberSubscription } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@iziwellpass/ui/components/card';
-import { Separator } from '@iziwellpass/ui/components/separator';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+import { SectionHeading } from '@iziwellpass/ui/components/working-page';
+import { tintClass, tintForIndex } from '@iziwellpass/ui/lib/tints';
+import { cn } from '@iziwellpass/ui/lib/utils';
 
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatCalendarDate } from '@/lib/datetime';
 import { formatMoney } from '@/lib/money';
+import { subscriptionTone } from '@/lib/subscription-tone';
 
 import { AssignSubscriptionDialog } from './assign-subscription-dialog';
 import { CancelSubscriptionDialog } from './cancel-subscription-dialog';
 
 /**
- * Status colour mirrors lib/member-status.ts: live reads as success, cancelled
- * as destructive, spent/lapsed as muted. Colour always pairs with a text label.
+ * One subscription as a tinted tile (canvas `L6sMyP`): name (+ « Impayé »),
+ * a 13px meta line, the status on the right in 14/500. Live tiles rotate the
+ * pastels; expired, exhausted or cancelled ones take the grey pill tone (D10).
  */
-function statusVariant(status: SubscriptionStatus): 'success' | 'destructive' | 'secondary' {
-  if (status === 'active') return 'success';
-  if (status === 'cancelled') return 'destructive';
-  return 'secondary';
-}
-
-function SubscriptionRow({
+function SubscriptionTile({
   subscription,
   planName,
+  index,
   memberId,
   canManage,
 }: {
   subscription: MemberSubscription;
   planName: string;
+  index: number;
   memberId: string;
   canManage: boolean;
 }) {
@@ -61,41 +54,47 @@ function SubscriptionRow({
             remaining: subscription.entries_remaining,
             total: subscription.entries_total,
           })
-        : t('detail.subscriptions.entriesTotal', {
-            total: subscription.entries_total,
-          })
+        : t('detail.subscriptions.entriesTotal', { total: subscription.entries_total })
       : subscription.expires_on != null
         ? t('detail.subscriptions.expiresOn', {
             date: formatCalendarDate(subscription.expires_on, locale),
           })
         : null;
+  const price = formatMoney(subscription.price_amount_minor, subscription.price_currency, locale);
+  const tone = subscriptionTone(subscription.status, index);
+  const live = subscription.status === 'active';
 
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="space-y-1">
+    <div
+      className={cn(
+        'flex items-center justify-between gap-4 rounded-lg p-5',
+        tone === 'side' ? 'bg-secondary' : tintClass(tintForIndex(tone)),
+      )}
+    >
+      <div className="flex min-w-0 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-medium">{planName}</span>
-          <Badge variant={statusVariant(subscription.status)}>
-            {t(`detail.subscriptions.status.${subscription.status}`)}
-          </Badge>
+          <span className="text-base font-semibold">{planName}</span>
           {subscription.payment_status === 'unpaid' ? (
-            <Badge variant="outline">{t('detail.subscriptions.unpaid')}</Badge>
+            <Badge variant="warning">{t('detail.subscriptions.unpaid')}</Badge>
           ) : null}
         </div>
-        {terms ? <p className="text-sm text-muted-foreground">{terms}</p> : null}
+        <p className="text-sm text-muted-strong">{terms ? `${terms} · ${price}` : price}</p>
       </div>
-      <div className="text-right">
-        <span className="font-medium">
-          {formatMoney(subscription.price_amount_minor, subscription.price_currency, locale)}
+      <div className="flex shrink-0 items-center gap-2">
+        <span
+          className={cn(
+            'text-md font-medium',
+            live ? 'text-success-foreground' : 'text-muted-foreground',
+          )}
+        >
+          {t(`detail.subscriptions.status.${subscription.status}`)}
         </span>
-        {canManage && subscription.status === 'active' ? (
-          <div className="mt-2">
-            <CancelSubscriptionDialog
-              memberId={memberId}
-              subscription={subscription}
-              planName={planName}
-            />
-          </div>
+        {canManage && live ? (
+          <CancelSubscriptionDialog
+            memberId={memberId}
+            subscription={subscription}
+            planName={planName}
+          />
         ) : null}
       </div>
     </div>
@@ -106,14 +105,11 @@ function SubscriptionRow({
  * Plan names live on the venue's plan list, not on the subscription, so every
  * venue represented in the list needs its own plan query. `useQueries` runs
  * that variable-length set in parallel and `combine` folds it into one id→name
- * map plus one aggregate pending flag — no per-venue child component and no
- * duplicated state to keep in sync.
+ * map plus one aggregate pending flag.
  *
  * Archived plans are included: a member can hold a subscription to a plan that
- * was archived afterwards. That makes this a different cache entry from the
- * assign dialog's `include_archived: false` list, so a just-assigned plan's
- * name is genuinely unknown here until this query resolves — which is why
- * callers must distinguish "still loading" from "no such plan".
+ * was archived afterwards. Callers must distinguish "still loading" from "no
+ * such plan".
  */
 function useVenuePlanNames(venueIds: string[]) {
   return useQueries({
@@ -129,7 +125,7 @@ function useVenuePlanNames(venueIds: string[]) {
   });
 }
 
-export function SubscriptionsCard({
+export function SubscriptionsSection({
   memberId,
   canManage,
 }: {
@@ -152,45 +148,41 @@ export function SubscriptionsCard({
 
   // Until the plan queries settle, a name we don't have yet is unknown to us,
   // not unknown to the system: show a neutral dash rather than claiming
-  // « Offre inconnue » — copy that would otherwise appear on every row for a
-  // round trip, and on a row the owner had just successfully created.
+  // « Offre inconnue ».
   const planNameFor = (planId: string) =>
     planNames.names[planId] ?? (planNames.isPending ? '—' : t('detail.subscriptions.unknownPlan'));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('detail.subscriptions.title')}</CardTitle>
-        <CardDescription>{t('detail.subscriptions.description')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {subscriptionsQuery.isLoading ? (
-          <Skeleton className="h-16 w-full" />
-        ) : subscriptionsQuery.isError ? (
-          <Alert variant="destructive">
-            <AlertDescription>
-              {apiErrorMessage(subscriptionsQuery.error, t('detail.subscriptions.loadError'))}
-            </AlertDescription>
-          </Alert>
-        ) : subscriptions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('detail.subscriptions.empty')}</p>
-        ) : (
-          <div className="space-y-4">
-            {subscriptions.map((subscription, i) => (
-              <div key={subscription.id} className="space-y-4">
-                {i > 0 ? <Separator /> : null}
-                <SubscriptionRow
-                  subscription={subscription}
-                  planName={planNameFor(subscription.plan_id)}
-                  memberId={memberId}
-                  canManage={canManage}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-        {canManage ? <AssignSubscriptionDialog memberId={memberId} /> : null}
-      </CardContent>
-    </Card>
+    <section className="flex flex-col gap-4">
+      <SectionHeading
+        title={t('detail.subscriptions.title')}
+        description={t('detail.subscriptions.description')}
+        action={canManage ? <AssignSubscriptionDialog memberId={memberId} /> : undefined}
+      />
+      {subscriptionsQuery.isLoading ? (
+        <Skeleton className="h-[78px] w-full rounded-lg" />
+      ) : subscriptionsQuery.isError ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {apiErrorMessage(subscriptionsQuery.error, t('detail.subscriptions.loadError'))}
+          </AlertDescription>
+        </Alert>
+      ) : subscriptions.length === 0 ? (
+        <p className="text-base text-muted-foreground">{t('detail.subscriptions.empty')}</p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {subscriptions.map((subscription, index) => (
+            <SubscriptionTile
+              key={subscription.id}
+              subscription={subscription}
+              planName={planNameFor(subscription.plan_id)}
+              index={index}
+              memberId={memberId}
+              canManage={canManage}
+            />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

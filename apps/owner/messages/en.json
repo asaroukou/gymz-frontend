@@ -399,6 +399,7 @@
           "noPlans": "No active plans at this venue.",
           "startsOn": "Start",
           "paid": "Paid",
+          "paidHint": "Payment was collected on assignment.",
           "submit": "Assign",
           "submitting": "Assigning…",
           "success": "Subscription assigned",
