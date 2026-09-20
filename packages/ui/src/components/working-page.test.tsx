@@ -30,7 +30,7 @@ describe('WorkingPage', () => {
     expect(h1.className).toContain('text-2xl');
     expect(h1.className).toContain('font-normal');
     expect(screen.getByText('128 membres').className).toContain('text-muted-foreground');
-    expect(screen.getByRole('button', { name: 'Ajouter un membre' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ajouter un membre' })).toBeTruthy();
     expect(screen.getByText('Actif').parentElement?.dataset.slot).toBe('working-header-badges');
   });
 
@@ -79,7 +79,7 @@ describe('WorkingPage', () => {
     expect(h2.className).toContain('text-xl');
     expect(h2.className).toContain('font-medium');
     expect(screen.getByText('Les formules achetées par ce membre.').className).toContain('text-md');
-    expect(screen.getByRole('button', { name: 'Attribuer' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Attribuer' })).toBeTruthy();
   });
 
   it('KeyValueList draws hairlines between rows only and right-aligns values', () => {
