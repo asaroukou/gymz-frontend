@@ -177,6 +177,7 @@ export function CheckinCommand({
             onSubmit={handleSubmit}
             mode={modeMenu}
             submitLabel={t('command.submit')}
+            disabled={register.isPending}
             inputProps={{
               ref: inputRef,
               onKeyDown,
@@ -207,7 +208,14 @@ export function CheckinCommand({
       >
         <div id={listId} role="listbox" aria-label={t('command.results')}>
           {results.length === 0 ? (
-            <p className="px-3 py-3 text-base text-muted-foreground">{t('walkin.noMembers')}</p>
+            <p
+              role="option"
+              aria-disabled="true"
+              aria-selected={false}
+              className="px-3 py-3 text-base text-muted-foreground"
+            >
+              {t('walkin.noMembers')}
+            </p>
           ) : (
             results.map((member, index) => (
               <div
