@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -14,16 +13,17 @@ import { z } from 'zod';
 import { unwrap } from '@iziwellpass/api/client';
 import { getListVenuesQueryKey, useCreateVenue } from '@iziwellpass/api/generated';
 import { Button } from '@iziwellpass/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@iziwellpass/ui/components/card';
 import { Form } from '@iziwellpass/ui/components/form';
+import { BackLink, WorkingHeader, WorkingPage } from '@iziwellpass/ui/components/working-page';
 
 import { RequirePageAccess } from '@/components/page-access';
+import { VenueFormFields } from '@/components/venue-form-fields';
 import { ACTIVITY_TYPE_VALUES } from '@/lib/activity-type';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
-import { VenueFormFields } from '@/components/venue-form-fields';
 
 function CreateVenueContent() {
   const t = useTranslations('venues');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const queryClient = useQueryClient();
   const createVenue = useCreateVenue();
@@ -90,36 +90,28 @@ function CreateVenueContent() {
   };
 
   return (
-    <div className="space-y-6">
-      <Link
-        href="/venues"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeftIcon className="size-4" />
+    <WorkingPage>
+      <BackLink href="/venues" linkComponent={Link}>
         {t('detail.back')}
-      </Link>
-      <h1 className="text-2xl font-normal">{t('create.title')}</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('create.formTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
-              className="grid gap-4 sm:grid-cols-2"
-            >
-              <VenueFormFields form={form} />
-              <div className="sm:col-span-2">
-                <Button type="submit" disabled={createVenue.isPending}>
-                  {createVenue.isPending ? t('create.submitting') : t('create.submit')}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+      </BackLink>
+      <WorkingHeader title={t('create.title')} />
+      <Form {...form}>
+        <form
+          onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
+          className="flex w-full max-w-[680px] flex-col gap-[18px]"
+        >
+          <VenueFormFields form={form} layout="rows" />
+          <div className="flex justify-end gap-2.5 pt-2">
+            <Button type="button" variant="ghost" asChild>
+              <Link href="/venues">{tCommon('cancel')}</Link>
+            </Button>
+            <Button type="submit" disabled={createVenue.isPending}>
+              {createVenue.isPending ? t('create.submitting') : t('create.submit')}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </WorkingPage>
   );
 }
 
