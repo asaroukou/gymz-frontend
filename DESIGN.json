@@ -1,153 +1,63 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-19T00:00:00Z",
+  "generatedAt": "2026-09-20T00:00:00Z",
   "title": "Design System: IziWellPass",
   "extensions": {
     "colorMeta": {
-      "encre": {
-        "role": "primary",
-        "displayName": "Encre",
-        "canonical": "#141512",
-        "tonalRamp": [
-          "#0b0c0a",
-          "#141512",
-          "#2a2c27",
-          "#42453e",
-          "#5d6156",
-          "#878b7e",
-          "#b5b8ac",
-          "#e4e5dd"
-        ]
-      },
-      "os": {
-        "role": "neutral",
-        "displayName": "Os",
-        "canonical": "#f2eee5",
-        "tonalRamp": [
-          "#3d3a30",
-          "#5c5847",
-          "#7d785f",
-          "#9e987b",
-          "#beb89c",
-          "#d9d4bf",
-          "#e8e4d6",
-          "#f2eee5"
-        ]
-      },
-      "foret": {
-        "role": "secondary",
-        "displayName": "Forêt",
-        "canonical": "#244f3c",
-        "tonalRamp": [
-          "#12281e",
-          "#1b3c2d",
-          "#244f3c",
-          "#33684f",
-          "#4a8367",
-          "#6ea189",
-          "#9cc1af",
-          "#cfe2d8"
-        ]
-      },
-      "argile": {
-        "role": "secondary",
-        "displayName": "Argile",
-        "canonical": "#c66f50",
-        "tonalRamp": [
-          "#4f2a1e",
-          "#743e2b",
-          "#985238",
-          "#c66f50",
-          "#d78a6d",
-          "#e4a78f",
-          "#eec5b4",
-          "#f7e1d8"
-        ]
-      },
-      "ocre": {
-        "role": "tertiary",
-        "displayName": "Ocre",
-        "canonical": "#d9b84b"
-      },
-      "sauge": {
-        "role": "tertiary",
-        "displayName": "Sauge",
-        "canonical": "#b9c9a4"
-      },
-      "eucalyptus": {
-        "role": "tertiary",
-        "displayName": "Eucalyptus",
-        "canonical": "#9fc0bb"
-      },
-      "eau": {
-        "role": "tertiary",
-        "displayName": "Eau",
-        "canonical": "#8ebbd2"
-      },
-      "statut-succes": {
-        "role": "status",
-        "displayName": "Statut succès",
-        "canonical": "#257a4e"
-      },
-      "statut-attention": {
-        "role": "status",
-        "displayName": "Statut attention",
-        "canonical": "#d9b84b"
-      },
-      "statut-erreur": {
-        "role": "status",
-        "displayName": "Statut erreur",
-        "canonical": "#b23a2a"
-      },
-      "statut-info": {
-        "role": "status",
-        "displayName": "Statut info",
-        "canonical": "#8ebbd2"
-      }
+      "encre": { "role": "primary", "displayName": "Encre", "canonical": "#1f1f1f" },
+      "attenue": { "role": "neutral", "displayName": "Atténué", "canonical": "#5f6368" },
+      "attenue-fort": { "role": "neutral", "displayName": "Atténué fort", "canonical": "#4d5156" },
+      "fond": { "role": "neutral", "displayName": "Fond", "canonical": "#ffffff" },
+      "cote": { "role": "neutral", "displayName": "Côté", "canonical": "#fafafa" },
+      "pilule": { "role": "neutral", "displayName": "Pilule", "canonical": "#eceef2" },
+      "filet": { "role": "neutral", "displayName": "Filet", "canonical": "#dcdcdc" },
+      "teinte-bleu": { "role": "tertiary", "displayName": "Teinte bleu", "canonical": "#e8eefb" },
+      "teinte-vert": { "role": "tertiary", "displayName": "Teinte vert", "canonical": "#e9f3ee" },
+      "teinte-sable": { "role": "tertiary", "displayName": "Teinte sable", "canonical": "#fbf1dc" },
+      "teinte-rose": { "role": "tertiary", "displayName": "Teinte rose", "canonical": "#f6ecf2" },
+      "teinte-lavande": { "role": "tertiary", "displayName": "Teinte lavande", "canonical": "#eee9f8" },
+      "statut-succes": { "role": "status", "displayName": "Statut succès", "canonical": "#e9f3ee", "text": "#1d5c3c" },
+      "statut-attention": { "role": "status", "displayName": "Statut attention", "canonical": "#fbf1dc", "text": "#7a5c10" },
+      "statut-erreur": { "role": "status", "displayName": "Statut erreur", "canonical": "#fbe9e7", "text": "#8f2f22" },
+      "statut-info": { "role": "status", "displayName": "Statut info", "canonical": "#e8eefb", "text": "#2c4f8a" }
+    },
+    "contrast": {
+      "method": "APCA",
+      "pairs": [
+        { "fg": "encre", "bg": "fond", "lc": 103.1, "wcag": "16.5:1" },
+        { "fg": "attenue", "bg": "fond", "lc": 79.5, "wcag": "6.1:1" },
+        { "fg": "attenue", "bg": "cote", "lc": 76.5, "wcag": "5.8:1" },
+        { "fg": "attenue-fort", "bg": "teinte-vert", "lc": 78.5, "wcag": "7.1:1" },
+        { "fg": "attenue-fort", "bg": "teinte-sable", "lc": 79.2, "wcag": "7.1:1" },
+        { "fg": "encre", "bg": "pilule", "lc": 92.9, "wcag": "14.2:1" },
+        { "fg": "fond", "bg": "encre", "lc": -105.9, "wcag": "16.5:1" },
+        { "fg": "statut-succes-texte", "bg": "statut-succes", "lc": 78.0, "wcag": "7.0:1" },
+        { "fg": "statut-attention-texte", "bg": "statut-attention", "lc": 72.3, "wcag": "5.6:1" },
+        { "fg": "statut-erreur-texte", "bg": "statut-erreur", "lc": 75.7, "wcag": "6.9:1" },
+        { "fg": "statut-info-texte", "bg": "statut-info", "lc": 76.9, "wcag": "7.0:1" },
+        { "fg": "filet", "bg": "fond", "lc": 17.8, "wcag": "1.4:1" }
+      ]
     },
     "typographyMeta": {
-      "display": {
-        "displayName": "Display",
-        "purpose": "Hero moments only: one per surface (page title, pass face)."
-      },
-      "headline": {
-        "displayName": "Headline",
-        "purpose": "Section heads inside a page."
-      },
-      "title": {
-        "displayName": "Title",
-        "purpose": "Card, panel, and row titles."
-      },
-      "body": {
-        "displayName": "Body",
-        "purpose": "Default reading size; cap prose at 65–75ch."
-      },
-      "label": {
-        "displayName": "Eyebrow",
-        "purpose": "Tracked uppercase overline; the only uppercase in the system."
-      },
-      "numeric": {
-        "displayName": "Numeric",
-        "purpose": "Tabular figures ('tnum') for times, capacities, amounts, codes."
-      }
+      "display": { "displayName": "Display", "purpose": "Hub greeting or question; one per screen; weight 400." },
+      "page-title": { "displayName": "Titre de page", "purpose": "Working screens; weight 400." },
+      "section": { "displayName": "Section", "purpose": "Section heads and day groups; weight 500." },
+      "title": { "displayName": "Titre", "purpose": "Tile titles and row primary text; weight 600." },
+      "body": { "displayName": "Corps", "purpose": "Default reading size; tables also use it." },
+      "label": { "displayName": "Libellé", "purpose": "Field labels, table headers, badges, timestamps. No uppercase." },
+      "numeric": { "displayName": "Numérique", "purpose": "Stat strip; tabular figures on every count, time, amount." }
     },
     "shadows": [],
     "motion": [
       {
         "name": "motion-standard",
-        "value": "360ms cubic-bezier(0.22, 1, 0.36, 1)",
-        "purpose": "The single easing/duration token for every state transition and reveal."
+        "value": "200ms ease-out",
+        "purpose": "Pill state changes and dialog fade. Functional only; honours prefers-reduced-motion."
       }
     ],
     "breakpoints": [
-      {
-        "name": "stack",
-        "value": "47.99rem"
-      },
-      {
-        "name": "header-collapse",
-        "value": "52rem"
-      }
+      { "name": "stack", "value": "47.99rem" },
+      { "name": "header-collapse", "value": "52rem" }
     ]
   },
   "components": [
@@ -155,129 +65,106 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Encre pill with white label; the one primary action per screen.",
+      "description": "The one dark pill on a screen.",
       "html": "<button class=\"ds-btn-primary\">Valider</button>",
-      "css": ".ds-btn-primary { min-block-size: 2.75rem; padding: 0.75rem 1rem; display: inline-flex; align-items: center; gap: 0.75rem; background: #141512; color: #ffffff; border: 1px solid #141512; border-radius: 999px; font-family: 'Inter Variable', Inter, sans-serif; font-size: 0.9rem; font-weight: 800; line-height: 1.15; cursor: pointer; transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary:hover { opacity: 0.85; } .ds-btn-primary:focus-visible { outline: 3px solid currentColor; outline-offset: 0.25rem; }"
+      "css": ".ds-btn-primary { min-block-size: 2.75rem; padding: 0 1.25rem; display: inline-flex; align-items: center; gap: 0.5rem; background: #1f1f1f; color: #ffffff; border: 0; border-radius: 999px; font-family: 'Inter Variable', Inter, sans-serif; font-size: 0.9375rem; font-weight: 500; cursor: pointer; transition: background 200ms ease-out; } .ds-btn-primary:hover { background: #333333; } .ds-btn-primary:focus-visible { outline: 3px solid #1f1f1f; outline-offset: 0.25rem; } .ds-btn-primary:disabled { opacity: 0.5; }"
     },
     {
-      "name": "Outline Button",
+      "name": "Secondary Button",
       "kind": "button",
-      "refersTo": "button-outline",
-      "description": "Transparent pill bounded by a currentColor hairline; secondary actions.",
-      "html": "<button class=\"ds-btn-outline\">Modifier</button>",
-      "css": ".ds-btn-outline { min-block-size: 2.75rem; padding: 0.75rem 1rem; display: inline-flex; align-items: center; background: transparent; color: #141512; border: 1px solid currentColor; border-radius: 999px; font-family: 'Inter Variable', Inter, sans-serif; font-size: 0.9rem; font-weight: 750; line-height: 1.15; cursor: pointer; transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-outline:hover { opacity: 0.7; } .ds-btn-outline:focus-visible { outline: 3px solid currentColor; outline-offset: 0.25rem; }"
+      "refersTo": "button-secondary",
+      "description": "Transparent pill with a hairline outline.",
+      "html": "<button class=\"ds-btn-secondary\">Modifier</button>",
+      "css": ".ds-btn-secondary { min-block-size: 2.75rem; padding: 0 1.25rem; display: inline-flex; align-items: center; background: transparent; color: #1f1f1f; border: 1px solid #dcdcdc; border-radius: 999px; font-family: 'Inter Variable', Inter, sans-serif; font-size: 0.9375rem; font-weight: 500; cursor: pointer; } .ds-btn-secondary:hover { background: #fafafa; } .ds-btn-secondary:focus-visible { outline: 3px solid #1f1f1f; outline-offset: 0.25rem; }"
+    },
+    {
+      "name": "Command Bar",
+      "kind": "input",
+      "refersTo": "command-bar",
+      "description": "The hub's single central control: scan a QR or search a member, with a mode selector and a dark round submit.",
+      "html": "<form class=\"ds-command\"><svg aria-hidden=\"true\"></svg><input type=\"text\" placeholder=\"Scanner un QR ou rechercher un membre\" aria-label=\"Scanner un QR ou rechercher un membre\" /><button type=\"button\" class=\"ds-command__mode\">Accueil</button><button type=\"submit\" class=\"ds-command__go\" aria-label=\"Valider\"></button></form>",
+      "css": ".ds-command { display: flex; align-items: center; gap: 0.875rem; block-size: 3.75rem; max-inline-size: 45rem; padding: 0 0.625rem 0 1.375rem; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 999px; } .ds-command input { flex: 1; border: 0; background: transparent; font: 400 1rem 'Inter Variable', Inter, sans-serif; color: #1f1f1f; } .ds-command input::placeholder { color: #5f6368; } .ds-command__mode { border: 0; background: transparent; font: 500 0.875rem Inter, sans-serif; color: #1f1f1f; padding: 0 0.625rem; block-size: 2.25rem; border-radius: 999px; } .ds-command__go { inline-size: 2.5rem; block-size: 2.5rem; border: 0; border-radius: 999px; background: #1f1f1f; }"
     },
     {
       "name": "Text Field",
       "kind": "input",
       "refersTo": "input",
-      "description": "White field on bone with a hairline; the one non-pill control family.",
-      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Rechercher un membre\" aria-label=\"Rechercher un membre\" />",
-      "css": ".ds-input { min-block-size: 2.75rem; padding: 0.65rem 1rem; background: #ffffff; color: #141512; border: 1px solid rgba(20, 21, 18, 0.18); border-radius: 0.75rem; font-family: 'Inter Variable', Inter, sans-serif; font-size: 1rem; } .ds-input::placeholder { color: rgba(20, 21, 18, 0.45); } .ds-input:focus-visible { outline: 3px solid currentColor; outline-offset: 0.25rem; border-color: currentColor; }"
+      "description": "48 px white pill with a hairline; label above in 13/500.",
+      "html": "<label class=\"ds-label\" for=\"email\">E-mail</label><input id=\"email\" class=\"ds-input\" type=\"email\" placeholder=\"prenom@exemple.sn\" />",
+      "css": ".ds-label { display: block; margin-block-end: 0.5rem; font: 500 0.8125rem/1.3 'Inter Variable', Inter, sans-serif; color: #4d5156; } .ds-input { block-size: 3rem; inline-size: 100%; padding: 0 1.125rem; background: #ffffff; color: #1f1f1f; border: 1px solid #dcdcdc; border-radius: 1.5rem; font: 400 0.9375rem 'Inter Variable', Inter, sans-serif; } .ds-input::placeholder { color: #5f6368; } .ds-input:focus-visible { border-color: #1f1f1f; outline: 3px solid #1f1f1f; outline-offset: 0.25rem; } .ds-input[aria-invalid='true'] { border-color: #b23a2a; }"
     },
     {
-      "name": "Eyebrow",
-      "kind": "custom",
-      "refersTo": "label",
-      "description": "The signature tracked-uppercase overline that introduces a section.",
-      "html": "<p class=\"ds-eyebrow\">Aujourd'hui</p>",
-      "css": ".ds-eyebrow { margin: 0; font-family: 'Inter Variable', Inter, sans-serif; font-size: 0.75rem; font-weight: 750; letter-spacing: 0.14em; text-transform: uppercase; color: #141512; }"
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Bare 15 px label at rest; the active item sits on a grey pill at 600.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\">Tableau de bord</a><a href=\"#\" aria-current=\"page\">Accueil</a><a href=\"#\">Planning</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 0.125rem; } .ds-nav a { display: flex; align-items: center; gap: 0.75rem; block-size: 2.625rem; padding: 0 0.875rem; border-radius: 999px; color: #1f1f1f; font: 400 0.9375rem 'Inter Variable', Inter, sans-serif; text-decoration: none; } .ds-nav a:hover { background: #f1f2f5; } .ds-nav a[aria-current='page'] { background: #eceef2; font-weight: 600; }"
+    },
+    {
+      "name": "Tile",
+      "kind": "card",
+      "refersTo": "tile",
+      "description": "A tinted 24 px-radius block for glanceable content. No border, no shadow. Dark ink on top.",
+      "html": "<article class=\"ds-tile\"><header><span class=\"ds-tile__time\">06:30</span><span class=\"ds-tile__count\">14/18</span></header><footer><h3>Yoga du matin</h3><p>Salle A · Aïssatou Ba</p></footer></article>",
+      "css": ".ds-tile { display: flex; flex-direction: column; justify-content: space-between; aspect-ratio: 1; padding: 1.25rem; background: #e9f3ee; border-radius: 1.5rem; color: #1f1f1f; font-family: 'Inter Variable', Inter, sans-serif; } .ds-tile header { display: flex; justify-content: space-between; } .ds-tile__time { font-size: 1.375rem; font-weight: 500; letter-spacing: -0.02em; } .ds-tile__count { font-size: 0.875rem; font-weight: 500; color: #4d5156; font-variant-numeric: tabular-nums; } .ds-tile h3 { margin: 0; font-size: 1rem; font-weight: 600; } .ds-tile p { margin: 0.25rem 0 0; font-size: 0.8125rem; color: #4d5156; }"
     },
     {
       "name": "Status Badge",
       "kind": "chip",
       "refersTo": "badge-statut",
-      "description": "Pill: 18% tint of the status color under its dark text stop; label always present.",
-      "html": "<span class=\"ds-badge-succes\">Actif</span> <span class=\"ds-badge-erreur\">Complet</span>",
-      "css": ".ds-badge-succes, .ds-badge-erreur { display: inline-flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: 999px; font-family: 'Inter Variable', Inter, sans-serif; font-size: 0.75rem; font-weight: 650; } .ds-badge-succes { background: rgba(37, 122, 78, 0.18); color: #1d5c3c; } .ds-badge-erreur { background: rgba(178, 58, 42, 0.18); color: #8f2f22; }"
+      "description": "Pale tint under dark status text; always labelled.",
+      "html": "<span class=\"ds-badge ds-badge--succes\">Actif</span> <span class=\"ds-badge ds-badge--attention\">Complet</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 999px; font: 500 0.8125rem 'Inter Variable', Inter, sans-serif; } .ds-badge--succes { background: #e9f3ee; color: #1d5c3c; } .ds-badge--attention { background: #fbf1dc; color: #7a5c10; } .ds-badge--erreur { background: #fbe9e7; color: #8f2f22; } .ds-badge--info { background: #e8eefb; color: #2c4f8a; }"
     },
     {
-      "name": "Navigation Link",
-      "kind": "nav",
-      "refersTo": "button-outline",
-      "description": "0.62-opacity resting nav; active goes 800-weight with the 2px rounded underline.",
-      "html": "<nav class=\"ds-nav\"><a href=\"#\">Membres</a><a href=\"#\" aria-current=\"page\">Planning</a><a href=\"#\">Accueil</a></nav>",
-      "css": ".ds-nav { display: flex; gap: 1.5rem; font-family: 'Inter Variable', Inter, sans-serif; } .ds-nav a { position: relative; min-block-size: 2.75rem; display: inline-flex; align-items: center; color: #141512; font-size: 0.875rem; font-weight: 650; opacity: 0.62; text-decoration: none; transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-nav a:hover, .ds-nav a:focus-visible, .ds-nav a[aria-current='page'] { opacity: 1; } .ds-nav a[aria-current='page'] { font-weight: 800; } .ds-nav a[aria-current='page']::after { position: absolute; inset-inline: 0; bottom: 0.25rem; height: 0.125rem; border-radius: 999px; background: currentColor; content: ''; }"
-    },
-    {
-      "name": "Panneau imprégné (forêt)",
-      "kind": "card",
-      "refersTo": "panel-drenched-foret",
-      "description": "The drenched identity panel: eyebrow + display statement on a full forest surface. One per screen, maximum.",
-      "html": "<div class=\"ds-panel-foret\"><p class=\"ds-panel-foret__eyebrow\">Ma carte</p><p class=\"ds-panel-foret__title\">Awa Ndiaye</p></div>",
-      "css": ".ds-panel-foret { padding: 1.5rem; background: #244f3c; color: #ffffff; border-radius: 1.25rem; font-family: 'Inter Variable', Inter, sans-serif; } .ds-panel-foret__eyebrow { margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 750; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; } .ds-panel-foret__title { margin: 0; font-size: 2.25rem; font-weight: 800; line-height: 0.95; letter-spacing: -0.05em; }"
+      "name": "Stat",
+      "kind": "custom",
+      "refersTo": "numeric",
+      "description": "A large tabular number over a label; no box; hairline between siblings.",
+      "html": "<div class=\"ds-stats\"><div class=\"ds-stat\"><strong>41</strong><span>Passages aujourd'hui</span></div><div class=\"ds-stat\"><strong>74 %</strong><span>Occupation</span></div></div>",
+      "css": ".ds-stats { display: flex; justify-content: center; } .ds-stat { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0 2.5rem; border-inline-start: 1px solid #dcdcdc; } .ds-stat:first-child { border: 0; } .ds-stat strong { font: 500 2rem/1.1 'Inter Variable', Inter, sans-serif; letter-spacing: -0.03em; color: #1f1f1f; font-variant-numeric: tabular-nums; } .ds-stat span { font: 400 0.8125rem Inter, sans-serif; color: #5f6368; }"
     }
   ],
   "narrative": {
-    "northStar": "Le studio documentaire",
-    "overview": "One brand from the public landing to the front desk to the member's pocket. The system is a documentary of real places: warm bone paper, near-black ink, and the flat colors of the venues themselves (forest, clay, ochre, sage, eucalyptus, water). Nothing shines that isn't real: a recorded product decision prohibits gradients outright; all depth comes from photography, flat color, typography, and contrast. Type does the heavy lifting: a single family (Inter Variable) speaking at documentary volume through weight (650/750/800) and scale. The landing shouts; the apps speak: tempered adoption reserves display scale for hero moments while working screens hold front-desk density. The forest/clay duality is meaningful, not decorative: forest belongs to the consumer/member side, clay to the partner/operator side.",
+    "northStar": "Le comptoir clair",
+    "overview": "A white counter with nothing on it but the thing you came to do. A light grey column beside a white page, one large quiet heading, one central action in a soft pill, and content in pale tinted tiles or between hairlines. Nothing is raised: no cards, no borders around groups, no shadows, no glass. Structure comes from three tones, generous space, and a single hairline where a list needs rows. The front desk is the reason: a receptionist should see one thing, the command bar. Owners at a laptop get the same calm at working density.",
     "keyCharacteristics": [
-      "Bone paper, ink controls: warm #f2eee5 ground, near-black #141512 as the single control fill; white panels sit on bone.",
-      "Two drenched hues with assigned meaning: forêt (member/consumer), argile (partner/owner). Rare, deliberate, full-bleed when used.",
-      "One family, heavy hand: Inter Variable only; hierarchy through weight (400 → 650 → 750 → 800) and scale, never through a second font.",
-      "The eyebrow: a 0.75rem, 750-weight, 0.14em-tracked uppercase overline is the system's signature label, and the only sanctioned uppercase.",
-      "Flat, hairline-bounded: zero shadows; 1px currentColor-mix hairlines; pills for controls, 1.25rem panels for surfaces.",
-      "Numerals are tabular: every time, capacity, amount, and code renders in Inter with 'tnum' at weight 650.",
-      "French-first, sentence case, operational; 2.75rem minimum touch targets; 3px currentColor focus outlines."
+      "White page, grey side: #ffffff next to #fafafa; the tonal step is the only frame.",
+      "Near-black ink at 400 and 500: headings are light and large; emphasis comes from size and space.",
+      "Pills for every control and every active state.",
+      "One dark pill per screen: the primary action is the only solid dark control in view.",
+      "Tinted tiles carry glanceable content: five pastels at equal lightness, dark ink on all.",
+      "Hairlines, never boxes: rows separate with a 1 px line; nothing is wrapped in a container.",
+      "Zero elevation: no shadows, no blur, no surface borders; overlays use a 25 % ink scrim."
     ],
     "rules": [
-      {
-        "name": "The Flat Ink Rule",
-        "body": "Encre is the only control color. If a screen needs a second brand color on a button, the design is wrong, not the palette.",
-        "section": "colors"
-      },
-      {
-        "name": "The Two Places Rule",
-        "body": "Forêt and argile are places, not paint: forêt = member side, argile = operator side. They appear drenched (a full surface) or not at all; never as borders, icons, or text accents.",
-        "section": "colors"
-      },
-      {
-        "name": "The Documentary Color Rule",
-        "body": "Color states a fact: whose side a surface belongs to, what category a thing is, what status it holds. Decorative color, and every gradient, is prohibited (recorded decision E-008).",
-        "section": "colors"
-      },
-      {
-        "name": "The One Family Rule",
-        "body": "Inter Variable is the entire typographic system. A second font is a bug.",
-        "section": "typography"
-      },
-      {
-        "name": "The Eyebrow Rule",
-        "body": "Uppercase exists only as the tracked 0.75rem eyebrow. Headings, buttons, and body are French sentence case, always.",
-        "section": "typography"
-      },
-      {
-        "name": "The Tabular Rule",
-        "body": "Any value someone compares, counts, or reads back renders with tabular figures at weight 650. No exceptions.",
-        "section": "typography"
-      },
-      {
-        "name": "The No-Shadow Rule",
-        "body": "box-shadow is prohibited. If a boundary needs asserting, use the hairline; if a layer needs separating, use a surface step or scrim.",
-        "section": "elevation"
-      },
-      {
-        "name": "The Hairline Rule",
-        "body": "Every border is 1px and derived from currentColor, so it recolors correctly on bone, white, forêt, and argile without new tokens.",
-        "section": "elevation"
-      }
+      { "name": "The One Dark Rule", "body": "Encre is the only solid dark control on a screen, and there is one of it.", "section": "colors" },
+      { "name": "The Pill Rule", "body": "Active means \"sits on a pilule\". No underlines, colour changes, or bold for selection.", "section": "colors" },
+      { "name": "The Tile Rule", "body": "Tints hold glanceable content only; never forms, tables, or dialogs; never a border or shadow.", "section": "colors" },
+      { "name": "The Light Heading Rule", "body": "Headings are 400 or 500. If one needs to be bolder to be seen, give it space instead.", "section": "typography" },
+      { "name": "The Sentence Case Rule", "body": "French sentence case everywhere. No uppercase, no tracked labels.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "Any value someone compares or reads back renders with tabular figures.", "section": "typography" },
+      { "name": "The No-Elevation Rule", "body": "box-shadow, backdrop-filter, and container borders are prohibited. Separate with space, tone, or a hairline between rows.", "section": "elevation" },
+      { "name": "The No-Box Rule", "body": "Content is never wrapped in a bordered or shadowed card.", "section": "elevation" }
     ],
     "dos": [
-      "Do ground every screen in os (#f2eee5) with encre (#141512) ink; panels are blanc, hairlines are 18% currentColor mixes.",
-      "Do reserve forêt for member-side identity and argile for operator-side identity, always drenched, at most one per screen.",
-      "Do use the eyebrow (0.75rem, 750, 0.14em, uppercase) to introduce sections, and Inter's odd weights (650/750/800) exactly.",
-      "Do render every time, capacity, amount, and code with 'tnum' tabular figures at weight 650.",
-      "Do keep every touch target at 2.75rem minimum, the 3px currentColor focus outline visible, and prefers-reduced-motion honored with the single 360ms ease-out motion token.",
-      "Do give every list a designed empty state with one CTA, every region a skeleton matching its final layout, and every error a calm message with a support reference."
+      "Do open hub screens with one light heading and the command bar, centred, with nothing competing.",
+      "Do keep exactly one dark pill per screen; every other control is outline, soft, or ghost.",
+      "Do mark active states with the grey pill and nothing else.",
+      "Do separate rows with hairlines and sections with space; wrap nothing in a card.",
+      "Do use the five tints for glanceable content, rotating by position, with dark ink on top.",
+      "Do hold text at APCA Lc 75 for body and Lc 60 for labels, verified on the surface it sits on.",
+      "Do keep touch targets at 2.75rem, the 3 px focus ring visible, and reduced-motion honoured."
     ],
     "donts": [
-      "Don't use gradients, ever: a recorded product decision prohibits them; depth comes from photography, flat color, typography, and contrast.",
-      "Don't use box-shadow, glassmorphism, or blur-as-decoration: the system is flat (see The No-Shadow Rule).",
-      "Don't build the \"generic SaaS dashboard\" PRODUCT.md forbids: no cream-and-blurple, no hero-metric cards, no identical icon+heading grids.",
-      "Don't drift toward the \"loud consumer fitness app\" (neon, gamified badges, hype copy) or \"playful/gamified\" (mascots, confetti, emoji).",
-      " compress into the \"dense enterprise admin\": reading text stays at 1rem, dense tables and rows may use 0.875rem and never less, rows breathe with hairlines, screens survive a 375px phone.",
-      "Don't go \"cold corporate minimalism\": no pure-white grounds, no cool greys, no timid 400-weight headings; the studio is warm and inked.",
-      "Don't uppercase anything except the eyebrow, use a second font family, put forêt/argile on borders/icons/text, or use border-left/border-right thicker than 1px as a colored stripe."
+      "Don't add a shadow, a blur, or a border around a group.",
+      "Don't use a second dark control, a coloured button, or a coloured underline for selection.",
+      "Don't set a heading above 500 weight or a row label above 600.",
+      "Don't use uppercase, tracked labels, or the retired eyebrow.",
+      "Don't put a form, a table, or a dialog inside a tinted tile.",
+      "Don't use a gradient anywhere except the optional lavis wash behind a hub heading.",
+      "Don't revert to the bone ground, drenched surfaces, or 750/800 weights of the previous system."
     ]
   }
 }

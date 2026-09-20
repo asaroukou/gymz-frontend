@@ -1,64 +1,78 @@
 ---
 name: IziWellPass
-description: Le studio documentaire — flat color, honest type, one brand from landing to front desk
+description: Le comptoir clair — flat, white, one action per screen; structure from tone, pills and space, never from elevation
 colors:
-  encre: '#141512'
-  os: '#f2eee5'
-  blanc: '#ffffff'
-  foret: '#244f3c'
-  argile: '#c66f50'
-  ocre: '#d9b84b'
-  sauge: '#b9c9a4'
-  eucalyptus: '#9fc0bb'
-  eau: '#8ebbd2'
-  statut-succes: '#257a4e'
+  encre: '#1f1f1f'
+  attenue: '#5f6368'
+  attenue-fort: '#4d5156'
+  fond: '#ffffff'
+  cote: '#fafafa'
+  pilule: '#eceef2'
+  pilule-survol: '#e3e6ec'
+  filet: '#dcdcdc'
+  lavis: '#dfe8fa'
+  teinte-bleu: '#e8eefb'
+  teinte-vert: '#e9f3ee'
+  teinte-sable: '#fbf1dc'
+  teinte-rose: '#f6ecf2'
+  teinte-lavande: '#eee9f8'
+  statut-succes: '#e9f3ee'
   statut-succes-texte: '#1d5c3c'
-  statut-attention: '#d9b84b'
+  statut-attention: '#fbf1dc'
   statut-attention-texte: '#7a5c10'
-  statut-erreur: '#b23a2a'
+  statut-erreur: '#fbe9e7'
   statut-erreur-texte: '#8f2f22'
-  statut-info: '#8ebbd2'
-  statut-info-texte: '#2c6a8a'
+  statut-info: '#e8eefb'
+  statut-info-texte: '#2c4f8a'
+  danger: '#b23a2a'
+  scrim: '#1f1f1f40'
 typography:
   display:
     fontFamily: 'Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif'
-    fontSize: 'clamp(2.25rem, 6vw, 4rem)'
-    fontWeight: 800
-    lineHeight: 0.95
-    letterSpacing: '-0.05em'
-  headline:
+    fontSize: '2.75rem'
+    fontWeight: 400
+    lineHeight: 1.1
+    letterSpacing: '-0.03em'
+  page-title:
     fontFamily: 'Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif'
-    fontSize: 'clamp(1.35rem, 1rem + 1.5vw, 2rem)'
-    fontWeight: 750
-    lineHeight: 1.05
-    letterSpacing: '-0.035em'
+    fontSize: '2rem'
+    fontWeight: 400
+    lineHeight: 1.1
+    letterSpacing: '-0.03em'
+  section:
+    fontFamily: 'Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif'
+    fontSize: '1.375rem'
+    fontWeight: 500
+    lineHeight: 1.2
+    letterSpacing: '-0.02em'
   title:
     fontFamily: 'Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '1.05rem'
-    fontWeight: 650
+    fontSize: '1rem'
+    fontWeight: 600
     lineHeight: 1.3
-    letterSpacing: '-0.01em'
   body:
     fontFamily: 'Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif'
-    fontSize: 'clamp(1rem, 0.95rem + 0.25vw, 1.125rem)'
+    fontSize: '0.9375rem'
     fontWeight: 400
     lineHeight: 1.5
   label:
     fontFamily: 'Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '0.75rem'
-    fontWeight: 750
+    fontSize: '0.8125rem'
+    fontWeight: 500
     lineHeight: 1.3
-    letterSpacing: '0.14em'
   numeric:
     fontFamily: 'Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '1rem'
-    fontWeight: 650
-    lineHeight: 1.3
+    fontSize: '2rem'
+    fontWeight: 500
+    lineHeight: 1.1
+    letterSpacing: '-0.03em'
     fontFeature: "'tnum' 1"
 rounded:
   pill: '999px'
-  panel: '1.25rem'
-  field: '0.75rem'
+  tile: '1.5rem'
+  dialog: '1.75rem'
+  field: '1.5rem'
+  small: '0.375rem'
 spacing:
   '1': '0.5rem'
   '2': '0.75rem'
@@ -69,181 +83,240 @@ spacing:
 components:
   button-primary:
     backgroundColor: '{colors.encre}'
-    textColor: '{colors.blanc}'
+    textColor: '{colors.fond}'
     rounded: '{rounded.pill}'
-    padding: '0.75rem 1rem'
+    padding: '0 1.25rem'
     height: '2.75rem'
-  button-outline:
+  button-secondary:
     backgroundColor: 'transparent'
     textColor: '{colors.encre}'
+    border: '1px solid {colors.filet}'
     rounded: '{rounded.pill}'
-    padding: '0.75rem 1rem'
+    padding: '0 1.25rem'
+    height: '2.75rem'
+  button-soft:
+    backgroundColor: '{colors.pilule}'
+    textColor: '{colors.encre}'
+    rounded: '{rounded.pill}'
+    padding: '0 1.25rem'
+    height: '2.75rem'
+  button-danger:
+    backgroundColor: '{colors.statut-erreur}'
+    textColor: '{colors.statut-erreur-texte}'
+    rounded: '{rounded.pill}'
+    padding: '0 1.25rem'
     height: '2.75rem'
   input:
-    backgroundColor: '{colors.blanc}'
+    backgroundColor: '{colors.fond}'
     textColor: '{colors.encre}'
+    border: '1px solid {colors.filet}'
     rounded: '{rounded.field}'
-    padding: '0.65rem 1rem'
-    height: '2.75rem'
-  panel:
-    backgroundColor: '{colors.blanc}'
+    padding: '0 1.125rem'
+    height: '3rem'
+  command-bar:
+    backgroundColor: '{colors.fond}'
     textColor: '{colors.encre}'
-    rounded: '{rounded.panel}'
-    padding: '1.5rem'
-  panel-drenched-foret:
-    backgroundColor: '{colors.foret}'
-    textColor: '{colors.blanc}'
-    rounded: '{rounded.panel}'
-    padding: '1.5rem'
-  panel-drenched-argile:
-    backgroundColor: '{colors.argile}'
+    border: '1px solid {colors.filet}'
+    rounded: '{rounded.pill}'
+    height: '3.75rem'
+    maxWidth: '45rem'
+  nav-item-active:
+    backgroundColor: '{colors.pilule}'
     textColor: '{colors.encre}'
-    rounded: '{rounded.panel}'
-    padding: '1.5rem'
+    rounded: '{rounded.pill}'
+    height: '2.625rem'
+  tile:
+    backgroundColor: '{colors.teinte-vert}'
+    textColor: '{colors.encre}'
+    rounded: '{rounded.tile}'
+    padding: '1.25rem'
   badge-statut:
+    backgroundColor: '{colors.statut-succes}'
     textColor: '{colors.statut-succes-texte}'
     rounded: '{rounded.pill}'
-    padding: '0.125rem 0.5rem'
+    padding: '0.25rem 0.75rem'
 ---
 
 # Design System: IziWellPass
 
 ## 1. Overview
 
-**Creative North Star: "Le studio documentaire"**
+**Creative North Star: "Le comptoir clair"**
 
-One brand from the public landing to the front desk to the member's pocket. The system is a documentary of real places: warm bone paper, near-black ink, and the flat colors of the venues themselves (forest, clay, ochre, sage, eucalyptus, water). Nothing shines that isn't real: a recorded product decision prohibits gradients outright; all depth comes from photography, flat color, typography, and contrast. Type does the heavy lifting: a single family (Inter Variable) speaking at documentary volume through weight (650/750/800) and scale, from a whispered letterspaced eyebrow to an editorial display headline.
+A white counter with nothing on it but the thing you came to do. The system borrows its posture from the calmest consumer assistants: a light grey column beside a white page, one large and quiet heading, one central action in a soft pill, and content that lives in pale tinted tiles or between hairlines. Nothing is raised. There are no cards, no borders around groups, no shadows, no glass. Structure comes from three tones (white page, grey side, grey pill), from generous space, and from a single hairline where a list needs rows.
 
-The landing shouts; the apps speak. **Tempered adoption** is the doctrine for product surfaces: the full palette, shape, and typographic voice carry over, but display scale is reserved for hero moments (a page title, the member's pass face), and working screens hold front-desk density. The forest/clay duality is meaningful, not decorative: forest belongs to the consumer/member side, clay to the partner/operator side, exactly as the landing's two branches divide.
+The front desk is the reason for this. A receptionist standing at a counter with a member in front of them should see one thing: the command bar that scans a QR or finds a member. Everything else steps back. Owners reviewing a table at a laptop get the same calm at working density: a light 32 px title, a search pill, a hairline table.
 
-This system explicitly rejects PRODUCT.md's anti-references: the generic SaaS dashboard, the loud consumer fitness app, the dense enterprise admin, anything playful/gamified, and cold corporate minimalism.
+This system replaces « Le studio documentaire » (bone ground, ink controls, drenched forest and clay surfaces, tracked uppercase eyebrows, heavy 750/800 weights). Those instruments are retired. Decision E-008 (no gradients) stands, with one sanctioned exception described under Elevation.
 
 **Key Characteristics:**
 
-- Bone paper, ink controls: warm `#f2eee5` ground, near-black `#141512` as the single control fill; white panels sit on bone.
-- Two drenched hues with assigned meaning: forêt (member/consumer), argile (partner/owner). Rare, deliberate, full-bleed when used.
-- One family, heavy hand: Inter Variable only; hierarchy through weight (400 → 650 → 750 → 800) and scale, never through a second font.
-- The eyebrow: a 0.75rem, 750-weight, 0.14em-tracked uppercase overline is the system's signature label, and the only sanctioned uppercase.
-- Flat, hairline-bounded: zero shadows; 1px `color-mix(in srgb, currentColor 18%, transparent)` hairlines; pills for controls, 1.25rem panels for surfaces.
-- Numerals are tabular: every time, capacity, amount, and code renders in Inter with `'tnum'` at weight 650.
-- French-first, sentence case, operational; 2.75rem minimum touch targets; 3px `currentColor` focus outlines.
+- White page, grey side: `#ffffff` main area next to a `#fafafa` navigation column. The tonal step is the only frame.
+- Near-black ink at 400 and 500: headings are light-weight and large; emphasis comes from size and space, not from bold.
+- Pills for every control and every active state: buttons, fields, tabs, the active nav item, pagination, badges.
+- One dark pill per screen: the primary action is the only solid dark control in view.
+- Tinted tiles carry glanceable content: five pastels at lightness 0.93 to 0.96, dark ink on all of them.
+- Hairlines, never boxes: tables and lists separate with a 1 px `#dcdcdc` line; nothing is wrapped in a bordered container.
+- Zero elevation: no shadows, no blur, no borders on surfaces. Overlays separate with a 25 % ink scrim.
 
 ## 2. Colors
 
-A documentary palette: ink on bone, two drenched place-colors, and an accent family drawn from the venues themselves.
+Three neutrals do the structural work; five pastels do the content work; four status pairs do the semantic work. Everything is measured with APCA against the surface it sits on.
 
-### Primary
-- **Encre** (#141512): the ink. All text on light surfaces, the primary button fill, active-nav underlines, wordmark. A warm near-black with a breath of green: never `#000`.
-- **Os** (#f2eee5): the bone paper. The application ground everywhere. Panels sit on it in white; it is never used as text.
-- **Blanc** (#ffffff): panel and card surfaces on bone, and text on drenched forêt. The one place pure white is allowed is as a surface/ink pairing against bone or a drenched hue; blanc never touches blanc.
+### Neutrals
 
-### Secondary
-- **Forêt** (#244f3c): the member/consumer color. Drenched surfaces only: the member pass face, member-side heroes, media fallbacks. White or bone text on it.
-- **Argile** (#c66f50): the partner/operator color. Drenched surfaces only: owner-side mastheads and identity moments. Encre text on it.
+- **Encre** (`#1f1f1f`): all headings, body, labels, icons, and the single primary button fill. Lc 103 on white.
+- **Atténué** (`#5f6368`): secondary text: subtitles, table headers, helper lines, timestamps, inactive tab labels. Lc 80 on white, Lc 77 on the side column. Body-text safe on both.
+- **Atténué fort** (`#4d5156`): secondary text when it sits on a tinted tile or a pill. Lc 78 on the green tile, Lc 79 on the sand tile.
+- **Fond** (`#ffffff`): the page.
+- **Côté** (`#fafafa`): the navigation column and disabled or archived tiles. WCAG 1.04:1 against the page; the step is felt, not seen.
+- **Pilule** (`#eceef2`): the active-state pill (nav, tabs, current page), soft buttons, neutral badges, the progress track. Encre on pilule is Lc 93.
+- **Filet** (`#dcdcdc`): the only border. Table rows, list rows, secondary button and field outlines. Lc 18 on white, above the Lc 15 visibility floor and deliberately no higher.
 
-### Tertiary — the documentary accents
-- **Ocre** (#d9b84b), **Sauge** (#b9c9a4), **Eucalyptus** (#9fc0bb), **Eau** (#8ebbd2): the venue-category family from the landing's imagery system (racquet, mind-body, recovery, water). In the apps they carry category coding and data-viz series, always flat, never as text.
+### Tinted surfaces
 
-### Neutral
-There is no grey scale. Neutrals are mixes of encre into the surface: hairlines at `color-mix(in srgb, currentColor 18%, transparent)`, muted text at reduced opacity of encre (0.62 is the landing's inactive-nav value), washes at low-percentage encre mixes over os/blanc.
+Five pastels at equal lightness so no tile reads louder than another: **bleu** `#e8eefb`, **vert** `#e9f3ee`, **sable** `#fbf1dc`, **rose** `#f6ecf2`, **lavande** `#eee9f8`. They fill the session tiles on the dashboard, the plan tiles, the venue tiles, the onboarding steps, and avatars. Text on them is encre or atténué fort. Tints rotate by position, not by meaning, with one exception: a full session takes sable.
 
-### Status (app register; derived from the documentary family)
-Badges are pills: an 18% tint of the base color under its dark text stop. Never a solid status fill, never color without a text label.
-- **Statut succès** (#257a4e, text stop #1d5c3c): active, paid, confirmed, checked-in. Forest family, one step brighter than forêt so a badge never reads as a member surface.
-- **Statut attention** (#d9b84b, text stop #7a5c10): expiring, pending, no-show, near-capacity. The native ochre.
-- **Statut erreur** (#b23a2a, text stop #8f2f22): destructive actions, full capacity, suspended, cancelled. A brick from the clay family, hotter and darker than argile.
-- **Statut info** (#8ebbd2, text stop #2c6a8a): secondary facts (method badges, links). The native water blue.
+**Lavis** (`#dfe8fa`) is the single radial wash allowed behind a hub heading (see Elevation).
+
+### Status
+
+Badges are pale tint under dark text. Never a solid status fill, never colour without a label.
+
+- **Succès** `#e9f3ee` / `#1d5c3c` (Lc 78): active, paid, confirmed, checked in, "En direct".
+- **Attention** `#fbf1dc` / `#7a5c10` (Lc 72): expiring, pending, no-show, full.
+- **Erreur** `#fbe9e7` / `#8f2f22` (Lc 76): suspended, cancelled, destructive buttons.
+- **Info** `#e8eefb` / `#2c4f8a` (Lc 77): QR method, roles, cross-venue access.
+- **Danger** `#b23a2a`: the error border on an invalid field. Not a fill.
 
 ### Named Rules
-**The Flat Ink Rule.** Encre is the only control color. If a screen needs a second "brand" color on a button, the design is wrong, not the palette.
 
-**The Two Places Rule.** Forêt and argile are places, not paint: forêt = member side, argile = operator side. They appear drenched (a full surface) or not at all; never as borders, icons, or text accents.
+**The One Dark Rule.** Encre is the only solid dark control on a screen, and there is one of it. A second primary is a design error.
 
-**The Documentary Color Rule.** Color states a fact: whose side a surface belongs to, what category a thing is, what status it holds. Decorative color, and every gradient, is prohibited (recorded decision E-008).
+**The Pill Rule.** Active means "sits on a pilule". No underlines, no colour changes, no bold for selection.
+
+**The Tile Rule.** Tints hold content people glance at (sessions, plans, venues, steps). They never hold forms, tables, or dialogs, and they never carry a border or a shadow.
 
 ## 3. Typography
 
-**Display Font:** Inter Variable (with ui-sans-serif, system-ui)
-**Body Font:** Inter Variable (same family, weight-differentiated)
-**Label/Mono Font:** none: Inter carries figures with `'tnum'`.
+**One family:** Inter (Inter Variable in the apps). No second face.
 
-**Character:** one variable family speaking every register: editorial weight (800, tight tracking, sub-1 line-height) for hero moments, confident middles (650/750) for working text, a letterspaced uppercase whisper for eyebrows. The odd weights (650, 750) are the signature; do not round them to 600/700.
+**Character:** light and large. Hub screens open with a 44 px regular-weight greeting; working screens with a 32 px regular-weight title. Section heads are 22 px at 500. Emphasis inside rows is 600, never 700 or above. There is no uppercase anywhere in the system; the tracked eyebrow is retired.
 
 ### Hierarchy
-- **Display** (800, clamp(2.25rem, 6vw, 4rem), 0.95, −0.05em): hero moments only: one per surface (a page title, the pass face name). The landing goes bigger; the apps stay at this tempered ceiling.
-- **Headline** (750, clamp(1.35rem, 1rem + 1.5vw, 2rem), 1.05, −0.035em): section heads inside a page.
-- **Title** (650, 1.05rem, 1.3): card/panel and row titles.
-- **Body** (400, clamp(1rem, 0.95rem + 0.25vw, 1.125rem), 1.5): the default reading size. Cap prose at 65–75ch.
-- **Label / Eyebrow** (750, 0.75rem, 0.14em tracking, uppercase): section overlines and micro-labels. The only uppercase in the system.
-- **Numeric** (650, `'tnum' 1`): every time (`06:30`), capacity (`14/18`), amount (`FCFA 120 000`), and reference code, column-aligned.
+
+- **Display** (400, 2.75rem, 1.1, −0.03em): the greeting or question on a hub screen. One per screen.
+- **Page title** (400, 2rem, 1.1, −0.03em): working screens.
+- **Section** (500, 1.375rem, 1.2, −0.02em): "Planning du jour", "Adhésion", a day group in the sessions list.
+- **Title** (600, 1rem, 1.3): a tile title, a row's primary text.
+- **Body** (400, 0.9375rem, 1.5): everything else. Tables and dense rows also use 15 px.
+- **Label** (500, 0.8125rem, 1.3): field labels, table headers, badge text, timestamps.
+- **Numeric** (500, 2rem, tnum): the stat strip. Tabular figures on every count, time, and amount at any size.
 
 ### Named Rules
-**The One Family Rule.** Inter Variable is the entire typographic system. A second font is a bug.
 
-**The Eyebrow Rule.** Uppercase exists only as the tracked 0.75rem eyebrow. Headings, buttons, and body are French sentence case, always.
+**The Light Heading Rule.** Headings are 400 or 500. If a heading needs to be bolder to be seen, it needs more space around it instead.
 
-**The Tabular Rule.** Any value someone compares, counts, or reads back renders with tabular figures at weight 650. No exceptions.
+**The Sentence Case Rule.** French sentence case everywhere: headings, buttons, labels, badges, nav. No uppercase.
+
+**The Tabular Rule.** Any value someone compares or reads back renders with tabular figures.
 
 ## 4. Elevation
 
-Flat. The system has **no shadows at all**: depth is conveyed by surface steps (white panel on bone ground; drenched panel above both), 1px hairlines at `color-mix(in srgb, currentColor 18%, transparent)`, and contrast. Overlays (dialogs, sheets) separate themselves with a scrim (`rgb(10 13 11 / 34%)`, deepening to 52% on interaction) rather than a drop shadow. Hover and focus are expressed in color, opacity, and the 3px `currentColor` focus outline (offset 0.25rem), never in depth.
+None. The system has no shadows, no blur, no borders around surfaces, and no layered cards. Depth is expressed in exactly four ways:
+
+1. **Tone.** White page, grey side column, grey pill. The eye reads three planes without a single edge.
+2. **Space.** Sections are separated by 32 to 48 px of nothing. Hub screens centre their content in a 940 px column with 120 px side margins.
+3. **Hairline.** A 1 px `#dcdcdc` line between rows in a table or list. Never around a group.
+4. **Scrim.** Dialogs and sheets sit on a 25 % encre scrim over the page. The dialog itself is a white 28 px-radius panel with no border and no shadow.
+
+**The wash exception.** A hub screen (dashboard, front desk, auth) may place one soft radial wash of lavis behind its heading, fading to transparent within about 640 px. It is the only gradient in the system, it carries no meaning, and it is optional. Decision E-008 otherwise stands: no linear gradients, no gradient fills on controls, no gradient text.
 
 ### Named Rules
-**The No-Shadow Rule.** `box-shadow` is prohibited. If a boundary needs asserting, use the hairline; if a layer needs separating, use a surface step or scrim.
 
-**The Hairline Rule.** Every border is 1px and derived from `currentColor`, so it recolors correctly on bone, white, forêt, and argile without new tokens.
+**The No-Elevation Rule.** `box-shadow`, `backdrop-filter`, and container borders are prohibited. If two regions need separating, add space, change tone, or draw a hairline between rows.
+
+**The No-Box Rule.** Content is never wrapped in a bordered or shadowed card. A group of fields is a heading and some fields. A table is rows with hairlines. A stat is a number over a label.
 
 ## 5. Components
 
-Controls are pills; surfaces are 1.25rem panels; everything sits flat on bone. One obvious primary action per screen. All interactive targets are at least 2.75rem.
+Controls are pills; content is tiles or hairline rows; the page is white. Touch targets stay at 2.75rem minimum.
 
 ### Buttons
-- **Shape:** full pill (999px), min-height 2.75rem, 0.75rem × 1rem padding, weight 750–800 labels.
-- **Primary:** encre fill, blanc text, 1px encre border. On drenched surfaces it inverts: blanc fill, encre text.
-- **Outline / Ghost:** transparent fill, 1px `currentColor` border; on media/drenched contexts the border softens to `rgb(255 255 255 / 66%)`.
-- **Hover / Focus:** color/opacity shifts over the standard motion token (360ms cubic-bezier(0.22, 1, 0.36, 1)); focus adds the 3px `currentColor` outline. Disabled is 40% opacity, nothing else.
-- **Split label:** a button may carry a small 0.65rem, 800-weight, 0.08em-tracked uppercase kicker above its label (the landing's product-action pattern) for launch-style CTAs; not for everyday actions.
 
-### Chips / Badges
-- **Style:** pills, 0.75rem, weight 650–750 text; status badges are an 18% tint of the status color under its dark text stop.
-- **State:** every badge carries a text label; color is the echo, never the message.
+- **Primary:** encre fill, white label, 44 px pill, 15/500. One per screen.
+- **Secondary:** transparent, 1 px filet outline, encre label.
+- **Soft:** pilule fill, encre label. Filters, secondary emphasis.
+- **Ghost:** no fill, no outline, encre label. Cancel, tertiary.
+- **Danger:** statut-erreur tint fill, statut-erreur-texte label. Destructive confirmation only.
+- **Small:** 36 px height, 14 px label, for rows, toolbars, dialog footers.
+- **Icon:** 44 or 36 px circle, ghost by default; the dark variant is the submit control inside the command bar.
+- **States:** hover shifts the pill one step (pilule → pilule-survol, encre → `#333333`). Focus is a 3 px encre outline offset 4 px. Disabled is 50 % opacity.
 
-### Cards / Containers
-- **Corner Style:** 1.25rem (`radius-panel`); controls inside remain pills.
-- **Background:** blanc on the os ground; drenched forêt or argile for identity moments (pass face, mastheads).
-- **Shadow Strategy:** none (see Elevation); a hairline only when two white surfaces would otherwise merge.
-- **Internal Padding:** 1.5rem (`space-4`), tighter 0.75–1rem inside dense lists.
+### The command bar (signature)
 
-### Inputs / Fields
-- **Style:** blanc fill, 0.75rem radius, 1px hairline, min-height 2.75rem, 0.65rem × 1rem padding. (The one non-pill control family: multiline and typed input want corners.)
-- **Focus:** border takes `currentColor` and the 3px outline blooms.
-- **Error:** border and message shift to statut erreur's text stop; message below the field.
+A 60 px white pill, filet outline, max width 720 px, centred under the hub heading. Leading icon, placeholder in atténué, a mode selector, and the dark round submit. On the front desk it scans a QR or searches a member; on the dashboard it is the same control. This is the one thing a receptionist looks for.
+
+### Fields
+
+- **Input, Select:** 48 px pill, white, filet outline, 15 px text, 18 px horizontal padding. Label above in 13/500 atténué fort.
+- **Textarea:** 20 px radius (1.25rem), same outline.
+- **Focus:** outline becomes encre, plus the 3 px focus ring.
+- **Error:** outline becomes danger; the message below in statut-erreur-texte.
+- **Switch:** 40 × 24 pill, encre when on, filet when off, white thumb.
+- **Checkbox:** 20 px, 6 px radius, encre when checked.
+
+### Pills and tabs
+
+- **Tab / Active:** pilule fill, 15/600 encre. **Tab / Inactive:** no fill, 15/400 atténué.
+- **Chip:** pilule fill, label plus a small dismiss icon.
+- **Badge:** 13/500 on a status tint. Always a text label. Two non-status variants: **Neutre** (pilule fill, atténué fort text: plan cadence, roles) and **Outline** (1 px filet, atténué fort text: archived, inactive). There is no dark badge.
 
 ### Navigation
-- **Style:** wordmark at 800 weight with −0.04em tracking; nav items at 0.875rem, weight 650, inactive at 0.62 opacity.
-- **Active:** full opacity, weight 800, and the signature **2px rounded underline** sitting 0.25rem under the label. Mobile keeps the same pills and underline in a drawer/tab form.
 
-### Le panneau imprégné (signature)
-The drenched panel: a full forêt or argile surface with white/encre content, an eyebrow, and a display-weight statement. It is the system's loudest instrument, borrowed from the landing's two-branch gateway. In the apps it appears exactly where identity lives: the member's pass face (forêt), an owner masthead (argile), an auth screen. One per screen, maximum.
+- **Side column:** 260 px, côté fill, no border. Wordmark at the top, venue switcher and user menu pinned to the bottom.
+- **Nav item:** 42 px pill, 15 px label; the active one takes pilule at 600, the rest are bare at 400.
+- **Section label:** 13/500 atténué, no uppercase.
+- **Mobile:** a 56 px top bar with the menu button, venue pill, and avatar; the column becomes a 300 px drawer over a scrim.
 
-### Graphiques (data-viz)
-Charts stay in the family: encre for the primary series, the documentary accents (ocre, sauge, eucalyptus, eau) for categories, hairline gridlines, tabular numerals on axes. Status colors appear in a chart only to encode the same fact they encode on a badge.
+### Data
+
+- **Stat:** a 32/500 number over a 13 px atténué label, no box, separated from its neighbours by a vertical hairline.
+- **Tile:** 24 px radius, one of the five tints, 20 px padding. Time or number top-left, count top-right, title and meta bottom-left. Square on the dashboard, tall on plans and venues.
+- **Table:** 13 px atténué headers over hairline rows at 15 px; the first column carries an avatar when it is a person. No outer border, no header fill.
+- **Progress:** 6 px pilule track with an encre fill. Full sessions switch the fill to statut-attention-texte.
+- **Avatar:** a tinted circle with 12/600 initials; tints rotate.
+
+### Overlays
+
+- **Dialog:** 520 to 620 px, white, 28 px radius, 32 px padding, on a scrim. Title 24/500, description in atténué, fields, then a footer with a ghost cancel and one primary.
+- **Sheet:** 460 px right panel on the same scrim, for lists that stay open while the page is used (session participants).
+- **Toast:** 52 px encre pill with a white message and a 60 % white timestamp, bottom right.
+
+### States
+
+- **Empty:** a sentence in atténué under the section heading, or on hubs a tinted tile per suggested next step.
+- **Loading:** pilule blocks the shape of the final content. No pulse.
+- **Error:** the alert is a tinted row (status tint, dark status text) with a support reference in tabular figures.
 
 ## 6. Do's and Don'ts
 
 ### Do:
-- **Do** ground every screen in os (#f2eee5) with encre (#141512) ink; panels are blanc, hairlines are 18% `currentColor` mixes.
-- **Do** reserve forêt for member-side identity and argile for operator-side identity, always drenched, at most one per screen.
-- **Do** use the eyebrow (0.75rem, 750, 0.14em, uppercase) to introduce sections, and Inter's odd weights (650/750/800) exactly.
-- **Do** render every time, capacity, amount, and code with `'tnum'` tabular figures at weight 650.
-- **Do** keep every touch target at 2.75rem minimum, the 3px `currentColor` focus outline visible, and `prefers-reduced-motion` honored with the single 360ms ease-out motion token.
-- **Do** give every list a designed empty state with one CTA, every region a skeleton matching its final layout, and every error a calm message with a support reference.
+
+- **Do** open hub screens with one light heading and the command bar, centred, with nothing competing.
+- **Do** keep exactly one dark pill per screen and let every other control be outline, soft, or ghost.
+- **Do** mark active states with the grey pill and nothing else.
+- **Do** separate rows with hairlines and sections with space; wrap nothing in a card.
+- **Do** use the five tints for glanceable content, rotating by position, with dark ink on top.
+- **Do** hold every text pair at APCA Lc 75 for body and Lc 60 for labels, and verify on the tint the text actually sits on.
+- **Do** keep touch targets at 2.75rem, the 3 px focus ring visible, and reduced-motion honoured.
 
 ### Don't:
-- **Don't** use gradients, ever: a recorded product decision prohibits them; depth comes from photography, flat color, typography, and contrast.
-- **Don't** use `box-shadow`, glassmorphism, or blur-as-decoration: the system is flat (see The No-Shadow Rule).
-- **Don't** build the "generic SaaS dashboard" PRODUCT.md forbids: no cream-and-blurple, no hero-metric cards, no identical icon+heading grids.
-- **Don't** drift toward the "loud consumer fitness app" (neon, gamified badges, hype copy) or "playful/gamified" (mascots, confetti, emoji).
-- **Don't** compress into the "dense enterprise admin": reading text stays at 1rem, dense tables and rows may use 0.875rem and never less, rows breathe with hairlines, screens survive a 375px phone.
-- **Don't** go "cold corporate minimalism": no pure-white grounds, no cool greys, no timid 400-weight headings; the studio is warm and inked.
-- **Don't** uppercase anything except the eyebrow, use a second font family, put forêt/argile on borders/icons/text, or use `border-left`/`border-right` thicker than 1px as a colored stripe.
+
+- **Don't** add a shadow, a blur, or a border around a group. The No-Elevation Rule has no exceptions.
+- **Don't** use a second dark control, a coloured button, or a coloured underline for selection.
+- **Don't** set a heading above 500 weight or a row label above 600.
+- **Don't** use uppercase, tracked labels, or the retired eyebrow.
+- **Don't** put a form, a table, or a dialog inside a tinted tile.
+- **Don't** use a gradient anywhere except the optional lavis wash behind a hub heading.
+- **Don't** revert to the bone ground, drenched forest or clay surfaces, or the 750/800 weights of the previous system.
