@@ -251,6 +251,14 @@ Controls are pills; content is tiles or hairline rows; the page is white. Touch 
 - **Danger:** statut-erreur tint fill, statut-erreur-texte label. Destructive confirmation only.
 - **Small:** 36 px height, 14 px label, for rows, toolbars, dialog footers.
 - **Icon:** 44 or 36 px circle, ghost by default; the dark variant is the submit control inside the command bar.
+
+### Icons
+
+- **Family:** Material Symbols Rounded, outlined, never filled. The rounded terminals match the pills; the thin stroke matches the 400-weight headings and the 1 px hairlines. Lucide is retired.
+- **Weight:** 200 on desktop (20 px in navigation, 18 px inside pills and fields), 300 on mobile (24 px in the tab bar, 20 px elsewhere) so strokes survive small screens.
+- **Colour:** encre at rest; atténué only when the surrounding label is atténué (inactive tabs, table headers).
+- **Active state:** the icon does not change. The pill alone marks selection.
+- **Names in use:** dashboard, door_open, calendar_month, sell, group, apartment, manage_accounts, badge, qr_code_2, qr_code_scanner, search, add, check, close, more_horiz, arrow_back, arrow_forward, arrow_upward, keyboard_arrow_down, unfold_more, left_panel_close, menu, visibility, check_circle, error, schedule, mail, person_add, logout.
 - **States:** hover shifts the pill one step (pilule → pilule-survol, encre → `#333333`). Focus is a 3 px encre outline offset 4 px. Disabled is 50 % opacity.
 
 ### The command bar (signature)
