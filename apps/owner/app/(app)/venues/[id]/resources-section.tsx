@@ -165,7 +165,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
                   <ResourceMenu
                     resource={resource}
                     size="icon"
-                    menuRef={focus.register(`${resource.id}:stack`)}
+                    menuRef={focus.register(resource.id)}
                     onEdit={(r) => {
                       setEditing(r);
                       setEditOpen(true);
@@ -242,7 +242,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
           resourceTypes={resourceTypes}
           open={editOpen}
           onOpenChange={setEditOpen}
-          restoreFocusTo={() => focus.get(editing?.id) ?? focus.get(`${editing?.id}:stack`)}
+          restoreFocusTo={() => focus.get(editing?.id)}
         />
       ) : null}
       {deleting ? (
@@ -251,7 +251,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
           resource={deleting}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
-          restoreFocusTo={() => focus.get(deleting?.id) ?? focus.get(`${deleting?.id}:stack`)}
+          restoreFocusTo={() => focus.get(deleting?.id)}
         />
       ) : null}
     </section>
