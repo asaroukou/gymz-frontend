@@ -691,6 +691,7 @@
       "duration": "Duration (days)",
       "entries": "Number of entries",
       "allActivities": "Valid for all activities",
+      "allActivitiesHint": "Otherwise pick the activities below.",
       "activities": "Included activities",
       "submit": "Save",
       "submitting": "Saving…",

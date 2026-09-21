@@ -691,6 +691,7 @@
       "duration": "Durée (jours)",
       "entries": "Nombre d'entrées",
       "allActivities": "Valable pour toutes les activités",
+      "allActivitiesHint": "Sinon, choisissez les activités concernées ci-dessous.",
       "activities": "Activités concernées",
       "submit": "Enregistrer",
       "submitting": "Enregistrement…",
