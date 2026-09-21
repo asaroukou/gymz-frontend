@@ -529,7 +529,13 @@ export function EditResourceDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next);
+        if (!next) form.reset(toDefaults(resource));
+      }}
+    >
       <DialogContent className="sm:max-w-[520px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('detail.resources.editDialog.title')}</DialogTitle>

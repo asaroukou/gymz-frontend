@@ -477,7 +477,16 @@ export function EditScheduleDialog({
   const weeklyNeedsDay = recurrence.frequency === 'weekly' && recurrence.byDay.length === 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next);
+        if (!next) {
+          form.reset(scheduleToDefaults(schedule));
+          setRecurrence(parseRecurrenceRule(schedule.recurrence_rule));
+        }
+      }}
+    >
       <DialogContent
         aria-describedby={undefined}
         className="sm:max-w-[620px]"
