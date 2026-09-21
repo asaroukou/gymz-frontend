@@ -5,14 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeftIcon,
-  MoreHorizontalIcon,
-  PencilIcon,
-  PlusIcon,
-  Trash2Icon,
-  XIcon,
-} from 'lucide-react';
+import { MoreHorizontalIcon, PencilIcon, PlusIcon, Trash2Icon, XIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -20,11 +13,9 @@ import { z } from 'zod';
 
 import { unwrap } from '@iziwellpass/api/client';
 import {
-  getGetVenueQueryKey,
   getListResourcesQueryKey,
   getListResourceTypesQueryKey,
   getListVenueActivitiesQueryKey,
-  getListVenuesQueryKey,
   useAddVenueActivity,
   useCreateResource,
   useCreateResourceType,
@@ -35,15 +26,8 @@ import {
   useListVenueActivities,
   useRemoveVenueActivity,
   useUpdateResource,
-  useUpdateVenue,
 } from '@iziwellpass/api/generated';
-import type {
-  BookingMode,
-  Resource,
-  ResourceType,
-  Venue,
-  VenueActivity,
-} from '@iziwellpass/api/schemas';
+import type { BookingMode, Resource, ResourceType, VenueActivity } from '@iziwellpass/api/schemas';
 import { useRole } from '@iziwellpass/auth/provider';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
@@ -88,7 +72,6 @@ import {
   SelectValue,
 } from '@iziwellpass/ui/components/select';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
-import { Switch } from '@iziwellpass/ui/components/switch';
 import {
   Table,
   TableBody,
@@ -98,17 +81,18 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 import { Textarea } from '@iziwellpass/ui/components/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/components/tooltip';
+import { BackLink, WorkingHeader, WorkingPage } from '@iziwellpass/ui/components/working-page';
 
 import {
   ACTIVITY_TYPE_VALUES,
   useActivityTypeLabel,
   useActivityTypeOptions,
 } from '@/lib/activity-type';
-import { VenueFormFields } from '@/components/venue-form-fields';
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { useVenueContext } from '@/lib/venue-context';
+
+import { ProfileSection } from './profile-section';
 
 const BOOKING_MODE_VALUES = [
   'class',
@@ -116,167 +100,6 @@ const BOOKING_MODE_VALUES = [
   'court_booking',
   'open_access',
 ] as const satisfies readonly BookingMode[];
-
-// ---------------------------------------------------------------------------
-// Profile section
-// ---------------------------------------------------------------------------
-
-function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: boolean }) {
-  const t = useTranslations('venues');
-  const queryClient = useQueryClient();
-  const updateVenue = useUpdateVenue();
-
-  const schema = useMemo(
-    () =>
-      z.object({
-        name: z.string().min(1, t('detail.profile.nameRequired')),
-        venue_type: z.enum(ACTIVITY_TYPE_VALUES),
-        description: z.string(),
-        address_line: z.string(),
-        city: z.string(),
-        country: z.string(),
-        phone: z.string(),
-        timezone: z.string().min(1, t('detail.profile.timezoneRequired')),
-        is_active: z.boolean(),
-      }),
-    [t],
-  );
-
-  type ProfileValues = z.infer<typeof schema>;
-
-  const toDefaults = (v: Venue): ProfileValues => ({
-    name: v.name,
-    venue_type: v.venue_type,
-    description: v.description ?? '',
-    address_line: v.address_line ?? '',
-    city: v.city,
-    country: v.country,
-    phone: v.phone ?? '',
-    timezone: v.timezone,
-    is_active: v.is_active,
-  });
-
-  const form = useForm<ProfileValues>({
-    resolver: zodResolver(schema),
-    defaultValues: toDefaults(venue),
-  });
-
-  // Re-sync the form when the underlying venue data changes (e.g. after a
-  // successful save re-fetches getVenue).
-  useEffect(() => {
-    form.reset(toDefaults(venue));
-  }, [venue, form]);
-
-  const onSubmit = (values: ProfileValues) => {
-    // `UpdateVenueRequest` accepts only these fields — `email` and `settings`
-    // (locale/timezone_override) are read-only in the contract and are
-    // deliberately not sent here.
-    updateVenue.mutate(
-      {
-        id: venue.id,
-        data: {
-          name: values.name,
-          venue_type: values.venue_type,
-          description: values.description || null,
-          address_line: values.address_line || null,
-          city: values.city || null,
-          country: values.country || null,
-          phone: values.phone || null,
-          timezone: values.timezone,
-          is_active: values.is_active,
-        },
-      },
-      {
-        onSuccess: () => {
-          toast.success(t('detail.profile.success'));
-          void queryClient.invalidateQueries({ queryKey: getGetVenueQueryKey(venue.id) });
-          void queryClient.invalidateQueries({ queryKey: getListVenuesQueryKey() });
-        },
-        onError: (err) => {
-          if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, t('detail.profile.error')));
-          }
-        },
-      },
-    );
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('detail.profile.title')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
-            className="grid gap-4 sm:grid-cols-2"
-          >
-            <VenueFormFields form={form} disabled={!canEdit} />
-            {/*
-              Email is read-only: `UpdateVenueRequest` has no `email` field, so
-              there is no contract to persist an edited value against. Rendered
-              disabled with a "editable soon" tooltip rather than an editable
-              input that would silently discard edits.
-            */}
-            <FormItem>
-              <FormLabel>{t('detail.profile.email')}</FormLabel>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span tabIndex={0} className="block">
-                    <Input
-                      type="email"
-                      value={venue.email ?? ''}
-                      disabled
-                      readOnly
-                      className="pointer-events-none"
-                      aria-label={t('detail.profile.email')}
-                    />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{t('detail.profile.emailReadOnly')}</TooltipContent>
-              </Tooltip>
-            </FormItem>
-            {/*
-              `VenueSettings` (locale, timezone_override) is a nested object on
-              `Venue` but is not part of `UpdateVenueRequest` — settings are
-              read-only in the current contract, so no editor is rendered here.
-            */}
-            <FormField
-              control={form.control}
-              name="is_active"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between gap-4 rounded-xl border p-4 sm:col-span-2">
-                  <div className="space-y-0.5">
-                    <FormLabel>{t('detail.profile.active')}</FormLabel>
-                    <p className="text-sm text-muted-foreground">
-                      {t('detail.profile.activeHint')}
-                    </p>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={!canEdit}
-                      aria-label={t('detail.profile.active')}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            {canEdit ? (
-              <div className="sm:col-span-2">
-                <Button type="submit" disabled={updateVenue.isPending}>
-                  {updateVenue.isPending ? t('detail.profile.saving') : t('detail.profile.save')}
-                </Button>
-              </div>
-            ) : null}
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Resource type inline creation
@@ -1106,28 +929,27 @@ function VenueDetailContent() {
   const venueQuery = useGetVenue(venueId, { query: { select: unwrap } });
 
   const backLink = (
-    <Link
-      href="/venues"
-      className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-    >
-      <ArrowLeftIcon className="size-4" />
+    <BackLink href="/venues" linkComponent={Link}>
       {t('detail.back')}
-    </Link>
+    </BackLink>
   );
 
   if (venueQuery.isLoading) {
     return (
-      <div className="space-y-6">
+      <WorkingPage>
         {backLink}
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-96 w-full" />
-      </div>
+        <Skeleton className="h-9 w-64" />
+        <div className="grid gap-10 md:grid-cols-2 md:gap-16">
+          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </WorkingPage>
     );
   }
 
   if (venueQuery.isError) {
     return (
-      <div className="space-y-6">
+      <WorkingPage>
         {backLink}
         <Alert variant="destructive">
           <AlertTitle>{t('errorTitle')}</AlertTitle>
@@ -1135,34 +957,45 @@ function VenueDetailContent() {
             {apiErrorMessage(venueQuery.error, t('detail.loadError'))}
           </AlertDescription>
         </Alert>
-      </div>
+      </WorkingPage>
     );
   }
 
   const venue = venueQuery.data;
   if (!venue) {
     return (
-      <div className="space-y-6">
+      <WorkingPage>
         {backLink}
-        <p className="text-sm text-muted-foreground">{t('detail.notFound')}</p>
-      </div>
+        <p className="text-base text-muted-foreground">{t('detail.notFound')}</p>
+      </WorkingPage>
     );
   }
 
+  const subtitle = [venue.address_line, venue.city].filter(Boolean).join(', ') || t('noAddress');
+
   return (
-    <div className="space-y-6">
+    <WorkingPage>
       {backLink}
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-normal">{venue.name}</h1>
-        <Badge variant="outline">{activityLabel(venue.venue_type)}</Badge>
-        <Badge variant={venue.is_active ? 'success' : 'secondary'}>
-          {venue.is_active ? t('status.active') : t('status.inactive')}
-        </Badge>
+      <WorkingHeader
+        title={venue.name}
+        subtitle={subtitle}
+        badges={
+          <>
+            <Badge variant={venue.is_active ? 'success' : 'default'}>
+              {venue.is_active ? t('status.active') : t('status.inactive')}
+            </Badge>
+            <Badge>{activityLabel(venue.venue_type)}</Badge>
+          </>
+        }
+      />
+      <div className="grid gap-10 md:grid-cols-2 md:gap-16">
+        <ProfileSection venue={venue} canEdit={canEdit} />
+        <div className="flex flex-col gap-10">
+          <ActivitiesSection venueId={venue.id} canEdit={canEdit} />
+          <ResourcesSection venueId={venue.id} canEdit={canEdit} />
+        </div>
       </div>
-      <ProfileSection venue={venue} canEdit={canEdit} />
-      <ActivitiesSection venueId={venue.id} canEdit={canEdit} />
-      <ResourcesSection venueId={venue.id} canEdit={canEdit} />
-    </div>
+    </WorkingPage>
   );
 }
 
