@@ -907,6 +907,7 @@
     },
     "row": {
       "menu": "Actions du membre",
+      "you": "vous",
       "changeRole": "Modifier le rôle",
       "remove": "Retirer",
       "selfHint": "Vous ne pouvez pas retirer votre propre compte."

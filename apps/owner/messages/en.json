@@ -907,6 +907,7 @@
     },
     "row": {
       "menu": "Member actions",
+      "you": "you",
       "changeRole": "Change role",
       "remove": "Remove",
       "selfHint": "You can't remove your own account."
