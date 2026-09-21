@@ -43,7 +43,9 @@ export type CancellationTarget =
 
 // `staleTime`/`gcTime` 0 keeps the preview honest: every open refetches the
 // counts, and the `version` we confirm with is never a cached one. `retry`
-// off so the load-error state shows immediately instead of after 3 attempts.
+// off so the load-error state shows immediately instead of after 3 attempts,
+// and no focus refetch — with `staleTime: 0` it would otherwise fire on every
+// tab-back and blink the confirm button disabled mid-read.
 // `select` names its envelope type instead of passing the generic `unwrap`
 // directly: spread into the options object, a bare generic function stops
 // react-query from inferring `TData` and `data` collapses to `unknown`.
@@ -52,6 +54,7 @@ const PREVIEW_QUERY = {
   staleTime: 0,
   gcTime: 0,
   retry: false,
+  refetchOnWindowFocus: false,
 } as const;
 
 /** Canvas `TeQNq`/`o9VUa3` (loaded), `UKoGk` (loading), `zvJSN` (409), `dAnIL` (blocked, load error). */
@@ -170,7 +173,7 @@ export function CancellationPreviewDialog({
                   <Button
                     variant="link"
                     size="sm"
-                    className="h-auto p-0"
+                    className="h-auto p-0 text-current"
                     onClick={() => void preview.refetch()}
                   >
                     {t('cancelPreview.retry')}
