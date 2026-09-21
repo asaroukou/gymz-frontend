@@ -37,8 +37,9 @@ import { RowsSkeleton } from '@/components/rows-skeleton';
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatCalendarDate } from '@/lib/datetime';
 
+import { CancellationPreviewDialog } from './cancellation-preview-dialog';
 import { usePlanningLabels } from './planning-utils';
-import { AddScheduleDialog, DeleteScheduleDialog, EditScheduleDialog } from './schedule-dialogs';
+import { AddScheduleDialog, EditScheduleDialog } from './schedule-dialogs';
 
 /** Edit/delete menu on a 36px « ··· » button, shared by the table row and the phone stack. */
 function CourseActions({
@@ -192,6 +193,7 @@ function CourseStack({
 
 export function SchedulesTab({ venueId, canManage }: { venueId: string; canManage: boolean }) {
   const t = useTranslations('planning');
+  const { formatRecurrence } = usePlanningLabels();
 
   const schedulesQuery = useListSchedules(venueId, { query: { select: unwrap } });
   const resourcesQuery = useListResources(venueId, { query: { select: unwrap } });
@@ -318,9 +320,18 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
         />
       ) : null}
       {deleting ? (
-        <DeleteScheduleDialog
+        <CancellationPreviewDialog
+          target={{
+            kind: 'schedule',
+            schedule: deleting,
+            description: t('deleteCourse.description', {
+              title: deleting.title,
+              recurrence: formatRecurrence(deleting.recurrence_rule),
+              start: deleting.start_time.slice(0, 5),
+              end: deleting.end_time.slice(0, 5),
+            }),
+          }}
           venueId={venueId}
-          schedule={deleting}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           restoreFocusTo={() => focus.get(deleting?.id)}

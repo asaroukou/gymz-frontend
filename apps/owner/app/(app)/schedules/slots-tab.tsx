@@ -1,32 +1,16 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { CalendarClockIcon, MoreHorizontalIcon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 
 import { unwrap } from '@iziwellpass/api/client';
-import {
-  getListSlotsQueryKey,
-  useCancelSlot,
-  useListResources,
-  useListSchedules,
-} from '@iziwellpass/api/generated';
+import { useListResources, useListSchedules } from '@iziwellpass/api/generated';
 import type { Resource, Schedule, ScheduleSlot } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
 import { Capacity } from '@iziwellpass/ui/components/capacity';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@iziwellpass/ui/components/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +30,7 @@ import { formatTime, venueDateKey, venueToday } from '@/lib/datetime';
 import { slotBadgeVariant } from '@/lib/slot-status';
 
 import { BookingsSheet } from './bookings-sheet';
+import { CancellationPreviewDialog } from './cancellation-preview-dialog';
 import { usePlanningLabels } from './planning-utils';
 
 /**
@@ -89,67 +74,6 @@ function useDayHeading(timeZone: string | undefined) {
   }, [locale, t, timeZone]);
 }
 
-function CancelSlotDialog({
-  slot,
-  venueId,
-  timeZone,
-  open,
-  onOpenChange,
-  restoreFocusTo,
-}: {
-  slot: ScheduleSlot;
-  venueId: string;
-  timeZone: string | undefined;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  restoreFocusTo?: () => HTMLElement | null | undefined;
-}) {
-  const t = useTranslations('planning');
-  const tCommon = useTranslations('common');
-  const queryClient = useQueryClient();
-  const cancelSlot = useCancelSlot();
-
-  const handleCancel = () => {
-    cancelSlot.mutate(
-      { sid: slot.id },
-      {
-        onSuccess: () => {
-          toast.success(t('cancelSlot.success'));
-          void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
-          onOpenChange(false);
-        },
-        onError: (err) => {
-          toast.error(apiErrorMessage(err, t('cancelSlot.error')));
-        },
-      },
-    );
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
-        <DialogHeader>
-          <DialogTitle>{t('cancelSlot.title')}</DialogTitle>
-          <DialogDescription>
-            {t('cancelSlot.description', {
-              start: formatTime(slot.start_time, timeZone),
-              end: formatTime(slot.end_time, timeZone),
-            })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">{tCommon('cancel')}</Button>
-          </DialogClose>
-          <Button variant="destructive" onClick={handleCancel} disabled={cancelSlot.isPending}>
-            {cancelSlot.isPending ? t('cancelSlot.confirming') : t('cancelSlot.confirm')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 /**
  * One session (canvas `s8ABF`): 18px time, title over the room, a 120px
  * capacity bar with its count, the status badge, « Participants » and « ··· ».
@@ -159,6 +83,7 @@ function SlotRow({
   slot,
   title,
   resourceName,
+  dayLabel,
   timeZone,
   canManageSlots,
   selected,
@@ -168,6 +93,7 @@ function SlotRow({
   slot: ScheduleSlot;
   title: string;
   resourceName: string;
+  dayLabel: string;
   timeZone: string | undefined;
   canManageSlots: boolean;
   selected: boolean;
@@ -248,10 +174,19 @@ function SlotRow({
           </DropdownMenu>
         ) : null}
       </div>
-      <CancelSlotDialog
-        slot={slot}
+      <CancellationPreviewDialog
+        target={{
+          kind: 'slot',
+          slot,
+          description: t('cancelSlot.description', {
+            title,
+            day: dayLabel,
+            start: formatTime(slot.start_time, timeZone),
+            end: formatTime(slot.end_time, timeZone),
+            room: resourceName,
+          }),
+        }}
         venueId={slot.venue_id}
-        timeZone={timeZone}
         open={cancelling}
         onOpenChange={setCancelling}
         restoreFocusTo={() => menuRef.current}
@@ -373,6 +308,7 @@ export function SlotsTab({
                     slot={slot}
                     title={titleOf(slot)}
                     resourceName={roomOf(slot)}
+                    dayLabel={heading}
                     timeZone={timeZone}
                     canManageSlots={canManageSlots}
                     selected={sheetOpen && sheetSlot?.id === slot.id}

@@ -12,7 +12,6 @@ import { z } from 'zod';
 import {
   getListSchedulesQueryKey,
   getListSlotsQueryKey,
-  useCancelSchedule,
   useCreateSchedule,
   useUpdateSchedule,
 } from '@iziwellpass/api/generated';
@@ -524,67 +523,6 @@ export function EditScheduleDialog({
             </DialogFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Delete (cancel course)
-// ---------------------------------------------------------------------------
-
-export function DeleteScheduleDialog({
-  venueId,
-  schedule,
-  open,
-  onOpenChange,
-  restoreFocusTo,
-}: {
-  venueId: string;
-  schedule: Schedule;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  restoreFocusTo?: () => HTMLElement | null | undefined;
-}) {
-  const t = useTranslations('planning');
-  const tCommon = useTranslations('common');
-  const queryClient = useQueryClient();
-  const cancelSchedule = useCancelSchedule();
-
-  const handleDelete = () => {
-    cancelSchedule.mutate(
-      { sid: schedule.id },
-      {
-        onSuccess: () => {
-          toast.success(t('deleteCourse.success'));
-          void queryClient.invalidateQueries({ queryKey: getListSchedulesQueryKey(venueId) });
-          void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
-          onOpenChange(false);
-        },
-        onError: (err) => {
-          toast.error(apiErrorMessage(err, t('deleteCourse.error')));
-        },
-      },
-    );
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
-        <DialogHeader>
-          <DialogTitle>{t('deleteCourse.title')}</DialogTitle>
-          <DialogDescription>
-            {t('deleteCourse.description', { title: schedule.title })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">{tCommon('cancel')}</Button>
-          </DialogClose>
-          <Button variant="destructive" onClick={handleDelete} disabled={cancelSchedule.isPending}>
-            {cancelSchedule.isPending ? t('deleteCourse.confirming') : t('deleteCourse.confirm')}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
