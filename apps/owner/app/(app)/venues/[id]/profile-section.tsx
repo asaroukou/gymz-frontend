@@ -18,7 +18,6 @@ import { Button } from '@iziwellpass/ui/components/button';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
 import { Switch } from '@iziwellpass/ui/components/switch';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/components/tooltip';
 import { SectionHeading } from '@iziwellpass/ui/components/working-page';
 
 import { VenueFormFields } from '@/components/venue-form-fields';
@@ -124,21 +123,14 @@ export function ProfileSection({ venue, canEdit }: { venue: Venue; canEdit: bool
           */}
           <FormItem>
             <FormLabel>{t('detail.profile.email')}</FormLabel>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={0} className="block">
-                  <Input
-                    type="email"
-                    value={venue.email ?? ''}
-                    disabled
-                    readOnly
-                    className="pointer-events-none"
-                    aria-label={t('detail.profile.email')}
-                  />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>{t('detail.profile.emailReadOnly')}</TooltipContent>
-            </Tooltip>
+            <Input
+              type="email"
+              value={venue.email ?? ''}
+              disabled
+              readOnly
+              className="pointer-events-none"
+              aria-label={t('detail.profile.email')}
+            />
             <p className="text-sm text-muted-foreground">{t('detail.profile.emailReadOnly')}</p>
           </FormItem>
           {/*

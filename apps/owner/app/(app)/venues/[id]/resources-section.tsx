@@ -232,7 +232,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
       )}
       {canEdit ? (
         <div>
-          <NewResourceTypeDialog onCreated={() => undefined} />
+          <NewResourceTypeDialog />
         </div>
       ) : null}
       {editing ? (

@@ -472,7 +472,6 @@
     "venuesError": "Impossible de charger les établissements",
     "venueNone": "Aucun établissement pour le moment.",
     "venuePrompt": "Sélectionnez un établissement pour voir son planning.",
-    "venuePlaceholder": "Choisir un établissement",
     "addCourse": "Ajouter un cours",
     "tabs": {
       "courses": "Cours récurrents",
@@ -733,7 +732,6 @@
     "create": {
       "cta": "Ajouter un lieu",
       "title": "Nouvel établissement",
-      "formTitle": "Informations",
       "cityRequired": "La ville est requise",
       "countryRequired": "Le pays est requis",
       "submit": "Créer l'établissement",
@@ -754,6 +752,7 @@
         "allAdded": "Toutes les activités sont ajoutées.",
         "loadError": "Impossible de charger les activités",
         "addError": "Impossible d'ajouter l'activité",
+        "removeChip": "Retirer {activity}",
         "removeConfirm": {
           "title": "Retirer l'activité",
           "description": "Retirer « {activity} » de cet établissement ?",
@@ -843,7 +842,7 @@
           "error": "Impossible de supprimer la ressource"
         },
         "typeDialog": {
-          "add": "Nouveau type",
+          "add": "Nouveau type de ressource",
           "title": "Nouveau type de ressource",
           "description": "Des catégories comme « Salle de yoga » ou « Terrain de tennis », partagées dans votre organisation.",
           "name": "Nom",

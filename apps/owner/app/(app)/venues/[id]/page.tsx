@@ -84,7 +84,7 @@ function VenueDetailContent() {
     );
   }
 
-  const subtitle = [venue.address_line, venue.city].filter(Boolean).join(', ') || t('noAddress');
+  const subtitle = [venue.address_line, venue.city].filter(Boolean).join(' · ') || t('noAddress');
 
   return (
     <WorkingPage>

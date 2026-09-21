@@ -472,7 +472,6 @@
     "venuesError": "Could not load venues",
     "venueNone": "No venues yet.",
     "venuePrompt": "Select a venue to view its planning.",
-    "venuePlaceholder": "Choose a venue",
     "addCourse": "Add course",
     "tabs": {
       "courses": "Recurring courses",
@@ -733,7 +732,6 @@
     "create": {
       "cta": "Add a venue",
       "title": "New venue",
-      "formTitle": "Details",
       "cityRequired": "City is required",
       "countryRequired": "Country is required",
       "submit": "Create venue",
@@ -754,6 +752,7 @@
         "allAdded": "All activities are added.",
         "loadError": "Could not load activities",
         "addError": "Could not add the activity",
+        "removeChip": "Remove {activity}",
         "removeConfirm": {
           "title": "Remove activity",
           "description": "Remove \"{activity}\" from this venue?",
@@ -843,7 +842,7 @@
           "error": "Could not delete resource"
         },
         "typeDialog": {
-          "add": "New type",
+          "add": "New resource type",
           "title": "New resource type",
           "description": "Categories like “Yoga Room” or “Tennis Court”, shared across your organization.",
           "name": "Name",

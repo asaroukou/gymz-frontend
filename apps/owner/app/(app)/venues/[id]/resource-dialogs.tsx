@@ -64,7 +64,7 @@ export const BOOKING_MODE_VALUES = [
 export function NewResourceTypeDialog({
   onCreated,
 }: {
-  onCreated: (resourceType: ResourceType) => void;
+  onCreated?: (resourceType: ResourceType) => void;
 }) {
   const t = useTranslations('venues');
   const tCommon = useTranslations('common');
@@ -111,7 +111,7 @@ export function NewResourceTypeDialog({
           const resourceType = unwrap(response);
           toast.success(t('detail.resources.typeDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListResourceTypesQueryKey() });
-          onCreated(resourceType);
+          onCreated?.(resourceType);
           form.reset(defaults);
           setOpen(false);
         },

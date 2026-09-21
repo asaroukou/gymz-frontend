@@ -75,7 +75,10 @@ export function ActivitiesSection({ venueId, canEdit }: { venueId: string; canEd
     addActivity.mutate(
       { id: venueId, data: { activity_type: value as (typeof ACTIVITY_TYPE_VALUES)[number] } },
       {
-        onSuccess: invalidateAll,
+        onSuccess: () => {
+          invalidateAll();
+          setPending('');
+        },
         onError: (err) => toast.error(apiErrorMessage(err, t('detail.activities.addError'))),
       },
     );
@@ -125,7 +128,9 @@ export function ActivitiesSection({ venueId, canEdit }: { venueId: string; canEd
               <Chip
                 key={activity.id}
                 onRemove={() => setRemoving(activity)}
-                removeLabel={t('detail.activities.removeConfirm.title')}
+                removeLabel={t('detail.activities.removeChip', {
+                  activity: activityLabel(activity.activity_type),
+                })}
               >
                 {activityLabel(activity.activity_type)}
               </Chip>
@@ -152,10 +157,7 @@ export function ActivitiesSection({ venueId, canEdit }: { venueId: string; canEd
               type="button"
               variant="outline"
               disabled={!pending || addActivity.isPending}
-              onClick={() => {
-                handleAdd(pending);
-                setPending('');
-              }}
+              onClick={() => handleAdd(pending)}
             >
               {tCommon('add')}
             </Button>
