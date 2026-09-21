@@ -116,8 +116,8 @@ function PassSkeleton() {
 export default function CardScreen() {
   const router = useRouter();
   const { claims, signOut } = useAuth();
-  const profileQ = useMeProfile({ query: { select: unwrap } });
-  const subQ = useMeSubscription({ query: { select: unwrap } });
+  const profileQ = useMeProfile(undefined, { query: { select: unwrap } });
+  const subQ = useMeSubscription(undefined, { query: { select: unwrap } });
   const name = claims?.name ?? null;
   // A member may hold more than one active subscription; the pass reflects the first.
   const subscription = subQ.data?.[0];

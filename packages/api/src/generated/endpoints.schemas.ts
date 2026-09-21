@@ -212,6 +212,56 @@ export interface ApiResponseBooking {
   request_id: string;
 }
 
+/**
+ * Set when the cancel would be a no-op (target already cancelled/inactive).
+ */
+export type ApiResponseCancellationPreviewDataBlockingCondition = string | null;
+
+/**
+ * Optimistic-concurrency token to echo back on the cancel as
+`expected_version`; a mismatch (the target changed) is rejected 409.
+ */
+export type ApiResponseCancellationPreviewDataVersion = string | null;
+
+/**
+ * A read-only summary of a pending cancellation. COUNTS ONLY, no PII.
+ */
+export type ApiResponseCancellationPreviewData = {
+  active_bookings_affected: number;
+  /** Set when the cancel would be a no-op (target already cancelled/inactive). */
+  blocking_condition?: ApiResponseCancellationPreviewDataBlockingCondition;
+  future_slots_affected: number;
+  member_booking_count: number;
+  notification_consequences: NotificationConsequences;
+  pass_booking_count: number;
+  refund_consequences: RefundConsequences;
+  target_id: string;
+  target_kind: CancellationTargetKind;
+  unchanged: UnchangedSummary;
+  /** Optimistic-concurrency token to echo back on the cancel as
+`expected_version`; a mismatch (the target changed) is rejected 409. */
+  version?: ApiResponseCancellationPreviewDataVersion;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseCancellationPreview {
+  /** A read-only summary of a pending cancellation. COUNTS ONLY, no PII. */
+  data: ApiResponseCancellationPreviewData;
+  request_id: string;
+}
+
 export type ApiResponseCheckInDataBookingId = null | BookingId;
 
 /**
@@ -720,6 +770,37 @@ Platform-level entity (not tenant-scoped). Maps to `pass_holders` table. */
   request_id: string;
 }
 
+/**
+ * A presigned upload target the client PUTs bytes to.
+ */
+export type ApiResponsePresignedUploadData = {
+  /** Unix seconds after which `upload_url` is no longer valid. */
+  expires_at: number;
+  object_key: string;
+  upload_url: string;
+  /** The final CDN URL the object will be served from after upload. */
+  url: string;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponsePresignedUpload {
+  /** A presigned upload target the client PUTs bytes to. */
+  data: ApiResponsePresignedUploadData;
+  request_id: string;
+}
+
 export type ApiResponseResourceDataDescription = string | null;
 
 /**
@@ -860,49 +941,6 @@ using an optional RRULE recurrence pattern. */
 }
 
 /**
- * An individual bookable time slot generated from a schedule.
-
-Maps to `schedule_slots` table. Each slot has a date, time window,
-capacity, and booking count for availability checking.
- */
-export type ApiResponseScheduleSlotData = {
-  booked_count: number;
-  capacity: number;
-  created_at: string;
-  date: string;
-  end_time: string;
-  id: SlotId;
-  resource_id: ResourceId;
-  schedule_id: ScheduleId;
-  start_time: string;
-  status: SlotStatus;
-  tenant_id: TenantId;
-  venue_id: VenueId;
-};
-
-/**
- * Standard success response envelope matching the LLD format.
-
-All successful API responses wrap the payload in a `data` field
-alongside a `request_id` for traceability:
-
-```json
-{
-  "data": { ... },
-  "request_id": "req_abc123"
-}
-```
- */
-export interface ApiResponseScheduleSlot {
-  /** An individual bookable time slot generated from a schedule.
-
-Maps to `schedule_slots` table. Each slot has a date, time window,
-capacity, and booking count for availability checking. */
-  data: ApiResponseScheduleSlotData;
-  request_id: string;
-}
-
-/**
  * A staff member at a venue (trainer, admin, receptionist, etc.).
  */
 export type ApiResponseStaffData = {
@@ -934,6 +972,59 @@ alongside a `request_id` for traceability:
 export interface ApiResponseStaff {
   /** A staff member at a venue (trainer, admin, receptionist, etc.). */
   data: ApiResponseStaffData;
+  request_id: string;
+}
+
+/**
+ * Response body of `GET /gms/v1/capabilities`: the caller's effective tenant
+plan and the canonical capability set it grants.
+
+The venue-console BFF reads this to render plan-gated navigation WITHOUT
+duplicating the backend entitlement matrix. It is derived exclusively from
+`capabilities_for(plan)` (the single source of truth that
+`require_feature` also enforces), so the response ALWAYS matches what the
+backend will enforce for the same request context.
+
+Staleness: `plan` comes from the token/authorizer context, never a DB read.
+A tenant plan change therefore becomes visible only after the caller's token
+is refreshed (re-login), and a change to the capability matrix takes effect
+after backend deployment.
+ */
+export type ApiResponseTenantCapabilitiesResponseData = {
+  /** Capabilities granted by `plan`, in `capabilities_for` order. */
+  capabilities: Capability[];
+  /** The tenant's current subscription tier (token-context derived). */
+  plan: Plan;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseTenantCapabilitiesResponse {
+  /** Response body of `GET /gms/v1/capabilities`: the caller's effective tenant
+plan and the canonical capability set it grants.
+
+The venue-console BFF reads this to render plan-gated navigation WITHOUT
+duplicating the backend entitlement matrix. It is derived exclusively from
+`capabilities_for(plan)` (the single source of truth that
+`require_feature` also enforces), so the response ALWAYS matches what the
+backend will enforce for the same request context.
+
+Staleness: `plan` comes from the token/authorizer context, never a DB read.
+A tenant plan change therefore becomes visible only after the caller's token
+is refreshed (re-login), and a change to the capability matrix takes effect
+after backend deployment. */
+  data: ApiResponseTenantCapabilitiesResponseData;
   request_id: string;
 }
 
@@ -1011,6 +1102,40 @@ export interface ApiResponseTenantUsage {
 across ALL of the tenant's venues. This is the metered-usage source the
 operator health rollup surfaces and P4 billing will reuse. */
   data: ApiResponseTenantUsageData;
+  request_id: string;
+}
+
+/**
+ * The venue-day operational snapshot.
+ */
+export type ApiResponseTodaySnapshotData = {
+  attendance: TodayAttendance;
+  buckets: TodayBuckets;
+  generated_at: string;
+  local_date: string;
+  /** Slot ids flagged `needs_attention`, for a fast "what needs me now" list. */
+  needs_attention: SlotId[];
+  slots: TodaySlot[];
+  timezone: string;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseTodaySnapshot {
+  /** The venue-day operational snapshot. */
+  data: ApiResponseTodaySnapshotData;
   request_id: string;
 }
 
@@ -1277,6 +1402,39 @@ export interface ApiResponseVecMemberSubscription {
 }
 
 /**
+ * A self-serviceable membership row (mirrors the member lambda's
+`MyMembershipResponse`), returned by `GET /gms/v1/me/memberships`.
+ */
+export type ApiResponseVecMyMembershipResponseDataItem = {
+  /** Human-facing gym (venue) name for the selector. */
+  gym_name: string;
+  /** The caller's `members` row id in this tenant. */
+  member_id: MemberId;
+  /** The tenant that owns the venue. */
+  tenant_id: TenantId;
+  /** A venue the caller can select via `?venue=` on the other `/me/*` routes. */
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecMyMembershipResponse {
+  data: ApiResponseVecMyMembershipResponseDataItem[];
+  request_id: string;
+}
+
+/**
  * Entry packs only; `None` for time-based subscriptions.
  */
 export type ApiResponseVecMySubscriptionResponseDataItemEntriesRemaining = number | null;
@@ -1493,6 +1651,92 @@ alongside a `request_id` for traceability:
  */
 export interface ApiResponseVecScheduleSlot {
   data: ApiResponseVecScheduleSlotDataItem[];
+  request_id: string;
+}
+
+export type ApiResponseVecSlotRosterEntryDataItemCancellationReason = string | null;
+
+export type ApiResponseVecSlotRosterEntryDataItemCancelledAt = string | null;
+
+export type ApiResponseVecSlotRosterEntryDataItemCheckInMethod = null | CheckInMethod;
+
+/**
+ * When the attendee checked in, if they have.
+ */
+export type ApiResponseVecSlotRosterEntryDataItemCheckedInAt = string | null;
+
+/**
+ * Member given name — `Some` ONLY for a member row read by a `member:read`
+caller. Always `None` for a pass-holder row or a caller without `member:read`.
+ */
+export type ApiResponseVecSlotRosterEntryDataItemFirstName = string | null;
+
+/**
+ * Member family name — same visibility rule as `first_name`.
+ */
+export type ApiResponseVecSlotRosterEntryDataItemLastName = string | null;
+
+export type ApiResponseVecSlotRosterEntryDataItemMemberId = null | MemberId;
+
+export type ApiResponseVecSlotRosterEntryDataItemPassHolderId = null | PassHolderId;
+
+/**
+ * One attendee on a slot's roster, enriched for the venue console
+(`GET /gms/v1/slots/{id}/bookings`).
+
+Backward-compatible SUPERSET of [`Booking`]: it carries every `Booking` field
+under the same name (so a client that consumed the prior `Vec<Booking>`
+response keeps working), PLUS the console enrichments `kind`, `first_name`,
+`last_name`, and `check_in_method`.
+
+Privacy (owner-confirmed 2026-09-20): `first_name`/`last_name` are populated
+ONLY for a member row AND only when the caller holds `member:read`
+(owner/admin/receptionist). A trainer (no `member:read`) sees the `member_id`
+but no name — the route strips names via [`SlotRosterEntry::without_member_names`].
+A pass-holder row NEVER carries a name: it is a cross-tenant identity shown to
+the venue only as an anonymous guest, so the repo query leaves its names `None`
+(the members join has no row for a pass-holder booking).
+ */
+export type ApiResponseVecSlotRosterEntryDataItem = {
+  booked_at: string;
+  cancellation_reason?: ApiResponseVecSlotRosterEntryDataItemCancellationReason;
+  cancelled_at?: ApiResponseVecSlotRosterEntryDataItemCancelledAt;
+  check_in_method?: ApiResponseVecSlotRosterEntryDataItemCheckInMethod;
+  /** When the attendee checked in, if they have. */
+  checked_in_at?: ApiResponseVecSlotRosterEntryDataItemCheckedInAt;
+  created_at: string;
+  /** Member given name — `Some` ONLY for a member row read by a `member:read`
+caller. Always `None` for a pass-holder row or a caller without `member:read`. */
+  first_name?: ApiResponseVecSlotRosterEntryDataItemFirstName;
+  id: BookingId;
+  kind: RosterActorKind;
+  /** Member family name — same visibility rule as `first_name`. */
+  last_name?: ApiResponseVecSlotRosterEntryDataItemLastName;
+  member_id?: ApiResponseVecSlotRosterEntryDataItemMemberId;
+  pass_holder_id?: ApiResponseVecSlotRosterEntryDataItemPassHolderId;
+  slot_id: SlotId;
+  /** How the booking was created (direct / iziwellpass / walk_in). */
+  source: BookingSource;
+  status: BookingStatus;
+  tenant_id: TenantId;
+  updated_at: string;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecSlotRosterEntry {
+  data: ApiResponseVecSlotRosterEntryDataItem[];
   request_id: string;
 }
 
@@ -1721,6 +1965,39 @@ export interface ApiResponseVecVenueId {
   request_id: string;
 }
 
+/**
+ * One photo in a venue's gallery. The image with the lowest `sort_order` is the
+primary/cover; the repo denormalizes its `url` to `venues.cover_image_url`.
+ */
+export type ApiResponseVecVenueImageDataItem = {
+  content_type: string;
+  created_at: string;
+  id: VenueImageId;
+  object_key: string;
+  sort_order: number;
+  tenant_id: TenantId;
+  url: string;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecVenueImage {
+  data: ApiResponseVecVenueImageDataItem[];
+  request_id: string;
+}
+
 export type ApiResponseVenueDataAddressLine = string | null;
 
 export type ApiResponseVenueDataCoverImageUrl = string | null;
@@ -1812,6 +2089,8 @@ export type ApiResponseVenueDetailDataAllOfNextAvailableDate = string | null;
 export type ApiResponseVenueDetailDataAllOf = {
   /** Number of available slots in the next 7 days. */
   available_slots_7d: number;
+  /** Gallery image CDN URLs ordered by sort_order ASC, created_at ASC. */
+  images: string[];
   /** Date of the next available slot (None if no upcoming slots). */
   next_available_date?: ApiResponseVenueDetailDataAllOfNextAvailableDate;
 };
@@ -1843,6 +2122,41 @@ export interface ApiResponseVenueDetail {
 Returned by `get_venue_detail` — includes the catalog entry plus
 a count of available slots in the upcoming days. */
   data: ApiResponseVenueDetailData;
+  request_id: string;
+}
+
+/**
+ * One photo in a venue's gallery. The image with the lowest `sort_order` is the
+primary/cover; the repo denormalizes its `url` to `venues.cover_image_url`.
+ */
+export type ApiResponseVenueImageData = {
+  content_type: string;
+  created_at: string;
+  id: VenueImageId;
+  object_key: string;
+  sort_order: number;
+  tenant_id: TenantId;
+  url: string;
+  venue_id: VenueId;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVenueImage {
+  /** One photo in a venue's gallery. The image with the lowest `sort_order` is the
+primary/cover; the repo denormalizes its `url` to `venues.cover_image_url`. */
+  data: ApiResponseVenueImageData;
   request_id: string;
 }
 
@@ -1976,6 +2290,71 @@ export type CancelBookingRequestReason = string | null;
 export interface CancelBookingRequest {
   reason?: CancelBookingRequestReason;
 }
+
+/**
+ * Set when the cancel would be a no-op (target already cancelled/inactive).
+ */
+export type CancellationPreviewBlockingCondition = string | null;
+
+/**
+ * Optimistic-concurrency token to echo back on the cancel as
+`expected_version`; a mismatch (the target changed) is rejected 409.
+ */
+export type CancellationPreviewVersion = string | null;
+
+/**
+ * A read-only summary of a pending cancellation. COUNTS ONLY, no PII.
+ */
+export interface CancellationPreview {
+  active_bookings_affected: number;
+  /** Set when the cancel would be a no-op (target already cancelled/inactive). */
+  blocking_condition?: CancellationPreviewBlockingCondition;
+  future_slots_affected: number;
+  member_booking_count: number;
+  notification_consequences: NotificationConsequences;
+  pass_booking_count: number;
+  refund_consequences: RefundConsequences;
+  target_id: string;
+  target_kind: CancellationTargetKind;
+  unchanged: UnchangedSummary;
+  /** Optimistic-concurrency token to echo back on the cancel as
+`expected_version`; a mismatch (the target changed) is rejected 409. */
+  version?: CancellationPreviewVersion;
+}
+
+/**
+ * Whether the preview is for a whole schedule (cascades to future slots) or a
+single slot.
+ */
+export type CancellationTargetKind =
+  (typeof CancellationTargetKind)[keyof typeof CancellationTargetKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const CancellationTargetKind = {
+  schedule: 'schedule',
+  slot: 'slot',
+} as const;
+
+/**
+ * A named, coarse feature capability gated by subscription tier.
+
+The serde `rename_all = "snake_case"` names are byte-identical to the
+`Display` impl below (pinned by `capability_serializes_byte_identical_to_display`),
+because both are the wire contract: the `GET /gms/v1/capabilities` response
+and the OpenAPI schema surface these exact strings to the venue console.
+ */
+export type Capability = (typeof Capability)[keyof typeof Capability];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const Capability = {
+  activity_pricing: 'activity_pricing',
+  qr_checkin: 'qr_checkin',
+  staff_accounts: 'staff_accounts',
+  multi_venue: 'multi_venue',
+  analytics: 'analytics',
+  member_self_service: 'member_self_service',
+  member_qr: 'member_qr',
+} as const;
 
 /**
  * Request to change subscription plan.
@@ -2500,6 +2879,21 @@ export const MembershipType = {
 } as const;
 
 /**
+ * A self-serviceable membership row (mirrors the member lambda's
+`MyMembershipResponse`), returned by `GET /gms/v1/me/memberships`.
+ */
+export interface MyMembershipResponse {
+  /** Human-facing gym (venue) name for the selector. */
+  gym_name: string;
+  /** The caller's `members` row id in this tenant. */
+  member_id: MemberId;
+  /** The tenant that owns the venue. */
+  tenant_id: TenantId;
+  /** A venue the caller can select via `?venue=` on the other `/me/*` routes. */
+  venue_id: VenueId;
+}
+
+/**
  * `Option` because `Member::email` is nullable: members created before the
 email requirement, and walk-ins, may have none.
  */
@@ -2564,6 +2958,12 @@ export interface MySubscriptionResponse {
   /** `SubscriptionStatus::as_str()`. */
   status: string;
   venue_id: VenueId;
+}
+
+export interface NotificationConsequences {
+  /** Released member bookings whose member has an email, and would receive a
+cancellation email (W6). */
+  member_emails_to_send: number;
 }
 
 export type OnboardVenueRequestAddressLine = string | null;
@@ -2965,6 +3365,26 @@ export const PlanKind = {
 } as const;
 
 /**
+ * Request a presigned upload URL for a new venue image.
+ */
+export interface PresignImageRequest {
+  /** MIME type of the file to upload (allowlist: image/jpeg, image/png, image/webp). */
+  content_type: string;
+}
+
+/**
+ * A presigned upload target the client PUTs bytes to.
+ */
+export interface PresignedUpload {
+  /** Unix seconds after which `upload_url` is no longer valid. */
+  expires_at: number;
+  object_key: string;
+  upload_url: string;
+  /** The final CDN URL the object will be served from after upload. */
+  url: string;
+}
+
+/**
  * QR check-in request body (mirrors lambdas/checkin QrCheckInBody).
  */
 export interface QrCheckinRequest {
@@ -2985,6 +3405,22 @@ Supported MVP patterns:
 Full RRULE parsing (EXDATE, BYMONTHDAY, etc.) deferred to IWP-029.
  */
 export type RecurrenceRule = string;
+
+export interface RefundConsequences {
+  /** Always 0: a venue-staff cancel does NOT auto-refund a member's priced-plan
+session credit (deferred conflict #4). */
+  member_credits_refunded: number;
+  /** Pass-linked bookings are refunded on the platform plane by the venue-cancel
+refund path, so this equals the pass booking count. */
+  pass_credits_refunded: number;
+}
+
+/**
+ * Register an object the client already uploaded via the presigned URL.
+ */
+export interface RegisterImageRequest {
+  object_key: string;
+}
 
 /**
  * Request to create a new gym-owner identity (Spec B2). Identity only, no
@@ -3009,6 +3445,13 @@ export interface RegisterPassHolderRequest {
   phone?: RegisterPassHolderRequestPhone;
   /** Chosen subscription plan. */
   plan: PassPlan;
+}
+
+/**
+ * Full reordering of a venue's images; index 0 becomes the primary/cover.
+ */
+export interface ReorderImagesRequest {
+  image_ids: VenueImageId[];
 }
 
 export type ResourceDescription = string | null;
@@ -3082,6 +3525,17 @@ export const Role = {
   trainer: 'trainer',
   receptionist: 'receptionist',
   consumer: 'consumer',
+} as const;
+
+/**
+ * Whether a roster entry is a tenant member or a marketplace pass holder.
+ */
+export type RosterActorKind = (typeof RosterActorKind)[keyof typeof RosterActorKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const RosterActorKind = {
+  member: 'member',
+  pass_holder: 'pass_holder',
 } as const;
 
 export type ScheduleDescription = string | null;
@@ -3217,6 +3671,87 @@ export interface SetTenantStatusRequest {
 export type SlotId = string;
 
 /**
+ * Where a slot sits in the day relative to the snapshot's `generated_at`.
+ */
+export type SlotLifecycle = (typeof SlotLifecycle)[keyof typeof SlotLifecycle];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const SlotLifecycle = {
+  upcoming: 'upcoming',
+  active: 'active',
+  completed: 'completed',
+  cancelled: 'cancelled',
+} as const;
+
+export type SlotRosterEntryCancellationReason = string | null;
+
+export type SlotRosterEntryCancelledAt = string | null;
+
+export type SlotRosterEntryCheckInMethod = null | CheckInMethod;
+
+/**
+ * When the attendee checked in, if they have.
+ */
+export type SlotRosterEntryCheckedInAt = string | null;
+
+/**
+ * Member given name — `Some` ONLY for a member row read by a `member:read`
+caller. Always `None` for a pass-holder row or a caller without `member:read`.
+ */
+export type SlotRosterEntryFirstName = string | null;
+
+/**
+ * Member family name — same visibility rule as `first_name`.
+ */
+export type SlotRosterEntryLastName = string | null;
+
+export type SlotRosterEntryMemberId = null | MemberId;
+
+export type SlotRosterEntryPassHolderId = null | PassHolderId;
+
+/**
+ * One attendee on a slot's roster, enriched for the venue console
+(`GET /gms/v1/slots/{id}/bookings`).
+
+Backward-compatible SUPERSET of [`Booking`]: it carries every `Booking` field
+under the same name (so a client that consumed the prior `Vec<Booking>`
+response keeps working), PLUS the console enrichments `kind`, `first_name`,
+`last_name`, and `check_in_method`.
+
+Privacy (owner-confirmed 2026-09-20): `first_name`/`last_name` are populated
+ONLY for a member row AND only when the caller holds `member:read`
+(owner/admin/receptionist). A trainer (no `member:read`) sees the `member_id`
+but no name — the route strips names via [`SlotRosterEntry::without_member_names`].
+A pass-holder row NEVER carries a name: it is a cross-tenant identity shown to
+the venue only as an anonymous guest, so the repo query leaves its names `None`
+(the members join has no row for a pass-holder booking).
+ */
+export interface SlotRosterEntry {
+  booked_at: string;
+  cancellation_reason?: SlotRosterEntryCancellationReason;
+  cancelled_at?: SlotRosterEntryCancelledAt;
+  check_in_method?: SlotRosterEntryCheckInMethod;
+  /** When the attendee checked in, if they have. */
+  checked_in_at?: SlotRosterEntryCheckedInAt;
+  created_at: string;
+  /** Member given name — `Some` ONLY for a member row read by a `member:read`
+caller. Always `None` for a pass-holder row or a caller without `member:read`. */
+  first_name?: SlotRosterEntryFirstName;
+  id: BookingId;
+  kind: RosterActorKind;
+  /** Member family name — same visibility rule as `first_name`. */
+  last_name?: SlotRosterEntryLastName;
+  member_id?: SlotRosterEntryMemberId;
+  pass_holder_id?: SlotRosterEntryPassHolderId;
+  slot_id: SlotId;
+  /** How the booking was created (direct / iziwellpass / walk_in). */
+  source: BookingSource;
+  status: BookingStatus;
+  tenant_id: TenantId;
+  updated_at: string;
+}
+
+/**
  * Status of a schedule slot.
  */
 export type SlotStatus = (typeof SlotStatus)[keyof typeof SlotStatus];
@@ -3290,6 +3825,28 @@ export interface TenantBilling {
 }
 
 /**
+ * Response body of `GET /gms/v1/capabilities`: the caller's effective tenant
+plan and the canonical capability set it grants.
+
+The venue-console BFF reads this to render plan-gated navigation WITHOUT
+duplicating the backend entitlement matrix. It is derived exclusively from
+`capabilities_for(plan)` (the single source of truth that
+`require_feature` also enforces), so the response ALWAYS matches what the
+backend will enforce for the same request context.
+
+Staleness: `plan` comes from the token/authorizer context, never a DB read.
+A tenant plan change therefore becomes visible only after the caller's token
+is refreshed (re-login), and a change to the capability matrix takes effect
+after backend deployment.
+ */
+export interface TenantCapabilitiesResponse {
+  /** Capabilities granted by `plan`, in `capabilities_for` order. */
+  capabilities: Capability[];
+  /** The tenant's current subscription tier (token-context derived). */
+  plan: Plan;
+}
+
+/**
  * Unique identifier for a tenant (maps 1:1 to Auth organization).
  */
 export type TenantId = string;
@@ -3350,6 +3907,98 @@ export interface TenantUsage {
   pass_bookings: number;
   tenant_id: TenantId;
   to: string;
+}
+
+/**
+ * Day-level attendance rollup.
+ */
+export interface TodayAttendance {
+  occupancy_pct: number;
+  total_check_ins: number;
+  unique_attendees: number;
+}
+
+/**
+ * Slot ids grouped by lifecycle, for quick console rendering.
+ */
+export interface TodayBuckets {
+  active: SlotId[];
+  cancelled: SlotId[];
+  completed: SlotId[];
+  upcoming: SlotId[];
+}
+
+export type TodaySlotActivityType = null | ActivityType;
+
+export type TodaySlotDescription = string | null;
+
+export type TodaySlotEndLocal = string | null;
+
+export type TodaySlotInstructorName = string | null;
+
+export type TodaySlotInstructorStaffId = null | StaffId;
+
+export type TodaySlotResourceName = string | null;
+
+/**
+ * RFC3339 local time (with the venue's offset), or `None` when the venue's
+timezone is not in the supported allowlist (best-effort; see conflict #9).
+ */
+export type TodaySlotStartLocal = string | null;
+
+export type TodaySlotTitle = string | null;
+
+/**
+ * One slot in the Today snapshot, enriched and bucketed.
+ */
+export interface TodaySlot {
+  activity_type?: TodaySlotActivityType;
+  booked_count: number;
+  capacity: number;
+  checked_in_count: number;
+  description?: TodaySlotDescription;
+  end_local?: TodaySlotEndLocal;
+  end_utc: string;
+  instructor_name?: TodaySlotInstructorName;
+  instructor_staff_id?: TodaySlotInstructorStaffId;
+  lifecycle: SlotLifecycle;
+  /** True when the slot warrants operator attention: active with zero arrivals,
+over capacity, or has bookings but no assigned instructor. Never true for a
+cancelled slot. */
+  needs_attention: boolean;
+  resource_id: ResourceId;
+  resource_name?: TodaySlotResourceName;
+  schedule_id: ScheduleId;
+  slot_id: SlotId;
+  /** RFC3339 local time (with the venue's offset), or `None` when the venue's
+timezone is not in the supported allowlist (best-effort; see conflict #9). */
+  start_local?: TodaySlotStartLocal;
+  start_utc: string;
+  title?: TodaySlotTitle;
+}
+
+/**
+ * The venue-day operational snapshot.
+ */
+export interface TodaySnapshot {
+  attendance: TodayAttendance;
+  buckets: TodayBuckets;
+  generated_at: string;
+  local_date: string;
+  /** Slot ids flagged `needs_attention`, for a fast "what needs me now" list. */
+  needs_attention: SlotId[];
+  slots: TodaySlot[];
+  timezone: string;
+  venue_id: VenueId;
+}
+
+export interface UnchangedSummary {
+  /** Confirmed bookings NOT released by the cancel (e.g. on preserved past
+slots, or already checked-in on the target slot). */
+  bookings_unchanged: number;
+  /** Slots the cancel leaves untouched (a schedule cancel preserves past/today
+slots; a slot cancel touches only itself, so this is 0). */
+  past_slots_preserved: number;
 }
 
 export type UpdateMemberRequestEmail = string | null;
@@ -3678,6 +4327,8 @@ export type VenueDetailAllOfNextAvailableDate = string | null;
 export type VenueDetailAllOf = {
   /** Number of available slots in the next 7 days. */
   available_slots_7d: number;
+  /** Gallery image CDN URLs ordered by sort_order ASC, created_at ASC. */
+  images: string[];
   /** Date of the next available slot (None if no upcoming slots). */
   next_available_date?: VenueDetailAllOfNextAvailableDate;
 };
@@ -3694,6 +4345,26 @@ export type VenueDetail = VenueCatalogEntry & VenueDetailAllOf;
  * Unique identifier for a venue (physical location).
  */
 export type VenueId = string;
+
+/**
+ * One photo in a venue's gallery. The image with the lowest `sort_order` is the
+primary/cover; the repo denormalizes its `url` to `venues.cover_image_url`.
+ */
+export interface VenueImage {
+  content_type: string;
+  created_at: string;
+  id: VenueImageId;
+  object_key: string;
+  sort_order: number;
+  tenant_id: TenantId;
+  url: string;
+  venue_id: VenueId;
+}
+
+/**
+ * Unique identifier for a venue image (gallery photo).
+ */
+export type VenueImageId = string;
 
 export interface VenueInfo {
   id: VenueId;
@@ -3755,9 +4426,69 @@ export interface WalkinCheckinRequest {
   venue_id: VenueId;
 }
 
+export type MeProfileParams = {
+  /**
+   * Selected venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
+};
+
+export type MeListBookingsParams = {
+  /**
+   * Selected membership venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
+};
+
+export type MeSelfBookParams = {
+  /**
+   * Selected membership venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
+};
+
+export type MeCancelBookingParams = {
+  /**
+   * Selected membership venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
+};
+
+export type MeBookingCheckinParams = {
+  /**
+   * Selected membership venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
+};
+
+export type MeBookingQrParams = {
+  /**
+   * Selected membership venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
+};
+
+export type MeWalkinCheckinParams = {
+  /**
+   * Selected membership venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
+};
+
+export type MintMemberQrParams = {
+  /**
+   * Selected membership venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
+};
+
 export type MeSlotsParams = {
   /**
-   * Venue id (UUID). REQUIRED; must be a venue the caller is entitled to.
+   * Selected membership venue; required when the caller has memberships in more than one tenant.
+   */
+  venue?: string;
+  /**
+   * Venue id (UUID) whose slots to list. REQUIRED; must be a venue the caller is entitled to.
    */
   venue_id: string;
   /**
@@ -3768,6 +4499,20 @@ export type MeSlotsParams = {
    * Inclusive end day (YYYY-MM-DD, max 62 days after 'from'). Omitted = the single 'from' day.
    */
   to?: string;
+};
+
+export type MeSubscriptionParams = {
+  /**
+   * Selected membership venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
+};
+
+export type MeVenuesParams = {
+  /**
+   * Selected membership venue; required when the caller has memberships in more than one tenant
+   */
+  venue?: string;
 };
 
 export type ListMembersParams = {
@@ -3804,11 +4549,32 @@ export type ListSubscriptionsParams = {
   status?: string;
 };
 
+export type CancelScheduleParams = {
+  /**
+   * Optimistic-concurrency token from the cancellation-preview; if it no longer matches, the cancel is rejected 409
+   */
+  expected_version?: string;
+};
+
+export type CancelSlotParams = {
+  /**
+   * Optimistic-concurrency token from the cancellation-preview; if it no longer matches, the cancel is rejected 409
+   */
+  expected_version?: string;
+};
+
 export type ListPlansParams = {
   /**
    * When true, also return soft-archived (is_active=false) plans.
    */
   include_archived?: boolean;
+};
+
+export type VenueTodayParams = {
+  /**
+   * Venue-local day as YYYY-MM-DD; defaults to today
+   */
+  date?: string;
 };
 
 export type GetAttendanceParams = {

@@ -163,6 +163,53 @@
         ]
       }
     },
+    "/gms/v1/capabilities": {
+      "get": {
+        "tags": [
+          "venue"
+        ],
+        "summary": "Effective tenant capabilities for the venue console.",
+        "description": "Returns the caller's current subscription `plan` and the canonical\ncapabilities it grants (from the backend `capabilities_for` matrix). Lets the\nvenue-console BFF render plan-gated navigation WITHOUT duplicating the\nentitlement logic in the browser.\n\nSTAFF-ONLY. Every tenant staff role (owner, admin, trainer, receptionist) may\nread it; members, consumers, and operators receive 403. It grants no\ncapability and enforces nothing — capability enforcement remains backend\nauthoritative via `require_feature`. Owner/admin callers must have finalized\nTOTP MFA: this route is behind the same `require_staff` gate as every other\nGMS route, so an owner/admin whose token lacks the MFA marker gets 403\n`MFA_ENROLLMENT_REQUIRED`.\n\nStaleness: `plan` is derived from the verified ID-token / authorizer context,\nNOT a live database read. A tenant plan change is therefore reflected only\nafter the caller's token is refreshed (re-login); a change to the capability\nmatrix takes effect after backend deployment. The response always matches\nwhat `require_feature` will enforce for the same request context.",
+        "operationId": "get_capabilities",
+        "responses": {
+          "200": {
+            "description": "The tenant's effective plan and its granted capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_TenantCapabilitiesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not tenant staff (member/consumer/operator), or is an owner/admin without finalized MFA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
     "/gms/v1/checkins/manual": {
       "post": {
         "tags": [
@@ -495,8 +542,19 @@
           "member"
         ],
         "summary": "Get the caller's own member profile.",
-        "description": "The member id comes only from the verified token, so this always returns the\ncaller's own row. Staff-only fields (`notes`, `user_id`) are projected out.",
+        "description": "The member id comes only from the verified token + selected venue (resolved\nserver-side), so this always returns the caller's own row. Staff-only fields\n(`notes`, `user_id`) are projected out. `/me/*` routes select which membership\nvia `?venue=` (required when the caller has memberships in more than one\ntenant; defaulted when exactly one).",
         "operationId": "me_profile",
+        "parameters": [
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "The caller's own profile",
@@ -504,6 +562,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse_MyProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "venue selection required (memberships in multiple tenants)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -519,7 +587,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a member principal",
+            "description": "No active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -553,6 +621,17 @@
         ],
         "summary": "List the caller's own bookings (newest slot first, cancelled excluded).",
         "operationId": "me_list_bookings",
+        "parameters": [
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "The caller's own bookings",
@@ -560,6 +639,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse_Vec_Booking"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "venue selection required (memberships in multiple tenants)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -575,7 +664,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a member principal",
+            "description": "Caller is not a member principal, or no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -598,6 +687,17 @@
         "summary": "Self-book a slot (idempotent on retry).",
         "description": "Request body is `{ \"slot_id\": \"<uuid>\" }`. The member id comes only from the\nverified token, so a member can never book for anyone else. A network retry\nreturns the existing booking (still 201). This write requires the\n`MemberSelfService` tier capability, so a free-plan tenant is rejected with\n403 FEATURE_NOT_AVAILABLE.",
         "operationId": "me_self_book",
+        "parameters": [
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Booking created (or the existing one on retry)",
@@ -610,7 +710,7 @@
             }
           },
           "400": {
-            "description": "Validation error (missing/invalid slot_id)",
+            "description": "Validation error (missing/invalid slot_id), or venue selection required (memberships in multiple tenants)",
             "content": {
               "application/json": {
                 "schema": {
@@ -630,7 +730,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a member principal, tenant lacks MemberSelfService, or the member is not entitled to this venue",
+            "description": "Caller is not a member principal, tenant lacks MemberSelfService, the member is not entitled to this venue, or no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -674,6 +774,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -683,6 +792,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse_Booking"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "venue selection required (memberships in multiple tenants)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -698,7 +817,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a member principal, or tenant lacks MemberSelfService",
+            "description": "Caller is not a member principal, tenant lacks MemberSelfService, or no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -752,6 +871,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -766,7 +894,7 @@
             }
           },
           "400": {
-            "description": "Validation error (invalid booking id, or booking not eligible for check-in)",
+            "description": "Validation error (invalid booking id, or booking not eligible for check-in), or venue selection required (memberships in multiple tenants)",
             "content": {
               "application/json": {
                 "schema": {
@@ -786,7 +914,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a member principal, tenant lacks MemberSelfService, the venue does not allow member self-scan, the member is not entitled to this venue, or the member has no valid, paid plan covering this visit",
+            "description": "Caller is not a member principal, tenant lacks MemberSelfService, the venue does not allow member self-scan, the member is not entitled to this venue, the member has no valid, paid plan covering this visit, or no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -840,6 +968,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -854,7 +991,7 @@
             }
           },
           "400": {
-            "description": "Validation error (invalid booking id)",
+            "description": "Validation error (invalid booking id), or venue selection required (memberships in multiple tenants)",
             "content": {
               "application/json": {
                 "schema": {
@@ -874,7 +1011,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a linked member, or the tenant's plan does not include member_qr",
+            "description": "Caller is not a linked member, the tenant's plan does not include member_qr, or no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -909,6 +1046,17 @@
         "summary": "Member self-check-in (walk-in) at a venue that allows member scan.",
         "description": "Gated on the `MemberSelfService` capability (Starter+) and additionally on the\nvenue's per-venue `checkin_scan_mode`: a venue must opt into member self-scan,\notherwise 403. The policy check runs before the check-in write, so a rejected\nvenue burns no entry. The member id comes only from the verified token; the\nvenue id from the body. Runs the same entitlement axes as the staff walk-in:\ndedupe (409), active membership, venue entitlement, and pricing consumption.",
         "operationId": "me_walkin_checkin",
+        "parameters": [
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -931,7 +1079,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Validation error, or venue selection required (memberships in multiple tenants)",
             "content": {
               "application/json": {
                 "schema": {
@@ -951,7 +1099,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a member principal, tenant lacks MemberSelfService, the venue does not allow member self-scan, the member's membership is not active, the member is not entitled to this venue, or the member has no valid, paid plan covering this visit",
+            "description": "Caller is not a member principal, tenant lacks MemberSelfService, the venue does not allow member self-scan, the member's membership is not active, the member is not entitled to this venue, the member has no valid, paid plan covering this visit, or no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -988,6 +1136,43 @@
         ]
       }
     },
+    "/gms/v1/me/memberships": {
+      "get": {
+        "tags": [
+          "member"
+        ],
+        "summary": "List the caller's self-serviceable memberships (venue-selector bootstrap).",
+        "description": "Cross-tenant: resolved from the verified `sub` via the SECURITY DEFINER\nresolver, so it lists every gym the caller is an active member of (a\nconverted owner still sees their old member gym). The returned `venue_id`s\nare what the other `/me/*` routes pass as `?venue=` to select which\nmembership to act under.",
+        "operationId": "me_memberships",
+        "responses": {
+          "200": {
+            "description": "The caller's active memberships",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Vec_MyMembershipResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
     "/gms/v1/me/qr": {
       "post": {
         "tags": [
@@ -996,6 +1181,17 @@
         "summary": "Mint a short-lived, tenant-derived walk-in QR token for the calling member.",
         "description": "The token is signed under a key derived from the caller's tenant AND the\n`walkin` kind, so it cannot be replayed at another organization or as a\nbooking token. It carries no member identity. Valid for 300 seconds.",
         "operationId": "mint_member_qr",
+        "parameters": [
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1018,7 +1214,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Validation error, or venue selection required (memberships in multiple tenants)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1038,7 +1234,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a linked member, the tenant's plan does not include member_qr, or the member is not entitled to this venue",
+            "description": "Caller is not a linked member, the tenant's plan does not include member_qr, the member is not entitled to this venue, or no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -1061,13 +1257,22 @@
           "member"
         ],
         "summary": "List bookable slots at one venue the caller is entitled to.",
-        "description": "`venue_id` is REQUIRED (there is no all-venues form). `from` is REQUIRED (the\ninclusive start day, ISO `YYYY-MM-DD`). `to` is OPTIONAL: when present the\nquery is the inclusive range `[from, to]` (max 62 days); when absent it is\n`from`'s single day. Entitlement is enforced: a member may browse slots only\nat a venue they are entitled to.",
+        "description": "`venue_id` is REQUIRED (there is no all-venues form). `from` is REQUIRED (the\ninclusive start day, ISO `YYYY-MM-DD`). `to` is OPTIONAL: when present the\nquery is the inclusive range `[from, to]` (max 62 days); when absent it is\n`from`'s single day. Entitlement is enforced: a member may browse slots only\nat a venue they are entitled to. Membership selection follows the same\ncontract as the other `/me/*` routes: pass `?venue=` to choose which\nmembership the caller acts under (required when the caller has memberships in\nmore than one tenant; defaulted when exactly one). `venue_id` is the venue\nwhose slots to list and is distinct from the membership-selector `venue`\n(they are typically the same venue).",
         "operationId": "me_slots",
         "parameters": [
           {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "venue_id",
             "in": "query",
-            "description": "Venue id (UUID). REQUIRED; must be a venue the caller is entitled to.",
+            "description": "Venue id (UUID) whose slots to list. REQUIRED; must be a venue the caller is entitled to.",
             "required": true,
             "schema": {
               "type": "string"
@@ -1104,7 +1309,7 @@
             }
           },
           "400": {
-            "description": "Missing/invalid venue_id, from, or range (from>to, or span>62d)",
+            "description": "Missing/invalid venue_id, from, or range (from>to, or span>62d), or venue selection required (memberships in multiple tenants)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1124,7 +1329,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a member principal, or is not entitled to this venue",
+            "description": "Caller is not a member principal, is not entitled to this venue, or has no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -1149,6 +1354,17 @@
         "summary": "List the caller's own ACTIVE subscriptions.",
         "description": "Only active subscriptions are returned (a \"what can I use now\" view, not\nbilling history). Staff PII (`assigned_by`) is projected out.",
         "operationId": "me_subscription",
+        "parameters": [
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "The caller's own active subscriptions",
@@ -1156,6 +1372,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse_Vec_MySubscriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "venue selection required (memberships in multiple tenants)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1171,7 +1397,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a member principal",
+            "description": "Caller is not a member principal, or no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -1196,6 +1422,17 @@
         "summary": "List the venues the caller may use.",
         "description": "A chain-wide member gets every active venue in the tenant; a venue-scoped\nmember gets only their entitlement set. Both return a bare `VenueId` list so\nthe response shape does not depend on the member's scope.",
         "operationId": "me_venues",
+        "parameters": [
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected membership venue; required when the caller has memberships in more than one tenant",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Venue ids the caller may use",
@@ -1203,6 +1440,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse_Vec_VenueId"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "venue selection required (memberships in multiple tenants)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1218,7 +1465,7 @@
             }
           },
           "403": {
-            "description": "Caller is not a member principal",
+            "description": "Caller is not a member principal, or no active membership for the selected venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -2314,7 +2561,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Validation error (includes an ineligible instructor_staff_id: not an active staff member with access to this venue)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2375,6 +2622,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "expected_version",
+            "in": "query",
+            "description": "Optimistic-concurrency token from the cancellation-preview; if it no longer matches, the cancel is rejected 409",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2410,6 +2666,84 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Stale expected_version: the schedule changed since the preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/schedules/{sid}/cancellation-preview": {
+      "get": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Read-only preview of cancelling a whole schedule (counts only, no PII).",
+        "description": "Returns the future slots that would be cancelled, the confirmed bookings on\nthem split member/pass, the actual refund and notification consequences of a\nvenue-staff cancel, what stays unchanged, and a `version` token to echo back\non the DELETE as `expected_version`. Same authority as the cancel it previews\n(`schedule:write`) plus venue-assignment; grants no authority.",
+        "operationId": "schedule_cancellation_preview",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "description": "Schedule id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancellation preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_CancellationPreview"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks schedule:write, or is a venue-scoped staff member not assigned to the schedule's venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Schedule not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2424,7 +2758,8 @@
         "tags": [
           "booking"
         ],
-        "summary": "List bookings for a slot.",
+        "summary": "The slot's attendee roster (venue console).",
+        "description": "One entry per booking on the slot, INCLUDING cancelled and no-show rows.\n`SlotRosterEntry` is a backward-compatible SUPERSET of `Booking` (every prior\nfield is retained under the same name), plus enrichments: `kind`,\n`check_in_method` (qr/manual, when checked in), and member `first_name`/\n`last_name`. Privacy: names appear ONLY when the caller holds `member:read`\n(owner/admin/receptionist); a trainer sees `member_id` and status but no name.\nPass-holder rows are cross-tenant identities and are NEVER named.",
         "operationId": "list_bookings_for_slot",
         "parameters": [
           {
@@ -2439,11 +2774,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Booking list",
+            "description": "Slot attendee roster (member names present only for a member:read caller; pass-holder rows never named)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Vec_Booking"
+                  "$ref": "#/components/schemas/ApiResponse_Vec_SlotRosterEntry"
                 }
               }
             }
@@ -2544,7 +2879,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks booking:write, or is a venue-scoped staff member not assigned to the slot's venue, or the member is not entitled to this venue",
+            "description": "Caller lacks booking:write, or is a venue-scoped staff member not assigned to the slot's venue, or the member is not entitled to this venue, or the member is inactive/suspended",
             "content": {
               "application/json": {
                 "schema": {
@@ -2555,6 +2890,16 @@
           },
           "404": {
             "description": "Slot not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slot is at capacity, or the actor already has an active booking for this slot (not retryable without changing the request)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2587,15 +2932,95 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "expected_version",
+            "in": "query",
+            "description": "Optimistic-concurrency token from the cancellation-preview; if it no longer matches, the cancel is rejected 409",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Slot cancelled; confirmed bookings released (no body)"
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks schedule:write, or is a venue-scoped staff member not assigned to this venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale expected_version: the slot changed since the preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/slots/{sid}/cancellation-preview": {
+      "get": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Read-only preview of cancelling a single slot (counts only, no PII).",
+        "description": "Returns the slot as the one affected slot, its confirmed bookings split\nmember/pass, refund/notification consequences, checked-in bookings that stay,\nand a `version` token to echo back on the cancel as `expected_version`.",
+        "operationId": "slot_cancellation_preview",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "description": "Slot id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Slot cancelled",
+            "description": "Cancellation preview",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_ScheduleSlot"
+                  "$ref": "#/components/schemas/ApiResponse_CancellationPreview"
                 }
               }
             }
@@ -2611,7 +3036,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks schedule:write",
+            "description": "Caller lacks schedule:write, or is a venue-scoped staff member not assigned to the slot's venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -2621,7 +3046,7 @@
             }
           },
           "404": {
-            "description": "Not found",
+            "description": "Slot not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -3610,6 +4035,391 @@
         ]
       }
     },
+    "/gms/v1/venues/{id}/images": {
+      "get": {
+        "tags": [
+          "venue"
+        ],
+        "summary": "List gallery images for a venue.",
+        "operationId": "list_venue_images",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Venue id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gallery image list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Vec_VenueImage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks venue:read, or is a venue-scoped staff member not assigned to this venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "venue"
+        ],
+        "summary": "Register a gallery image after upload to S3.",
+        "operationId": "add_venue_image",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Venue id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterImageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Image registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_VenueImage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Venue not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/venues/{id}/images/order": {
+      "put": {
+        "tags": [
+          "venue"
+        ],
+        "summary": "Reorder gallery images for a venue.",
+        "operationId": "reorder_venue_images",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Venue id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderImagesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Gallery images reordered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Vec_VenueImage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Venue not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/venues/{id}/images/presign": {
+      "post": {
+        "tags": [
+          "venue"
+        ],
+        "summary": "Request a presigned S3 upload URL for a venue gallery image.",
+        "operationId": "presign_venue_image",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Venue id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresignImageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Presigned upload URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_PresignedUpload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Venue not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/venues/{id}/images/{image_id}": {
+      "delete": {
+        "tags": [
+          "venue"
+        ],
+        "summary": "Delete a gallery image from a venue.",
+        "operationId": "delete_venue_image",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Venue id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "image_id",
+            "in": "path",
+            "description": "Image id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks venue:write, or is a venue-scoped staff member not assigned to this venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
     "/gms/v1/venues/{id}/marketplace": {
       "put": {
         "tags": [
@@ -4239,6 +5049,93 @@
         ]
       }
     },
+    "/gms/v1/venues/{id}/today": {
+      "get": {
+        "tags": [
+          "venue"
+        ],
+        "summary": "A venue's operational snapshot for a single day (venue console \"Today\").",
+        "description": "Every slot for the day INCLUDING cancelled ones, each with a `lifecycle`\nbucket (upcoming/active/completed/cancelled), a `needs_attention` flag, and\nbest-effort local times, plus a day-level attendance rollup and buckets of\nslot ids. Requires BOTH `schedule:read` and `checkin:read` (a caller holding\nonly one is 403) plus venue-assignment. `?date=YYYY-MM-DD` selects the\nvenue-local day; omit it for the venue's current local day.",
+        "operationId": "venue_today",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Venue id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "Venue-local day as YYYY-MM-DD; defaults to today",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Venue-day operational snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_TodaySnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed date query parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks schedule:read or checkin:read, or is a venue-scoped staff member not assigned to this venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Venue not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
     "/gms/v1/venues/{vid}/attendance": {
       "get": {
         "tags": [
@@ -4630,6 +5527,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Resource has active schedules and cannot be deleted (cancel those schedules first)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4734,7 +5641,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Validation error (includes an ineligible instructor_staff_id: not an active staff member with access to this venue)",
             "content": {
               "application/json": {
                 "schema": {
@@ -5945,6 +6852,114 @@
         }
       }
     },
+    "/platform/v1/mfa/finalize": {
+      "post": {
+        "tags": [
+          "mfa"
+        ],
+        "summary": "Finalize the authenticated caller's MFA enrollment: confirms TOTP is\nenabled+preferred, revokes all prior sessions (global sign-out), then writes\nthe durable `mfa_enrolled_at` marker. The next login is TOTP-challenged and\nits token carries the `mfa_enrolled_at` claim. Idempotent.",
+        "operationId": "finalize_mfa",
+        "responses": {
+          "200": {
+            "description": "MFA enrollment finalized; marker written and prior sessions revoked"
+          },
+          "400": {
+            "description": "TOTP is not enabled+preferred yet (complete enrollment first)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller not permitted (operators are excluded)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/platform/v1/onboarding/eligibility": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Grant just-in-time onboarding eligibility for the authenticated caller.\nConsole-audience only; caller must be a consumer/member with MFA enrolled.\nHMAC-signs `{sub, aud, until}` into the admin-only eligibility attribute.",
+        "operationId": "grant_eligibility",
+        "responses": {
+          "200": {
+            "description": "Eligibility granted; expires ~10 minutes later"
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not console audience, wrong principal, or MFA_ENROLLMENT_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
     "/platform/v1/onboarding/venue": {
       "post": {
         "tags": [
@@ -6997,6 +8012,81 @@
           }
         }
       },
+      "ApiResponse_CancellationPreview": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "A read-only summary of a pending cancellation. COUNTS ONLY, no PII.",
+            "required": [
+              "target_kind",
+              "target_id",
+              "future_slots_affected",
+              "active_bookings_affected",
+              "member_booking_count",
+              "pass_booking_count",
+              "refund_consequences",
+              "notification_consequences",
+              "unchanged"
+            ],
+            "properties": {
+              "active_bookings_affected": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "blocking_condition": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Set when the cancel would be a no-op (target already cancelled/inactive)."
+              },
+              "future_slots_affected": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "member_booking_count": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "notification_consequences": {
+                "$ref": "#/components/schemas/NotificationConsequences"
+              },
+              "pass_booking_count": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "refund_consequences": {
+                "$ref": "#/components/schemas/RefundConsequences"
+              },
+              "target_id": {
+                "type": "string"
+              },
+              "target_kind": {
+                "$ref": "#/components/schemas/CancellationTargetKind"
+              },
+              "unchanged": {
+                "$ref": "#/components/schemas/UnchangedSummary"
+              },
+              "version": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Optimistic-concurrency token to echo back on the cancel as\n`expected_version`; a mismatch (the target changed) is rejected 409."
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_CheckIn": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -7748,6 +8838,46 @@
           }
         }
       },
+      "ApiResponse_PresignedUpload": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "A presigned upload target the client PUTs bytes to.",
+            "required": [
+              "upload_url",
+              "object_key",
+              "url",
+              "expires_at"
+            ],
+            "properties": {
+              "expires_at": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Unix seconds after which `upload_url` is no longer valid."
+              },
+              "object_key": {
+                "type": "string"
+              },
+              "upload_url": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "description": "The final CDN URL the object will be served from after upload."
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_Resource": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -8012,81 +9142,6 @@
           }
         }
       },
-      "ApiResponse_ScheduleSlot": {
-        "type": "object",
-        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
-        "required": [
-          "data",
-          "request_id"
-        ],
-        "properties": {
-          "data": {
-            "type": "object",
-            "description": "An individual bookable time slot generated from a schedule.\n\nMaps to `schedule_slots` table. Each slot has a date, time window,\ncapacity, and booking count for availability checking.",
-            "required": [
-              "id",
-              "tenant_id",
-              "schedule_id",
-              "venue_id",
-              "resource_id",
-              "date",
-              "start_time",
-              "end_time",
-              "capacity",
-              "booked_count",
-              "status",
-              "created_at"
-            ],
-            "properties": {
-              "booked_count": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "capacity": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "created_at": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "date": {
-                "type": "string",
-                "format": "date"
-              },
-              "end_time": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "id": {
-                "$ref": "#/components/schemas/SlotId"
-              },
-              "resource_id": {
-                "$ref": "#/components/schemas/ResourceId"
-              },
-              "schedule_id": {
-                "$ref": "#/components/schemas/ScheduleId"
-              },
-              "start_time": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "status": {
-                "$ref": "#/components/schemas/SlotStatus"
-              },
-              "tenant_id": {
-                "$ref": "#/components/schemas/TenantId"
-              },
-              "venue_id": {
-                "$ref": "#/components/schemas/VenueId"
-              }
-            }
-          },
-          "request_id": {
-            "type": "string"
-          }
-        }
-      },
       "ApiResponse_Staff": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -8142,6 +9197,40 @@
               },
               "user_id": {
                 "type": "string"
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_TenantCapabilitiesResponse": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Response body of `GET /gms/v1/capabilities`: the caller's effective tenant\nplan and the canonical capability set it grants.\n\nThe venue-console BFF reads this to render plan-gated navigation WITHOUT\nduplicating the backend entitlement matrix. It is derived exclusively from\n`capabilities_for(plan)` (the single source of truth that\n`require_feature` also enforces), so the response ALWAYS matches what the\nbackend will enforce for the same request context.\n\nStaleness: `plan` comes from the token/authorizer context, never a DB read.\nA tenant plan change therefore becomes visible only after the caller's token\nis refreshed (re-login), and a change to the capability matrix takes effect\nafter backend deployment.",
+            "required": [
+              "plan",
+              "capabilities"
+            ],
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Capability"
+                },
+                "description": "Capabilities granted by `plan`, in `capabilities_for` order."
+              },
+              "plan": {
+                "$ref": "#/components/schemas/Plan",
+                "description": "The tenant's current subscription tier (token-context derived)."
               }
             }
           },
@@ -8259,6 +9348,68 @@
               "to": {
                 "type": "string",
                 "format": "date"
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_TodaySnapshot": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "The venue-day operational snapshot.",
+            "required": [
+              "venue_id",
+              "timezone",
+              "local_date",
+              "generated_at",
+              "attendance",
+              "slots",
+              "buckets",
+              "needs_attention"
+            ],
+            "properties": {
+              "attendance": {
+                "$ref": "#/components/schemas/TodayAttendance"
+              },
+              "buckets": {
+                "$ref": "#/components/schemas/TodayBuckets"
+              },
+              "generated_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "local_date": {
+                "type": "string",
+                "format": "date"
+              },
+              "needs_attention": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SlotId"
+                },
+                "description": "Slot ids flagged `needs_attention`, for a fast \"what needs me now\" list."
+              },
+              "slots": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TodaySlot"
+                }
+              },
+              "timezone": {
+                "type": "string"
+              },
+              "venue_id": {
+                "$ref": "#/components/schemas/VenueId"
               }
             }
           },
@@ -8746,6 +9897,50 @@
           }
         }
       },
+      "ApiResponse_Vec_MyMembershipResponse": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A self-serviceable membership row (mirrors the member lambda's\n`MyMembershipResponse`), returned by `GET /gms/v1/me/memberships`.",
+              "required": [
+                "member_id",
+                "tenant_id",
+                "venue_id",
+                "gym_name"
+              ],
+              "properties": {
+                "gym_name": {
+                  "type": "string",
+                  "description": "Human-facing gym (venue) name for the selector."
+                },
+                "member_id": {
+                  "$ref": "#/components/schemas/MemberId",
+                  "description": "The caller's `members` row id in this tenant."
+                },
+                "tenant_id": {
+                  "$ref": "#/components/schemas/TenantId",
+                  "description": "The tenant that owns the venue."
+                },
+                "venue_id": {
+                  "$ref": "#/components/schemas/VenueId",
+                  "description": "A venue the caller can select via `?venue=` on the other `/me/*` routes."
+                }
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_Vec_MySubscriptionResponse": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -9158,6 +10353,137 @@
           }
         }
       },
+      "ApiResponse_Vec_SlotRosterEntry": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "One attendee on a slot's roster, enriched for the venue console\n(`GET /gms/v1/slots/{id}/bookings`).\n\nBackward-compatible SUPERSET of [`Booking`]: it carries every `Booking` field\nunder the same name (so a client that consumed the prior `Vec<Booking>`\nresponse keeps working), PLUS the console enrichments `kind`, `first_name`,\n`last_name`, and `check_in_method`.\n\nPrivacy (owner-confirmed 2026-09-20): `first_name`/`last_name` are populated\nONLY for a member row AND only when the caller holds `member:read`\n(owner/admin/receptionist). A trainer (no `member:read`) sees the `member_id`\nbut no name — the route strips names via [`SlotRosterEntry::without_member_names`].\nA pass-holder row NEVER carries a name: it is a cross-tenant identity shown to\nthe venue only as an anonymous guest, so the repo query leaves its names `None`\n(the members join has no row for a pass-holder booking).",
+              "required": [
+                "id",
+                "tenant_id",
+                "slot_id",
+                "source",
+                "status",
+                "booked_at",
+                "created_at",
+                "updated_at",
+                "kind"
+              ],
+              "properties": {
+                "booked_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "cancellation_reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "cancelled_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "check_in_method": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CheckInMethod",
+                      "description": "How they checked in (qr / manual). `None` until the attendee checks in."
+                    }
+                  ]
+                },
+                "checked_in_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "When the attendee checked in, if they have."
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "first_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Member given name — `Some` ONLY for a member row read by a `member:read`\ncaller. Always `None` for a pass-holder row or a caller without `member:read`."
+                },
+                "id": {
+                  "$ref": "#/components/schemas/BookingId"
+                },
+                "kind": {
+                  "$ref": "#/components/schemas/RosterActorKind"
+                },
+                "last_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Member family name — same visibility rule as `first_name`."
+                },
+                "member_id": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/MemberId",
+                      "description": "The tenant member behind a member row (`None` for a pass-holder row). An\nin-tenant id, not PII, so it is present regardless of `member:read`."
+                    }
+                  ]
+                },
+                "pass_holder_id": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PassHolderId"
+                    }
+                  ]
+                },
+                "slot_id": {
+                  "$ref": "#/components/schemas/SlotId"
+                },
+                "source": {
+                  "$ref": "#/components/schemas/BookingSource",
+                  "description": "How the booking was created (direct / iziwellpass / walk_in)."
+                },
+                "status": {
+                  "$ref": "#/components/schemas/BookingStatus"
+                },
+                "tenant_id": {
+                  "$ref": "#/components/schemas/TenantId"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_Vec_Staff": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -9550,6 +10876,64 @@
           }
         }
       },
+      "ApiResponse_Vec_VenueImage": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "One photo in a venue's gallery. The image with the lowest `sort_order` is the\nprimary/cover; the repo denormalizes its `url` to `venues.cover_image_url`.",
+              "required": [
+                "id",
+                "tenant_id",
+                "venue_id",
+                "object_key",
+                "url",
+                "content_type",
+                "sort_order",
+                "created_at"
+              ],
+              "properties": {
+                "content_type": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "id": {
+                  "$ref": "#/components/schemas/VenueImageId"
+                },
+                "object_key": {
+                  "type": "string"
+                },
+                "sort_order": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "tenant_id": {
+                  "$ref": "#/components/schemas/TenantId"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "venue_id": {
+                  "$ref": "#/components/schemas/VenueId"
+                }
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_Venue": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -9718,13 +11102,21 @@
               {
                 "type": "object",
                 "required": [
-                  "available_slots_7d"
+                  "available_slots_7d",
+                  "images"
                 ],
                 "properties": {
                   "available_slots_7d": {
                     "type": "integer",
                     "format": "int64",
                     "description": "Number of available slots in the next 7 days."
+                  },
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Gallery image CDN URLs ordered by sort_order ASC, created_at ASC."
                   },
                   "next_available_date": {
                     "type": [
@@ -9738,6 +11130,61 @@
               }
             ],
             "description": "Enriched venue view with availability summary.\n\nReturned by `get_venue_detail` — includes the catalog entry plus\na count of available slots in the upcoming days."
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_VenueImage": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "One photo in a venue's gallery. The image with the lowest `sort_order` is the\nprimary/cover; the repo denormalizes its `url` to `venues.cover_image_url`.",
+            "required": [
+              "id",
+              "tenant_id",
+              "venue_id",
+              "object_key",
+              "url",
+              "content_type",
+              "sort_order",
+              "created_at"
+            ],
+            "properties": {
+              "content_type": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "id": {
+                "$ref": "#/components/schemas/VenueImageId"
+              },
+              "object_key": {
+                "type": "string"
+              },
+              "sort_order": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "tenant_id": {
+                "$ref": "#/components/schemas/TenantId"
+              },
+              "url": {
+                "type": "string"
+              },
+              "venue_id": {
+                "$ref": "#/components/schemas/VenueId"
+              }
+            }
           },
           "request_id": {
             "type": "string"
@@ -9954,6 +11401,89 @@
             ]
           }
         }
+      },
+      "CancellationPreview": {
+        "type": "object",
+        "description": "A read-only summary of a pending cancellation. COUNTS ONLY, no PII.",
+        "required": [
+          "target_kind",
+          "target_id",
+          "future_slots_affected",
+          "active_bookings_affected",
+          "member_booking_count",
+          "pass_booking_count",
+          "refund_consequences",
+          "notification_consequences",
+          "unchanged"
+        ],
+        "properties": {
+          "active_bookings_affected": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "blocking_condition": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Set when the cancel would be a no-op (target already cancelled/inactive)."
+          },
+          "future_slots_affected": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "member_booking_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "notification_consequences": {
+            "$ref": "#/components/schemas/NotificationConsequences"
+          },
+          "pass_booking_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "refund_consequences": {
+            "$ref": "#/components/schemas/RefundConsequences"
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "target_kind": {
+            "$ref": "#/components/schemas/CancellationTargetKind"
+          },
+          "unchanged": {
+            "$ref": "#/components/schemas/UnchangedSummary"
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optimistic-concurrency token to echo back on the cancel as\n`expected_version`; a mismatch (the target changed) is rejected 409."
+          }
+        }
+      },
+      "CancellationTargetKind": {
+        "type": "string",
+        "description": "Whether the preview is for a whole schedule (cascades to future slots) or a\nsingle slot.",
+        "enum": [
+          "schedule",
+          "slot"
+        ]
+      },
+      "Capability": {
+        "type": "string",
+        "description": "A named, coarse feature capability gated by subscription tier.\n\nThe serde `rename_all = \"snake_case\"` names are byte-identical to the\n`Display` impl below (pinned by `capability_serializes_byte_identical_to_display`),\nbecause both are the wire contract: the `GET /gms/v1/capabilities` response\nand the OpenAPI schema surface these exact strings to the venue console.",
+        "enum": [
+          "activity_pricing",
+          "qr_checkin",
+          "staff_accounts",
+          "multi_venue",
+          "analytics",
+          "member_self_service",
+          "member_qr"
+        ]
       },
       "ChangePlanRequest": {
         "type": "object",
@@ -10955,6 +12485,34 @@
           "trial"
         ]
       },
+      "MyMembershipResponse": {
+        "type": "object",
+        "description": "A self-serviceable membership row (mirrors the member lambda's\n`MyMembershipResponse`), returned by `GET /gms/v1/me/memberships`.",
+        "required": [
+          "member_id",
+          "tenant_id",
+          "venue_id",
+          "gym_name"
+        ],
+        "properties": {
+          "gym_name": {
+            "type": "string",
+            "description": "Human-facing gym (venue) name for the selector."
+          },
+          "member_id": {
+            "$ref": "#/components/schemas/MemberId",
+            "description": "The caller's `members` row id in this tenant."
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/TenantId",
+            "description": "The tenant that owns the venue."
+          },
+          "venue_id": {
+            "$ref": "#/components/schemas/VenueId",
+            "description": "A venue the caller can select via `?venue=` on the other `/me/*` routes."
+          }
+        }
+      },
       "MyProfileResponse": {
         "type": "object",
         "description": "What a member may see about themselves.\n\nExcluded by design: `notes` (staff-authored free text ABOUT the member) and\n`user_id` (their Cognito sub, which the app already knows from its own token\nand which should not be echoed back). Enum fields are flattened to their\n`as_str()` wire form by the caller.",
@@ -11057,6 +12615,19 @@
           },
           "venue_id": {
             "$ref": "#/components/schemas/VenueId"
+          }
+        }
+      },
+      "NotificationConsequences": {
+        "type": "object",
+        "required": [
+          "member_emails_to_send"
+        ],
+        "properties": {
+          "member_emails_to_send": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Released member bookings whose member has an email, and would receive a\ncancellation email (W6)."
           }
         }
       },
@@ -11757,6 +13328,46 @@
           "entry_pack"
         ]
       },
+      "PresignImageRequest": {
+        "type": "object",
+        "description": "Request a presigned upload URL for a new venue image.",
+        "required": [
+          "content_type"
+        ],
+        "properties": {
+          "content_type": {
+            "type": "string",
+            "description": "MIME type of the file to upload (allowlist: image/jpeg, image/png, image/webp)."
+          }
+        }
+      },
+      "PresignedUpload": {
+        "type": "object",
+        "description": "A presigned upload target the client PUTs bytes to.",
+        "required": [
+          "upload_url",
+          "object_key",
+          "url",
+          "expires_at"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix seconds after which `upload_url` is no longer valid."
+          },
+          "object_key": {
+            "type": "string"
+          },
+          "upload_url": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "description": "The final CDN URL the object will be served from after upload."
+          }
+        }
+      },
       "QrCheckinRequest": {
         "type": "object",
         "description": "QR check-in request body (mirrors lambdas/checkin QrCheckInBody).",
@@ -11778,6 +13389,37 @@
       "RecurrenceRule": {
         "type": "string",
         "description": "iCal RRULE string wrapper with basic validation.\n\nSupported MVP patterns:\n- `FREQ=DAILY`\n- `FREQ=WEEKLY;BYDAY=MO,WE,FR`\n- `FREQ=WEEKLY;BYDAY=SA;INTERVAL=2`\n\nFull RRULE parsing (EXDATE, BYMONTHDAY, etc.) deferred to IWP-029."
+      },
+      "RefundConsequences": {
+        "type": "object",
+        "required": [
+          "member_credits_refunded",
+          "pass_credits_refunded"
+        ],
+        "properties": {
+          "member_credits_refunded": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Always 0: a venue-staff cancel does NOT auto-refund a member's priced-plan\nsession credit (deferred conflict #4)."
+          },
+          "pass_credits_refunded": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Pass-linked bookings are refunded on the platform plane by the venue-cancel\nrefund path, so this equals the pass booking count."
+          }
+        }
+      },
+      "RegisterImageRequest": {
+        "type": "object",
+        "description": "Register an object the client already uploaded via the presigned URL.",
+        "required": [
+          "object_key"
+        ],
+        "properties": {
+          "object_key": {
+            "type": "string"
+          }
+        }
       },
       "RegisterOwnerRequest": {
         "type": "object",
@@ -11827,6 +13469,21 @@
           "plan": {
             "$ref": "#/components/schemas/PassPlan",
             "description": "Chosen subscription plan."
+          }
+        }
+      },
+      "ReorderImagesRequest": {
+        "type": "object",
+        "description": "Full reordering of a venue's images; index 0 becomes the primary/cover.",
+        "required": [
+          "image_ids"
+        ],
+        "properties": {
+          "image_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VenueImageId"
+            }
           }
         }
       },
@@ -11987,6 +13644,14 @@
           "trainer",
           "receptionist",
           "consumer"
+        ]
+      },
+      "RosterActorKind": {
+        "type": "string",
+        "description": "Whether a roster entry is a tenant member or a marketplace pass holder.",
+        "enum": [
+          "member",
+          "pass_holder"
         ]
       },
       "Schedule": {
@@ -12277,6 +13942,131 @@
         "format": "uuid",
         "description": "Unique identifier for a schedule slot (individual bookable time)."
       },
+      "SlotLifecycle": {
+        "type": "string",
+        "description": "Where a slot sits in the day relative to the snapshot's `generated_at`.",
+        "enum": [
+          "upcoming",
+          "active",
+          "completed",
+          "cancelled"
+        ]
+      },
+      "SlotRosterEntry": {
+        "type": "object",
+        "description": "One attendee on a slot's roster, enriched for the venue console\n(`GET /gms/v1/slots/{id}/bookings`).\n\nBackward-compatible SUPERSET of [`Booking`]: it carries every `Booking` field\nunder the same name (so a client that consumed the prior `Vec<Booking>`\nresponse keeps working), PLUS the console enrichments `kind`, `first_name`,\n`last_name`, and `check_in_method`.\n\nPrivacy (owner-confirmed 2026-09-20): `first_name`/`last_name` are populated\nONLY for a member row AND only when the caller holds `member:read`\n(owner/admin/receptionist). A trainer (no `member:read`) sees the `member_id`\nbut no name — the route strips names via [`SlotRosterEntry::without_member_names`].\nA pass-holder row NEVER carries a name: it is a cross-tenant identity shown to\nthe venue only as an anonymous guest, so the repo query leaves its names `None`\n(the members join has no row for a pass-holder booking).",
+        "required": [
+          "id",
+          "tenant_id",
+          "slot_id",
+          "source",
+          "status",
+          "booked_at",
+          "created_at",
+          "updated_at",
+          "kind"
+        ],
+        "properties": {
+          "booked_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancellation_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelled_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "check_in_method": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CheckInMethod",
+                "description": "How they checked in (qr / manual). `None` until the attendee checks in."
+              }
+            ]
+          },
+          "checked_in_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the attendee checked in, if they have."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "first_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Member given name — `Some` ONLY for a member row read by a `member:read`\ncaller. Always `None` for a pass-holder row or a caller without `member:read`."
+          },
+          "id": {
+            "$ref": "#/components/schemas/BookingId"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/RosterActorKind"
+          },
+          "last_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Member family name — same visibility rule as `first_name`."
+          },
+          "member_id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MemberId",
+                "description": "The tenant member behind a member row (`None` for a pass-holder row). An\nin-tenant id, not PII, so it is present regardless of `member:read`."
+              }
+            ]
+          },
+          "pass_holder_id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PassHolderId"
+              }
+            ]
+          },
+          "slot_id": {
+            "$ref": "#/components/schemas/SlotId"
+          },
+          "source": {
+            "$ref": "#/components/schemas/BookingSource",
+            "description": "How the booking was created (direct / iziwellpass / walk_in)."
+          },
+          "status": {
+            "$ref": "#/components/schemas/BookingStatus"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/TenantId"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "SlotStatus": {
         "type": "string",
         "description": "Status of a schedule slot.",
@@ -12398,6 +14188,27 @@
           },
           "tenant_id": {
             "$ref": "#/components/schemas/TenantId"
+          }
+        }
+      },
+      "TenantCapabilitiesResponse": {
+        "type": "object",
+        "description": "Response body of `GET /gms/v1/capabilities`: the caller's effective tenant\nplan and the canonical capability set it grants.\n\nThe venue-console BFF reads this to render plan-gated navigation WITHOUT\nduplicating the backend entitlement matrix. It is derived exclusively from\n`capabilities_for(plan)` (the single source of truth that\n`require_feature` also enforces), so the response ALWAYS matches what the\nbackend will enforce for the same request context.\n\nStaleness: `plan` comes from the token/authorizer context, never a DB read.\nA tenant plan change therefore becomes visible only after the caller's token\nis refreshed (re-login), and a change to the capability matrix takes effect\nafter backend deployment.",
+        "required": [
+          "plan",
+          "capabilities"
+        ],
+        "properties": {
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Capability"
+            },
+            "description": "Capabilities granted by `plan`, in `capabilities_for` order."
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Plan",
+            "description": "The tenant's current subscription tier (token-context derived)."
           }
         }
       },
@@ -12523,6 +14334,244 @@
           "to": {
             "type": "string",
             "format": "date"
+          }
+        }
+      },
+      "TodayAttendance": {
+        "type": "object",
+        "description": "Day-level attendance rollup.",
+        "required": [
+          "total_check_ins",
+          "unique_attendees",
+          "occupancy_pct"
+        ],
+        "properties": {
+          "occupancy_pct": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_check_ins": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unique_attendees": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "TodayBuckets": {
+        "type": "object",
+        "description": "Slot ids grouped by lifecycle, for quick console rendering.",
+        "required": [
+          "upcoming",
+          "active",
+          "completed",
+          "cancelled"
+        ],
+        "properties": {
+          "active": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlotId"
+            }
+          },
+          "cancelled": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlotId"
+            }
+          },
+          "completed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlotId"
+            }
+          },
+          "upcoming": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlotId"
+            }
+          }
+        }
+      },
+      "TodaySlot": {
+        "type": "object",
+        "description": "One slot in the Today snapshot, enriched and bucketed.",
+        "required": [
+          "slot_id",
+          "schedule_id",
+          "resource_id",
+          "start_utc",
+          "end_utc",
+          "capacity",
+          "booked_count",
+          "checked_in_count",
+          "lifecycle",
+          "needs_attention"
+        ],
+        "properties": {
+          "activity_type": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ActivityType"
+              }
+            ]
+          },
+          "booked_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "checked_in_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "end_local": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "end_utc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "instructor_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "instructor_staff_id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StaffId"
+              }
+            ]
+          },
+          "lifecycle": {
+            "$ref": "#/components/schemas/SlotLifecycle"
+          },
+          "needs_attention": {
+            "type": "boolean",
+            "description": "True when the slot warrants operator attention: active with zero arrivals,\nover capacity, or has bookings but no assigned instructor. Never true for a\ncancelled slot."
+          },
+          "resource_id": {
+            "$ref": "#/components/schemas/ResourceId"
+          },
+          "resource_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "schedule_id": {
+            "$ref": "#/components/schemas/ScheduleId"
+          },
+          "slot_id": {
+            "$ref": "#/components/schemas/SlotId"
+          },
+          "start_local": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "RFC3339 local time (with the venue's offset), or `None` when the venue's\ntimezone is not in the supported allowlist (best-effort; see conflict #9)."
+          },
+          "start_utc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TodaySnapshot": {
+        "type": "object",
+        "description": "The venue-day operational snapshot.",
+        "required": [
+          "venue_id",
+          "timezone",
+          "local_date",
+          "generated_at",
+          "attendance",
+          "slots",
+          "buckets",
+          "needs_attention"
+        ],
+        "properties": {
+          "attendance": {
+            "$ref": "#/components/schemas/TodayAttendance"
+          },
+          "buckets": {
+            "$ref": "#/components/schemas/TodayBuckets"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "local_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "needs_attention": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlotId"
+            },
+            "description": "Slot ids flagged `needs_attention`, for a fast \"what needs me now\" list."
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TodaySlot"
+            }
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "venue_id": {
+            "$ref": "#/components/schemas/VenueId"
+          }
+        }
+      },
+      "UnchangedSummary": {
+        "type": "object",
+        "required": [
+          "past_slots_preserved",
+          "bookings_unchanged"
+        ],
+        "properties": {
+          "bookings_unchanged": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Confirmed bookings NOT released by the cancel (e.g. on preserved past\nslots, or already checked-in on the target slot)."
+          },
+          "past_slots_preserved": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Slots the cancel leaves untouched (a schedule cancel preserves past/today\nslots; a slot cancel touches only itself, so this is 0)."
           }
         }
       },
@@ -13182,13 +15231,21 @@
           {
             "type": "object",
             "required": [
-              "available_slots_7d"
+              "available_slots_7d",
+              "images"
             ],
             "properties": {
               "available_slots_7d": {
                 "type": "integer",
                 "format": "int64",
                 "description": "Number of available slots in the next 7 days."
+              },
+              "images": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Gallery image CDN URLs ordered by sort_order ASC, created_at ASC."
               },
               "next_available_date": {
                 "type": [
@@ -13207,6 +15264,53 @@
         "type": "string",
         "format": "uuid",
         "description": "Unique identifier for a venue (physical location)."
+      },
+      "VenueImage": {
+        "type": "object",
+        "description": "One photo in a venue's gallery. The image with the lowest `sort_order` is the\nprimary/cover; the repo denormalizes its `url` to `venues.cover_image_url`.",
+        "required": [
+          "id",
+          "tenant_id",
+          "venue_id",
+          "object_key",
+          "url",
+          "content_type",
+          "sort_order",
+          "created_at"
+        ],
+        "properties": {
+          "content_type": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "$ref": "#/components/schemas/VenueImageId"
+          },
+          "object_key": {
+            "type": "string"
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/TenantId"
+          },
+          "url": {
+            "type": "string"
+          },
+          "venue_id": {
+            "$ref": "#/components/schemas/VenueId"
+          }
+        }
+      },
+      "VenueImageId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "Unique identifier for a venue image (gallery photo)."
       },
       "VenueInfo": {
         "type": "object",
@@ -13306,6 +15410,10 @@
     {
       "name": "onboarding",
       "description": "Venue onboarding & tenant provisioning (platform)"
+    },
+    {
+      "name": "mfa",
+      "description": "Owner/admin MFA enrollment finalization (platform)"
     },
     {
       "name": "billing",

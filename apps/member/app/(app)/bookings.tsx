@@ -107,7 +107,7 @@ function ListSkeleton() {
 
 export default function BookingsScreen() {
   const qc = useQueryClient();
-  const list = useMeListBookings({ query: { select: unwrap } });
+  const list = useMeListBookings(undefined, { query: { select: unwrap } });
   const cancel = useMeCancelBooking({
     mutation: {
       onSuccess: () => qc.invalidateQueries({ queryKey: getMeListBookingsQueryKey() }),

@@ -18,7 +18,7 @@ const QR_TTL_SECONDS = 300;
 export default function QrScreen() {
   // `POST /gms/v1/me/qr` requires `venue_id`; there is no all-venues form and no
   // venue picker yet, so we mint for the first venue the member is entitled to.
-  const venues = useMeVenues({ query: { select: unwrap } });
+  const venues = useMeVenues(undefined, { query: { select: unwrap } });
   const venueId = venues.data?.[0];
 
   const mint = useMintMemberQr({ mutation: {} });
