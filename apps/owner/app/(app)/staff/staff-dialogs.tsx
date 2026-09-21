@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontalIcon, Trash2Icon, UserCogIcon, UserPlusIcon } from 'lucide-react';
@@ -300,10 +300,12 @@ function ChangeRoleDialog({
   staff,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   staff: Staff;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('staff');
   const tCommon = useTranslations('common');
@@ -352,7 +354,7 @@ function ChangeRoleDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[520px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('roleDialog.title')}</DialogTitle>
           <DialogDescription>
@@ -416,10 +418,12 @@ function ManageVenuesDialog({
   staff,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   staff: Staff;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('staff');
   const tCommon = useTranslations('common');
@@ -459,7 +463,11 @@ function ManageVenuesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-[520px]">
+      <DialogContent
+        aria-describedby={undefined}
+        className="sm:max-w-[520px]"
+        restoreFocusTo={restoreFocusTo}
+      >
         <DialogHeader>
           <DialogTitle>{t('venuesDialog.title')}</DialogTitle>
         </DialogHeader>
@@ -501,10 +509,12 @@ function RemoveStaffDialog({
   staff,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   staff: Staff;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('staff');
   const tCommon = useTranslations('common');
@@ -529,7 +539,7 @@ function RemoveStaffDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('removeDialog.title')}</DialogTitle>
           <DialogDescription>
@@ -566,12 +576,13 @@ export function StaffRowActions({
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
   const [manageVenuesOpen, setManageVenuesOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size={size} aria-label={t('row.menu')}>
+          <Button ref={menuRef} variant="ghost" size={size} aria-label={t('row.menu')}>
             <MoreHorizontalIcon />
           </Button>
         </DropdownMenuTrigger>
@@ -602,13 +613,24 @@ export function StaffRowActions({
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
-      <ChangeRoleDialog staff={staff} open={changeRoleOpen} onOpenChange={setChangeRoleOpen} />
+      <ChangeRoleDialog
+        staff={staff}
+        open={changeRoleOpen}
+        onOpenChange={setChangeRoleOpen}
+        restoreFocusTo={() => menuRef.current}
+      />
       <ManageVenuesDialog
         staff={staff}
         open={manageVenuesOpen}
         onOpenChange={setManageVenuesOpen}
+        restoreFocusTo={() => menuRef.current}
       />
-      <RemoveStaffDialog staff={staff} open={removeOpen} onOpenChange={setRemoveOpen} />
+      <RemoveStaffDialog
+        staff={staff}
+        open={removeOpen}
+        onOpenChange={setRemoveOpen}
+        restoreFocusTo={() => menuRef.current}
+      />
     </>
   );
 }

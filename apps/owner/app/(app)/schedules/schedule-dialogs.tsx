@@ -414,6 +414,7 @@ export function EditScheduleDialog({
   staff,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   venueId: string;
   schedule: Schedule;
@@ -421,6 +422,7 @@ export function EditScheduleDialog({
   staff: Staff[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('planning');
   const tCommon = useTranslations('common');
@@ -476,7 +478,11 @@ export function EditScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-[620px]">
+      <DialogContent
+        aria-describedby={undefined}
+        className="sm:max-w-[620px]"
+        restoreFocusTo={restoreFocusTo}
+      >
         <DialogHeader>
           <DialogTitle>{t('scheduleDialog.editTitle')}</DialogTitle>
         </DialogHeader>
@@ -523,11 +529,13 @@ export function DeleteScheduleDialog({
   schedule,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   venueId: string;
   schedule: Schedule;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('planning');
   const tCommon = useTranslations('common');
@@ -553,7 +561,7 @@ export function DeleteScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('deleteCourse.title')}</DialogTitle>
           <DialogDescription>

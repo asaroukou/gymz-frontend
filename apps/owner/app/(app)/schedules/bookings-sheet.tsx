@@ -49,6 +49,7 @@ import {
 } from '@iziwellpass/ui/components/sheet';
 import { Textarea } from '@iziwellpass/ui/components/textarea';
 
+import { useFocusRegistry } from '@/components/focus-registry';
 import { RowsSkeleton } from '@/components/rows-skeleton';
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatTime } from '@/lib/datetime';
@@ -66,11 +67,13 @@ function CancelBookingDialog({
   venueId,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   booking: Booking;
   venueId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('planning');
   const tCommon = useTranslations('common');
@@ -99,7 +102,7 @@ function CancelBookingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('cancelBooking.title')}</DialogTitle>
           <DialogDescription>{t('cancelBooking.description')}</DialogDescription>
@@ -245,6 +248,7 @@ export function BookingsSheet({
   canManageBookings,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   slot: ScheduleSlot;
   venueId: string;
@@ -257,6 +261,7 @@ export function BookingsSheet({
   canManageBookings: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('planning');
   const { bookingStatusLabel, bookingSourceLabel } = usePlanningLabels();
@@ -266,6 +271,7 @@ export function BookingsSheet({
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const focus = useFocusRegistry();
   const checkIn = useCheckInManual();
   const [validatingBookingId, setValidatingBookingId] = useState<string | null>(null);
 
@@ -307,7 +313,7 @@ export function BookingsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right">
+      <SheetContent side="right" restoreFocusTo={restoreFocusTo}>
         <SheetHeader>
           <p className="text-md text-muted-foreground">
             {t('bookings.dateLine', { day: dayLabel, room: resourceName })}
@@ -391,6 +397,7 @@ export function BookingsSheet({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
+                            ref={focus.register(booking.id)}
                             variant="ghost"
                             size="icon-sm"
                             className="size-11 md:size-9"
@@ -426,6 +433,7 @@ export function BookingsSheet({
           venueId={venueId}
           open={cancelOpen}
           onOpenChange={setCancelOpen}
+          restoreFocusTo={() => focus.get(cancellingBooking?.id)}
         />
       ) : null}
     </Sheet>

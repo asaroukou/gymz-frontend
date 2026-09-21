@@ -27,6 +27,7 @@ export interface MemberRowProps {
   index: number;
   canManage: boolean;
   onSuspend: (member: Member) => void;
+  menuRef?: (el: HTMLButtonElement | null) => void;
 }
 
 /** Row action menu (view, edit, suspend): 36px « ··· » in the table, 44px on the phone stack. */
@@ -35,6 +36,7 @@ export function MemberActions({
   canManage,
   onSuspend,
   size = 'icon-sm',
+  menuRef,
 }: Omit<MemberRowProps, 'index'> & { size?: 'icon' | 'icon-sm' }) {
   const t = useTranslations('members');
   const canSuspend = canManage && member.membership_status !== 'suspended';
@@ -42,7 +44,7 @@ export function MemberActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={size} aria-label={t('row.menu')}>
+        <Button ref={menuRef} variant="ghost" size={size} aria-label={t('row.menu')}>
           <MoreHorizontalIcon />
         </Button>
       </DropdownMenuTrigger>
@@ -86,7 +88,7 @@ function useEndCell(member: Member) {
 }
 
 /** Desktop row (canvas `xLxJY`): 64px, avatar + name, stacked contact, type, status, end + « Bientôt », « ··· ». */
-export function MemberRow({ member, index, canManage, onSuspend }: MemberRowProps) {
+export function MemberRow({ member, index, canManage, onSuspend, menuRef }: MemberRowProps) {
   const t = useTranslations('members');
   const end = useEndCell(member);
 
@@ -123,14 +125,19 @@ export function MemberRow({ member, index, canManage, onSuspend }: MemberRowProp
         </div>
       </TableCell>
       <TableCell className="text-right">
-        <MemberActions member={member} canManage={canManage} onSuspend={onSuspend} />
+        <MemberActions
+          member={member}
+          canManage={canManage}
+          onSuspend={onSuspend}
+          menuRef={menuRef}
+        />
       </TableCell>
     </TableRow>
   );
 }
 
 /** Phone stack (spec D6): the same cells stacked between hairlines, no card. */
-export function MemberStack({ member, index, canManage, onSuspend }: MemberRowProps) {
+export function MemberStack({ member, index, canManage, onSuspend, menuRef }: MemberRowProps) {
   const t = useTranslations('members');
   const end = useEndCell(member);
 
@@ -158,7 +165,13 @@ export function MemberStack({ member, index, canManage, onSuspend }: MemberRowPr
           </div>
         </div>
       </Link>
-      <MemberActions member={member} canManage={canManage} onSuspend={onSuspend} size="icon" />
+      <MemberActions
+        member={member}
+        canManage={canManage}
+        onSuspend={onSuspend}
+        size="icon"
+        menuRef={menuRef}
+      />
     </div>
   );
 }

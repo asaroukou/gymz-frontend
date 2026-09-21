@@ -470,12 +470,14 @@ export function EditResourceDialog({
   resourceTypes,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   venueId: string;
   resource: Resource;
   resourceTypes: ResourceType[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('venues');
   const tCommon = useTranslations('common');
@@ -528,7 +530,7 @@ export function EditResourceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[520px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('detail.resources.editDialog.title')}</DialogTitle>
           <DialogDescription>{t('detail.resources.editDialog.description')}</DialogDescription>
@@ -563,11 +565,13 @@ export function DeleteResourceDialog({
   resource,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   venueId: string;
   resource: Resource;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('venues');
   const tCommon = useTranslations('common');
@@ -592,7 +596,7 @@ export function DeleteResourceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('detail.resources.deleteDialog.title')}</DialogTitle>
           <DialogDescription>

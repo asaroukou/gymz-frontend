@@ -17,6 +17,7 @@ import {
 } from '@iziwellpass/ui/components/table';
 import { Tabs, TabsList, TabsTrigger } from '@iziwellpass/ui/components/tabs';
 
+import { useFocusRegistry } from '@/components/focus-registry';
 import { memberName } from '@/lib/member-search';
 import { paginate } from '@/lib/paginate';
 
@@ -46,6 +47,7 @@ export function MembersDirectory({
   const [page, setPage] = useState(1);
   const [suspendTarget, setSuspendTarget] = useState<Member | null>(null);
   const [suspendOpen, setSuspendOpen] = useState(false);
+  const focus = useFocusRegistry();
 
   const handleSuspend = (member: Member) => {
     setSuspendTarget(member);
@@ -125,6 +127,7 @@ export function MembersDirectory({
                 index={index}
                 canManage={canManage}
                 onSuspend={handleSuspend}
+                menuRef={focus.register(member.id)}
               />
             ))}
           </div>
@@ -151,6 +154,7 @@ export function MembersDirectory({
                     index={index}
                     canManage={canManage}
                     onSuspend={handleSuspend}
+                    menuRef={focus.register(member.id)}
                   />
                 ))}
               </TableBody>
@@ -181,6 +185,7 @@ export function MembersDirectory({
           member={suspendTarget}
           open={suspendOpen}
           onOpenChange={setSuspendOpen}
+          restoreFocusTo={() => focus.get(suspendTarget?.id)}
         />
       ) : null}
     </div>

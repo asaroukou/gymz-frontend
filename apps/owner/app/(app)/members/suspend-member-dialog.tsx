@@ -32,10 +32,12 @@ export function SuspendMemberDialog({
   member,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   member: Member;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('members');
   const tCommon = useTranslations('common');
@@ -61,7 +63,7 @@ export function SuspendMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('detail.suspendDialog.title')}</DialogTitle>
           <DialogDescription>

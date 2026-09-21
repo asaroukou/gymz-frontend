@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { CalendarClockIcon, MoreHorizontalIcon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -37,6 +37,7 @@ import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from '@iziwellpass/ui
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
+import { useFocusRegistry } from '@/components/focus-registry';
 import { RowsSkeleton } from '@/components/rows-skeleton';
 import { useAllMembers } from '@/lib/all-members';
 import { apiErrorMessage } from '@/lib/api-error';
@@ -94,12 +95,14 @@ function CancelSlotDialog({
   timeZone,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   slot: ScheduleSlot;
   venueId: string;
   timeZone: string | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('planning');
   const tCommon = useTranslations('common');
@@ -124,7 +127,7 @@ function CancelSlotDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('cancelSlot.title')}</DialogTitle>
           <DialogDescription>
@@ -160,6 +163,7 @@ function SlotRow({
   canManageSlots,
   selected,
   onOpenParticipants,
+  participantsRef,
 }: {
   slot: ScheduleSlot;
   title: string;
@@ -168,10 +172,12 @@ function SlotRow({
   canManageSlots: boolean;
   selected: boolean;
   onOpenParticipants: (slot: ScheduleSlot) => void;
+  participantsRef?: (el: HTMLButtonElement | null) => void;
 }) {
   const t = useTranslations('planning');
   const { slotStatusLabel } = usePlanningLabels();
   const [cancelling, setCancelling] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
 
   const isCancelled = slot.status === 'cancelled';
 
@@ -213,6 +219,7 @@ function SlotRow({
       <div className="col-start-3 row-start-1 flex items-center gap-1 md:col-start-auto md:row-start-auto">
         {/* 44px touch targets below md, the canvas 36px from md up. */}
         <Button
+          ref={participantsRef}
           variant="outline"
           size="sm"
           className="h-11 md:h-9"
@@ -224,6 +231,7 @@ function SlotRow({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                ref={menuRef}
                 variant="ghost"
                 size="icon-sm"
                 className="size-11 md:size-9"
@@ -246,6 +254,7 @@ function SlotRow({
         timeZone={timeZone}
         open={cancelling}
         onOpenChange={setCancelling}
+        restoreFocusTo={() => menuRef.current}
       />
     </div>
   );
@@ -286,6 +295,7 @@ export function SlotsTab({
 
   const [sheetSlot, setSheetSlot] = useState<ScheduleSlot | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const focus = useFocusRegistry();
 
   const slotsByDate = useMemo(() => {
     const groups = new Map<string, ScheduleSlot[]>();
@@ -370,6 +380,7 @@ export function SlotsTab({
                       setSheetSlot(opened);
                       setSheetOpen(true);
                     }}
+                    participantsRef={focus.register(slot.id)}
                   />
                 ))}
               </div>
@@ -390,6 +401,7 @@ export function SlotsTab({
           canManageBookings={canManageBookings}
           open={sheetOpen}
           onOpenChange={setSheetOpen}
+          restoreFocusTo={() => focus.get(sheetSlot?.id)}
         />
       ) : null}
     </>

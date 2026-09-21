@@ -31,6 +31,7 @@ import {
 } from '@iziwellpass/ui/components/table';
 import { SectionHeading } from '@iziwellpass/ui/components/working-page';
 
+import { useFocusRegistry } from '@/components/focus-registry';
 import { RowsSkeleton } from '@/components/rows-skeleton';
 import { apiErrorMessage } from '@/lib/api-error';
 
@@ -56,6 +57,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
     [resourceTypes],
   );
   const resources = resourcesQuery.data ?? [];
+  const focus = useFocusRegistry();
 
   // Overlays stay mounted after close so focus returns to the row menu.
   const [editing, setEditing] = useState<Resource | null>(null);
@@ -128,6 +130,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
+                          ref={focus.register(resource.id)}
                           variant="ghost"
                           size="icon-sm"
                           aria-label={t('detail.resources.row.menu')}
@@ -176,6 +179,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
           resourceTypes={resourceTypes}
           open={editOpen}
           onOpenChange={setEditOpen}
+          restoreFocusTo={() => focus.get(editing?.id)}
         />
       ) : null}
       {deleting ? (
@@ -184,6 +188,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
           resource={deleting}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
+          restoreFocusTo={() => focus.get(deleting?.id)}
         />
       ) : null}
     </section>

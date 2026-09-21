@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -97,6 +97,7 @@ export function ActivitiesSection({ venueId, canEdit }: { venueId: string; canEd
   };
 
   const [pending, setPending] = useState('');
+  const addRef = useRef<HTMLButtonElement>(null);
 
   return (
     <section className="flex flex-col gap-4">
@@ -147,6 +148,7 @@ export function ActivitiesSection({ venueId, canEdit }: { venueId: string; canEd
               className="flex-1"
             />
             <Button
+              ref={addRef}
               type="button"
               variant="outline"
               disabled={!pending || addActivity.isPending}
@@ -164,7 +166,7 @@ export function ActivitiesSection({ venueId, canEdit }: { venueId: string; canEd
       ) : null}
 
       <Dialog open={removing !== null} onOpenChange={(next) => !next && setRemoving(null)}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="sm:max-w-[480px]" restoreFocusTo={() => addRef.current}>
           <DialogHeader>
             <DialogTitle>{t('detail.activities.removeConfirm.title')}</DialogTitle>
             <DialogDescription>

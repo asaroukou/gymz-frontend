@@ -32,6 +32,7 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 
+import { useFocusRegistry } from '@/components/focus-registry';
 import { RowsSkeleton } from '@/components/rows-skeleton';
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatCalendarDate } from '@/lib/datetime';
@@ -45,17 +46,19 @@ function CourseActions({
   onEdit,
   onDelete,
   size = 'icon-sm',
+  menuRef,
 }: {
   schedule: Schedule;
   onEdit: (schedule: Schedule) => void;
   onDelete: (schedule: Schedule) => void;
   size?: 'icon' | 'icon-sm';
+  menuRef?: (el: HTMLButtonElement | null) => void;
 }) {
   const t = useTranslations('planning');
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={size} aria-label={t('courses.rowMenu')}>
+        <Button ref={menuRef} variant="ghost" size={size} aria-label={t('courses.rowMenu')}>
           <MoreHorizontalIcon />
         </Button>
       </DropdownMenuTrigger>
@@ -96,6 +99,7 @@ interface CourseRowProps {
   canManage: boolean;
   onEdit: (schedule: Schedule) => void;
   onDelete: (schedule: Schedule) => void;
+  menuRef?: (el: HTMLButtonElement | null) => void;
 }
 
 /** Desktop row (canvas `oouHs`): 64px, title + 13px description, rule + clock, room, instructor, period, « ··· ». */
@@ -106,6 +110,7 @@ function CourseRow({
   canManage,
   onEdit,
   onDelete,
+  menuRef,
 }: CourseRowProps) {
   const t = useTranslations('planning');
   const { formatRecurrence } = usePlanningLabels();
@@ -132,7 +137,12 @@ function CourseRow({
       <TableCell className="text-muted-foreground">{periodLabel(schedule)}</TableCell>
       <TableCell className="text-right">
         {canManage ? (
-          <CourseActions schedule={schedule} onEdit={onEdit} onDelete={onDelete} />
+          <CourseActions
+            schedule={schedule}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            menuRef={menuRef}
+          />
         ) : null}
       </TableCell>
     </TableRow>
@@ -147,6 +157,7 @@ function CourseStack({
   canManage,
   onEdit,
   onDelete,
+  menuRef,
 }: CourseRowProps) {
   const t = useTranslations('planning');
   const { formatRecurrence } = usePlanningLabels();
@@ -167,7 +178,13 @@ function CourseStack({
         <p className="mt-0.5 text-sm text-muted-foreground">{periodLabel(schedule)}</p>
       </div>
       {canManage ? (
-        <CourseActions schedule={schedule} onEdit={onEdit} onDelete={onDelete} size="icon" />
+        <CourseActions
+          schedule={schedule}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          size="icon"
+          menuRef={menuRef}
+        />
       ) : null}
     </div>
   );
@@ -189,6 +206,7 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
   const staffById = useMemo(() => new Map(staff.map((s: Staff) => [s.id, s])), [staff]);
 
   const schedules = useMemo(() => schedulesQuery.data ?? [], [schedulesQuery.data]);
+  const focus = useFocusRegistry();
 
   const [editing, setEditing] = useState<Schedule | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -254,6 +272,7 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
       setDeleting(s);
       setDeleteOpen(true);
     },
+    menuRef: focus.register(schedule.id),
   });
 
   return (
@@ -295,6 +314,7 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
           staff={staff}
           open={editOpen}
           onOpenChange={setEditOpen}
+          restoreFocusTo={() => focus.get(editing?.id)}
         />
       ) : null}
       {deleting ? (
@@ -303,6 +323,7 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
           schedule={deleting}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
+          restoreFocusTo={() => focus.get(deleting?.id)}
         />
       ) : null}
     </>
