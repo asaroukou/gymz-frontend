@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { CircleAlertIcon, TriangleAlertIcon } from 'lucide-react';
+import { CircleAlertIcon, CircleCheckIcon, TriangleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from '@iziwellpass/ui/components/dialog';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+import { cn } from '@iziwellpass/ui/lib/utils';
 
 import { apiErrorMessage } from '@/lib/api-error';
 import { isStalePreviewConflict, previewRows, type PreviewRow } from '@/lib/cancellation-preview';
@@ -108,6 +109,9 @@ export function CancellationPreviewDialog({
         };
 
   const handleConfirm = () => {
+    // Clear first: without this a second stale confirm would leave the notice
+    // already on screen and read as "nothing happened".
+    setConflict(false);
     // Echo the previewed `version` back so the backend rejects (409) a confirm
     // whose counts went stale between the preview and the click.
     const version = preview.data?.version ?? undefined;
@@ -135,7 +139,7 @@ export function CancellationPreviewDialog({
 
   const blocked = preview.data?.blocking_condition != null;
   const rows = preview.data ? previewRows(preview.data, target.kind) : [];
-  const canConfirm = preview.isSuccess && !blocked && !confirming;
+  const canConfirm = preview.isSuccess && !preview.isFetching && !blocked && !confirming;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,7 +150,10 @@ export function CancellationPreviewDialog({
         </DialogHeader>
 
         {blocked ? (
-          <p className="text-base">{labels.blocked}</p>
+          <Alert variant="default">
+            <CircleCheckIcon />
+            <AlertDescription>{labels.blocked}</AlertDescription>
+          </Alert>
         ) : (
           <div className="flex flex-col gap-[18px]">
             {conflict ? (
@@ -158,9 +165,14 @@ export function CancellationPreviewDialog({
             {preview.isError ? (
               <Alert variant="destructive">
                 <CircleAlertIcon />
-                <AlertDescription className="flex flex-wrap items-center gap-3">
+                <AlertDescription>
                   <span>{t('cancelPreview.loadError')}</span>
-                  <Button variant="outline" size="sm" onClick={() => void preview.refetch()}>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0"
+                    onClick={() => void preview.refetch()}
+                  >
                     {t('cancelPreview.retry')}
                   </Button>
                 </AlertDescription>
@@ -177,7 +189,7 @@ export function CancellationPreviewDialog({
         <DialogFooter>
           {blocked ? (
             <DialogClose asChild>
-              <Button variant="ghost">{t('cancelPreview.close')}</Button>
+              <Button variant="outline">{t('cancelPreview.close')}</Button>
             </DialogClose>
           ) : (
             <>
@@ -205,20 +217,19 @@ function PreviewList({ rows }: { rows: PreviewRow[] }) {
       {rows.map((row) => (
         <div
           key={row.key}
-          className={
-            row.muted
-              ? 'flex items-start justify-between gap-4 py-3 text-muted-foreground'
-              : 'flex items-start justify-between gap-4 py-3'
-          }
+          className={cn(
+            'flex items-start justify-between gap-4 py-3',
+            row.muted && 'text-muted-foreground',
+          )}
         >
-          <div className="flex min-w-0 flex-col gap-[3px]">
-            <dt className="text-base">{t(row.key)}</dt>
+          <dt className="min-w-0 text-base">
+            {t(row.key)}
             {row.hint ? (
-              <dd className="text-sm text-muted-foreground">
+              <span className="block text-sm text-muted-foreground">
                 {t(`${row.hint}Hint`, row.hintValues)}
-              </dd>
+              </span>
             ) : null}
-          </div>
+          </dt>
           <dd className="shrink-0 font-numeric text-base font-medium">
             {row.value === null ? '—' : row.value}
           </dd>
@@ -230,7 +241,7 @@ function PreviewList({ rows }: { rows: PreviewRow[] }) {
 
 function PreviewSkeleton() {
   return (
-    <div className="flex flex-col" aria-busy>
+    <div className="flex flex-col [&>*+*]:border-t [&>*+*]:border-border" aria-busy>
       {[0, 1, 2, 3].map((i) => (
         <div key={i} className="flex h-[42px] items-center justify-between">
           <Skeleton className="h-3.5 w-[220px]" />

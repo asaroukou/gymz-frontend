@@ -572,7 +572,7 @@
       "updateError": "Impossible de mettre à jour le cours"
     },
     "deleteCourse": {
-      "title": "Annuler ce cours",
+      "title": "Annuler le cours",
       "description": "{title} · {recurrence} · {start}–{end}",
       "confirm": "Annuler le cours",
       "confirming": "Annulation…",

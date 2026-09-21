@@ -572,7 +572,7 @@
       "updateError": "Could not update course"
     },
     "deleteCourse": {
-      "title": "Cancel this course",
+      "title": "Cancel course",
       "description": "{title} · {recurrence} · {start}–{end}",
       "confirm": "Cancel course",
       "confirming": "Cancelling…",
