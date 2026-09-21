@@ -548,7 +548,8 @@
       "endTime": "Heure de fin",
       "effectiveFrom": "À partir du",
       "effectiveUntil": "Jusqu'au (facultatif)",
-      "description": "Description"
+      "description": "Description",
+      "instructorIneligible": "Cet intervenant n'a pas accès à cette salle."
     },
     "validation": {
       "titleRequired": "Le titre est requis",
@@ -572,11 +573,11 @@
     },
     "deleteCourse": {
       "title": "Annuler ce cours",
-      "description": "Cela supprimera « {title} » et arrêtera la génération de nouvelles séances. Cette action est irréversible.",
+      "description": "{title} · {recurrence} · {start}–{end}",
       "confirm": "Annuler le cours",
-      "confirming": "Suppression…",
-      "success": "Cours supprimé",
-      "error": "Impossible de supprimer le cours"
+      "confirming": "Annulation…",
+      "success": "Cours annulé",
+      "error": "Impossible d'annuler le cours"
     },
     "courses": {
       "columns": {
@@ -613,7 +614,7 @@
     },
     "cancelSlot": {
       "title": "Annuler la séance",
-      "description": "Cela annulera la séance de {start}–{end}. Les participants devront être gérés séparément. Cette action est irréversible.",
+      "description": "{title} · {day} · {start}–{end} · {room}",
       "confirm": "Annuler la séance",
       "confirming": "Annulation…",
       "success": "Séance annulée",
@@ -628,7 +629,16 @@
       "validate": "Valider",
       "validating": "Validation…",
       "validateSuccess": "Entrée validée",
-      "validateError": "Impossible de valider l'entrée"
+      "validateError": "Impossible de valider l'entrée",
+      "arrival": "Arrivée {time} · {method}",
+      "method": {
+        "qr": "QR",
+        "manual": "manuel"
+      },
+      "passVisitor": "Visiteur pass",
+      "passChip": "Pass",
+      "coachView": "Vue coach · noms masqués",
+      "memberNumber": "Membre n° {id}"
     },
     "addBooking": {
       "label": "Ajouter un participant",
@@ -645,6 +655,11 @@
         "expired": "Abonnement expiré",
         "suspended": "Abonnement suspendu",
         "cancelled": "Abonnement annulé"
+      },
+      "errors": {
+        "full": "Séance complète.",
+        "duplicate": "Déjà inscrit à cette séance.",
+        "ineligible": "Membre non éligible à cet établissement."
       }
     },
     "cancelBooking": {
@@ -656,6 +671,32 @@
       "confirming": "Annulation…",
       "success": "Réservation annulée",
       "error": "Impossible d'annuler la réservation"
+    },
+    "cancelPreview": {
+      "caption": "Ce que l'annulation entraîne",
+      "rows": {
+        "futureSlots": "Séances futures concernées",
+        "futureSlotsHint": "À partir de demain. La séance d'aujourd'hui et les séances passées sont conservées.",
+        "bookings": "Réservations concernées",
+        "bookingsHint": "dont {members} membres · {pass} visiteurs pass",
+        "emails": "E-mails envoyés automatiquement",
+        "emailsHint": "Aux membres ayant une adresse ; un membre peut en recevoir plusieurs.",
+        "passCredits": "Crédits pass remboursés",
+        "passCreditsHint": "Remboursés par la plateforme.",
+        "memberCredits": "Crédits membres remboursés",
+        "memberCreditsHint": "Une annulation par l'équipe ne rembourse pas les crédits de séance des membres.",
+        "unchanged": "Inchangé",
+        "unchangedHint": "Les arrivées déjà enregistrées et les séances passées sont conservées."
+      },
+      "back": "Retour",
+      "close": "Fermer",
+      "conflict": "Les réservations ont changé. Aperçu mis à jour — vérifiez avant de confirmer.",
+      "loadError": "Impossible de charger l'aperçu.",
+      "retry": "Réessayer",
+      "blocked": {
+        "slot": "Cette séance est déjà annulée.",
+        "schedule": "Ce cours est déjà annulé."
+      }
     }
   },
   "plans": {
@@ -839,7 +880,12 @@
           "confirm": "Supprimer",
           "confirming": "Suppression…",
           "success": "Ressource supprimée",
-          "error": "Impossible de supprimer la ressource"
+          "error": "Impossible de supprimer la ressource",
+          "inUse": {
+            "message": "Cette ressource est utilisée par des cours. Annulez-les d'abord.",
+            "close": "Fermer",
+            "viewCourses": "Voir les cours"
+          }
         },
         "typeDialog": {
           "add": "Nouveau type de ressource",

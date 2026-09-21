@@ -548,7 +548,8 @@
       "endTime": "End time",
       "effectiveFrom": "Effective from",
       "effectiveUntil": "Effective until (optional)",
-      "description": "Description"
+      "description": "Description",
+      "instructorIneligible": "This instructor has no access to this room."
     },
     "validation": {
       "titleRequired": "Title is required",
@@ -572,11 +573,11 @@
     },
     "deleteCourse": {
       "title": "Cancel this course",
-      "description": "This will delete \"{title}\" and stop generating new sessions. This action cannot be undone.",
+      "description": "{title} · {recurrence} · {start}–{end}",
       "confirm": "Cancel course",
-      "confirming": "Deleting…",
-      "success": "Course deleted",
-      "error": "Could not delete course"
+      "confirming": "Cancelling…",
+      "success": "Course cancelled",
+      "error": "Could not cancel course"
     },
     "courses": {
       "columns": {
@@ -613,7 +614,7 @@
     },
     "cancelSlot": {
       "title": "Cancel session",
-      "description": "This will cancel the {start}–{end} session. Participants will need to be handled separately. This action cannot be undone.",
+      "description": "{title} · {day} · {start}–{end} · {room}",
       "confirm": "Cancel session",
       "confirming": "Cancelling…",
       "success": "Session cancelled",
@@ -628,7 +629,16 @@
       "validate": "Check in",
       "validating": "Checking in…",
       "validateSuccess": "Checked in",
-      "validateError": "Could not check in"
+      "validateError": "Could not check in",
+      "arrival": "Arrived {time} · {method}",
+      "method": {
+        "qr": "QR",
+        "manual": "manual"
+      },
+      "passVisitor": "Pass visitor",
+      "passChip": "Pass",
+      "coachView": "Coach view · names hidden",
+      "memberNumber": "Member no. {id}"
     },
     "addBooking": {
       "label": "Add participant",
@@ -645,6 +655,11 @@
         "expired": "Membership expired",
         "suspended": "Membership suspended",
         "cancelled": "Membership cancelled"
+      },
+      "errors": {
+        "full": "Session full.",
+        "duplicate": "Already booked on this session.",
+        "ineligible": "Member not eligible at this venue."
       }
     },
     "cancelBooking": {
@@ -656,6 +671,32 @@
       "confirming": "Cancelling…",
       "success": "Booking cancelled",
       "error": "Could not cancel booking"
+    },
+    "cancelPreview": {
+      "caption": "What cancelling entails",
+      "rows": {
+        "futureSlots": "Future sessions affected",
+        "futureSlotsHint": "From tomorrow. Today's and past sessions are kept.",
+        "bookings": "Bookings affected",
+        "bookingsHint": "{members} members · {pass} pass visitors",
+        "emails": "E-mails sent automatically",
+        "emailsHint": "To members with an address; one member may receive several.",
+        "passCredits": "Pass credits refunded",
+        "passCreditsHint": "Refunded by the platform.",
+        "memberCredits": "Member credits refunded",
+        "memberCreditsHint": "A cancellation by the team does not refund members' session credits.",
+        "unchanged": "Unchanged",
+        "unchangedHint": "Recorded arrivals and past sessions are kept."
+      },
+      "back": "Back",
+      "close": "Close",
+      "conflict": "Bookings have changed. Preview updated — check before confirming.",
+      "loadError": "Could not load the preview.",
+      "retry": "Retry",
+      "blocked": {
+        "slot": "This session is already cancelled.",
+        "schedule": "This course is already cancelled."
+      }
     }
   },
   "plans": {
@@ -839,7 +880,12 @@
           "confirm": "Delete",
           "confirming": "Deleting…",
           "success": "Resource deleted",
-          "error": "Could not delete resource"
+          "error": "Could not delete resource",
+          "inUse": {
+            "message": "This resource is used by courses. Cancel them first.",
+            "close": "Close",
+            "viewCourses": "View courses"
+          }
         },
         "typeDialog": {
           "add": "New resource type",
