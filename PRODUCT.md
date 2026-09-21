@@ -32,7 +32,7 @@ The API is the contract. Every screen maps to something the system can actually 
 - **Honest (flat):** no elevation at all. Depth comes from three tones, space, and a hairline between rows, never from shadows, borders around groups, glass, or gradients (a recorded product decision, with one optional soft wash behind a hub heading as the sole exception). Status is stated as fact with a labeled badge, never an exclamation. Real state is surfaced honestly: designed empty states, calm errors with a support reference, known gaps shown as disabled affordances rather than hidden.
 - **Precise:** this handles people's memberships and money. High craft, dependable, closer to a serious professional tool than a consumer app. Figures align (tabular numerals), timetables read at a glance, one obvious primary action per screen.
 
-Voice: French-first, sentence case everywhere: headings, buttons, labels, badges, navigation. No uppercase anywhere. Nouns for labels (Abonnement, Salle, Moyen de paiement), imperative verbs for buttons (Ajouter, Valider, Modifier). No hype, no marketing gloss, no emoji. Meaning is carried by words first, thin rounded icons (Material Symbols Rounded) and badge color second.
+Voice: French-first, sentence case everywhere: headings, buttons, labels, badges, navigation. No uppercase anywhere. Nouns for labels (Abonnement, Salle, Moyen de paiement), imperative verbs for buttons (Ajouter, Valider, Modifier). No hype, no marketing gloss, no emoji. Meaning is carried by words first, thin-stroke Lucide icons and badge color second.
 
 ## Anti-references
 

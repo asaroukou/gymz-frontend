@@ -254,25 +254,12 @@ Controls are pills; content is tiles or hairline rows; the page is white. Touch 
 
 ### Icons
 
-- **Family:** Material Symbols Rounded, outlined, never filled. The rounded terminals match the pills; the thin stroke matches the 400-weight headings and the 1 px hairlines. Lucide is retired.
-- **Weight:** 200 on desktop (20 px in navigation, 18 px inside pills and fields), 300 on mobile (24 px in the tab bar, 20 px elsewhere) so strokes survive small screens.
+- **Family:** Lucide, outlined, never filled. Its geometry matches the 400-weight type once the stroke is thinned.
+- **Stroke:** 1.5 everywhere, set once on the icon component (`strokeWidth={1.5}` in lucide-react and lucide-react-native). The library default of 2 is too heavy against the light headings and the 1 px hairlines and must not appear.
+- **Size:** 20 px in navigation, 18 px inside pills and fields, 24 px in the mobile tab bar, 16 px for inline affordances such as chevrons.
 - **Colour:** encre at rest; atténué only when the surrounding label is atténué (inactive tabs, table headers).
 - **Active state:** the icon does not change. The pill alone marks selection.
-- **Names in use:** dashboard, door_open, calendar_month, sell, group, apartment, manage_accounts, badge, qr_code_2, qr_code_scanner, search, add, check, close, more_horiz, arrow_back, arrow_forward, arrow_upward, keyboard_arrow_down, unfold_more, left_panel_close, menu, visibility, check_circle, error, schedule, mail, person_add, logout.
-- **States:** hover shifts the pill one step (pilule → pilule-survol, encre → `#333333`). Focus is a 3 px encre outline offset 4 px. Disabled is 50 % opacity.
-
-### The command bar (signature)
-
-A 60 px white pill, filet outline, max width 720 px, centred under the hub heading. Leading icon, placeholder in atténué, a mode selector, and the dark round submit. On the front desk it scans a QR or searches a member; on the dashboard it is the same control. This is the one thing a receptionist looks for.
-
-### Fields
-
-- **Input, Select:** 48 px pill, white, filet outline, 15 px text, 18 px horizontal padding. Label above in 13/500 atténué fort.
-- **Textarea:** 20 px radius (1.25rem), same outline.
-- **Focus:** outline becomes encre, plus the 3 px focus ring.
-- **Error:** outline becomes danger; the message below in statut-erreur-texte.
-- **Switch:** 40 × 24 pill, encre when on, filet when off, white thumb.
-- **Checkbox:** 20 px, 6 px radius, encre when checked.
+- **Names in use:** layout-dashboard, door-open, calendar-days, tags, users, building-2, user-cog, credit-card, qr-code, scan-line, search, plus, check, x, ellipsis, arrow-left, arrow-right, arrow-up, chevron-down, chevrons-up-down, panel-left, menu, eye, circle-check, circle-alert, clock-3, mail, user-plus, log-out.
 
 ### Pills and tabs
 
