@@ -7,17 +7,7 @@ import { useAllMembers } from '@/lib/all-members';
 import { useAttendanceByDate, useCheckInsByDate } from '@/lib/dated-api';
 import { venueToday } from '@/lib/datetime';
 
-/**
- * Structural subset of a react-query result consumed by the front-desk
- * sections — decouples the child components from the exact generated hook
- * return types while staying assignable from `UseQueryResult`.
- */
-export interface QueryLike<T> {
-  data: T | undefined;
-  isLoading: boolean;
-  isError: boolean;
-  error: unknown;
-}
+export type { QueryLike } from '@/components/checkin/query-like';
 
 /**
  * Initiates every venue-scoped front-desk query in one place so they fan out

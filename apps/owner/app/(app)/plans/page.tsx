@@ -10,7 +10,7 @@ import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage } from '@/lib/api-error';
 import { useVenueContext } from '@/lib/venue-context';
 
-import { PlansList } from './plans-list';
+import { PlansHeader, PlansList } from './plans-list';
 
 function PlansContent() {
   const t = useTranslations('plans');
@@ -19,29 +19,33 @@ function PlansContent() {
 
   const { venues, isLoading, isError, error, selectedVenueId } = useVenueContext();
 
-  return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-normal">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
-      </div>
+  // The list owns the header once a venue is selected (the create action
+  // needs the venue's activities); the other states draw it themselves.
+  if (selectedVenueId && !isLoading && !isError) {
+    return <PlansList venueId={selectedVenueId} canManage={canManage} />;
+  }
 
+  return (
+    <div className="flex flex-col gap-8">
+      <PlansHeader />
       {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-9 w-64 rounded-full" />
-          <Skeleton className="h-48 w-full" />
+        <div className="flex flex-col gap-8" aria-hidden="true">
+          <Skeleton className="h-6 w-56" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-[14.75rem] w-full rounded-xl" />
+            ))}
+          </div>
         </div>
       ) : isError ? (
         <Alert variant="destructive">
           <AlertTitle>{t('errorTitle')}</AlertTitle>
           <AlertDescription>{apiErrorMessage(error, t('venuesError'))}</AlertDescription>
         </Alert>
-      ) : venues.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">{t('venueNone')}</p>
-      ) : !selectedVenueId ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">{t('venuePrompt')}</p>
       ) : (
-        <PlansList venueId={selectedVenueId} canManage={canManage} />
+        <p className="py-12 text-center text-base text-muted-foreground">
+          {venues.length === 0 ? t('venueNone') : t('venuePrompt')}
+        </p>
       )}
     </div>
   );

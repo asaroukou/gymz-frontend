@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { CalendarClockIcon, MoreHorizontalIcon, UsersIcon } from 'lucide-react';
+import { CalendarClockIcon, MoreHorizontalIcon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -17,9 +17,10 @@ import type { Resource, Schedule, ScheduleSlot } from '@iziwellpass/api/schemas'
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
-import { Card } from '@iziwellpass/ui/components/card';
+import { Capacity } from '@iziwellpass/ui/components/capacity';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -33,20 +34,23 @@ import {
   DropdownMenuTrigger,
 } from '@iziwellpass/ui/components/dropdown-menu';
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from '@iziwellpass/ui/components/empty';
-import { Capacity } from '@iziwellpass/ui/components/capacity';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
+import { cn } from '@iziwellpass/ui/lib/utils';
 
+import { useFocusRegistry } from '@/components/focus-registry';
+import { RowsSkeleton } from '@/components/rows-skeleton';
 import { useAllMembers } from '@/lib/all-members';
 import { apiErrorMessage } from '@/lib/api-error';
 import { useSlotsByDate } from '@/lib/dated-api';
 import { formatTime, venueDateKey, venueToday } from '@/lib/datetime';
+import { slotBadgeVariant } from '@/lib/slot-status';
 
 import { BookingsSheet } from './bookings-sheet';
 import { usePlanningLabels } from './planning-utils';
 
 /**
  * Friendly, venue-local day heading for a slot group: "Aujourd'hui" /
- * "Demain" / "lundi 13 juillet". `dateKey` is the venue-local `YYYY-MM-DD`
+ * "Demain" / "Lundi 21 septembre". `dateKey` is the venue-local `YYYY-MM-DD`
  * group key (from `venueDateKey`); relative labels compare against today's
  * and tomorrow's venue-local keys. The weekday/day/month text is formatted in
  * the venue timezone off the slot's real UTC instant, sentence-cased.
@@ -91,12 +95,14 @@ function CancelSlotDialog({
   timeZone,
   open,
   onOpenChange,
+  restoreFocusTo,
 }: {
   slot: ScheduleSlot;
   venueId: string;
   timeZone: string | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('planning');
   const tCommon = useTranslations('common');
@@ -121,7 +127,7 @@ function CancelSlotDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('cancelSlot.title')}</DialogTitle>
           <DialogDescription>
@@ -132,9 +138,9 @@ function CancelSlotDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {tCommon('cancel')}
-          </Button>
+          <DialogClose asChild>
+            <Button variant="ghost">{tCommon('cancel')}</Button>
+          </DialogClose>
           <Button variant="destructive" onClick={handleCancel} disabled={cancelSlot.isPending}>
             {cancelSlot.isPending ? t('cancelSlot.confirming') : t('cancelSlot.confirm')}
           </Button>
@@ -144,63 +150,93 @@ function CancelSlotDialog({
   );
 }
 
+/**
+ * One session (canvas `s8ABF`): 18px time, title over the room, a 120px
+ * capacity bar with its count, the status badge, « Participants » and « ··· ».
+ * 64px tall between hairlines; the row whose sheet is open becomes a grey pill.
+ */
 function SlotRow({
   slot,
   title,
   resourceName,
   timeZone,
   canManageSlots,
+  selected,
   onOpenParticipants,
+  participantsRef,
 }: {
   slot: ScheduleSlot;
   title: string;
   resourceName: string;
   timeZone: string | undefined;
   canManageSlots: boolean;
+  selected: boolean;
   onOpenParticipants: (slot: ScheduleSlot) => void;
+  participantsRef?: (el: HTMLButtonElement | null) => void;
 }) {
   const t = useTranslations('planning');
-  const { slotStatusBadge } = usePlanningLabels();
+  const { slotStatusLabel } = usePlanningLabels();
   const [cancelling, setCancelling] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
 
   const isCancelled = slot.status === 'cancelled';
-  const badge = slotStatusBadge(slot.status);
-  const venueId = slot.venue_id;
 
   return (
-    <div className="flex items-center gap-4 border-t px-4 py-3 first:border-t-0">
-      <span className="w-11 shrink-0 font-numeric text-sm">
+    <div
+      data-state={selected ? 'selected' : undefined}
+      className={cn(
+        'grid grid-cols-[64px_1fr_auto] items-center gap-x-4 gap-y-2 border-b border-border py-[14px] last:border-0 md:grid-cols-[64px_1fr_120px_48px_auto_auto]',
+        selected && 'rounded-lg border-transparent bg-secondary',
+        isCancelled && 'text-muted-foreground',
+      )}
+    >
+      <span className="font-numeric text-[1.125rem] font-medium">
         {formatTime(slot.start_time, timeZone)}
       </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{title}</p>
-        <p className="truncate text-xs text-muted-foreground">{resourceName}</p>
+      <div className="min-w-0 leading-tight">
+        <p className="truncate text-base font-medium">{title}</p>
+        <p className="truncate text-sm text-muted-foreground">{resourceName}</p>
       </div>
-      {isCancelled ? (
-        <div className="w-16 shrink-0 sm:w-24" />
-      ) : (
-        <Capacity
-          booked={slot.booked_count}
-          capacity={slot.capacity}
-          className="w-16 shrink-0 sm:w-24"
-          label={t('slots.capacityLabel', {
-            booked: slot.booked_count,
-            cap: slot.capacity,
-          })}
-        />
-      )}
-      <Badge variant={badge.variant} className="shrink-0">
-        {badge.label}
-      </Badge>
-      <div className="flex shrink-0 items-center gap-1">
-        <Button variant="outline" onClick={() => onOpenParticipants(slot)}>
-          <UsersIcon />
-          <span className="hidden sm:inline">{t('slots.participants')}</span>
+      <div className="col-start-2 flex items-center gap-3 md:contents">
+        {isCancelled ? (
+          <div className="hidden md:block" />
+        ) : (
+          <Capacity
+            hideCount
+            booked={slot.booked_count}
+            capacity={slot.capacity}
+            className="w-[120px]"
+            label={t('slots.capacityLabel', { booked: slot.booked_count, cap: slot.capacity })}
+          />
+        )}
+        {isCancelled ? (
+          <span className="hidden md:block" />
+        ) : (
+          <span className="font-numeric text-md font-medium text-muted-foreground">{`${slot.booked_count}/${slot.capacity}`}</span>
+        )}
+        <Badge variant={slotBadgeVariant(slot.status)}>{slotStatusLabel(slot.status)}</Badge>
+      </div>
+      <div className="col-start-3 row-start-1 flex items-center gap-1 md:col-start-auto md:row-start-auto">
+        {/* 44px touch targets below md, the canvas 36px from md up. */}
+        <Button
+          ref={participantsRef}
+          variant="outline"
+          size="sm"
+          className="h-11 md:h-9"
+          onClick={() => onOpenParticipants(slot)}
+        >
+          {t('slots.participants')}
         </Button>
         {canManageSlots && !isCancelled ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t('slots.rowMenu')}>
+              <Button
+                ref={menuRef}
+                variant="ghost"
+                size="icon-sm"
+                className="size-11 md:size-9"
+                aria-label={t('slots.rowMenu')}
+              >
                 <MoreHorizontalIcon />
               </Button>
             </DropdownMenuTrigger>
@@ -212,15 +248,14 @@ function SlotRow({
           </DropdownMenu>
         ) : null}
       </div>
-      {cancelling ? (
-        <CancelSlotDialog
-          slot={slot}
-          venueId={venueId}
-          timeZone={timeZone}
-          open={cancelling}
-          onOpenChange={setCancelling}
-        />
-      ) : null}
+      <CancelSlotDialog
+        slot={slot}
+        venueId={slot.venue_id}
+        timeZone={timeZone}
+        open={cancelling}
+        onOpenChange={setCancelling}
+        restoreFocusTo={() => menuRef.current}
+      />
     </div>
   );
 }
@@ -258,7 +293,9 @@ export function SlotsTab({
     [resourcesQuery.data],
   );
 
-  const [participantsSlot, setParticipantsSlot] = useState<ScheduleSlot | null>(null);
+  const [sheetSlot, setSheetSlot] = useState<ScheduleSlot | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const focus = useFocusRegistry();
 
   const slotsByDate = useMemo(() => {
     const groups = new Map<string, ScheduleSlot[]>();
@@ -285,15 +322,9 @@ export function SlotsTab({
   // the secondary queries resolve. The slots query stays the primary driver.
   if (slotsQuery.isLoading || schedulesQuery.isLoading || resourcesQuery.isLoading) {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-5 w-32" />
-        <Card className="gap-0 py-0">
-          <div className="space-y-3 p-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full" />
-            ))}
-          </div>
-        </Card>
+      <div className="flex flex-col gap-1">
+        <Skeleton className="h-7 w-32" />
+        <RowsSkeleton />
       </div>
     );
   }
@@ -311,61 +342,66 @@ export function SlotsTab({
 
   if (slotsByDate.length === 0) {
     return (
-      <Card>
-        <Empty>
-          <EmptyMedia>
-            <CalendarClockIcon />
-          </EmptyMedia>
-          <EmptyTitle>{t('slots.emptyTitle')}</EmptyTitle>
-          <EmptyDescription>{t('slots.emptyBody')}</EmptyDescription>
-        </Empty>
-      </Card>
+      <Empty>
+        <EmptyMedia>
+          <CalendarClockIcon />
+        </EmptyMedia>
+        <EmptyTitle>{t('slots.emptyTitle')}</EmptyTitle>
+        <EmptyDescription>{t('slots.emptyBody')}</EmptyDescription>
+      </Empty>
     );
   }
 
+  const titleOf = (slot: ScheduleSlot) =>
+    scheduleTitleById.get(slot.schedule_id) ?? t('slots.untitled');
+  const roomOf = (slot: ScheduleSlot) =>
+    resourceNameById.get(slot.resource_id) ?? t('slots.unknownResource');
+
   return (
     <>
-      <div className="space-y-6">
+      <div className="flex flex-col gap-8">
         {slotsByDate.map(({ key, slots }) => {
           const first = slots[0];
           const heading = first ? dayHeading(key, first.start_time) : key;
           return (
-            <section key={key} className="space-y-2">
-              <h2 className="sticky top-0 z-10 -mx-1 bg-background px-1 py-1 text-sm font-semibold">
-                {heading}
-              </h2>
-              <Card className="gap-0 py-0">
+            <section key={key} className="flex flex-col gap-1">
+              <h2 className="text-xl font-medium">{heading}</h2>
+              <div className="flex flex-col">
                 {slots.map((slot) => (
                   <SlotRow
                     key={slot.id}
                     slot={slot}
-                    title={scheduleTitleById.get(slot.schedule_id) ?? t('slots.untitled')}
-                    resourceName={
-                      resourceNameById.get(slot.resource_id) ?? t('slots.unknownResource')
-                    }
+                    title={titleOf(slot)}
+                    resourceName={roomOf(slot)}
                     timeZone={timeZone}
                     canManageSlots={canManageSlots}
-                    onOpenParticipants={setParticipantsSlot}
+                    selected={sheetOpen && sheetSlot?.id === slot.id}
+                    onOpenParticipants={(opened) => {
+                      setSheetSlot(opened);
+                      setSheetOpen(true);
+                    }}
+                    participantsRef={focus.register(slot.id)}
                   />
                 ))}
-              </Card>
+              </div>
             </section>
           );
         })}
       </div>
 
-      {participantsSlot ? (
+      {sheetSlot ? (
         <BookingsSheet
-          slot={participantsSlot}
+          slot={sheetSlot}
           venueId={venueId}
           timeZone={timeZone}
-          title={scheduleTitleById.get(participantsSlot.schedule_id) ?? t('slots.untitled')}
+          title={titleOf(sheetSlot)}
+          dayLabel={dayHeading(venueDateKey(sheetSlot.start_time, timeZone), sheetSlot.start_time)}
+          resourceName={roomOf(sheetSlot)}
           members={members}
           canManageBookings={canManageBookings}
-          open={participantsSlot !== null}
-          onOpenChange={(next) => {
-            if (!next) setParticipantsSlot(null);
-          }}
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          restoreFocusTo={() => focus.get(sheetSlot?.id)}
         />
       ) : null}
     </>

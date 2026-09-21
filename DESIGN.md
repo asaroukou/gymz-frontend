@@ -206,6 +206,7 @@ Badges are pale tint under dark text. Never a solid status fill, never colour wi
 ### Hierarchy
 
 - **Display** (400, 2.75rem, 1.1, −0.03em): the greeting or question on a hub screen. One per screen.
+- **Auth title** (400, 2.25rem, 1.15, −0.025em): the question on an auth or onboarding screen.
 - **Page title** (400, 2rem, 1.1, −0.03em): working screens.
 - **Section** (500, 1.375rem, 1.2, −0.02em): "Planning du jour", "Adhésion", a day group in the sessions list.
 - **Title** (600, 1rem, 1.3): a tile title, a row's primary text.

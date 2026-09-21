@@ -37,6 +37,8 @@ import {
 import { Switch } from '@iziwellpass/ui/components/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iziwellpass/ui/components/tabs';
 import { Textarea } from '@iziwellpass/ui/components/textarea';
+import { DayToggle } from '@iziwellpass/ui/components/day-toggle';
+import { Pagination } from '@iziwellpass/ui/components/pagination';
 
 import { Matrix } from '../_chrome/matrix';
 import { sectionNumber, type TocEntry } from '../_chrome/page-frame';
@@ -142,6 +144,38 @@ function CheckboxSpecimen() {
       </div>
     </div>
   );
+}
+
+const WEEK = [
+  { value: 'MO', short: 'L', long: 'Lundi' },
+  { value: 'TU', short: 'M', long: 'Mardi' },
+  { value: 'WE', short: 'M', long: 'Mercredi' },
+  { value: 'TH', short: 'J', long: 'Jeudi' },
+  { value: 'FR', short: 'V', long: 'Vendredi' },
+  { value: 'SA', short: 'S', long: 'Samedi' },
+  { value: 'SU', short: 'D', long: 'Dimanche' },
+] as const;
+
+function PaginationSpecimen() {
+  const [page, setPage] = useState(1);
+  return (
+    <Pagination
+      page={page}
+      pageCount={13}
+      onPageChange={setPage}
+      labels={{
+        label: 'Pagination',
+        previous: 'Page précédente',
+        next: 'Page suivante',
+        page: (n) => `Page ${n}`,
+      }}
+    />
+  );
+}
+
+function DayToggleSpecimen() {
+  const [days, setDays] = useState<string[]>(['MO', 'WE', 'FR']);
+  return <DayToggle days={WEEK} value={days} onChange={setDays} />;
 }
 
 export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) {
@@ -392,6 +426,28 @@ export function ControlSpecimens({ entries }: { entries: readonly TocEntry[] }) 
               <DropdownMenuItem variant="destructive">Suspendre l’accès</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </Specimen>
+      </Section>
+
+      <Section
+        id="pagination"
+        number={number('pagination')}
+        title="Pagination"
+        note="Sous un tableau : flèches 36px et pastilles 36px, la page courante en pastille grise. Première, dernière, la page courante et ses voisines ; des points de suspension ailleurs."
+      >
+        <Specimen name="Pagination" signature="page, pageCount, onPageChange, labels">
+          <PaginationSpecimen />
+        </Specimen>
+      </Section>
+
+      <Section
+        id="day-toggle"
+        number={number('day-toggle')}
+        title="Jours"
+        note="Les jours d’un cours récurrent : sept pastilles rondes de 44px, encre quand le jour est choisi."
+      >
+        <Specimen name="DayToggle" signature="days, value, onChange, disabled">
+          <DayToggleSpecimen />
         </Specimen>
       </Section>
     </>

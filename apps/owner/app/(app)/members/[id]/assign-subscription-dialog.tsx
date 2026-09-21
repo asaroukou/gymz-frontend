@@ -15,6 +15,7 @@ import {
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -49,6 +50,7 @@ import { useVenueContext } from '@/lib/venue-context';
  */
 export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
   const t = useTranslations('members');
+  const tCommon = useTranslations('common');
   const locale = useLocale();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -109,12 +111,12 @@ export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button variant="outline" size="sm">
           <PlusIcon />
           {t('detail.subscriptions.assign')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>{t('detail.subscriptions.assignDialog.title')}</DialogTitle>
           <DialogDescription>
@@ -122,11 +124,11 @@ export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4">
-          <div className="grid gap-2">
+        <div className="flex flex-col gap-[18px]">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="assign-venue">{t('detail.subscriptions.assignDialog.venue')}</Label>
             <Select value={venueId} onValueChange={setVenueId}>
-              <SelectTrigger id="assign-venue">
+              <SelectTrigger id="assign-venue" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -139,7 +141,7 @@ export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
             </Select>
           </div>
 
-          <div className="grid gap-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="assign-plan">{t('detail.subscriptions.assignDialog.plan')}</Label>
             {venueId !== '' && !plansQuery.isLoading && plans.length === 0 ? (
               <p className="text-sm text-muted-foreground">
@@ -147,7 +149,7 @@ export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
               </p>
             ) : (
               <Select value={planId} onValueChange={setPlanId}>
-                <SelectTrigger id="assign-plan">
+                <SelectTrigger id="assign-plan" className="w-full">
                   <SelectValue
                     placeholder={t('detail.subscriptions.assignDialog.planPlaceholder')}
                   />
@@ -164,7 +166,7 @@ export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
             )}
           </div>
 
-          <div className="grid gap-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="assign-start">{t('detail.subscriptions.assignDialog.startsOn')}</Label>
             <Input
               id="assign-start"
@@ -175,12 +177,22 @@ export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
           </div>
 
           <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="assign-paid">{t('detail.subscriptions.assignDialog.paid')}</Label>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="assign-paid" className="text-base font-medium">
+                {t('detail.subscriptions.assignDialog.paid')}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t('detail.subscriptions.assignDialog.paidHint')}
+              </p>
+            </div>
             <Switch id="assign-paid" checked={paid} onCheckedChange={setPaid} />
           </div>
         </div>
 
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="ghost">{tCommon('cancel')}</Button>
+          </DialogClose>
           <Button onClick={onSubmit} disabled={planId === '' || assign.isPending}>
             {assign.isPending
               ? t('detail.subscriptions.assignDialog.submitting')

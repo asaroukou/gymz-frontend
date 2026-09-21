@@ -104,19 +104,23 @@ export function QrScannerDialog({ onDetected, disabled, onClose }: QrScannerDial
       <DialogTrigger asChild>
         <Button
           type="button"
-          variant="outline"
-          size="icon"
+          variant="ghost"
           disabled={disabled}
-          aria-label={t('qr.scanButton')}
+          className="h-10 rounded-full px-[18px] text-base font-normal text-muted-foreground hover:text-foreground"
         >
-          <CameraIcon className="size-5" aria-hidden="true" />
+          <CameraIcon aria-hidden="true" />
+          {t('qr.scanButton')}
         </Button>
       </DialogTrigger>
       <DialogContent
         className="max-w-sm"
         onCloseAutoFocus={(e) => {
+          // Only steal focus back to the command bar when a caller asked for
+          // it; otherwise let Radix restore focus to the trigger it opened
+          // from (the camera pill has no caller-provided close handler).
+          if (!onClose) return;
           e.preventDefault();
-          onClose?.();
+          onClose();
         }}
       >
         <DialogHeader>

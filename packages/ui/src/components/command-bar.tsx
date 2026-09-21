@@ -18,6 +18,8 @@ export interface CommandBarProps {
   mode?: React.ReactNode;
   /** Accessible name of the dark round submit. */
   submitLabel: string;
+  /** Locks the submit while a submission is in flight; the input stays focusable so a wedge scanner keeps its target. */
+  disabled?: boolean;
   inputProps?: Omit<React.ComponentProps<'input'>, 'value' | 'onChange' | 'placeholder'>;
   className?: string;
 }
@@ -35,6 +37,7 @@ export function CommandBar({
   onSubmit,
   mode,
   submitLabel,
+  disabled,
   inputProps,
   className,
 }: CommandBarProps) {
@@ -73,7 +76,13 @@ export function CommandBar({
         )}
       />
       {mode ? <div className="shrink-0 text-md font-medium">{mode}</div> : null}
-      <Button type="submit" size="icon-md" aria-label={submitLabel} className="shrink-0">
+      <Button
+        type="submit"
+        size="icon-md"
+        aria-label={submitLabel}
+        disabled={disabled}
+        className="shrink-0"
+      >
         <ArrowUp />
       </Button>
     </form>

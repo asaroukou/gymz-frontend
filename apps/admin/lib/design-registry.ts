@@ -26,6 +26,8 @@ export const PRIMITIVES: readonly PrimitiveEntry[] = [
   { id: 'input-otp', title: 'Code à usage unique', group: 'controls' },
   { id: 'tabs', title: 'Onglets', group: 'controls' },
   { id: 'dropdown-menu', title: 'Menu déroulant', group: 'controls' },
+  { id: 'pagination', title: 'Pagination', group: 'controls' },
+  { id: 'day-toggle', title: 'Jours', group: 'controls' },
 
   // Display, feedback and overlays
   { id: 'badge', title: 'Badge', group: 'display' },
@@ -50,6 +52,9 @@ export const PRIMITIVES: readonly PrimitiveEntry[] = [
   { id: 'command-bar', title: 'Barre de commande', group: 'display' },
   { id: 'chip', title: 'Puce', group: 'display' },
   { id: 'wordmark', title: 'Marque', group: 'display' },
+  { id: 'hub-page', title: 'Page de hub', group: 'display' },
+  { id: 'wash', title: 'Lavis', group: 'display' },
+  { id: 'working-page', title: 'Page de travail', group: 'display' },
 ];
 
 export function primitivesInGroup(group: PrimitiveEntry['group']): readonly PrimitiveEntry[] {

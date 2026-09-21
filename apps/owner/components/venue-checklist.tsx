@@ -16,19 +16,21 @@ export function VenueChecklist({
   value,
   onChange,
   disabled = false,
+  'aria-labelledby': ariaLabelledBy,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
+  'aria-labelledby'?: string;
 }) {
   const t = useTranslations('venueChecklist');
   const { venues, isLoading, isError } = useVenueContext();
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-full rounded-md" />
-        <Skeleton className="h-8 w-2/3 rounded-md" />
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-5 w-40 rounded-full" />
+        <Skeleton className="h-5 w-40 rounded-full" />
       </div>
     );
   }
@@ -44,14 +46,15 @@ export function VenueChecklist({
   };
 
   return (
-    <div className="flex max-h-56 flex-col gap-1 overflow-y-auto rounded-md border p-1">
+    <div
+      role="group"
+      aria-labelledby={ariaLabelledBy}
+      className="flex max-h-56 flex-col gap-3 overflow-y-auto"
+    >
       {venues.map((venue) => {
         const checked = value.includes(venue.id);
         return (
-          <label
-            key={venue.id}
-            className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-          >
+          <label key={venue.id} className="flex items-center gap-2.5 text-base">
             <Checkbox
               checked={checked}
               disabled={disabled}

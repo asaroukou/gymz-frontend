@@ -50,6 +50,8 @@
   },
   "shell": {
     "openMenu": "Ouvrir le menu",
+    "collapseMenu": "Réduire le menu",
+    "expandMenu": "Déplier le menu",
     "account": "Compte",
     "signOut": "Se déconnecter"
   },
@@ -63,14 +65,20 @@
     "search": "Rechercher",
     "loading": "Chargement…",
     "retry": "Réessayer",
-    "passVisitor": "Visiteur pass"
+    "passVisitor": "Visiteur pass",
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Page précédente",
+      "next": "Page suivante",
+      "page": "Page {n}"
+    }
   },
   "auth": {
     "footer": "Besoin d'aide ? Contactez la personne qui vous a donné accès.",
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
     "login": {
-      "title": "Connexion",
+      "title": "Bon retour",
       "subtitle": "Connectez-vous pour accéder à votre espace.",
       "email": "E-mail",
       "password": "Mot de passe",
@@ -95,14 +103,14 @@
     },
     "signup": {
       "title": "Créer un compte",
-      "subtitle": "Indiquez vos coordonnées — vous recevrez un mot de passe provisoire par e-mail.",
+      "subtitle": "Vous recevrez un mot de passe provisoire par e-mail.",
       "email": "E-mail",
       "firstName": "Prénom",
       "lastName": "Nom",
       "submit": "Créer un compte",
       "submitting": "Création du compte…",
       "sentTitle": "Vérifiez votre boîte mail",
-      "sentBody": "Si un compte peut être créé pour {email}, un e-mail avec un mot de passe provisoire vient d'être envoyé. Connectez-vous avec ce mot de passe pour continuer.",
+      "sentBody": "Si un compte peut être créé pour {email}, un e-mail avec un mot de passe provisoire vient d'être envoyé.",
       "haveAccount": "Vous avez déjà un compte ?",
       "signin": "Se connecter",
       "error": "Impossible de créer le compte"
@@ -163,8 +171,9 @@
     }
   },
   "dashboard": {
-    "greeting": "Bonjour {name}",
+    "greeting": "Bonjour, {name}",
     "greetingNoName": "Bonjour",
+    "dateLine": "{date} · {venue}",
     "venuePlaceholder": "Choisir un établissement",
     "venueNone": "Aucun établissement pour le moment.",
     "venuePrompt": "Sélectionnez un établissement pour voir son tableau de bord.",
@@ -174,30 +183,33 @@
       "occupancy": "Occupation",
       "activeMembers": "Membres actifs"
     },
+    "tabs": {
+      "label": "Sections du tableau de bord",
+      "schedule": "Planning du jour",
+      "checkins": "Derniers passages"
+    },
     "schedule": {
-      "title": "Planning du jour",
-      "capacityLabel": "Capacité {booked}/{cap}",
       "full": "Complet",
       "cancelled": "Annulé",
+      "seeAll": "{count, plural, one {Voir la séance du jour} other {Voir les # séances du jour}}",
       "emptyTitle": "Aucun créneau aujourd'hui",
       "emptyBody": "Créez un planning pour générer les créneaux de la journée.",
       "emptyCta": "Créer un planning"
     },
-    "checkins": {
-      "title": "Derniers passages",
-      "empty": "Aucun passage pour le moment.",
-      "methodQr": "QR",
-      "methodManual": "Manuel"
-    },
     "starter": {
-      "title": "Configurons votre établissement",
-      "body": "Trois étapes pour démarrer avec IziWellPass.",
+      "title": "Bienvenue, {name}",
+      "titleNoName": "Bienvenue",
+      "body": "Trois étapes pour démarrer. Chacune prend moins d'une minute.",
       "step1Title": "Créer un planning",
       "step1Body": "Définissez vos cours et vos créneaux.",
+      "step1Cta": "Créer un cours",
       "step2Title": "Ajouter un membre",
       "step2Body": "Enregistrez vos premiers adhérents.",
+      "step2Cta": "Ajouter",
       "step3Title": "Premier passage",
-      "step3Body": "Enregistrez une entrée à l'accueil."
+      "step3Body": "Enregistrez une entrée à l'accueil.",
+      "step3Cta": "Ouvrir l'accueil",
+      "placeholder": "Le planning du jour et les derniers passages apparaîtront ici."
     },
     "errors": {
       "venues": "Impossible de charger les établissements",
@@ -207,8 +219,9 @@
     }
   },
   "frontdesk": {
-    "title": "Accueil",
-    "subtitle": "Enregistrez les entrées et suivez la fréquentation du jour.",
+    "dateLine": "Accueil · {date}",
+    "question": "Qui entre ?",
+    "questionWalkin": "Qui entre sans réservation ?",
     "venuePlaceholder": "Choisir un établissement",
     "venueNone": "Aucun établissement pour le moment.",
     "venuePrompt": "Sélectionnez un établissement pour enregistrer les passages.",
@@ -217,20 +230,25 @@
     "stats": {
       "checkins": "Passages",
       "uniqueMembers": "Membres uniques",
+      "uniqueMembersShort": "Uniques",
       "occupancy": "Occupation"
     },
-    "register": {
-      "title": "Enregistrer un passage",
-      "tabsLabel": "Mode d'enregistrement",
-      "tabQr": "QR / code",
-      "tabWalkin": "Sans réservation"
+    "command": {
+      "placeholderQr": "Scanner un QR ou saisir un code",
+      "placeholderQrShort": "Scanner ou saisir",
+      "placeholderWalkin": "Rechercher un membre",
+      "submit": "Valider",
+      "modeQr": "Accueil",
+      "modeWalkin": "Sans réservation",
+      "modeMenuLabel": "Mode d'enregistrement",
+      "results": "Membres correspondants"
+    },
+    "modes": {
+      "qr": "QR / code",
+      "walkin": "Sans réservation"
     },
     "qr": {
-      "label": "Code QR ou jeton",
-      "placeholder": "Scannez ou saisissez le code",
-      "hint": "Présentez le QR au lecteur, ou saisissez le jeton, puis validez. Réservations, entrées libres et pass marketplace sont acceptés.",
-      "submit": "Valider",
-      "submitting": "Validation…",
+      "hint": "Présentez le QR au lecteur ou saisissez le jeton. Réservations, entrées libres et pass marketplace sont acceptés.",
       "scanButton": "Scanner avec la caméra",
       "cameraError": "Accès à la caméra refusé — utilisez le champ de texte.",
       "dialogDescription": "Pointez la caméra vers le QR code du membre.",
@@ -239,31 +257,22 @@
       "errorPassNotSettleable": "Cette réservation pass ne peut pas être validée ici — elle concerne peut-être un autre jour, a déjà été utilisée ou a été annulée. Demandez au visiteur de vérifier sa réservation."
     },
     "walkin": {
-      "hint": "Enregistrez un membre présent sans réservation.",
-      "member": "Membre",
-      "memberPlaceholder": "Choisir un membre",
-      "memberSearch": "Rechercher un membre",
+      "hint": "Choisissez un membre présent, puis validez l'entrée.",
       "noMembers": "Aucun membre",
-      "submit": "Enregistrer l'entrée",
-      "submitting": "Enregistrement…",
       "errorDuplicate": "Ce membre a déjà été enregistré ici récemment.",
       "membersError": "Impossible de charger les membres"
     },
     "feed": {
       "title": "Derniers passages",
+      "live": "En direct",
       "methodQr": "QR",
       "methodManual": "Manuel",
       "self": "Auto (QR)",
       "unknownMember": "Membre",
       "unknownStaff": "l'équipe",
       "byLabel": "par {name}",
-      "emptyTitle": "Aucun passage pour le moment",
-      "emptyBody": "Les entrées enregistrées apparaîtront ici en direct.",
+      "empty": "Aucun passage pour le moment.",
       "loadError": "Impossible de charger les passages"
-    },
-    "validation": {
-      "qrRequired": "Scannez ou saisissez le code",
-      "memberRequired": "Choisissez un membre"
     },
     "success": "Passage enregistré — {name}",
     "successNoName": "Passage enregistré",
@@ -276,6 +285,7 @@
     "add": "Ajouter un membre",
     "errorTitle": "Une erreur est survenue",
     "loadError": "Impossible de charger les membres",
+    "footer": "{shown, plural, one {# membre} other {# membres}} sur {total}",
     "filters": {
       "all": "Tous",
       "active": "Actifs",
@@ -389,6 +399,7 @@
           "noPlans": "Aucune offre active dans cet établissement.",
           "startsOn": "Début",
           "paid": "Réglé",
+          "paidHint": "Le paiement a été encaissé à l'attribution.",
           "submit": "Attribuer",
           "submitting": "Attribution…",
           "success": "Abonnement attribué",
@@ -461,7 +472,6 @@
     "venuesError": "Impossible de charger les établissements",
     "venueNone": "Aucun établissement pour le moment.",
     "venuePrompt": "Sélectionnez un établissement pour voir son planning.",
-    "venuePlaceholder": "Choisir un établissement",
     "addCourse": "Ajouter un cours",
     "tabs": {
       "courses": "Cours récurrents",
@@ -527,7 +537,6 @@
       "weekdayRequired": "Sélectionnez au moins un jour",
       "intervalDays": "Intervalle (jours)",
       "intervalWeeks": "Intervalle (semaines)",
-      "sectionCourse": "Le cours",
       "sectionTiming": "Horaire",
       "title": "Titre",
       "titlePlaceholder": "Yoga du matin",
@@ -611,11 +620,11 @@
       "error": "Impossible d'annuler la séance"
     },
     "bookings": {
+      "dateLine": "{day} · {room}",
       "subtitle": "{start}–{end} · {booked}/{cap} inscrits",
       "loadError": "Impossible de charger les participants",
       "emptyTitle": "Aucun participant",
       "emptyBody": "Ajoutez un participant pour réserver une place.",
-      "cancel": "Annuler",
       "validate": "Valider",
       "validating": "Validation…",
       "validateSuccess": "Entrée validée",
@@ -681,6 +690,7 @@
       "duration": "Durée (jours)",
       "entries": "Nombre d'entrées",
       "allActivities": "Valable pour toutes les activités",
+      "allActivitiesHint": "Sinon, choisissez les activités concernées ci-dessous.",
       "activities": "Activités concernées",
       "submit": "Enregistrer",
       "submitting": "Enregistrement…",
@@ -722,7 +732,6 @@
     "create": {
       "cta": "Ajouter un lieu",
       "title": "Nouvel établissement",
-      "formTitle": "Informations",
       "cityRequired": "La ville est requise",
       "countryRequired": "Le pays est requis",
       "submit": "Créer l'établissement",
@@ -743,6 +752,7 @@
         "allAdded": "Toutes les activités sont ajoutées.",
         "loadError": "Impossible de charger les activités",
         "addError": "Impossible d'ajouter l'activité",
+        "removeChip": "Retirer {activity}",
         "removeConfirm": {
           "title": "Retirer l'activité",
           "description": "Retirer « {activity} » de cet établissement ?",
@@ -832,7 +842,7 @@
           "error": "Impossible de supprimer la ressource"
         },
         "typeDialog": {
-          "add": "Nouveau type",
+          "add": "Nouveau type de ressource",
           "title": "Nouveau type de ressource",
           "description": "Des catégories comme « Salle de yoga » ou « Terrain de tennis », partagées dans votre organisation.",
           "name": "Nom",
@@ -897,6 +907,7 @@
     },
     "row": {
       "menu": "Actions du membre",
+      "you": "vous",
       "changeRole": "Modifier le rôle",
       "remove": "Retirer",
       "selfHint": "Vous ne pouvez pas retirer votre propre compte."

@@ -145,3 +145,82 @@ describe('AppShell', () => {
     expect(idle.className).not.toContain('bg-secondary');
   });
 });
+
+describe('AppShell collapse', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('collapses the column to a rail, swaps the footer and remembers it', () => {
+    render(
+      <AppShell
+        nav={nav}
+        title="IziWellPass"
+        navFooter={<p>full footer</p>}
+        navFooterCollapsed={<p>rail footer</p>}
+        collapseLabel="Réduire le menu"
+        expandLabel="Déplier le menu"
+        storageKey="test.collapsed"
+      >
+        <p>content</p>
+      </AppShell>,
+    );
+    const aside = document.querySelector('aside') as HTMLElement;
+    expect(aside.className).toContain('w-[260px]');
+    expect(within(aside).getByText('full footer')).toBeTruthy();
+    const toggle = within(aside).getByRole('button', { name: 'Réduire le menu' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    act(() => {
+      toggle.click();
+    });
+    expect(aside.className).toContain('w-[72px]');
+    expect(aside.getAttribute('data-collapsed')).toBe('true');
+    expect(
+      within(aside).getByRole('button', { name: 'Déplier le menu' }).getAttribute('aria-expanded'),
+    ).toBe('false');
+    expect(within(aside).getByText('rail footer')).toBeTruthy();
+    expect(within(aside).queryByText('full footer')).toBeNull();
+    // Links keep their accessible name on the rail (sr-only label).
+    expect(within(aside).getByRole('link', { name: 'Members' })).toBeTruthy();
+    expect(window.localStorage.getItem('test.collapsed')).toBe('1');
+
+    act(() => {
+      within(aside).getByRole('button', { name: 'Déplier le menu' }).click();
+    });
+    expect(aside.className).toContain('w-[260px]');
+    expect(window.localStorage.getItem('test.collapsed')).toBe('0');
+  });
+
+  it('restores the remembered rail on mount and hides the nav header there', () => {
+    window.localStorage.setItem('test.collapsed', '1');
+    render(
+      <AppShell
+        nav={nav}
+        title="IziWellPass"
+        storageKey="test.collapsed"
+        navHeader={<p>column header</p>}
+      >
+        <p>content</p>
+      </AppShell>,
+    );
+    const aside = document.querySelector('aside') as HTMLElement;
+    expect(aside.getAttribute('data-collapsed')).toBe('true');
+    expect(within(aside).queryByText('column header')).toBeNull();
+  });
+
+  it('never collapses the mobile drawer column', () => {
+    window.localStorage.setItem('test.collapsed', '1');
+    render(
+      <AppShell nav={nav} title="IziWellPass" storageKey="test.collapsed" openMenuLabel="Menu">
+        <p>content</p>
+      </AppShell>,
+    );
+    act(() => {
+      screen.getByRole('button', { name: 'Menu' }).click();
+    });
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).queryByRole('button', { name: /menu/i })).toBeNull();
+    expect(within(dialog).getByText('Dashboard').className).not.toContain('sr-only');
+  });
+});

@@ -45,9 +45,13 @@ function DialogContent({
   children,
   showCloseButton = true,
   onInteractOutside,
+  onCloseAutoFocus,
+  restoreFocusTo,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
+  /** Where focus goes when the overlay closes, for overlays opened without a Trigger (row menus, chips). */
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const dismissGuard = useOverlayDismissGuard();
   return (
@@ -56,7 +60,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-6 rounded-2xl bg-card p-8 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg',
+          'fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100vh-2rem)] translate-x-[-50%] translate-y-[-50%] gap-6 overflow-y-auto rounded-2xl bg-card p-8 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-[520px]',
           className,
         )}
         onInteractOutside={(event) => {
@@ -66,13 +70,22 @@ function DialogContent({
           if (dismissGuard.current) event.preventDefault();
           onInteractOutside?.(event);
         }}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (event.defaultPrevented || !restoreFocusTo) return;
+          const target = restoreFocusTo();
+          if (target) {
+            event.preventDefault();
+            target.focus();
+          }
+        }}
         {...props}
       >
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="absolute top-6 right-6 grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-side disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]"
+            className="absolute top-7 right-7 grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-side disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]"
           >
             <XIcon />
             <span className="sr-only">Close</span>
@@ -87,7 +100,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
+      className={cn('flex flex-col gap-2 pr-10 text-left', className)}
       {...props}
     />
   );

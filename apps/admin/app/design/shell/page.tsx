@@ -41,6 +41,9 @@ function ShellFrame({ currentPath }: { currentPath: string }) {
         currentPath={currentPath}
         linkComponent={InertLink}
         openMenuLabel="Ouvrir le menu"
+        collapseLabel="Réduire le menu"
+        expandLabel="Déplier le menu"
+        storageKey="design.shell.collapsed"
         navFooter={
           <Button variant="ghost" size="sm" className="justify-start px-2">
             Se déconnecter
@@ -80,7 +83,7 @@ export default function ShellPage() {
       >
         <Specimen
           name="AppShell"
-          signature="title, nav, navFooter, actions, currentPath, linkComponent"
+          signature="title, nav, navFooter, navFooterCollapsed, actions, currentPath, linkComponent, collapseLabel, expandLabel"
         >
           <ShellFrame currentPath="/members" />
         </Specimen>

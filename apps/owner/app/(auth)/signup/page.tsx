@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { MailIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -69,7 +70,7 @@ export default function SignupPage() {
   };
 
   const footer = (
-    <p className="text-sm text-muted-foreground">
+    <p>
       {t('signup.haveAccount')}{' '}
       <Link
         href="/login"
@@ -83,11 +84,12 @@ export default function SignupPage() {
   if (sentTo) {
     return (
       <AuthCard
+        media={<MailIcon />}
         title={t('signup.sentTitle')}
         subtitle={t('signup.sentBody', { email: sentTo })}
         footer={footer}
       >
-        <Button asChild className="h-11 w-full">
+        <Button asChild className="w-full">
           <Link href="/login">{t('signup.signin')}</Link>
         </Button>
       </AuthCard>
@@ -97,7 +99,7 @@ export default function SignupPage() {
   return (
     <AuthCard title={t('signup.title')} subtitle={t('signup.subtitle')} footer={footer}>
       <Form {...form}>
-        <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
+        <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-[18px]">
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -106,7 +108,7 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>{t('signup.firstName')}</FormLabel>
                   <FormControl>
-                    <Input autoComplete="given-name" className="h-11" {...field} />
+                    <Input autoComplete="given-name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,7 +121,7 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>{t('signup.lastName')}</FormLabel>
                   <FormControl>
-                    <Input autoComplete="family-name" className="h-11" {...field} />
+                    <Input autoComplete="family-name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -133,7 +135,7 @@ export default function SignupPage() {
               <FormItem>
                 <FormLabel>{t('signup.email')}</FormLabel>
                 <FormControl>
-                  <Input type="email" autoComplete="email" className="h-11" {...field} />
+                  <Input type="email" autoComplete="email" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -144,7 +146,7 @@ export default function SignupPage() {
               {form.formState.errors.root.message}
             </p>
           ) : null}
-          <Button type="submit" className="h-11 w-full" disabled={registerOwner.isPending}>
+          <Button type="submit" className="w-full" disabled={registerOwner.isPending}>
             {registerOwner.isPending ? t('signup.submitting') : t('signup.submit')}
           </Button>
         </form>

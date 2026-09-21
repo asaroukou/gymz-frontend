@@ -141,3 +141,22 @@ export function venueDateKey(iso: string, timeZone: string | undefined): string 
 export function venueToday(timeZone: string | undefined): string {
   return venueDateKey(new Date().toISOString(), timeZone);
 }
+
+/**
+ * Today's date in the active locale and the venue's timezone (falls back to
+ * the runtime zone if the venue tz is missing/invalid), first letter
+ * capitalised — French weekday names are otherwise lowercase.
+ */
+export function todayLabel(locale: string, timeZone: string | undefined): string {
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+  let text: string;
+  try {
+    text = new Intl.DateTimeFormat(locale, {
+      ...options,
+      timeZone: timeZone && timeZone.trim().length > 0 ? timeZone : undefined,
+    }).format(new Date());
+  } catch {
+    text = new Intl.DateTimeFormat(locale, options).format(new Date());
+  }
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

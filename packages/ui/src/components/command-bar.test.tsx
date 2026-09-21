@@ -21,4 +21,9 @@ describe('CommandBar', () => {
     render(<CommandBar placeholder="p" submitLabel="Go" mode={<span>Accueil</span>} />);
     expect(screen.getByText('Accueil')).toBeTruthy();
   });
+  it('locks the submit while disabled', () => {
+    render(<CommandBar placeholder="x" submitLabel="Go" disabled />);
+    const button = screen.getByRole('button', { name: 'Go' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+  });
 });

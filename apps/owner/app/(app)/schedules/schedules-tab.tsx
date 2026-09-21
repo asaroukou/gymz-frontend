@@ -9,7 +9,6 @@ import { useListResources, useListSchedules, useListStaff } from '@iziwellpass/a
 import type { Resource, Schedule, Staff } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Button } from '@iziwellpass/ui/components/button';
-import { Card } from '@iziwellpass/ui/components/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +23,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@iziwellpass/ui/components/empty';
-import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import {
   Table,
   TableBody,
@@ -34,29 +32,33 @@ import {
   TableRow,
 } from '@iziwellpass/ui/components/table';
 
+import { useFocusRegistry } from '@/components/focus-registry';
+import { RowsSkeleton } from '@/components/rows-skeleton';
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatCalendarDate } from '@/lib/datetime';
 
 import { usePlanningLabels } from './planning-utils';
 import { AddScheduleDialog, DeleteScheduleDialog, EditScheduleDialog } from './schedule-dialogs';
 
-/** Edit/delete menu, shared by the desktop table row and the phone card. */
+/** Edit/delete menu on a 36px « ··· » button, shared by the table row and the phone stack. */
 function CourseActions({
   schedule,
   onEdit,
   onDelete,
   size = 'icon-sm',
+  menuRef,
 }: {
   schedule: Schedule;
   onEdit: (schedule: Schedule) => void;
   onDelete: (schedule: Schedule) => void;
   size?: 'icon' | 'icon-sm';
+  menuRef?: (el: HTMLButtonElement | null) => void;
 }) {
   const t = useTranslations('planning');
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={size} aria-label={t('courses.rowMenu')}>
+        <Button ref={menuRef} variant="ghost" size={size} aria-label={t('courses.rowMenu')}>
           <MoreHorizontalIcon />
         </Button>
       </DropdownMenuTrigger>
@@ -78,57 +80,29 @@ function scheduleClock(schedule: Schedule): string {
   return `${schedule.start_time.slice(0, 5)}–${schedule.end_time.slice(0, 5)}`;
 }
 
-/**
- * Phone layout for a recurring course: a stacked card (title, recurrence +
- * clock, resource · instructor, period) instead of the 6-column table, which
- * would force horizontal scroll at 375px.
- */
-function CourseCard({
-  schedule,
-  resourceName,
-  instructorName,
-  canManage,
-  onEdit,
-  onDelete,
-}: {
+function usePeriodLabel() {
+  const t = useTranslations('planning');
+  const locale = useLocale();
+  return (schedule: Schedule): string =>
+    schedule.effective_until
+      ? t('courses.dateRange', {
+          from: formatCalendarDate(schedule.effective_from, locale),
+          until: formatCalendarDate(schedule.effective_until, locale),
+        })
+      : t('courses.dateFrom', { from: formatCalendarDate(schedule.effective_from, locale) });
+}
+
+interface CourseRowProps {
   schedule: Schedule;
   resourceName: string;
   instructorName: string;
   canManage: boolean;
   onEdit: (schedule: Schedule) => void;
   onDelete: (schedule: Schedule) => void;
-}) {
-  const t = useTranslations('planning');
-  const locale = useLocale();
-  const { formatRecurrence } = usePlanningLabels();
-  const dateRange = schedule.effective_until
-    ? t('courses.dateRange', {
-        from: formatCalendarDate(schedule.effective_from, locale),
-        until: formatCalendarDate(schedule.effective_until, locale),
-      })
-    : t('courses.dateFrom', { from: formatCalendarDate(schedule.effective_from, locale) });
-
-  return (
-    <div className="flex items-start gap-3 p-4">
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{schedule.title}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-          <span>{formatRecurrence(schedule.recurrence_rule)}</span>
-          <span className="font-numeric">{scheduleClock(schedule)}</span>
-        </div>
-        <p className="mt-1 truncate text-xs text-muted-foreground">
-          {resourceName}
-          {instructorName ? ` · ${instructorName}` : ''}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{dateRange}</p>
-      </div>
-      {canManage ? (
-        <CourseActions schedule={schedule} onEdit={onEdit} onDelete={onDelete} size="icon" />
-      ) : null}
-    </div>
-  );
+  menuRef?: (el: HTMLButtonElement | null) => void;
 }
 
+/** Desktop row (canvas `oouHs`): 64px, title + 13px description, rule + clock, room, instructor, period, « ··· ». */
 function CourseRow({
   schedule,
   resourceName,
@@ -136,50 +110,83 @@ function CourseRow({
   canManage,
   onEdit,
   onDelete,
-}: {
-  schedule: Schedule;
-  resourceName: string;
-  instructorName: string;
-  canManage: boolean;
-  onEdit: (schedule: Schedule) => void;
-  onDelete: (schedule: Schedule) => void;
-}) {
+  menuRef,
+}: CourseRowProps) {
   const t = useTranslations('planning');
-  const locale = useLocale();
   const { formatRecurrence } = usePlanningLabels();
-
-  const clock = scheduleClock(schedule);
-
-  const dateRange = schedule.effective_until
-    ? t('courses.dateRange', {
-        from: formatCalendarDate(schedule.effective_from, locale),
-        until: formatCalendarDate(schedule.effective_until, locale),
-      })
-    : t('courses.dateFrom', { from: formatCalendarDate(schedule.effective_from, locale) });
+  const periodLabel = usePeriodLabel();
 
   return (
     <TableRow>
       <TableCell>
-        <div className="font-medium">{schedule.title}</div>
+        <p className="font-medium">{schedule.title}</p>
         {schedule.description ? (
-          <div className="truncate text-xs text-muted-foreground">{schedule.description}</div>
+          <p className="truncate text-sm text-muted-foreground">{schedule.description}</p>
         ) : null}
       </TableCell>
       <TableCell>
-        <div className="text-sm">{formatRecurrence(schedule.recurrence_rule)}</div>
-        <div className="font-numeric text-xs text-muted-foreground">{clock}</div>
+        <p>{formatRecurrence(schedule.recurrence_rule)}</p>
+        <p className="font-numeric text-sm font-medium text-muted-foreground">
+          {scheduleClock(schedule)}
+        </p>
       </TableCell>
       <TableCell>{resourceName}</TableCell>
       <TableCell className={instructorName ? undefined : 'text-muted-foreground'}>
         {instructorName || t('courses.noInstructor')}
       </TableCell>
-      <TableCell className="text-muted-foreground">{dateRange}</TableCell>
+      <TableCell className="text-muted-foreground">{periodLabel(schedule)}</TableCell>
       <TableCell className="text-right">
         {canManage ? (
-          <CourseActions schedule={schedule} onEdit={onEdit} onDelete={onDelete} size="icon-sm" />
+          <CourseActions
+            schedule={schedule}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            menuRef={menuRef}
+          />
         ) : null}
       </TableCell>
     </TableRow>
+  );
+}
+
+/** Phone stack (spec D6): the same cells stacked between hairlines, no card. */
+function CourseStack({
+  schedule,
+  resourceName,
+  instructorName,
+  canManage,
+  onEdit,
+  onDelete,
+  menuRef,
+}: CourseRowProps) {
+  const t = useTranslations('planning');
+  const { formatRecurrence } = usePlanningLabels();
+  const periodLabel = usePeriodLabel();
+
+  return (
+    <div className="flex items-start gap-3 border-b border-border py-3 last:border-0">
+      <div className="min-w-0 flex-1 leading-tight">
+        <p className="truncate font-medium">{schedule.title}</p>
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+          <span>{formatRecurrence(schedule.recurrence_rule)}</span>
+          <span className="font-numeric font-medium">{scheduleClock(schedule)}</span>
+        </p>
+        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+          {resourceName}
+          {instructorName ? ` · ${instructorName}` : ` · ${t('courses.noInstructor')}`}
+        </p>
+        <p className="mt-0.5 text-sm text-muted-foreground">{periodLabel(schedule)}</p>
+      </div>
+      {canManage ? (
+        <CourseActions
+          schedule={schedule}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          size="icon"
+          menuRef={menuRef}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -199,9 +206,12 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
   const staffById = useMemo(() => new Map(staff.map((s: Staff) => [s.id, s])), [staff]);
 
   const schedules = useMemo(() => schedulesQuery.data ?? [], [schedulesQuery.data]);
+  const focus = useFocusRegistry();
 
   const [editing, setEditing] = useState<Schedule | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState<Schedule | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const instructorName = (schedule: Schedule): string => {
     if (!schedule.instructor_staff_id) return '';
@@ -213,15 +223,7 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
   // so rows never render fallback labels that then flash to real names once
   // the secondary queries resolve. The schedules query stays the primary driver.
   if (schedulesQuery.isLoading || resourcesQuery.isLoading || staffQuery.isLoading) {
-    return (
-      <Card className="gap-0 py-0">
-        <div className="space-y-3 p-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
-          ))}
-        </div>
-      </Card>
-    );
+    return <RowsSkeleton />;
   }
 
   if (schedulesQuery.isError) {
@@ -237,81 +239,72 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
 
   if (schedules.length === 0) {
     return (
-      <Card>
-        <Empty>
-          <EmptyMedia>
-            <RepeatIcon />
-          </EmptyMedia>
-          <EmptyTitle>{t('courses.emptyTitle')}</EmptyTitle>
-          <EmptyDescription>{t('courses.emptyBody')}</EmptyDescription>
-          {canManage ? (
-            <EmptyContent>
-              <AddScheduleDialog venueId={venueId} resources={resources} staff={staff} />
-            </EmptyContent>
-          ) : null}
-        </Empty>
-      </Card>
+      <Empty>
+        <EmptyMedia>
+          <RepeatIcon />
+        </EmptyMedia>
+        <EmptyTitle>{t('courses.emptyTitle')}</EmptyTitle>
+        <EmptyDescription>{t('courses.emptyBody')}</EmptyDescription>
+        {canManage ? (
+          <EmptyContent>
+            <AddScheduleDialog
+              venueId={venueId}
+              resources={resources}
+              staff={staff}
+              variant="secondary"
+            />
+          </EmptyContent>
+        ) : null}
+      </Empty>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {canManage ? (
-        <div className="flex justify-end">
-          <AddScheduleDialog venueId={venueId} resources={resources} staff={staff} />
-        </div>
-      ) : null}
+  const rowProps = (schedule: Schedule): CourseRowProps => ({
+    schedule,
+    resourceName: resourceById.get(schedule.resource_id)?.name ?? t('courses.unknownResource'),
+    instructorName: instructorName(schedule),
+    canManage,
+    onEdit: (s) => {
+      setEditing(s);
+      setEditOpen(true);
+    },
+    onDelete: (s) => {
+      setDeleting(s);
+      setDeleteOpen(true);
+    },
+    menuRef: focus.register(schedule.id),
+  });
 
-      <Card className="gap-0 overflow-hidden py-0">
-        {/* Phone: stacked cards. The 6-column table would force horizontal scroll at 375px. */}
-        <div className="divide-y md:hidden">
-          {schedules.map((schedule: Schedule) => (
-            <CourseCard
-              key={schedule.id}
-              schedule={schedule}
-              resourceName={
-                resourceById.get(schedule.resource_id)?.name ?? t('courses.unknownResource')
-              }
-              instructorName={instructorName(schedule)}
-              canManage={canManage}
-              onEdit={setEditing}
-              onDelete={setDeleting}
-            />
-          ))}
-        </div>
-        {/* Tablet/desktop: the full table. */}
-        <div className="hidden md:block">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('courses.columns.course')}</TableHead>
-                <TableHead>{t('courses.columns.recurrence')}</TableHead>
-                <TableHead>{t('courses.columns.resource')}</TableHead>
-                <TableHead>{t('courses.columns.instructor')}</TableHead>
-                <TableHead>{t('courses.columns.period')}</TableHead>
-                <TableHead className="text-right">
-                  <span className="sr-only">{t('courses.columns.actions')}</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {schedules.map((schedule: Schedule) => (
-                <CourseRow
-                  key={schedule.id}
-                  schedule={schedule}
-                  resourceName={
-                    resourceById.get(schedule.resource_id)?.name ?? t('courses.unknownResource')
-                  }
-                  instructorName={instructorName(schedule)}
-                  canManage={canManage}
-                  onEdit={setEditing}
-                  onDelete={setDeleting}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+  return (
+    <>
+      {/* Phone: stacked hairline rows. The 6-column table would force horizontal scroll at 375px. */}
+      <div className="md:hidden">
+        {schedules.map((schedule: Schedule) => (
+          <CourseStack key={schedule.id} {...rowProps(schedule)} />
+        ))}
+      </div>
+      {/* Tablet/desktop: the hairline table at the canvas column widths. */}
+      <div className="hidden md:block">
+        <Table className="table-fixed">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[204px]">{t('courses.columns.course')}</TableHead>
+              <TableHead className="w-[300px]">{t('courses.columns.recurrence')}</TableHead>
+              <TableHead className="w-[120px]">{t('courses.columns.resource')}</TableHead>
+              <TableHead className="w-[160px]">{t('courses.columns.instructor')}</TableHead>
+              <TableHead className="w-[220px]">{t('courses.columns.period')}</TableHead>
+              <TableHead className="w-16 text-right">
+                <span className="sr-only">{t('courses.columns.actions')}</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {schedules.map((schedule: Schedule) => (
+              <CourseRow key={schedule.id} {...rowProps(schedule)} />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {editing ? (
         <EditScheduleDialog
@@ -319,22 +312,20 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
           schedule={editing}
           resources={resources}
           staff={staff}
-          open={editing !== null}
-          onOpenChange={(next) => {
-            if (!next) setEditing(null);
-          }}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          restoreFocusTo={() => focus.get(editing?.id)}
         />
       ) : null}
       {deleting ? (
         <DeleteScheduleDialog
           venueId={venueId}
           schedule={deleting}
-          open={deleting !== null}
-          onOpenChange={(next) => {
-            if (!next) setDeleting(null);
-          }}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          restoreFocusTo={() => focus.get(deleting?.id)}
         />
       ) : null}
-    </div>
+    </>
   );
 }

@@ -13,6 +13,7 @@ import type { ActivityPlan } from '@iziwellpass/api/schemas';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -66,7 +67,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-1">
       <p className="text-sm font-medium">{label}</p>
-      <p className="text-sm text-muted-foreground">{value}</p>
+      <p className="text-base text-muted-foreground">{value}</p>
     </div>
   );
 }
@@ -89,6 +90,7 @@ export function PlanDialog({
   plan?: ActivityPlan;
 }) {
   const t = useTranslations('plans');
+  const tCommon = useTranslations('common');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const createPlan = useCreatePlan();
@@ -165,114 +167,137 @@ export function PlanDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant={isEdit ? 'outline' : 'default'} size={isEdit ? 'sm' : 'default'}>
+        <Button variant={isEdit ? 'ghost' : 'default'} size={isEdit ? 'sm' : 'default'}>
           {isEdit ? null : <PlusIcon />}
           {isEdit ? t('edit') : t('add')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>{isEdit ? t('dialog.editTitle') : t('dialog.createTitle')}</DialogTitle>
           <DialogDescription>{t('dialog.description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('dialog.name')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {isEdit ? (
-              <ReadOnlyField label={t('dialog.kind')} value={t(`kind.${kind}`)} />
-            ) : (
+          <form
+            onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
+            className="flex flex-col gap-6"
+          >
+            <div className="flex flex-col gap-[18px]">
               <FormField
                 control={form.control}
-                name="kind"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('dialog.kind')}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {PLAN_KIND_VALUES.map((k) => (
-                          <SelectItem key={k} value={k}>
-                            {t(`kind.${k}`)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="price_major"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('dialog.price')}</FormLabel>
+                    <FormLabel>{t('dialog.name')}</FormLabel>
                     <FormControl>
-                      <Input inputMode="decimal" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="price_currency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('dialog.currency')}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {CURRENCY_VALUES.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
-            {/* An entry_pack may also carry a duration as an expiry, so the
-                duration stays visible for both kinds. Both are read-only in
-                edit mode — the update endpoint does not accept them. */}
-            {kind === 'entry_pack' ? (
-              isEdit ? (
-                <ReadOnlyField label={t('dialog.entries')} value={entryCount || '—'} />
+              {isEdit ? (
+                <ReadOnlyField label={t('dialog.kind')} value={t(`kind.${kind}`)} />
               ) : (
                 <FormField
                   control={form.control}
-                  name="entry_count"
+                  name="kind"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('dialog.entries')}</FormLabel>
+                      <FormLabel>{t('dialog.kind')}</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PLAN_KIND_VALUES.map((k) => (
+                            <SelectItem key={k} value={k}>
+                              {t(`kind.${k}`)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="price_major"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('dialog.price')}</FormLabel>
+                      <FormControl>
+                        <Input inputMode="decimal" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="price_currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('dialog.currency')}</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {CURRENCY_VALUES.map((c) => (
+                            <SelectItem key={c} value={c}>
+                              {c}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* An entry_pack may also carry a duration as an expiry, so the
+                  duration stays visible for both kinds. Both are read-only in
+                  edit mode — the update endpoint does not accept them. */}
+              {kind === 'entry_pack' ? (
+                isEdit ? (
+                  <ReadOnlyField label={t('dialog.entries')} value={entryCount || '—'} />
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="entry_count"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('dialog.entries')}</FormLabel>
+                        <FormControl>
+                          <Input inputMode="numeric" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )
+              ) : null}
+
+              {isEdit ? (
+                <ReadOnlyField label={t('dialog.duration')} value={durationDays || '—'} />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="duration_days"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('dialog.duration')}</FormLabel>
                       <FormControl>
                         <Input inputMode="numeric" {...field} />
                       </FormControl>
@@ -280,76 +305,70 @@ export function PlanDialog({
                     </FormItem>
                   )}
                 />
-              )
-            ) : null}
-
-            {isEdit ? (
-              <ReadOnlyField label={t('dialog.duration')} value={durationDays || '—'} />
-            ) : (
-              <FormField
-                control={form.control}
-                name="duration_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('dialog.duration')}</FormLabel>
-                    <FormControl>
-                      <Input inputMode="numeric" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              control={form.control}
-              name="all_activities"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-4">
-                  <FormLabel>{t('dialog.allActivities')}</FormLabel>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                </FormItem>
               )}
-            />
 
-            {allActivities ? null : (
               <FormField
                 control={form.control}
-                name="activities"
+                name="all_activities"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('dialog.activities')}</FormLabel>
-                    <div className="flex flex-wrap gap-2">
-                      {venueActivities.map((activity) => {
-                        const selected = field.value.includes(activity);
-                        return (
-                          <Button
-                            key={activity}
-                            type="button"
-                            size="sm"
-                            variant={selected ? 'default' : 'outline'}
-                            onClick={() =>
-                              field.onChange(
-                                selected
-                                  ? field.value.filter((a) => a !== activity)
-                                  : [...field.value, activity],
-                              )
-                            }
-                          >
-                            {activityLabel(activity)}
-                          </Button>
-                        );
-                      })}
+                  <FormItem className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-1">
+                      <FormLabel className="text-base font-medium">
+                        {t('dialog.allActivities')}
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        {t('dialog.allActivitiesHint')}
+                      </p>
                     </div>
-                    <FormMessage />
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
                   </FormItem>
                 )}
               />
-            )}
+
+              {allActivities ? null : (
+                <FormField
+                  control={form.control}
+                  name="activities"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('dialog.activities')}</FormLabel>
+                      <div className="flex flex-wrap gap-2">
+                        {venueActivities.map((activity) => {
+                          const selected = field.value.includes(activity);
+                          return (
+                            <Button
+                              key={activity}
+                              type="button"
+                              size="sm"
+                              variant={selected ? 'secondary' : 'outline'}
+                              onClick={() =>
+                                field.onChange(
+                                  selected
+                                    ? field.value.filter((a) => a !== activity)
+                                    : [...field.value, activity],
+                                )
+                              }
+                            >
+                              {activityLabel(activity)}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
 
             <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="ghost">
+                  {tCommon('cancel')}
+                </Button>
+              </DialogClose>
               <Button type="submit" disabled={pending}>
                 {pending ? t('dialog.submitting') : t('dialog.submit')}
               </Button>

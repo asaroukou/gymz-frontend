@@ -16,8 +16,3 @@ export function useAccessScopeLabel(): (value: string) => string {
   return (value: string) =>
     t.has(`accessScope.${value}`) ? t(`accessScope.${value}`) : humanizeScope(value);
 }
-
-/** Quiet badge variant — scope is descriptive metadata, not a status. */
-export function accessScopeBadgeVariant(scope: string): 'secondary' | 'outline' {
-  return scope === 'chain_wide' ? 'secondary' : 'outline';
-}

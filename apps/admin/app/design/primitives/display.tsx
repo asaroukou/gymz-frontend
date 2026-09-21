@@ -44,6 +44,21 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@iziwellpass/ui/components/empty';
+import {
+  HubEyebrow,
+  HubHero,
+  HubLead,
+  HubPage,
+  HubTitle,
+} from '@iziwellpass/ui/components/hub-page';
+import {
+  BackLink,
+  KeyValueList,
+  KeyValueRow,
+  SectionHeading,
+  WorkingHeader,
+  WorkingPage,
+} from '@iziwellpass/ui/components/working-page';
 import { Popover, PopoverContent, PopoverTrigger } from '@iziwellpass/ui/components/popover';
 import { Progress } from '@iziwellpass/ui/components/progress';
 import { Separator } from '@iziwellpass/ui/components/separator';
@@ -79,6 +94,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@iziwellpass/ui/components/tooltip';
+import { Wash } from '@iziwellpass/ui/components/wash';
 import { Wordmark } from '@iziwellpass/ui/components/wordmark';
 
 import { sectionNumber, type TocEntry } from '../_chrome/page-frame';
@@ -579,6 +595,82 @@ export function DisplaySpecimens({ entries }: { entries: readonly TocEntry[] }) 
         <Specimen name="Wordmark" signature="name, size=sm | md">
           <Wordmark name="IziWellPass" />
           <Wordmark name="IziWellPass" size="sm" />
+        </Specimen>
+      </Section>
+
+      <Section
+        id="hub-page"
+        number={number('hub-page')}
+        title="Page de hub"
+        note="La colonne 940px de l’accueil et du tableau de bord : Hero, puis les sections empilées. Sans lavis ici, pour isoler la hiérarchie du titre."
+      >
+        <Specimen name="HubPage" signature="HubHero, HubEyebrow, HubTitle, HubLead">
+          <HubPage className="max-w-none">
+            <HubHero>
+              <HubEyebrow>Samedi 20 septembre · Studio Dakar Plateau</HubEyebrow>
+              <HubTitle>Bonjour, Moussa</HubTitle>
+              <HubLead>Un titre léger, une seule action, rien qui rivalise.</HubLead>
+            </HubHero>
+          </HubPage>
+        </Specimen>
+      </Section>
+
+      <Section
+        id="wash"
+        number={number('wash')}
+        title="Lavis"
+        note="Le seul dégradé du système (DESIGN.md §4) : un radial derrière un titre de hub, cadré 800×640, masqué sous md."
+      >
+        <Specimen name="Wash" signature="derrière un titre de hub">
+          <div className="relative h-[320px] w-full max-w-[640px] overflow-hidden">
+            <Wash className="md:block" />
+            <HubTitle className="relative text-center">Le lavis</HubTitle>
+          </div>
+        </Specimen>
+      </Section>
+
+      <Section
+        id="working-page"
+        number={number('working-page')}
+        title="Page de travail"
+        note="Les écrans de travail (planning, membres, équipe, établissements) : un titre 32 léger, une action sombre, un lien de retour 14, des titres de section 22 et des lignes clé/valeur entre filets."
+      >
+        <Specimen
+          name="WorkingPage"
+          signature="WorkingHeader, BackLink, SectionHeading, KeyValueList, KeyValueRow"
+        >
+          <WorkingPage className="max-w-[640px]">
+            <BackLink href="#working-page">Retour aux membres</BackLink>
+            <WorkingHeader
+              title="Awa Ndiaye"
+              subtitle="Membre depuis le 3 mars 2026"
+              badges={
+                <>
+                  <Badge variant="success">Actif</Badge>
+                  <Badge>Mensuel</Badge>
+                </>
+              }
+            />
+            <div className="flex flex-col gap-4">
+              <SectionHeading
+                title="Adhésion"
+                description="Ce que le membre a acheté et jusqu'à quand."
+                action={
+                  <Button variant="secondary" size="sm">
+                    <PlusIcon />
+                    Attribuer une formule
+                  </Button>
+                }
+              />
+              <KeyValueList>
+                <KeyValueRow label="Type">Mensuel</KeyValueRow>
+                <KeyValueRow label="Début">1 sept. 2026</KeyValueRow>
+                <KeyValueRow label="Statut">
+                  <Badge variant="success">Actif</Badge>
+                </KeyValueRow>
+              </KeyValueList>
+            </div>
+          </WorkingPage>
         </Specimen>
       </Section>
     </>
