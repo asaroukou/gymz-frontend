@@ -76,3 +76,23 @@ export function applyFieldErrors<TFieldValues extends FieldValues>(
   }
   return applied;
 }
+
+/**
+ * Returns a copy of a `VALIDATION_ERROR` whose matching `details[].message`
+ * are replaced by the given copy (e.g. the canvas sentence for
+ * `instructor_staff_id`), so `applyFieldErrors` shows product copy instead of
+ * the server's English. Anything else is returned untouched.
+ */
+export function overrideFieldMessages(err: unknown, overrides: Record<string, string>): unknown {
+  if (!(err instanceof ApiError) || err.code !== 'VALIDATION_ERROR') return err;
+  const details = parseFieldErrorDetails(err.details);
+  if (!details || !details.some((d) => d.field in overrides)) return err;
+  const rewritten = details.map((d) =>
+    d.field in overrides ? { ...d, message: overrides[d.field] } : d,
+  );
+  return new ApiError(
+    err.status,
+    { code: err.code, message: err.message, details: rewritten },
+    err.requestId,
+  );
+}
