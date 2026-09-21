@@ -24,6 +24,8 @@ No data hook, mutation, or API call changes. This is composition and styling on 
 - **D9 — « Ajouter et enchaîner »** submits, toasts success, resets the form, keeps the dialog open with focus on « Prénom ». « Ajouter le membre » submits and closes. Both exist today (`addDialog.submitAndAnother`); only the placement changes (ghost, left of the dark action).
 - **D10 — Expired subscription tiles take the grey pill tone, not côté.** The canvas (`L6sMyP`) draws the expired tile at `#eceef2` (`bg-secondary`), unlike SP-B's cancelled sessions at côté. Follow the canvas: `subscriptionTone` → `'side'` renders `bg-secondary`.
 - **D11 — Canvas « Button/Secondary » is the ui `outline` variant.** DESIGN.md gives the secondary button a filet outline on white; the ui `secondary` variant is the grey pilule fill and is reserved for tabs, chips and empty-state CTAs. « Participants », « + Attribuer une formule », « Réactiver », « Ajouter » (activités) and every other canvas secondary pill render with `variant="outline"`.
+- **D12 — Dialogs opened from a row menu restore focus explicitly.** Radix only restores focus to a `DialogTrigger`; controlled dialogs and sheets opened from a « ··· » menu, a chip or a row button take `restoreFocusTo={() => element}` on `DialogContent`/`SheetContent` (a callback returning the originating button, kept in a per-row focus registry). Staying mounted is not enough.
+- **D13 — Table row heights follow from content.** `TableCell` padding is 14px; a row holding a 36px control or avatar is 64px. The canvas 46px (resources) and 60px (team) rows are not reproduced; every hairline table row is 64px.
 
 ## 3. Shared primitives (`packages/ui`)
 
@@ -86,7 +88,7 @@ Tests: renders 7 buttons; click toggles and calls `onChange` in day order; `aria
 - `TableCell`: `px-3 py-[14px] align-middle text-base` (15px; was `py-3`, size inherited).
 - `TableRow`: keep `border-b border-border`; `data-[state=selected]:bg-secondary` (was `bg-side`), plus `data-[state=selected]:[&>td:first-child]:rounded-l-[20px] data-[state=selected]:[&>td:last-child]:rounded-r-[20px]` for the participants-open highlight (`skmEM`).
 - `TableHeader`: `[&_tr]:border-b` unchanged.
-- Row heights fall out of content: 36 avatar + 14×2 = 64 (members, courses), text rows 46 (resources, team at 60 with avatar padding 12).
+- Row heights fall out of content: every row that holds a 36px avatar or control is 64px (D13).
 
 Admin consumers are checked visually in `/design` (specimen updated) and by the admin test suite; no admin page code changes.
 
