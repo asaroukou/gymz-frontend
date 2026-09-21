@@ -45,9 +45,13 @@ function DialogContent({
   children,
   showCloseButton = true,
   onInteractOutside,
+  onCloseAutoFocus,
+  restoreFocusTo,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
+  /** Where focus goes when the overlay closes, for overlays opened without a Trigger (row menus, chips). */
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const dismissGuard = useOverlayDismissGuard();
   return (
@@ -65,6 +69,15 @@ function DialogContent({
           // dropdown closes on its own layer; the first click leaves the modal.
           if (dismissGuard.current) event.preventDefault();
           onInteractOutside?.(event);
+        }}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (event.defaultPrevented || !restoreFocusTo) return;
+          const target = restoreFocusTo();
+          if (target) {
+            event.preventDefault();
+            target.focus();
+          }
         }}
         {...props}
       >

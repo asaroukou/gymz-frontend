@@ -45,10 +45,14 @@ function SheetContent({
   side = 'right',
   showCloseButton = true,
   onInteractOutside,
+  onCloseAutoFocus,
+  restoreFocusTo,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: 'top' | 'right' | 'bottom' | 'left';
   showCloseButton?: boolean;
+  /** Where focus goes when the overlay closes, for overlays opened without a Trigger (row menus, chips). */
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const dismissGuard = useOverlayDismissGuard();
   return (
@@ -61,6 +65,15 @@ function SheetContent({
           // dismiss an open portalled dropdown (Select/Popover/Dropdown).
           if (dismissGuard.current) event.preventDefault();
           onInteractOutside?.(event);
+        }}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (event.defaultPrevented || !restoreFocusTo) return;
+          const target = restoreFocusTo();
+          if (target) {
+            event.preventDefault();
+            target.focus();
+          }
         }}
         className={cn(
           'fixed z-50 flex flex-col gap-6 bg-card p-8 transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
