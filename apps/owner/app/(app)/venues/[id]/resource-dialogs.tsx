@@ -370,11 +370,13 @@ export function AddResourceDialog({
   resourceTypes,
   variant = 'default',
   size = 'sm',
+  className,
 }: {
   venueId: string;
   resourceTypes: ResourceType[];
   variant?: 'default' | 'secondary';
   size?: 'default' | 'sm';
+  className?: string;
 }) {
   const t = useTranslations('venues');
   const tCommon = useTranslations('common');
@@ -429,7 +431,7 @@ export function AddResourceDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant={variant} size={size}>
+        <Button variant={variant} size={size} className={className}>
           <PlusIcon />
           {t('detail.resources.add')}
         </Button>

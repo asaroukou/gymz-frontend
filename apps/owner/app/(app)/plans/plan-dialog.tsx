@@ -342,7 +342,7 @@ export function PlanDialog({
                               key={activity}
                               type="button"
                               size="sm"
-                              variant={selected ? 'default' : 'outline'}
+                              variant={selected ? 'secondary' : 'outline'}
                               onClick={() =>
                                 field.onChange(
                                   selected

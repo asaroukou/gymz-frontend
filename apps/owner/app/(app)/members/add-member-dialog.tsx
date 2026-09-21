@@ -30,6 +30,7 @@ import {
   FormMessage,
 } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
+import { Label } from '@iziwellpass/ui/components/label';
 import {
   Select,
   SelectContent,
@@ -303,8 +304,12 @@ export function AddMemberDialog({ variant = 'default' }: { variant?: 'default' |
                   name="venue_ids"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('addDialog.venues')}</FormLabel>
-                      <VenueChecklist value={field.value} onChange={field.onChange} />
+                      <Label id="add-member-venues-label">{t('addDialog.venues')}</Label>
+                      <VenueChecklist
+                        value={field.value}
+                        onChange={field.onChange}
+                        aria-labelledby="add-member-venues-label"
+                      />
                       <FormMessage />
                     </FormItem>
                   )}

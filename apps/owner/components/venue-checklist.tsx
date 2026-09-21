@@ -16,10 +16,12 @@ export function VenueChecklist({
   value,
   onChange,
   disabled = false,
+  'aria-labelledby': ariaLabelledBy,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
+  'aria-labelledby'?: string;
 }) {
   const t = useTranslations('venueChecklist');
   const { venues, isLoading, isError } = useVenueContext();
@@ -44,7 +46,11 @@ export function VenueChecklist({
   };
 
   return (
-    <div className="flex max-h-56 flex-col gap-3 overflow-y-auto">
+    <div
+      role="group"
+      aria-labelledby={ariaLabelledBy}
+      className="flex max-h-56 flex-col gap-3 overflow-y-auto"
+    >
       {venues.map((venue) => {
         const checked = value.includes(venue.id);
         return (

@@ -114,6 +114,9 @@ export function EditAccessDialog({
           </div>
           {scope === 'venue_scoped' ? (
             <div className="flex flex-col gap-2">
+              <Label id="access-venues-label" className="sr-only">
+                {t('detail.access.title')}
+              </Label>
               <p className="text-sm text-muted-foreground">{t('detail.access.replaceWarning')}</p>
               <VenueChecklist
                 value={venueIds}
@@ -121,6 +124,7 @@ export function EditAccessDialog({
                   setVenueIds(next);
                   if (next.length > 0) setVenuesError(false);
                 }}
+                aria-labelledby="access-venues-label"
               />
               {venuesError ? (
                 <p className="text-sm text-destructive-foreground">

@@ -45,6 +45,7 @@ import {
   FormMessage,
 } from '@iziwellpass/ui/components/form';
 import { Input } from '@iziwellpass/ui/components/input';
+import { Label } from '@iziwellpass/ui/components/label';
 import {
   Select,
   SelectContent,
@@ -263,8 +264,12 @@ export function InviteStaffDialog({ variant = 'default' }: { variant?: 'default'
                   name="venue_ids"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('inviteDialog.venues')}</FormLabel>
-                      <VenueChecklist value={field.value} onChange={field.onChange} />
+                      <Label id="invite-venues-label">{t('inviteDialog.venues')}</Label>
+                      <VenueChecklist
+                        value={field.value}
+                        onChange={field.onChange}
+                        aria-labelledby="invite-venues-label"
+                      />
                       <p className="text-sm text-muted-foreground">
                         {t('inviteDialog.venuesHint')}
                       </p>
@@ -472,6 +477,9 @@ function ManageVenuesDialog({
           <DialogTitle>{t('venuesDialog.title')}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-[18px]">
+          <Label id="manage-venues-label" className="sr-only">
+            {t('venuesDialog.title')}
+          </Label>
           <p className="text-sm text-muted-foreground">{t('venuesDialog.replaceWarning')}</p>
           <VenueChecklist
             value={venueIds}
@@ -479,6 +487,7 @@ function ManageVenuesDialog({
               setVenueIds(next);
               if (next.length > 0) setVenuesError(false);
             }}
+            aria-labelledby="manage-venues-label"
           />
           {venuesError ? (
             <p className="text-sm text-destructive-foreground">

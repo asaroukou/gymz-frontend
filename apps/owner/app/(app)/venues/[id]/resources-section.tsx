@@ -42,10 +42,52 @@ import {
   NewResourceTypeDialog,
 } from './resource-dialogs';
 
+/** Edit/delete menu on a « ··· » button, shared by the table row and the phone stack. */
+function ResourceMenu({
+  resource,
+  size = 'icon-sm',
+  menuRef,
+  onEdit,
+  onDelete,
+}: {
+  resource: Resource;
+  size?: 'icon' | 'icon-sm';
+  menuRef?: (el: HTMLButtonElement | null) => void;
+  onEdit: (resource: Resource) => void;
+  onDelete: (resource: Resource) => void;
+}) {
+  const t = useTranslations('venues');
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          ref={menuRef}
+          variant="ghost"
+          size={size}
+          aria-label={t('detail.resources.row.menu')}
+        >
+          <MoreHorizontalIcon />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => onEdit(resource)}>
+          <PencilIcon />
+          {t('detail.resources.row.edit')}
+        </DropdownMenuItem>
+        <DropdownMenuItem variant="destructive" onSelect={() => onDelete(resource)}>
+          <Trash2Icon />
+          {t('detail.resources.row.delete')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /**
  * « Ressources »: a 22px heading with the dark small « + Ajouter une ressource »
  * (spec D1), a hairline table Nom 168 · Type 180 · Capacité 90 · 64 at 46px
- * rows, and a ghost small « Nouveau type de ressource » beneath.
+ * rows on tablet/desktop, a phone stack below md, and a ghost small
+ * « Nouveau type de ressource » beneath.
  */
 export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdit: boolean }) {
   const t = useTranslations('venues');
@@ -71,7 +113,11 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
         title={t('detail.resources.title')}
         action={
           canEdit && resources.length > 0 ? (
-            <AddResourceDialog venueId={venueId} resourceTypes={resourceTypes} />
+            <AddResourceDialog
+              venueId={venueId}
+              resourceTypes={resourceTypes}
+              className="h-11 md:h-9"
+            />
           ) : undefined
         }
       />
@@ -99,73 +145,90 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
           ) : null}
         </Empty>
       ) : (
-        <Table className="table-fixed">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[168px]">{t('detail.resources.columns.name')}</TableHead>
-              <TableHead>{t('detail.resources.columns.type')}</TableHead>
-              <TableHead className="w-[90px]" numeric>
-                {t('detail.resources.columns.capacity')}
-              </TableHead>
-              {canEdit ? (
-                <TableHead className="w-16 text-right">
-                  <span className="sr-only">{t('detail.resources.columns.actions')}</span>
-                </TableHead>
-              ) : null}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          {/* Phone: stacked hairline rows. The 4-column table would force horizontal scroll at 375px. */}
+          <div className="md:hidden">
             {resources.map((resource) => (
-              <TableRow key={resource.id}>
-                <TableCell className="truncate font-medium">{resource.name}</TableCell>
-                <TableCell className="truncate">
-                  {resourceTypeById.get(resource.resource_type_id)?.name ??
-                    t('detail.resources.unknownType')}
-                </TableCell>
-                <TableCell numeric className="font-medium">
-                  {resource.capacity}
-                </TableCell>
+              <div
+                key={resource.id}
+                className="flex items-center gap-3 border-b border-border py-3 last:border-0"
+              >
+                <div className="min-w-0 flex-1 leading-tight">
+                  <p className="truncate font-medium">{resource.name}</p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {resourceTypeById.get(resource.resource_type_id)?.name ??
+                      t('detail.resources.unknownType')}{' '}
+                    · {resource.capacity}
+                  </p>
+                </div>
                 {canEdit ? (
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          ref={focus.register(resource.id)}
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t('detail.resources.row.menu')}
-                        >
-                          <MoreHorizontalIcon />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            setEditing(resource);
+                  <ResourceMenu
+                    resource={resource}
+                    size="icon"
+                    menuRef={focus.register(`${resource.id}:stack`)}
+                    onEdit={(r) => {
+                      setEditing(r);
+                      setEditOpen(true);
+                    }}
+                    onDelete={(r) => {
+                      setDeleting(r);
+                      setDeleteOpen(true);
+                    }}
+                  />
+                ) : null}
+              </div>
+            ))}
+          </div>
+          {/* Tablet/desktop: the hairline table at the canvas column widths. */}
+          <div className="hidden md:block">
+            <Table className="table-fixed">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[168px]">{t('detail.resources.columns.name')}</TableHead>
+                  <TableHead>{t('detail.resources.columns.type')}</TableHead>
+                  <TableHead className="w-[90px]" numeric>
+                    {t('detail.resources.columns.capacity')}
+                  </TableHead>
+                  {canEdit ? (
+                    <TableHead className="w-16 text-right">
+                      <span className="sr-only">{t('detail.resources.columns.actions')}</span>
+                    </TableHead>
+                  ) : null}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {resources.map((resource) => (
+                  <TableRow key={resource.id}>
+                    <TableCell className="truncate font-medium">{resource.name}</TableCell>
+                    <TableCell className="truncate">
+                      {resourceTypeById.get(resource.resource_type_id)?.name ??
+                        t('detail.resources.unknownType')}
+                    </TableCell>
+                    <TableCell numeric className="font-medium">
+                      {resource.capacity}
+                    </TableCell>
+                    {canEdit ? (
+                      <TableCell className="text-right">
+                        <ResourceMenu
+                          resource={resource}
+                          menuRef={focus.register(resource.id)}
+                          onEdit={(r) => {
+                            setEditing(r);
                             setEditOpen(true);
                           }}
-                        >
-                          <PencilIcon />
-                          {t('detail.resources.row.edit')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onSelect={() => {
-                            setDeleting(resource);
+                          onDelete={(r) => {
+                            setDeleting(r);
                             setDeleteOpen(true);
                           }}
-                        >
-                          <Trash2Icon />
-                          {t('detail.resources.row.delete')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                ) : null}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                        />
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
       {canEdit ? (
         <div>
@@ -179,7 +242,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
           resourceTypes={resourceTypes}
           open={editOpen}
           onOpenChange={setEditOpen}
-          restoreFocusTo={() => focus.get(editing?.id)}
+          restoreFocusTo={() => focus.get(editing?.id) ?? focus.get(`${editing?.id}:stack`)}
         />
       ) : null}
       {deleting ? (
@@ -188,7 +251,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
           resource={deleting}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
-          restoreFocusTo={() => focus.get(deleting?.id)}
+          restoreFocusTo={() => focus.get(deleting?.id) ?? focus.get(`${deleting?.id}:stack`)}
         />
       ) : null}
     </section>
