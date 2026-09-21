@@ -21,6 +21,7 @@ import { Role } from '@iziwellpass/api/schemas';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -95,6 +96,7 @@ function assignableRoleOrFallback(role: Staff['role']): (typeof ASSIGNABLE_ROLES
 
 export function InviteStaffDialog({ variant = 'default' }: { variant?: 'default' | 'secondary' }) {
   const t = useTranslations('staff');
+  const tCommon = useTranslations('common');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const inviteStaff = useInviteStaff();
@@ -179,22 +181,53 @@ export function InviteStaffDialog({ variant = 'default' }: { variant?: 'default'
           {t('invite')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>{t('inviteDialog.title')}</DialogTitle>
           <DialogDescription>{t('inviteDialog.description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <form
+            onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
+            className="flex flex-col gap-6"
+          >
+            <div className="flex flex-col gap-[18px]">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="first_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('inviteDialog.firstName')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('inviteDialog.lastName')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
-                name="first_name"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('inviteDialog.firstName')}</FormLabel>
+                    <FormLabel>{t('inviteDialog.email')}</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input type="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -202,71 +235,52 @@ export function InviteStaffDialog({ variant = 'default' }: { variant?: 'default'
               />
               <FormField
                 control={form.control}
-                name="last_name"
+                name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('inviteDialog.lastName')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
+                    <FormLabel>{t('inviteDialog.role')}</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ASSIGNABLE_ROLES.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {t(`role.${role}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              {isVenueScopedRole(form.watch('role')) ? (
+                <FormField
+                  control={form.control}
+                  name="venue_ids"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('inviteDialog.venues')}</FormLabel>
+                      <VenueChecklist value={field.value} onChange={field.onChange} />
+                      <p className="text-sm text-muted-foreground">
+                        {t('inviteDialog.venuesHint')}
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null}
+              <p className="text-md text-muted-foreground">{t('inviteDialog.expectation')}</p>
             </div>
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('inviteDialog.email')}</FormLabel>
-                  <FormControl>
-                    <Input type="email" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('inviteDialog.role')}</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ASSIGNABLE_ROLES.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {t(`role.${role}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {isVenueScopedRole(form.watch('role')) ? (
-              <FormField
-                control={form.control}
-                name="venue_ids"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('inviteDialog.venues')}</FormLabel>
-                    <VenueChecklist value={field.value} onChange={field.onChange} />
-                    <p className="text-sm text-muted-foreground">{t('inviteDialog.venuesHint')}</p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ) : null}
-            <p className="text-sm text-muted-foreground">{t('inviteDialog.expectation')}</p>
             <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="ghost">
+                  {tCommon('cancel')}
+                </Button>
+              </DialogClose>
               <Button type="submit" disabled={inviteStaff.isPending}>
                 {inviteStaff.isPending ? t('inviteDialog.submitting') : t('inviteDialog.submit')}
               </Button>
@@ -292,6 +306,7 @@ function ChangeRoleDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations('staff');
+  const tCommon = useTranslations('common');
   const queryClient = useQueryClient();
   const changeRole = useChangeRole();
 
@@ -337,7 +352,7 @@ function ChangeRoleDialog({
         }
       }}
     >
-      <DialogContent>
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>{t('roleDialog.title')}</DialogTitle>
           <DialogDescription>
@@ -345,33 +360,43 @@ function ChangeRoleDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-4">
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('roleDialog.role')}</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ASSIGNABLE_ROLES.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {t(`role.${role}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <p className="text-sm text-muted-foreground">{t('roleDialog.hint')}</p>
+          <form
+            onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
+            className="flex flex-col gap-6"
+          >
+            <div className="flex flex-col gap-[18px]">
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('roleDialog.role')}</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ASSIGNABLE_ROLES.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {t(`role.${role}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <p className="text-sm text-muted-foreground">{t('roleDialog.hint')}</p>
+            </div>
             <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="ghost">
+                  {tCommon('cancel')}
+                </Button>
+              </DialogClose>
               <Button type="submit" disabled={changeRole.isPending}>
                 {changeRole.isPending ? t('roleDialog.saving') : t('roleDialog.save')}
               </Button>
@@ -434,11 +459,11 @@ function ManageVenuesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined} className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>{t('venuesDialog.title')}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-2">
+        <div className="flex flex-col gap-[18px]">
           <p className="text-sm text-muted-foreground">{t('venuesDialog.replaceWarning')}</p>
           <VenueChecklist
             value={venueIds}
@@ -454,9 +479,11 @@ function ManageVenuesDialog({
           ) : null}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {tCommon('cancel')}
-          </Button>
+          <DialogClose asChild>
+            <Button type="button" variant="ghost">
+              {tCommon('cancel')}
+            </Button>
+          </DialogClose>
           <Button onClick={handleSave} disabled={setVenues.isPending}>
             {setVenues.isPending ? t('venuesDialog.submitting') : t('venuesDialog.submit')}
           </Button>
@@ -502,7 +529,7 @@ function RemoveStaffDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>{t('removeDialog.title')}</DialogTitle>
           <DialogDescription>
@@ -510,9 +537,9 @@ function RemoveStaffDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {tCommon('cancel')}
-          </Button>
+          <DialogClose asChild>
+            <Button variant="ghost">{tCommon('cancel')}</Button>
+          </DialogClose>
           <Button variant="destructive" onClick={handleRemove} disabled={removeStaff.isPending}>
             {removeStaff.isPending ? t('removeDialog.confirming') : t('removeDialog.confirm')}
           </Button>
