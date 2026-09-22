@@ -15,12 +15,6 @@ export function memberName(member: Member): string {
   return `${member.first_name} ${member.last_name}`.trim();
 }
 
-export function memberInitials(member: Member): string {
-  const first = member.first_name.charAt(0);
-  const last = member.last_name.charAt(0);
-  return `${first}${last}`.toUpperCase() || '?';
-}
-
 // Badge colours live in lib/slot-status.ts (slotBadgeVariant, bookingBadgeVariant).
 
 // ---------------------------------------------------------------------------

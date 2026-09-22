@@ -631,6 +631,7 @@
       "validateSuccess": "Checked in",
       "validateError": "Could not check in",
       "arrival": "Arrived {time} · {method}",
+      "arrivalNoMethod": "Arrived {time}",
       "method": {
         "qr": "QR",
         "manual": "manual"

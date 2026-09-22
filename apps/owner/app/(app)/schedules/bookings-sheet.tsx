@@ -164,9 +164,12 @@ function AddParticipant({
   // A member can only be booked while active with a live membership. Ineligible
   // members stay in the list but are disabled with the reason, so front-desk
   // staff can find the name and understand why they can't add it (rather than
-  // seeing an empty result), then go fix the membership.
+  // seeing an empty result), then go fix the membership. Members already booked
+  // are kept for the same reason — and so the trigger still shows the name the
+  // operator picked when the add comes back 409.
   const options = useMemo(() => {
     const ineligibleReason = (member: Member): string | null => {
+      if (bookedMemberIds.has(member.id)) return t('addBooking.errors.duplicate');
       if (!member.is_active) return t('addBooking.ineligible.inactive');
       switch (member.membership_status) {
         case 'active':
@@ -183,7 +186,6 @@ function AddParticipant({
     };
 
     return members
-      .filter((member) => !bookedMemberIds.has(member.id))
       .map((member) => {
         const reason = ineligibleReason(member);
         return {
@@ -250,7 +252,7 @@ function AddParticipant({
           className="size-12 shrink-0"
           aria-label={createBooking.isPending ? t('addBooking.adding') : t('addBooking.add')}
           onClick={handleAdd}
-          disabled={full || !memberId || createBooking.isPending}
+          disabled={full || !memberId || inlineError !== null || createBooking.isPending}
         >
           <PlusIcon />
         </Button>
@@ -404,12 +406,18 @@ export function BookingsSheet({
                   passLabel: t('bookings.passVisitor'),
                   memberNumber: (id) => t('bookings.memberNumber', { id }),
                 });
-                const arrival = entry.checked_in_at
-                  ? t('bookings.arrival', {
-                      time: formatTime(entry.checked_in_at, timeZone),
-                      method: t(`bookings.method.${entry.check_in_method ?? 'manual'}`),
-                    })
-                  : null;
+                // A check-in can arrive without a method (older rows, imports):
+                // show the time alone rather than inventing « manuel ».
+                const arrival = !entry.checked_in_at
+                  ? null
+                  : entry.check_in_method
+                    ? t('bookings.arrival', {
+                        time: formatTime(entry.checked_in_at, timeZone),
+                        method: t(`bookings.method.${entry.check_in_method}`),
+                      })
+                    : t('bookings.arrivalNoMethod', {
+                        time: formatTime(entry.checked_in_at, timeZone),
+                      });
                 return (
                   <li
                     key={entry.id}
@@ -427,10 +435,10 @@ export function BookingsSheet({
                       )}
                     </Avatar>
                     <div className="min-w-0 flex-1 leading-tight">
-                      <p className="flex items-center gap-2 truncate text-base font-medium">
-                        <span className="truncate">{label.name}</span>
+                      <p className="flex flex-wrap items-center gap-2 text-base font-medium">
+                        <span className="min-w-0 truncate">{label.name}</span>
                         {label.kind === 'pass' ? (
-                          <Chip className="bg-info py-0.5 pl-2.5 pr-2.5 text-sm text-info-foreground">
+                          <Chip className="shrink-0 bg-info py-0.5 pl-2.5 pr-2.5 text-sm text-info-foreground">
                             {t('bookings.passChip')}
                           </Chip>
                         ) : null}

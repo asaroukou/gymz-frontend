@@ -631,6 +631,7 @@
       "validateSuccess": "Entrée validée",
       "validateError": "Impossible de valider l'entrée",
       "arrival": "Arrivée {time} · {method}",
+      "arrivalNoMethod": "Arrivée {time}",
       "method": {
         "qr": "QR",
         "manual": "manuel"
