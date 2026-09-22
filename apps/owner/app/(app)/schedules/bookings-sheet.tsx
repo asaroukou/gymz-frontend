@@ -219,6 +219,15 @@ function AddParticipant({
           const kind = addParticipantError(err);
           if (kind) {
             setInlineError(kind);
+            // A 409/403 means the server knows something this sheet doesn't
+            // (someone else booked the seat, the membership lapsed). Refetch
+            // the roster and the slot so the list, the « x/y inscrits »
+            // subtitle and the pre-flight « complet » helper stop contradicting
+            // the error we just put under the picker.
+            void queryClient.invalidateQueries({
+              queryKey: getListBookingsForSlotQueryKey(slotId),
+            });
+            void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
             return;
           }
           toast.error(apiErrorMessage(err, t('addBooking.error')));

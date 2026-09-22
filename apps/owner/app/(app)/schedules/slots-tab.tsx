@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CalendarClockIcon, MoreHorizontalIcon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 
@@ -83,27 +83,27 @@ function SlotRow({
   slot,
   title,
   resourceName,
-  dayLabel,
   timeZone,
   canManageSlots,
   selected,
   onOpenParticipants,
+  onCancel,
   participantsRef,
+  menuRef,
 }: {
   slot: ScheduleSlot;
   title: string;
   resourceName: string;
-  dayLabel: string;
   timeZone: string | undefined;
   canManageSlots: boolean;
   selected: boolean;
   onOpenParticipants: (slot: ScheduleSlot) => void;
+  onCancel: (slot: ScheduleSlot) => void;
   participantsRef?: (el: HTMLButtonElement | null) => void;
+  menuRef?: (el: HTMLButtonElement | null) => void;
 }) {
   const t = useTranslations('planning');
   const { slotStatusLabel } = usePlanningLabels();
-  const [cancelling, setCancelling] = useState(false);
-  const menuRef = useRef<HTMLButtonElement>(null);
 
   const isCancelled = slot.status === 'cancelled';
 
@@ -167,30 +167,13 @@ function SlotRow({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem variant="destructive" onSelect={() => setCancelling(true)}>
+              <DropdownMenuItem variant="destructive" onSelect={() => onCancel(slot)}>
                 {t('slots.cancel')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
       </div>
-      <CancellationPreviewDialog
-        target={{
-          kind: 'slot',
-          slot,
-          description: t('cancelSlot.description', {
-            title,
-            day: dayLabel,
-            start: formatTime(slot.start_time, timeZone),
-            end: formatTime(slot.end_time, timeZone),
-            room: resourceName,
-          }),
-        }}
-        venueId={slot.venue_id}
-        open={cancelling}
-        onOpenChange={setCancelling}
-        restoreFocusTo={() => menuRef.current}
-      />
     </div>
   );
 }
@@ -232,6 +215,11 @@ export function SlotsTab({
 
   const [sheetSlot, setSheetSlot] = useState<ScheduleSlot | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // The cancel dialog lives here, not in the row: it must stay mounted while
+  // its confirm is in flight and while focus returns to the row's « ··· »
+  // (spec D12), which a row that re-renders under a refetch can't guarantee.
+  const [cancelling, setCancelling] = useState<ScheduleSlot | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const focus = useFocusRegistry();
 
   const slotsByDate = useMemo(() => {
@@ -310,7 +298,6 @@ export function SlotsTab({
                     slot={slot}
                     title={titleOf(slot)}
                     resourceName={roomOf(slot)}
-                    dayLabel={heading}
                     timeZone={timeZone}
                     canManageSlots={canManageSlots}
                     selected={sheetOpen && sheetSlot?.id === slot.id}
@@ -318,7 +305,12 @@ export function SlotsTab({
                       setSheetSlot(opened);
                       setSheetOpen(true);
                     }}
+                    onCancel={(target) => {
+                      setCancelling(target);
+                      setCancelOpen(true);
+                    }}
                     participantsRef={focus.register(slot.id)}
+                    menuRef={focus.register(`menu-${slot.id}`)}
                   />
                 ))}
               </div>
@@ -340,6 +332,26 @@ export function SlotsTab({
           open={sheetOpen}
           onOpenChange={setSheetOpen}
           restoreFocusTo={() => focus.get(sheetSlot?.id)}
+        />
+      ) : null}
+
+      {cancelling ? (
+        <CancellationPreviewDialog
+          target={{
+            kind: 'slot',
+            slot: cancelling,
+            description: t('cancelSlot.description', {
+              title: titleOf(cancelling),
+              day: dayHeading(venueDateKey(cancelling.start_time, timeZone), cancelling.start_time),
+              start: formatTime(cancelling.start_time, timeZone),
+              end: formatTime(cancelling.end_time, timeZone),
+              room: roomOf(cancelling),
+            }),
+          }}
+          venueId={venueId}
+          open={cancelOpen}
+          onOpenChange={setCancelOpen}
+          restoreFocusTo={() => focus.get(`menu-${cancelling.id}`)}
         />
       ) : null}
     </>

@@ -1327,12 +1327,16 @@ function listSlotsHandler(venueId, query) {
   return [200, envelope(list)];
 }
 
+// Demo bookkeeping only — kept beside the slot rows rather than on them, so
+// the flag never serializes into a slot payload the client would see.
+const conflictedOnce = new Set();
+
 function cancelSlotHandler(slotId, query) {
   const slot = slots.find((s) => s.id === slotId);
   if (!slot) return notFound(`Slot ${slotId} not found`);
   // Demo hook: slot-03 409s the first confirm after a preview, then succeeds.
-  if (slotId === 'slot-03' && !slot.conflictedOnce) {
-    slot.conflictedOnce = true;
+  if (slotId === 'slot-03' && !conflictedOnce.has(slotId)) {
+    conflictedOnce.add(slotId);
     bump(slot);
     return conflict('slot changed since preview; re-fetch and retry');
   }

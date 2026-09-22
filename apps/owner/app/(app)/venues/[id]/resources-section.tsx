@@ -97,7 +97,11 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
   const t = useTranslations('venues');
   const resourcesQuery = useListResources(venueId, { query: { select: unwrap } });
   const resourceTypesQuery = useListResourceTypes({ query: { select: unwrap } });
-  const schedulesQuery = useListSchedules(venueId, { query: { select: unwrap } });
+  // Schedules only feed the delete dialog's « ressource utilisée » check, so
+  // a role that can't delete never needs them.
+  const schedulesQuery = useListSchedules(venueId, {
+    query: { select: unwrap, enabled: canEdit },
+  });
   const resourceTypes = useMemo(() => resourceTypesQuery.data ?? [], [resourceTypesQuery.data]);
   const resourceTypeById = useMemo(
     () => new Map(resourceTypes.map((type) => [type.id, type])),

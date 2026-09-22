@@ -77,8 +77,14 @@ function CourseActions({
 /** `Schedule.start_time`/`end_time` are `NaiveTime` clock strings ("09:00:00"),
  * the recurring template's venue-local daily window. Trim to "HH:MM"; never run
  * through the venue-timezone formatters. */
+function scheduleClockParts(schedule: Schedule): { start: string; end: string } {
+  return { start: schedule.start_time.slice(0, 5), end: schedule.end_time.slice(0, 5) };
+}
+
+/** The same window as one string, for the row's second line. */
 function scheduleClock(schedule: Schedule): string {
-  return `${schedule.start_time.slice(0, 5)}–${schedule.end_time.slice(0, 5)}`;
+  const { start, end } = scheduleClockParts(schedule);
+  return `${start}–${end}`;
 }
 
 function usePeriodLabel() {
@@ -327,8 +333,7 @@ export function SchedulesTab({ venueId, canManage }: { venueId: string; canManag
             description: t('deleteCourse.description', {
               title: deleting.title,
               recurrence: formatRecurrence(deleting.recurrence_rule),
-              start: deleting.start_time.slice(0, 5),
-              end: deleting.end_time.slice(0, 5),
+              ...scheduleClockParts(deleting),
             }),
           }}
           venueId={venueId}

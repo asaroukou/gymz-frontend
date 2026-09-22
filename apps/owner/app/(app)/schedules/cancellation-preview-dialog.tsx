@@ -159,7 +159,10 @@ export function CancellationPreviewDialog({
           </Alert>
         ) : (
           <div className="flex flex-col gap-[18px]">
-            {conflict ? (
+            {/* One alert at a time: when the refetch that follows a 409 itself
+                fails, the load error is the actionable one, so the conflict
+                warning steps aside instead of stacking above it. */}
+            {conflict && !preview.isError ? (
               <Alert variant="warning">
                 <TriangleAlertIcon />
                 <AlertDescription>{t('cancelPreview.conflict')}</AlertDescription>
@@ -183,7 +186,16 @@ export function CancellationPreviewDialog({
             ) : (
               <>
                 <p className="text-sm text-muted-foreground">{t('cancelPreview.caption')}</p>
-                {preview.isSuccess ? <PreviewList rows={rows} /> : <PreviewSkeleton />}
+                {/* A reopened dialog still holds the previous render's rows
+                    while the (staleTime 0) refetch is in flight — skeleton
+                    them out rather than flash last time's counts. The conflict
+                    refetch is the exception: its rows stay on screen under the
+                    warning so the operator can watch them change. */}
+                {preview.isSuccess && (conflict || !preview.isFetching) ? (
+                  <PreviewList rows={rows} />
+                ) : (
+                  <PreviewSkeleton />
+                )}
               </>
             )}
           </div>
