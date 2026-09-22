@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, TriangleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -18,7 +19,8 @@ import {
   useDeleteResource,
   useUpdateResource,
 } from '@iziwellpass/api/generated';
-import type { BookingMode, Resource, ResourceType } from '@iziwellpass/api/schemas';
+import type { BookingMode, Resource, ResourceType, Schedule } from '@iziwellpass/api/schemas';
+import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
@@ -48,7 +50,9 @@ import {
 } from '@iziwellpass/ui/components/select';
 import { Textarea } from '@iziwellpass/ui/components/textarea';
 
+import { usePlanningLabels } from '@/app/(app)/schedules/planning-utils';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import { activeSchedulesUsing, isResourceInUse } from '@/lib/resource-in-use';
 
 export const BOOKING_MODE_VALUES = [
   'class',
@@ -571,12 +575,14 @@ export function EditResourceDialog({
 export function DeleteResourceDialog({
   venueId,
   resource,
+  schedules,
   open,
   onOpenChange,
   restoreFocusTo,
 }: {
   venueId: string;
   resource: Resource;
+  schedules: Schedule[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   restoreFocusTo?: () => HTMLElement | null | undefined;
@@ -585,6 +591,17 @@ export function DeleteResourceDialog({
   const tCommon = useTranslations('common');
   const queryClient = useQueryClient();
   const deleteResource = useDeleteResource();
+  const [blocked, setBlocked] = useState(false);
+  const { formatRecurrence } = usePlanningLabels();
+  const inUse = useMemo(
+    () => activeSchedulesUsing(schedules, resource.id),
+    [schedules, resource.id],
+  );
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next) setBlocked(false);
+    onOpenChange(next);
+  };
 
   const handleDelete = () => {
     deleteResource.mutate(
@@ -596,6 +613,10 @@ export function DeleteResourceDialog({
           onOpenChange(false);
         },
         onError: (err) => {
+          if (isResourceInUse(err)) {
+            setBlocked(true);
+            return;
+          }
           toast.error(apiErrorMessage(err, t('detail.resources.deleteDialog.error')));
         },
       },
@@ -603,7 +624,7 @@ export function DeleteResourceDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
         <DialogHeader>
           <DialogTitle>{t('detail.resources.deleteDialog.title')}</DialogTitle>
@@ -611,15 +632,51 @@ export function DeleteResourceDialog({
             {t('detail.resources.deleteDialog.description', { name: resource.name })}
           </DialogDescription>
         </DialogHeader>
+        {blocked ? (
+          <Alert variant="warning">
+            <TriangleAlertIcon />
+            <AlertDescription>
+              <p>{t('detail.resources.deleteDialog.inUse.message')}</p>
+              {inUse.length > 0 ? (
+                <ul className="flex flex-col gap-1">
+                  {inUse.map((s) => (
+                    <li key={s.id}>
+                      · {s.title} · {formatRecurrence(s.recurrence_rule)}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </AlertDescription>
+          </Alert>
+        ) : null}
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">{tCommon('cancel')}</Button>
-          </DialogClose>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleteResource.isPending}>
-            {deleteResource.isPending
-              ? t('detail.resources.deleteDialog.confirming')
-              : t('detail.resources.deleteDialog.confirm')}
-          </Button>
+          {blocked ? (
+            <>
+              <DialogClose asChild>
+                <Button variant="ghost">{t('detail.resources.deleteDialog.inUse.close')}</Button>
+              </DialogClose>
+              <Button asChild variant="outline">
+                <Link href="/schedules">
+                  {t('detail.resources.deleteDialog.inUse.viewCourses')}
+                </Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <DialogClose asChild>
+                <Button variant="ghost">{tCommon('cancel')}</Button>
+              </DialogClose>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleteResource.isPending}
+              >
+                {deleteResource.isPending
+                  ? t('detail.resources.deleteDialog.confirming')
+                  : t('detail.resources.deleteDialog.confirm')}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

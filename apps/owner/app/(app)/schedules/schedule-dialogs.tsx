@@ -45,7 +45,7 @@ import {
 } from '@iziwellpass/ui/components/select';
 import { Textarea } from '@iziwellpass/ui/components/textarea';
 
-import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import { apiErrorMessage, applyFieldErrors, overrideFieldMessages } from '@/lib/api-error';
 import {
   parseRecurrenceRule,
   serializeRecurrenceRule,
@@ -337,7 +337,10 @@ export function AddScheduleDialog({
           setOpen(false);
         },
         onError: (err) => {
-          if (!applyFieldErrors(form, err)) {
+          const mapped = overrideFieldMessages(err, {
+            instructor_staff_id: t('form.instructorIneligible'),
+          });
+          if (!applyFieldErrors(form, mapped)) {
             toast.error(apiErrorMessage(err, t('scheduleDialog.createError')));
           }
         },
@@ -465,7 +468,10 @@ export function EditScheduleDialog({
           onOpenChange(false);
         },
         onError: (err) => {
-          if (!applyFieldErrors(form, err)) {
+          const mapped = overrideFieldMessages(err, {
+            instructor_staff_id: t('form.instructorIneligible'),
+          });
+          if (!applyFieldErrors(form, mapped)) {
             toast.error(apiErrorMessage(err, t('scheduleDialog.updateError')));
           }
         },

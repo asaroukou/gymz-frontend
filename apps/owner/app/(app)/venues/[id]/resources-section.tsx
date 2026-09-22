@@ -5,7 +5,11 @@ import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
-import { useListResources, useListResourceTypes } from '@iziwellpass/api/generated';
+import {
+  useListResources,
+  useListResourceTypes,
+  useListSchedules,
+} from '@iziwellpass/api/generated';
 import type { Resource } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Button } from '@iziwellpass/ui/components/button';
@@ -93,6 +97,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
   const t = useTranslations('venues');
   const resourcesQuery = useListResources(venueId, { query: { select: unwrap } });
   const resourceTypesQuery = useListResourceTypes({ query: { select: unwrap } });
+  const schedulesQuery = useListSchedules(venueId, { query: { select: unwrap } });
   const resourceTypes = useMemo(() => resourceTypesQuery.data ?? [], [resourceTypesQuery.data]);
   const resourceTypeById = useMemo(
     () => new Map(resourceTypes.map((type) => [type.id, type])),
@@ -249,6 +254,7 @@ export function ResourcesSection({ venueId, canEdit }: { venueId: string; canEdi
         <DeleteResourceDialog
           venueId={venueId}
           resource={deleting}
+          schedules={schedulesQuery.data ?? []}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           restoreFocusTo={() => focus.get(deleting?.id)}
