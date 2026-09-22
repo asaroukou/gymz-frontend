@@ -37,6 +37,13 @@
 //     day 409s as a duplicate walk-in).
 //   - `POST /gms/v1/members` with `access_scope` defaulting to
 //     `venue_scoped` and no `venue_ids` demoes the VALIDATION_ERROR shape.
+//   - slot `slot-03` 409s once on `PUT /gms/v1/slots/{id}/cancel` — the
+//     first confirm after a preview always reports a stale-version conflict
+//     (and bumps its version), the next confirm succeeds — demoes the
+//     preview-then-conflict-then-retry flow.
+//   - staff `staff-trainer-02` (Cheikh Fall, trainer) only has access to
+//     venue 2 — picking them as `instructor_staff_id` on a venue-1 course
+//     always fails with a VALIDATION_ERROR on that field.
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 
@@ -188,6 +195,18 @@ const staff = [
     updated_at: iso(daysFromNow(-300)),
   },
   {
+    id: 'staff-trainer-02',
+    user_id: 'user-trainer-02',
+    tenant_id: TENANT_ID,
+    first_name: 'Cheikh',
+    last_name: 'Fall',
+    email: 'cheikh.fall@studio-teranga.sn',
+    role: 'trainer',
+    is_active: true,
+    created_at: iso(daysFromNow(-100)),
+    updated_at: iso(daysFromNow(-100)),
+  },
+  {
     id: 'staff-reception-01',
     user_id: 'user-reception-01',
     tenant_id: TENANT_ID,
@@ -203,6 +222,7 @@ const staff = [
 // Non-owner/admin staff's venue assignments (owner/admin implicitly see all venues).
 const staffVenues = new Map([
   ['staff-trainer-01', [VENUE_1]],
+  ['staff-trainer-02', [VENUE_2]],
   ['staff-reception-01', [VENUE_1]],
 ]);
 
@@ -526,6 +546,7 @@ const schedules = [
     is_active: true,
     created_at: iso(daysFromNow(-300)),
     updated_at: iso(daysFromNow(-300)),
+    version: iso(daysFromNow(-1)),
   },
   {
     id: 'sch-crossfit-01',
@@ -543,6 +564,7 @@ const schedules = [
     is_active: true,
     created_at: iso(daysFromNow(-300)),
     updated_at: iso(daysFromNow(-300)),
+    version: iso(daysFromNow(-1)),
   },
   {
     id: 'sch-danse-01',
@@ -560,6 +582,7 @@ const schedules = [
     is_active: true,
     created_at: iso(daysFromNow(-150)),
     updated_at: iso(daysFromNow(-150)),
+    version: iso(daysFromNow(-1)),
   },
 ];
 
@@ -582,6 +605,7 @@ function mkSlot(id, scheduleId, resourceId, venueId, startOffsetH, durationH, ca
     booked_count: 0, // recomputed below from seeded bookings
     status: 'available',
     created_at: iso(daysFromNow(-1)),
+    version: iso(daysFromNow(-1)),
   };
 }
 
@@ -595,16 +619,21 @@ const slots = [
 
 // --- seed: bookings ------------------------------------------------------------
 function mkBooking(id, slotId, memberId, status, opts = {}) {
+  const member = memberId ? members.find((m) => m.id === memberId) : undefined;
   return {
     id,
     tenant_id: TENANT_ID,
     slot_id: slotId,
     member_id: memberId,
-    pass_holder_id: undefined,
+    pass_holder_id: opts.passHolderId,
+    kind: opts.passHolderId ? 'pass_holder' : 'member',
+    first_name: member?.first_name,
+    last_name: member?.last_name,
     source: opts.source ?? 'direct',
     status,
     booked_at: opts.bookedAt ?? iso(daysFromNow(-1)),
     checked_in_at: opts.checkedInAt,
+    check_in_method: opts.checkInMethod,
     cancelled_at: opts.cancelledAt,
     cancellation_reason: opts.cancellationReason,
     created_at: opts.bookedAt ?? iso(daysFromNow(-1)),
@@ -621,6 +650,17 @@ const bookings = [
   mkBooking('bkg-03', 'slot-01', 'mbr-11', 'cancelled', {
     cancelledAt: iso(daysFromNow(-1)),
     cancellationReason: 'Empêchement de dernière minute',
+  }),
+  // Pass-holder bookings — fixed demo hooks for the roster's pass rows.
+  mkBooking('bkg-pass-01', 'slot-01', undefined, 'checked_in', {
+    passHolderId: 'ph-01',
+    source: 'iziwellpass',
+    checkedInAt: iso(hoursFromNow(-2.8)),
+    checkInMethod: 'qr',
+  }),
+  mkBooking('bkg-pass-02', 'slot-01', undefined, 'confirmed', {
+    passHolderId: 'ph-02',
+    source: 'iziwellpass',
   }),
   mkBooking('bkg-04', 'slot-02', 'mbr-02', 'checked_in', {
     checkedInAt: iso(hoursFromNow(-0.95)),
@@ -641,13 +681,21 @@ const bookings = [
   mkBooking('bkg-10', 'slot-05', 'mbr-02', 'confirmed'),
 ];
 
+// Bumps a slot/schedule's optimistic-concurrency token after a mutation.
+const bump = (row) => {
+  row.version = iso(now());
+  row.updated_at = row.version;
+};
+
 function recomputeSlotCounts() {
   for (const slot of slots) {
     const count = bookings.filter((b) => b.slot_id === slot.id && b.status !== 'cancelled').length;
+    const touched = count !== slot.booked_count;
     slot.booked_count = count;
     if (slot.status !== 'cancelled') {
       slot.status = count >= slot.capacity ? 'full' : 'available';
     }
+    if (touched) bump(slot);
   }
 }
 recomputeSlotCounts();
@@ -1090,6 +1138,9 @@ function updateResourceHandler(venueId, resourceId, body) {
 function deleteResourceHandler(venueId, resourceId) {
   const resource = resources.find((r) => r.id === resourceId && r.venue_id === venueId);
   if (!resource) return notFound(`Resource ${resourceId} not found on venue ${venueId}`);
+  if (schedules.some((s) => s.is_active && s.resource_id === resourceId)) {
+    return conflict(`Resource ${resourceId} has active schedules and cannot be deleted`);
+  }
   resource.is_active = false;
   resource.updated_at = iso(now());
   return [204, ''];
@@ -1140,6 +1191,15 @@ function createScheduleHandler(venueId, body) {
     'title',
   ]);
   if (details.length) return validationError(details);
+  // Demo hook: staff-trainer-02 has no access to venue 1 — reject as an instructor.
+  if (body.instructor_staff_id === 'staff-trainer-02') {
+    return validationError([
+      {
+        field: 'instructor_staff_id',
+        message: 'not an active staff member with access to this venue',
+      },
+    ]);
+  }
   const schedule = {
     id: newId('sch'),
     tenant_id: TENANT_ID,
@@ -1156,6 +1216,7 @@ function createScheduleHandler(venueId, body) {
     is_active: true,
     created_at: iso(now()),
     updated_at: iso(now()),
+    version: iso(now()),
   };
   schedules.push(schedule);
   return [201, envelope(schedule)];
@@ -1164,6 +1225,14 @@ function createScheduleHandler(venueId, body) {
 function updateScheduleHandler(scheduleId, body) {
   const schedule = schedules.find((s) => s.id === scheduleId);
   if (!schedule) return notFound(`Schedule ${scheduleId} not found`);
+  if (body?.instructor_staff_id === 'staff-trainer-02') {
+    return validationError([
+      {
+        field: 'instructor_staff_id',
+        message: 'not an active staff member with access to this venue',
+      },
+    ]);
+  }
   for (const key of [
     'description',
     'effective_until',
@@ -1176,16 +1245,72 @@ function updateScheduleHandler(scheduleId, body) {
   ]) {
     if (body?.[key] !== undefined) schedule[key] = body[key];
   }
-  schedule.updated_at = iso(now());
+  bump(schedule);
   return [200, envelope(schedule)];
 }
 
-function cancelScheduleHandler(scheduleId) {
+function cancelScheduleHandler(scheduleId, query) {
   const schedule = schedules.find((s) => s.id === scheduleId);
   if (!schedule) return notFound(`Schedule ${scheduleId} not found`);
+  const expectedVersion = query?.get('expected_version');
+  if (expectedVersion && expectedVersion !== schedule.version) {
+    return conflict('schedule changed since preview; re-fetch and retry');
+  }
   schedule.is_active = false;
-  schedule.updated_at = iso(now());
+  bump(schedule);
   return [204, ''];
+}
+
+// ---- cancellation preview (slots and schedules) --------------------------------
+function previewFor(kind, target) {
+  const slotIds =
+    kind === 'slot'
+      ? [target.id]
+      : slots
+          .filter(
+            (s) =>
+              s.schedule_id === target.id && s.status !== 'cancelled' && s.start_time > iso(now()),
+          )
+          .map((s) => s.id);
+  const live = bookings.filter((b) => slotIds.includes(b.slot_id) && b.status === 'confirmed');
+  const memberRows = live.filter((b) => b.member_id);
+  const passRows = live.filter((b) => b.pass_holder_id);
+  const emails = memberRows.filter((b) => members.find((m) => m.id === b.member_id)?.email).length;
+  const untouched = bookings.filter(
+    (b) => slotIds.includes(b.slot_id) && b.status === 'checked_in',
+  ).length;
+  const alreadyCancelled = kind === 'slot' ? target.status === 'cancelled' : !target.is_active;
+  return {
+    target_kind: kind,
+    target_id: target.id,
+    future_slots_affected: kind === 'slot' ? 0 : slotIds.length,
+    active_bookings_affected: live.length,
+    member_booking_count: memberRows.length,
+    pass_booking_count: passRows.length,
+    notification_consequences: { member_emails_to_send: emails },
+    refund_consequences: { pass_credits_refunded: passRows.length, member_credits_refunded: 0 },
+    unchanged: {
+      bookings_unchanged: untouched,
+      past_slots_preserved:
+        kind === 'slot'
+          ? 0
+          : slots.filter((s) => s.schedule_id === target.id && s.start_time <= iso(now())).length,
+    },
+    blocking_condition: alreadyCancelled ? `${kind} is already cancelled` : null,
+    version: target.version,
+  };
+}
+
+function slotCancellationPreviewHandler(slotId) {
+  const slot = slots.find((s) => s.id === slotId);
+  if (!slot) return notFound(`Slot ${slotId} not found`);
+  return [200, envelope(previewFor('slot', slot))];
+}
+
+function scheduleCancellationPreviewHandler(scheduleId) {
+  const schedule = schedules.find((s) => s.id === scheduleId);
+  if (!schedule) return notFound(`Schedule ${scheduleId} not found`);
+  return [200, envelope(previewFor('schedule', schedule))];
 }
 
 // ---- slots --------------------------------------------------------------------
@@ -1202,16 +1327,47 @@ function listSlotsHandler(venueId, query) {
   return [200, envelope(list)];
 }
 
-function cancelSlotHandler(slotId) {
+// Demo bookkeeping only — kept beside the slot rows rather than on them, so
+// the flag never serializes into a slot payload the client would see.
+const conflictedOnce = new Set();
+
+function cancelSlotHandler(slotId, query) {
   const slot = slots.find((s) => s.id === slotId);
   if (!slot) return notFound(`Slot ${slotId} not found`);
+  // Demo hook: slot-03 409s the first confirm after a preview, then succeeds.
+  if (slotId === 'slot-03' && !conflictedOnce.has(slotId)) {
+    conflictedOnce.add(slotId);
+    bump(slot);
+    return conflict('slot changed since preview; re-fetch and retry');
+  }
+  const expectedVersion = query?.get('expected_version');
+  if (expectedVersion && expectedVersion !== slot.version) {
+    return conflict('slot changed since preview; re-fetch and retry');
+  }
   slot.status = 'cancelled';
-  return [200, envelope(slot)];
+  bump(slot);
+  return [204, ''];
 }
 
 // ---- bookings -------------------------------------------------------------------
+function toRosterEntry(b) {
+  const member = b.member_id ? members.find((m) => m.id === b.member_id) : undefined;
+  const checkIn = checkIns.find((c) => c.booking_id === b.id);
+  return {
+    ...b,
+    first_name: member?.first_name ?? b.first_name,
+    last_name: member?.last_name ?? b.last_name,
+    check_in_method:
+      b.status === 'checked_in'
+        ? (checkIn?.method ?? b.check_in_method ?? 'manual')
+        : b.check_in_method,
+    checked_in_at:
+      b.status === 'checked_in' ? (checkIn?.checked_in_at ?? b.checked_in_at) : b.checked_in_at,
+  };
+}
+
 function listBookingsForSlotHandler(slotId) {
-  return [200, envelope(bookings.filter((b) => b.slot_id === slotId))];
+  return [200, envelope(bookings.filter((b) => b.slot_id === slotId).map(toRosterEntry))];
 }
 
 function createBookingHandler(slotId, body) {
@@ -1222,15 +1378,30 @@ function createBookingHandler(slotId, body) {
   if (details.length) return validationError(details);
   const slot = slots.find((s) => s.id === slotId);
   if (!slot) return notFound(`Slot ${slotId} not found`);
+  if (
+    body.member_id &&
+    bookings.some(
+      (b) => b.slot_id === slotId && b.status !== 'cancelled' && b.member_id === body.member_id,
+    )
+  ) {
+    return conflict('A booking already exists for this actor on this slot');
+  }
+  if (body.member_id) {
+    const member = members.find((m) => m.id === body.member_id);
+    if (member && !member.is_active) {
+      return [403, errorBody('FORBIDDEN', 'Member is not entitled to this venue')];
+    }
+  }
   const liveCount = bookings.filter((b) => b.slot_id === slotId && b.status !== 'cancelled').length;
-  if (liveCount >= slot.capacity) return conflict('Ce créneau est complet.');
+  if (liveCount >= slot.capacity) return conflict('Slot is full — no available capacity');
   const booking = mkBooking(newId('bkg'), slotId, body.member_id ?? undefined, 'confirmed', {
     source: body.source ?? 'direct',
     bookedAt: iso(now()),
+    passHolderId: body.pass_holder_id ?? undefined,
   });
-  booking.pass_holder_id = body.pass_holder_id ?? undefined;
   bookings.push(booking);
   recomputeSlotCounts();
+  bump(slot);
   return [201, envelope(booking)];
 }
 
@@ -1244,6 +1415,8 @@ function cancelBookingHandler(bookingId, body) {
   booking.cancellation_reason = body?.reason ?? undefined;
   booking.updated_at = iso(now());
   recomputeSlotCounts();
+  const slot = slots.find((s) => s.id === booking.slot_id);
+  if (slot) bump(slot);
   return [200, envelope(booking)];
 }
 
@@ -1726,7 +1899,12 @@ const routes = [
   {
     method: 'DELETE',
     pattern: /^\/gms\/v1\/schedules\/([^/]+)$/,
-    handler: (m) => cancelScheduleHandler(m[1]),
+    handler: (m, _b, q) => cancelScheduleHandler(m[1], q),
+  },
+  {
+    method: 'GET',
+    pattern: /^\/gms\/v1\/schedules\/([^/]+)\/cancellation-preview$/,
+    handler: (m) => scheduleCancellationPreviewHandler(m[1]),
   },
 
   {
@@ -1737,7 +1915,12 @@ const routes = [
   {
     method: 'PUT',
     pattern: /^\/gms\/v1\/slots\/([^/]+)\/cancel$/,
-    handler: (m) => cancelSlotHandler(m[1]),
+    handler: (m, _b, q) => cancelSlotHandler(m[1], q),
+  },
+  {
+    method: 'GET',
+    pattern: /^\/gms\/v1\/slots\/([^/]+)\/cancellation-preview$/,
+    handler: (m) => slotCancellationPreviewHandler(m[1]),
   },
 
   {

@@ -47,9 +47,15 @@ export async function fetchAllMembers(): Promise<Member[]> {
   return all;
 }
 
-export function useAllMembers() {
+/**
+ * `enabled` lets a caller skip the walk entirely — the roster only needs the
+ * member list to populate the "add participant" picker, so a role that cannot
+ * manage bookings should not pay for the pagination.
+ */
+export function useAllMembers(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: [...getListMembersQueryKey(), { scope: 'all' }],
     queryFn: fetchAllMembers,
+    enabled: options?.enabled ?? true,
   });
 }

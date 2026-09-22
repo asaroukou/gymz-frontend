@@ -1,32 +1,16 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import { CalendarClockIcon, MoreHorizontalIcon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 
 import { unwrap } from '@iziwellpass/api/client';
-import {
-  getListSlotsQueryKey,
-  useCancelSlot,
-  useListResources,
-  useListSchedules,
-} from '@iziwellpass/api/generated';
+import { useListResources, useListSchedules } from '@iziwellpass/api/generated';
 import type { Resource, Schedule, ScheduleSlot } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
 import { Capacity } from '@iziwellpass/ui/components/capacity';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@iziwellpass/ui/components/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +30,7 @@ import { formatTime, venueDateKey, venueToday } from '@/lib/datetime';
 import { slotBadgeVariant } from '@/lib/slot-status';
 
 import { BookingsSheet } from './bookings-sheet';
+import { CancellationPreviewDialog } from './cancellation-preview-dialog';
 import { usePlanningLabels } from './planning-utils';
 
 /**
@@ -89,67 +74,6 @@ function useDayHeading(timeZone: string | undefined) {
   }, [locale, t, timeZone]);
 }
 
-function CancelSlotDialog({
-  slot,
-  venueId,
-  timeZone,
-  open,
-  onOpenChange,
-  restoreFocusTo,
-}: {
-  slot: ScheduleSlot;
-  venueId: string;
-  timeZone: string | undefined;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  restoreFocusTo?: () => HTMLElement | null | undefined;
-}) {
-  const t = useTranslations('planning');
-  const tCommon = useTranslations('common');
-  const queryClient = useQueryClient();
-  const cancelSlot = useCancelSlot();
-
-  const handleCancel = () => {
-    cancelSlot.mutate(
-      { sid: slot.id },
-      {
-        onSuccess: () => {
-          toast.success(t('cancelSlot.success'));
-          void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
-          onOpenChange(false);
-        },
-        onError: (err) => {
-          toast.error(apiErrorMessage(err, t('cancelSlot.error')));
-        },
-      },
-    );
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
-        <DialogHeader>
-          <DialogTitle>{t('cancelSlot.title')}</DialogTitle>
-          <DialogDescription>
-            {t('cancelSlot.description', {
-              start: formatTime(slot.start_time, timeZone),
-              end: formatTime(slot.end_time, timeZone),
-            })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">{tCommon('cancel')}</Button>
-          </DialogClose>
-          <Button variant="destructive" onClick={handleCancel} disabled={cancelSlot.isPending}>
-            {cancelSlot.isPending ? t('cancelSlot.confirming') : t('cancelSlot.confirm')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 /**
  * One session (canvas `s8ABF`): 18px time, title over the room, a 120px
  * capacity bar with its count, the status badge, « Participants » and « ··· ».
@@ -163,7 +87,9 @@ function SlotRow({
   canManageSlots,
   selected,
   onOpenParticipants,
+  onCancel,
   participantsRef,
+  menuRef,
 }: {
   slot: ScheduleSlot;
   title: string;
@@ -172,12 +98,12 @@ function SlotRow({
   canManageSlots: boolean;
   selected: boolean;
   onOpenParticipants: (slot: ScheduleSlot) => void;
+  onCancel: (slot: ScheduleSlot) => void;
   participantsRef?: (el: HTMLButtonElement | null) => void;
+  menuRef?: (el: HTMLButtonElement | null) => void;
 }) {
   const t = useTranslations('planning');
   const { slotStatusLabel } = usePlanningLabels();
-  const [cancelling, setCancelling] = useState(false);
-  const menuRef = useRef<HTMLButtonElement>(null);
 
   const isCancelled = slot.status === 'cancelled';
 
@@ -241,21 +167,13 @@ function SlotRow({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem variant="destructive" onSelect={() => setCancelling(true)}>
+              <DropdownMenuItem variant="destructive" onSelect={() => onCancel(slot)}>
                 {t('slots.cancel')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
       </div>
-      <CancelSlotDialog
-        slot={slot}
-        venueId={slot.venue_id}
-        timeZone={timeZone}
-        open={cancelling}
-        onOpenChange={setCancelling}
-        restoreFocusTo={() => menuRef.current}
-      />
     </div>
   );
 }
@@ -281,7 +199,9 @@ export function SlotsTab({
   const slotsQuery = useSlotsByDate(venueId, venueToday(timeZone));
   const schedulesQuery = useListSchedules(venueId, { query: { select: unwrap } });
   const resourcesQuery = useListResources(venueId, { query: { select: unwrap } });
-  const membersQuery = useAllMembers();
+  // Only the add-participant picker needs the full member list; a role that
+  // cannot manage bookings never renders it, so skip the paginated walk.
+  const membersQuery = useAllMembers({ enabled: canManageBookings });
 
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
   const scheduleTitleById = useMemo(
@@ -295,6 +215,11 @@ export function SlotsTab({
 
   const [sheetSlot, setSheetSlot] = useState<ScheduleSlot | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // The cancel dialog lives here, not in the row: it must stay mounted while
+  // its confirm is in flight and while focus returns to the row's « ··· »
+  // (spec D12), which a row that re-renders under a refetch can't guarantee.
+  const [cancelling, setCancelling] = useState<ScheduleSlot | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const focus = useFocusRegistry();
 
   const slotsByDate = useMemo(() => {
@@ -380,7 +305,12 @@ export function SlotsTab({
                       setSheetSlot(opened);
                       setSheetOpen(true);
                     }}
+                    onCancel={(target) => {
+                      setCancelling(target);
+                      setCancelOpen(true);
+                    }}
                     participantsRef={focus.register(slot.id)}
+                    menuRef={focus.register(`menu-${slot.id}`)}
                   />
                 ))}
               </div>
@@ -402,6 +332,26 @@ export function SlotsTab({
           open={sheetOpen}
           onOpenChange={setSheetOpen}
           restoreFocusTo={() => focus.get(sheetSlot?.id)}
+        />
+      ) : null}
+
+      {cancelling ? (
+        <CancellationPreviewDialog
+          target={{
+            kind: 'slot',
+            slot: cancelling,
+            description: t('cancelSlot.description', {
+              title: titleOf(cancelling),
+              day: dayHeading(venueDateKey(cancelling.start_time, timeZone), cancelling.start_time),
+              start: formatTime(cancelling.start_time, timeZone),
+              end: formatTime(cancelling.end_time, timeZone),
+              room: roomOf(cancelling),
+            }),
+          }}
+          venueId={venueId}
+          open={cancelOpen}
+          onOpenChange={setCancelOpen}
+          restoreFocusTo={() => focus.get(`menu-${cancelling.id}`)}
         />
       ) : null}
     </>
