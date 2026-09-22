@@ -1269,6 +1269,8 @@ function registerImageHandler(venueId, body) {
       ]),
     ];
   }
+  // Intentional re-check: the unauthenticated /__media PUT accepts any content-type,
+  // so this is the only place that actually enforces the image/* allow-list on it.
   if (!IMAGE_TYPES[stored.contentType]) return unsupportedType();
   if (stored.bytes.length > MAX_IMAGE_BYTES) {
     return [400, errorBody('VALIDATION_ERROR', `Image exceeds ${MAX_IMAGE_BYTES} bytes`)];
@@ -2261,7 +2263,15 @@ http
     const raw = Buffer.concat(chunks);
 
     if (url.pathname.startsWith('/__media/')) {
-      const key = decodeURIComponent(url.pathname.slice('/__media/'.length));
+      let key;
+      try {
+        key = decodeURIComponent(url.pathname.slice('/__media/'.length));
+      } catch {
+        console.log(`[mock] ${req.method} ${url.pathname} -> 400 (malformed key)`);
+        res.writeHead(400, { 'content-type': 'application/json' });
+        res.end(errorBody('VALIDATION_ERROR', 'Malformed media key'));
+        return;
+      }
       if (req.method === 'PUT') {
         media.set(key, {
           contentType: req.headers['content-type'] ?? 'application/octet-stream',
@@ -2281,6 +2291,9 @@ http
         res.end(stored ? stored.bytes : undefined);
         return;
       }
+      res.writeHead(405);
+      res.end();
+      return;
     }
 
     const rawBody = raw.toString('utf8');
