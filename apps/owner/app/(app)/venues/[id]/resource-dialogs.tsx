@@ -629,7 +629,9 @@ export function DeleteResourceDialog({
         <DialogHeader>
           <DialogTitle>{t('detail.resources.deleteDialog.title')}</DialogTitle>
           <DialogDescription>
-            {t('detail.resources.deleteDialog.description', { name: resource.name })}
+            {blocked
+              ? resource.name
+              : t('detail.resources.deleteDialog.description', { name: resource.name })}
           </DialogDescription>
         </DialogHeader>
         {blocked ? (
