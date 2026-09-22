@@ -14,6 +14,7 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { BackLink, WorkingHeader, WorkingPage } from '@iziwellpass/ui/components/working-page';
 
 import { useActivityTypeLabel } from '@/lib/activity-type';
+import { VenueGallery } from '@/components/gallery/venue-gallery';
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage } from '@/lib/api-error';
 import { useVenueContext } from '@/lib/venue-context';
@@ -104,6 +105,9 @@ function VenueDetailContent() {
       <div className="grid gap-10 md:grid-cols-2 md:gap-16">
         <ProfileSection venue={venue} canEdit={canEdit} />
         <div className="flex flex-col gap-10">
+          <div className="hidden md:block">
+            <VenueGallery venueId={venue.id} canEdit={canEdit} variant="section" />
+          </div>
           <ActivitiesSection venueId={venue.id} canEdit={canEdit} />
           <ResourcesSection venueId={venue.id} canEdit={canEdit} />
         </div>
