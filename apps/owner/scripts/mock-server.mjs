@@ -44,8 +44,12 @@
 //   - staff `staff-trainer-02` (Cheikh Fall, trainer) only has access to
 //     venue 2 — picking them as `instructor_staff_id` on a venue-1 course
 //     always fails with a VALIDATION_ERROR on that field.
+//   - Venue gallery: `venue-dakar-01` starts with three seeded photos;
+//     uploads go to the same-origin `/api/backend/__media/<key>` (no auth),
+//     mirroring the presigned S3 PUT; state resets on restart.
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { crc32, deflateSync } from 'node:zlib';
 
 const PORT = Number(process.env.PORT ?? 8090);
 
@@ -117,6 +121,77 @@ const venues = [
     updated_at: iso(daysFromNow(-60)),
   },
 ];
+
+// --- seed: venue images (gallery, SP-D) ---------------------------------------
+const IMAGE_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+const MAX_IMAGES = 10;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const media = new Map(); // object_key -> { contentType, bytes }
+const venueImages = new Map(); // venue id -> VenueImage[] in cover-first order
+const mediaUrl = (key) => `/api/backend/__media/${key}`;
+
+function pngChunk(type, data) {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length);
+  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(body) >>> 0);
+  return Buffer.concat([len, body, crc]);
+}
+/** A small solid-colour PNG so seeded photos render without fixtures on disk. */
+function solidPng([r, g, b], width = 64, height = 48) {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 2; // truecolour RGB
+  const row = Buffer.alloc(1 + width * 3);
+  for (let x = 0; x < width; x++) row.set([r, g, b], 1 + x * 3);
+  const pixels = Buffer.concat(Array.from({ length: height }, () => row));
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk('IHDR', ihdr),
+    pngChunk('IDAT', deflateSync(pixels)),
+    pngChunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+function imagesOf(venueId) {
+  if (!venueImages.has(venueId)) venueImages.set(venueId, []);
+  return venueImages.get(venueId);
+}
+/** Mirrors the backend: sort_order follows the list, the first url is the venue cover. */
+function syncCover(venueId) {
+  const list = imagesOf(venueId);
+  list.forEach((image, index) => {
+    image.sort_order = index;
+  });
+  const venue = venues.find((v) => v.id === venueId);
+  if (venue) venue.cover_image_url = list[0]?.url ?? null;
+}
+function storeImage(venueId, key, contentType) {
+  const image = {
+    id: randomUUID(),
+    tenant_id: TENANT_ID,
+    venue_id: venueId,
+    object_key: key,
+    url: mediaUrl(key),
+    content_type: contentType,
+    sort_order: imagesOf(venueId).length,
+    created_at: iso(now()),
+  };
+  imagesOf(venueId).push(image);
+  syncCover(venueId);
+  return image;
+}
+for (const rgb of [
+  [233, 243, 238],
+  [232, 238, 251],
+  [245, 236, 220],
+]) {
+  const key = `venues/${TENANT_ID}/${VENUE_1}/${randomUUID()}.png`;
+  media.set(key, { contentType: 'image/png', bytes: solidPng(rgb) });
+  storeImage(VENUE_1, key, 'image/png');
+}
 
 const venueActivities = [
   {
@@ -1146,6 +1221,94 @@ function deleteResourceHandler(venueId, resourceId) {
   return [204, ''];
 }
 
+// ---- venue images (gallery) ---------------------------------------------------
+const unsupportedType = () => [
+  400,
+  errorBody('VALIDATION_ERROR', 'Unsupported image type', [
+    { field: 'content_type', message: 'Must be image/jpeg, image/png, or image/webp' },
+  ]),
+];
+const galleryFull = () => [
+  400,
+  errorBody('VALIDATION_ERROR', `A venue may have at most ${MAX_IMAGES} images`),
+];
+
+function presignImageHandler(venueId, body) {
+  if (!venues.some((v) => v.id === venueId)) return notFound(`Venue ${venueId} not found`);
+  const ext = IMAGE_TYPES[body?.content_type];
+  if (!ext) return unsupportedType();
+  if (imagesOf(venueId).length >= MAX_IMAGES) return galleryFull();
+  const key = `venues/${TENANT_ID}/${venueId}/${randomUUID()}.${ext}`;
+  return [
+    201,
+    envelope({
+      upload_url: mediaUrl(key),
+      object_key: key,
+      url: mediaUrl(key),
+      expires_at: Math.floor(Date.now() / 1000) + 300,
+    }),
+  ];
+}
+function registerImageHandler(venueId, body) {
+  if (!venues.some((v) => v.id === venueId)) return notFound(`Venue ${venueId} not found`);
+  const key = body?.object_key ?? '';
+  if (!key.startsWith(`venues/${TENANT_ID}/${venueId}/`)) {
+    return [
+      400,
+      errorBody('VALIDATION_ERROR', "object_key is outside this venue's upload prefix", [
+        { field: 'object_key', message: 'must be an object uploaded for this venue' },
+      ]),
+    ];
+  }
+  const stored = media.get(key);
+  if (!stored) {
+    return [
+      400,
+      errorBody('VALIDATION_ERROR', 'Uploaded object not found', [
+        { field: 'object_key', message: 'No object at this key' },
+      ]),
+    ];
+  }
+  if (!IMAGE_TYPES[stored.contentType]) return unsupportedType();
+  if (stored.bytes.length > MAX_IMAGE_BYTES) {
+    return [400, errorBody('VALIDATION_ERROR', `Image exceeds ${MAX_IMAGE_BYTES} bytes`)];
+  }
+  if (imagesOf(venueId).length >= MAX_IMAGES) return galleryFull();
+  return [201, envelope(storeImage(venueId, key, stored.contentType))];
+}
+function listImagesHandler(venueId) {
+  if (!venues.some((v) => v.id === venueId)) return notFound(`Venue ${venueId} not found`);
+  return [200, envelope(imagesOf(venueId))];
+}
+function reorderImagesHandler(venueId, body) {
+  const list = imagesOf(venueId);
+  const ids = Array.isArray(body?.image_ids) ? body.image_ids : [];
+  const sameSet =
+    ids.length === list.length &&
+    new Set(ids).size === ids.length &&
+    ids.every((id) => list.some((i) => i.id === id));
+  if (!sameSet)
+    return [
+      400,
+      errorBody('VALIDATION_ERROR', 'image_ids must be exactly the current set of images'),
+    ];
+  venueImages.set(
+    venueId,
+    ids.map((id) => list.find((i) => i.id === id)),
+  );
+  syncCover(venueId);
+  return [200, envelope(imagesOf(venueId))];
+}
+function deleteImageHandler(venueId, imageId) {
+  const list = imagesOf(venueId);
+  const index = list.findIndex((i) => i.id === imageId);
+  if (index === -1) return notFound(`Image ${imageId} not found`);
+  const [removed] = list.splice(index, 1);
+  media.delete(removed.object_key);
+  syncCover(venueId);
+  return [204, ''];
+}
+
 // ---- attendance / check-ins list ------------------------------------------------
 function getAttendanceHandler(venueId, query) {
   const date = query.get('date');
@@ -1871,6 +2034,32 @@ const routes = [
   },
 
   {
+    method: 'POST',
+    pattern: /^\/gms\/v1\/venues\/([^/]+)\/images\/presign$/,
+    handler: (m, body) => presignImageHandler(m[1], body),
+  },
+  {
+    method: 'PUT',
+    pattern: /^\/gms\/v1\/venues\/([^/]+)\/images\/order$/,
+    handler: (m, body) => reorderImagesHandler(m[1], body),
+  },
+  {
+    method: 'GET',
+    pattern: /^\/gms\/v1\/venues\/([^/]+)\/images$/,
+    handler: (m) => listImagesHandler(m[1]),
+  },
+  {
+    method: 'POST',
+    pattern: /^\/gms\/v1\/venues\/([^/]+)\/images$/,
+    handler: (m, body) => registerImageHandler(m[1], body),
+  },
+  {
+    method: 'DELETE',
+    pattern: /^\/gms\/v1\/venues\/([^/]+)\/images\/([^/]+)$/,
+    handler: (m) => deleteImageHandler(m[1], m[2]),
+  },
+
+  {
     method: 'GET',
     pattern: /^\/gms\/v1\/venues\/([^/]+)\/attendance$/,
     handler: (m, _b, q) => getAttendanceHandler(m[1], q),
@@ -2069,7 +2258,32 @@ http
 
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
-    const rawBody = Buffer.concat(chunks).toString('utf8');
+    const raw = Buffer.concat(chunks);
+
+    if (url.pathname.startsWith('/__media/')) {
+      const key = decodeURIComponent(url.pathname.slice('/__media/'.length));
+      if (req.method === 'PUT') {
+        media.set(key, {
+          contentType: req.headers['content-type'] ?? 'application/octet-stream',
+          bytes: raw,
+        });
+        console.log(`[mock] PUT /__media/${key} (${raw.length} bytes) -> 200`);
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+      if (req.method === 'GET') {
+        const stored = media.get(key);
+        res.writeHead(
+          stored ? 200 : 404,
+          stored ? { 'content-type': stored.contentType, 'cache-control': 'no-store' } : {},
+        );
+        res.end(stored ? stored.bytes : undefined);
+        return;
+      }
+    }
+
+    const rawBody = raw.toString('utf8');
     let body;
     if (rawBody) {
       try {

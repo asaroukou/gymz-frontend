@@ -910,6 +910,45 @@
             "open_access": "Open access"
           }
         }
+      },
+      "photos": {
+        "title": "Photos",
+        "count": "{count, plural, one {# photo} other {# photos}} of 10 · The first one is the cover",
+        "rules": "Up to 10 photos · JPEG, PNG or WebP · 5 MB max",
+        "add": "Add photos",
+        "addTile": "Add",
+        "cover": "Cover",
+        "alt": "Photo {index} of {count}",
+        "menu": "Photo {index} actions",
+        "setCover": "Set as cover",
+        "moveLeft": "Move left",
+        "moveRight": "Move right",
+        "delete": "Delete",
+        "emptyTitle": "No photos yet",
+        "emptyBody": "Show your venue to members and on the marketplace. The first photo becomes the cover.",
+        "full": "Gallery full (10/10). Delete a photo to add another.",
+        "progress": "{percent}%",
+        "errors": {
+          "type": "Format not accepted",
+          "size": "File too large (max 5 MB)",
+          "full": "Gallery full (10/10)",
+          "interrupted": "Upload interrupted"
+        },
+        "retry": "Retry",
+        "dismiss": "Remove",
+        "loadError": "Could not load photos",
+        "reorderError": "Could not reorder photos",
+        "summaryNone": "No photos",
+        "summaryCount": "{count, plural, one {# photo} other {# photos}} of 10",
+        "deleteDialog": {
+          "title": "Delete this photo",
+          "description": "It will be removed from the gallery and the marketplace.",
+          "coverNote": "The next photo will become the cover.",
+          "confirm": "Delete",
+          "confirming": "Deleting…",
+          "success": "Photo deleted",
+          "error": "Could not delete photo"
+        }
       }
     }
   },
