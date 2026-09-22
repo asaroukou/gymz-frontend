@@ -3,13 +3,7 @@
 import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 
-import type {
-  Booking,
-  BookingSource,
-  BookingStatus,
-  Member,
-  SlotStatus,
-} from '@iziwellpass/api/schemas';
+import type { BookingSource, BookingStatus, Member, SlotStatus } from '@iziwellpass/api/schemas';
 
 import { summarizeRecurrenceRule, type Weekday } from '@/lib/recurrence';
 
@@ -25,23 +19,6 @@ export function memberInitials(member: Member): string {
   const first = member.first_name.charAt(0);
   const last = member.last_name.charAt(0);
   return `${first}${last}`.toUpperCase() || '?';
-}
-
-/**
- * Resolve the display label for a booking's actor. `CreateBookingRequest`
- * allows exactly one of `member_id`/`pass_holder_id`; marketplace pass-holder
- * bookings are out of scope for this slice, so we resolve member bookings by
- * name via the members lookup map and fall back to a raw id otherwise.
- */
-export function resolveBookingActorLabel(
-  booking: Booking,
-  memberById: Map<string, Member>,
-): string {
-  if (booking.member_id) {
-    const member = memberById.get(booking.member_id);
-    return member ? memberName(member) : booking.member_id;
-  }
-  return booking.pass_holder_id ?? '—';
 }
 
 // Badge colours live in lib/slot-status.ts (slotBadgeVariant, bookingBadgeVariant).

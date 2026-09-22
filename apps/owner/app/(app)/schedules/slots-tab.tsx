@@ -216,7 +216,9 @@ export function SlotsTab({
   const slotsQuery = useSlotsByDate(venueId, venueToday(timeZone));
   const schedulesQuery = useListSchedules(venueId, { query: { select: unwrap } });
   const resourcesQuery = useListResources(venueId, { query: { select: unwrap } });
-  const membersQuery = useAllMembers();
+  // Only the add-participant picker needs the full member list; a role that
+  // cannot manage bookings never renders it, so skip the paginated walk.
+  const membersQuery = useAllMembers({ enabled: canManageBookings });
 
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
   const scheduleTitleById = useMemo(

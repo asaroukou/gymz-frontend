@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { MoreHorizontalIcon, PlusIcon } from 'lucide-react';
+import {
+  CircleAlertIcon,
+  EyeOffIcon,
+  MoreHorizontalIcon,
+  PlusIcon,
+  TicketIcon,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -17,12 +23,19 @@ import {
   useCreateBooking,
   useListBookingsForSlot,
 } from '@iziwellpass/api/generated';
-import type { Booking, CreateBookingRequest, Member, ScheduleSlot } from '@iziwellpass/api/schemas';
+import type {
+  CreateBookingRequest,
+  Member,
+  ScheduleSlot,
+  SlotRosterEntry,
+} from '@iziwellpass/api/schemas';
 import { BookingSource } from '@iziwellpass/api/schemas';
+import { useRole } from '@iziwellpass/auth/provider';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
+import { Chip } from '@iziwellpass/ui/components/chip';
 import { Combobox } from '@iziwellpass/ui/components/combobox';
 import {
   Dialog,
@@ -52,15 +65,12 @@ import { Textarea } from '@iziwellpass/ui/components/textarea';
 import { useFocusRegistry } from '@/components/focus-registry';
 import { RowsSkeleton } from '@/components/rows-skeleton';
 import { apiErrorMessage } from '@/lib/api-error';
+import { addParticipantError, type AddParticipantErrorKind } from '@/lib/booking-errors';
 import { formatTime } from '@/lib/datetime';
+import { rosterInitials, rosterLabel } from '@/lib/roster';
 import { bookingBadgeVariant } from '@/lib/slot-status';
 
-import {
-  memberInitials,
-  memberName,
-  resolveBookingActorLabel,
-  usePlanningLabels,
-} from './planning-utils';
+import { memberName, usePlanningLabels } from './planning-utils';
 
 function CancelBookingDialog({
   booking,
@@ -69,7 +79,7 @@ function CancelBookingDialog({
   onOpenChange,
   restoreFocusTo,
 }: {
-  booking: Booking;
+  booking: SlotRosterEntry;
   venueId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -147,6 +157,9 @@ function AddParticipant({
   const queryClient = useQueryClient();
   const createBooking = useCreateBooking();
   const [memberId, setMemberId] = useState('');
+  // A 409/403 from the add belongs on the field, not in a toast: the operator's
+  // next move is to pick someone else, so the reason stays next to the picker.
+  const [inlineError, setInlineError] = useState<AddParticipantErrorKind | null>(null);
 
   // A member can only be booked while active with a live membership. Ineligible
   // members stay in the list but are disabled with the reason, so front-desk
@@ -198,8 +211,14 @@ function AddParticipant({
           void queryClient.invalidateQueries({ queryKey: getListBookingsForSlotQueryKey(slotId) });
           void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
           setMemberId('');
+          setInlineError(null);
         },
         onError: (err) => {
+          const kind = addParticipantError(err);
+          if (kind) {
+            setInlineError(kind);
+            return;
+          }
           toast.error(apiErrorMessage(err, t('addBooking.error')));
         },
       },
@@ -215,11 +234,15 @@ function AddParticipant({
         <Combobox
           options={options}
           value={memberId}
-          onValueChange={setMemberId}
+          onValueChange={(value) => {
+            setMemberId(value);
+            setInlineError(null);
+          }}
           placeholder={t('addBooking.placeholder')}
           searchPlaceholder={t('addBooking.search')}
           emptyText={t('addBooking.noMembers')}
           disabled={full}
+          aria-invalid={inlineError !== null}
           className="flex-1"
         />
         <Button
@@ -232,7 +255,14 @@ function AddParticipant({
           <PlusIcon />
         </Button>
       </div>
-      {full ? <p className="text-sm text-muted-foreground">{t('addBooking.slotFull')}</p> : null}
+      {inlineError ? (
+        <p role="alert" className="flex items-center gap-1.5 text-sm text-destructive-foreground">
+          <CircleAlertIcon className="size-3.5" />
+          {t(`addBooking.errors.${inlineError}`)}
+        </p>
+      ) : full ? (
+        <p className="text-sm text-muted-foreground">{t('addBooking.slotFull')}</p>
+      ) : null}
     </div>
   );
 }
@@ -264,18 +294,21 @@ export function BookingsSheet({
   restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('planning');
-  const { bookingStatusLabel, bookingSourceLabel } = usePlanningLabels();
+  const { bookingStatusLabel } = usePlanningLabels();
   const queryClient = useQueryClient();
+  // A trainer holds no `member:read`, so the roster arrives without names
+  // (`SlotRosterEntry` strips them server-side). The sheet says so out loud
+  // instead of showing a wall of « Membre n° … » with no explanation.
+  const hideNames = useRole() === 'trainer';
 
   const bookingsQuery = useListBookingsForSlot(slot.id, { query: { select: unwrap } });
-  const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
-  const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+  const [cancellingBooking, setCancellingBooking] = useState<SlotRosterEntry | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const focus = useFocusRegistry();
   const checkIn = useCheckInManual();
   const [validatingBookingId, setValidatingBookingId] = useState<string | null>(null);
 
-  const handleValidate = (booking: Booking) => {
+  const handleValidate = (booking: SlotRosterEntry) => {
     setValidatingBookingId(booking.id);
     checkIn.mutate(
       { data: { booking_id: booking.id, venue_id: venueId } },
@@ -327,6 +360,12 @@ export function BookingsSheet({
               cap: slot.capacity,
             })}
           </SheetDescription>
+          {hideNames ? (
+            <Chip className="mt-2 self-start text-sm">
+              <EyeOffIcon className="size-3.5" />
+              {t('bookings.coachView')}
+            </Chip>
+          ) : null}
         </SheetHeader>
 
         {canManageBookings ? (
@@ -356,39 +395,60 @@ export function BookingsSheet({
             </div>
           ) : (
             <ul className="flex flex-col">
-              {bookings.map((booking, index) => {
+              {bookings.map((entry, index) => {
                 const canCancel =
                   canManageBookings &&
-                  (booking.status === 'confirmed' || booking.status === 'checked_in');
-                const member = booking.member_id ? memberById.get(booking.member_id) : undefined;
+                  (entry.status === 'confirmed' || entry.status === 'checked_in');
+                const label = rosterLabel(entry, {
+                  hideNames,
+                  passLabel: t('bookings.passVisitor'),
+                  memberNumber: (id) => t('bookings.memberNumber', { id }),
+                });
+                const arrival = entry.checked_in_at
+                  ? t('bookings.arrival', {
+                      time: formatTime(entry.checked_in_at, timeZone),
+                      method: t(`bookings.method.${entry.check_in_method ?? 'manual'}`),
+                    })
+                  : null;
                 return (
                   <li
-                    key={booking.id}
-                    className="flex items-center gap-3 border-b border-border py-3 last:border-0"
+                    key={entry.id}
+                    className="flex min-h-[60px] items-center gap-3 border-b border-border py-2 last:border-0"
                   >
                     <Avatar>
-                      <AvatarFallback aria-hidden tint={index}>
-                        {member ? memberInitials(member) : '—'}
-                      </AvatarFallback>
+                      {label.kind === 'pass' ? (
+                        <AvatarFallback aria-hidden className="bg-secondary text-muted-strong">
+                          <TicketIcon className="size-4" />
+                        </AvatarFallback>
+                      ) : (
+                        <AvatarFallback aria-hidden tint={index}>
+                          {label.anonymous ? '?' : rosterInitials(entry)}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
                     <div className="min-w-0 flex-1 leading-tight">
-                      <p className="truncate text-base font-medium">
-                        {resolveBookingActorLabel(booking, memberById)}
+                      <p className="flex items-center gap-2 truncate text-base font-medium">
+                        <span className="truncate">{label.name}</span>
+                        {label.kind === 'pass' ? (
+                          <Chip className="bg-info py-0.5 pl-2.5 pr-2.5 text-sm text-info-foreground">
+                            {t('bookings.passChip')}
+                          </Chip>
+                        ) : null}
                       </p>
-                      <p className="truncate text-sm text-muted-foreground">
-                        {bookingSourceLabel(booking.source)}
-                      </p>
+                      {arrival ? (
+                        <p className="truncate text-sm text-muted-foreground">{arrival}</p>
+                      ) : null}
                     </div>
-                    <Badge variant={bookingBadgeVariant(booking.status)} className="shrink-0">
-                      {bookingStatusLabel(booking.status)}
+                    <Badge variant={bookingBadgeVariant(entry.status)} className="shrink-0">
+                      {bookingStatusLabel(entry.status)}
                     </Badge>
-                    {canManageBookings && booking.status === 'confirmed' ? (
+                    {canManageBookings && entry.status === 'confirmed' ? (
                       <Button
                         size="sm"
-                        disabled={validatingBookingId === booking.id}
-                        onClick={() => handleValidate(booking)}
+                        disabled={validatingBookingId === entry.id}
+                        onClick={() => handleValidate(entry)}
                       >
-                        {validatingBookingId === booking.id
+                        {validatingBookingId === entry.id
                           ? t('bookings.validating')
                           : t('bookings.validate')}
                       </Button>
@@ -397,7 +457,7 @@ export function BookingsSheet({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
-                            ref={focus.register(booking.id)}
+                            ref={focus.register(entry.id)}
                             variant="ghost"
                             size="icon-sm"
                             className="size-11 md:size-9"
@@ -410,7 +470,7 @@ export function BookingsSheet({
                           <DropdownMenuItem
                             variant="destructive"
                             onSelect={() => {
-                              setCancellingBooking(booking);
+                              setCancellingBooking(entry);
                               setCancelOpen(true);
                             }}
                           >

@@ -26,6 +26,8 @@ export interface ComboboxProps {
   disabled?: boolean;
   className?: string;
   contentClassName?: string;
+  /** Marks the trigger as invalid (red border) for an inline field error. */
+  'aria-invalid'?: boolean;
 }
 
 function Combobox({
@@ -38,6 +40,7 @@ function Combobox({
   disabled = false,
   className,
   contentClassName,
+  'aria-invalid': ariaInvalid,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const current = options.find((o) => o.value === value);
@@ -53,8 +56,9 @@ function Combobox({
         disabled={disabled}
         role="combobox"
         aria-expanded={open}
+        aria-invalid={ariaInvalid}
         className={cn(
-          'flex h-12 w-full items-center justify-between gap-2 rounded-full border border-input bg-card px-[18px] text-base whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-12 w-full items-center justify-between gap-2 rounded-full border border-input bg-card px-[18px] text-base whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger',
           !current && 'text-muted-foreground',
           className,
         )}
