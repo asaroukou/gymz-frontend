@@ -14,6 +14,7 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { BackLink, WorkingHeader, WorkingPage } from '@iziwellpass/ui/components/working-page';
 
 import { useActivityTypeLabel } from '@/lib/activity-type';
+import { PhotosSummaryRow } from '@/components/gallery/photos-summary-row';
 import { VenueGallery } from '@/components/gallery/venue-gallery';
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage } from '@/lib/api-error';
@@ -108,6 +109,7 @@ function VenueDetailContent() {
           <div className="hidden md:block">
             <VenueGallery venueId={venue.id} canEdit={canEdit} variant="section" />
           </div>
+          <PhotosSummaryRow venueId={venue.id} className="md:hidden" />
           <ActivitiesSection venueId={venue.id} canEdit={canEdit} />
           <ResourcesSection venueId={venue.id} canEdit={canEdit} />
         </div>

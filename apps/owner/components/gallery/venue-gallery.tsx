@@ -69,7 +69,7 @@ export function VenueGallery({
   // left it goes to the empty panel's add button, or the heading when read-only.
   const deletedRef = useRef(false);
   const emptyAddRef = useRef<HTMLButtonElement>(null);
-  const headingRef = useRef<HTMLSpanElement>(null);
+  const headingRef = useRef<HTMLElement>(null);
 
   const restoreDeleteFocus = () => {
     if (!deleting) return null;
@@ -173,7 +173,13 @@ export function VenueGallery({
     variant === 'section' ? (
       <SectionHeading
         title={
-          <span ref={headingRef} tabIndex={-1} className="outline-none">
+          <span
+            ref={(el) => {
+              headingRef.current = el;
+            }}
+            tabIndex={-1}
+            className="outline-none"
+          >
             {t('title')}
           </span>
         }
@@ -193,7 +199,34 @@ export function VenueGallery({
           ) : null
         }
       />
-    ) : null;
+    ) : (
+      <>
+        <div className="flex flex-col gap-1.5">
+          <h1
+            ref={(el) => {
+              headingRef.current = el;
+            }}
+            tabIndex={-1}
+            className="text-2xl font-normal outline-none"
+          >
+            {t('title')}
+          </h1>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        {/* The empty panel carries its own dark button, so the screen never shows two. */}
+        {canEdit && hasCells ? (
+          <Button
+            ref={headerAddRef}
+            className="h-12 w-full"
+            onClick={openPicker}
+            disabled={!canAdd}
+          >
+            <PlusIcon aria-hidden="true" />
+            {t('add')}
+          </Button>
+        ) : null}
+      </>
+    );
 
   /** The single place the grid is assembled: photos, then uploads, then the add tile. */
   const galleryCells = () => [

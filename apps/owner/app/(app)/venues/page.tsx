@@ -1,7 +1,8 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
-import { Building2Icon, PlusIcon } from 'lucide-react';
+import { ImageOffIcon, PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
@@ -12,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
-import { Tile, TileMeta, TileTitle, TileTop } from '@iziwellpass/ui/components/tile';
+import { tintClass, tintForIndex } from '@iziwellpass/ui/lib/tints';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
 import { RequirePageAccess } from '@/components/page-access';
@@ -20,35 +21,55 @@ import { useActivityTypeLabel } from '@/lib/activity-type';
 import { apiErrorMessage } from '@/lib/api-error';
 
 /**
- * One venue as a tall tinted tile that links to its page: the building mark
- * and the status badge on top, the name and « type · ville » at the bottom.
- * An inactive venue takes the côté tone (canvas `EjThs`).
+ * One venue as a bordered tile that links to its page (canvas `p96Uq`): a
+ * 130px band on top shows the cover photo, else the venue's tint with a
+ * crossed-out image mark (grey when inactive), the status badge in its corner;
+ * the name and « type · ville » sit below.
  */
 function VenueTile({ venue, index }: { venue: Venue; index: number }) {
   const t = useTranslations('venues');
   const activityLabel = useActivityTypeLabel();
-
   return (
     <li className="contents">
-      <Link href={`/venues/${venue.id}`} className="block rounded-xl">
-        <Tile
-          aspect="tall"
-          tint={index}
-          className={cn('min-h-[13.75rem] gap-8 p-6', !venue.is_active && 'bg-side')}
+      <Link
+        href={`/venues/${venue.id}`}
+        className="flex flex-col overflow-hidden rounded-xl border border-border hover:bg-side/60"
+      >
+        <div
+          className={cn(
+            'relative flex h-[130px] items-center justify-center',
+            venue.cover_image_url
+              ? 'bg-secondary'
+              : venue.is_active
+                ? tintClass(tintForIndex(index))
+                : 'bg-secondary',
+          )}
         >
-          <TileTop className="items-center">
-            <Building2Icon className="size-[22px] text-muted-strong" aria-hidden="true" />
-            <Badge variant={venue.is_active ? 'success' : 'default'}>
-              {venue.is_active ? t('status.active') : t('status.inactive')}
-            </Badge>
-          </TileTop>
-          <div>
-            <TileTitle className="text-[1.25rem]">{venue.name}</TileTitle>
-            <TileMeta className="mt-1.5 text-md">
-              {activityLabel(venue.venue_type)} · {venue.city || t('noAddress')}
-            </TileMeta>
-          </div>
-        </Tile>
+          {venue.cover_image_url ? (
+            <Image
+              src={venue.cover_image_url}
+              alt=""
+              fill
+              unoptimized
+              sizes="(min-width: 1024px) 33vw, 100vw"
+              className="object-cover"
+            />
+          ) : (
+            <ImageOffIcon className="size-[22px] text-muted-strong" aria-hidden="true" />
+          )}
+          <Badge
+            variant={venue.is_active ? 'success' : 'default'}
+            className="absolute top-3 left-3"
+          >
+            {venue.is_active ? t('status.active') : t('status.inactive')}
+          </Badge>
+        </div>
+        <div className="flex flex-col gap-1.5 p-5">
+          <p className="text-[1.25rem] font-medium">{venue.name}</p>
+          <p className="text-md text-muted-foreground">
+            {activityLabel(venue.venue_type)} · {venue.city || t('noAddress')}
+          </p>
+        </div>
       </Link>
     </li>
   );
@@ -58,7 +79,7 @@ function VenuesGridSkeleton() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
       {Array.from({ length: 3 }).map((_, i) => (
-        <Skeleton key={i} className="h-[13.75rem] w-full rounded-xl" />
+        <Skeleton key={i} className="h-[232px] w-full rounded-xl" />
       ))}
     </div>
   );
