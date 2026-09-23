@@ -20,7 +20,7 @@ export function PhotosSummaryRow({ venueId, className }: { venueId: string; clas
       href={`/venues/${venueId}/photos`}
       className={cn('flex min-h-16 items-center gap-3 border-b border-border py-2', className)}
     >
-      <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-info text-info-foreground">
+      <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-info text-info-foreground">
         {cover ? (
           <Image src={cover.url} alt="" fill unoptimized sizes="48px" className="object-cover" />
         ) : (

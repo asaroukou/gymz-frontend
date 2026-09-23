@@ -42,7 +42,7 @@ function VenueTile({ venue, index }: { venue: Venue; index: number }) {
               ? 'bg-secondary'
               : venue.is_active
                 ? tintClass(tintForIndex(index))
-                : 'bg-secondary',
+                : 'bg-side',
           )}
         >
           {venue.cover_image_url ? (
