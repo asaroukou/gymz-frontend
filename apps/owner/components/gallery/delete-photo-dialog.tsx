@@ -26,6 +26,7 @@ export function DeletePhotoDialog({
   venueId,
   image,
   isCover,
+  hasNextCover,
   open,
   onOpenChange,
   restoreFocusTo,
@@ -33,7 +34,10 @@ export function DeletePhotoDialog({
 }: {
   venueId: string;
   image: VenueImage;
+  /** Shows the « Couverture » badge on the thumbnail. */
   isCover: boolean;
+  /** Deleting the cover while another photo remains: that photo becomes the cover. */
+  hasNextCover: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   restoreFocusTo?: () => HTMLElement | null | undefined;
@@ -67,7 +71,7 @@ export function DeletePhotoDialog({
           <DialogTitle>{t('deleteDialog.title')}</DialogTitle>
           <DialogDescription>
             {t('deleteDialog.description')}
-            {isCover ? ` ${t('deleteDialog.coverNote')}` : null}
+            {hasNextCover ? ` ${t('deleteDialog.coverNote')}` : null}
           </DialogDescription>
         </DialogHeader>
         <div className="relative h-[84px] w-[120px] overflow-hidden rounded-xl bg-secondary">
