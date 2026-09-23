@@ -2259,7 +2259,13 @@ http
     const url = new URL(req.url ?? '/', 'http://internal');
 
     const chunks = [];
-    for await (const chunk of req) chunks.push(chunk);
+    try {
+      for await (const chunk of req) chunks.push(chunk);
+    } catch {
+      // The client went away mid-body (an upload aborted on navigation): nothing to answer.
+      console.log(`[mock] ${req.method} ${url.pathname} -> aborted by client`);
+      return;
+    }
     const raw = Buffer.concat(chunks);
 
     if (url.pathname.startsWith('/__media/')) {
