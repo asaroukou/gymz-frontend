@@ -186,7 +186,9 @@
     "tabs": {
       "label": "Sections du tableau de bord",
       "schedule": "Planning du jour",
+      "scheduleShort": "Planning",
       "checkins": "Derniers passages",
+      "checkinsShort": "Passages",
       "attention": "À régler",
       "attentionCount": "À régler ({count})"
     },

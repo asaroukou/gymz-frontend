@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import type { MembershipStatus } from '@iziwellpass/api/schemas';
@@ -88,6 +88,10 @@ function DashboardBody({
   );
   const [mode, setMode] = useState<CheckinMode>('qr');
   const [tab, setTab] = useState<Tab>('schedule');
+  // D12 fallback: when a resolved row's own button is gone by the time a
+  // sheet/dialog closes (the refetch already removed it), focus goes to the
+  // tab trigger rather than the document body.
+  const attentionTabRef = useRef<HTMLButtonElement>(null);
 
   if (schedules.isLoading || members.isLoading) {
     return <LoadingHub dateLine={dateLine} />;
@@ -129,10 +133,16 @@ function DashboardBody({
           onValueChange={(value) => setTab(value as Tab)}
           className="w-full items-center gap-6"
         >
-          <TabsList aria-label={t('tabs.label')}>
-            <TabsTrigger value="schedule">{t('tabs.schedule')}</TabsTrigger>
-            <TabsTrigger value="checkins">{t('tabs.checkins')}</TabsTrigger>
-            <TabsTrigger value="attention">
+          <TabsList aria-label={t('tabs.label')} className="max-w-full overflow-x-auto">
+            <TabsTrigger value="schedule">
+              <span className="md:hidden">{t('tabs.scheduleShort')}</span>
+              <span className="hidden md:inline">{t('tabs.schedule')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="checkins">
+              <span className="md:hidden">{t('tabs.checkinsShort')}</span>
+              <span className="hidden md:inline">{t('tabs.checkins')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="attention" ref={attentionTabRef}>
               {attentionCount > 0
                 ? t('tabs.attentionCount', { count: attentionCount })
                 : t('tabs.attention')}
@@ -159,6 +169,7 @@ function DashboardBody({
               resources={resources.data ?? []}
               staff={staff.data ?? []}
               members={list}
+              fallbackFocus={attentionTabRef}
             />
           </TabsContent>
         </Tabs>

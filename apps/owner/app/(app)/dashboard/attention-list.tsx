@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { CircleCheckIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
@@ -51,6 +51,7 @@ export function AttentionList({
   resources,
   staff,
   members,
+  fallbackFocus,
 }: {
   venueId: string;
   timeZone: string | undefined;
@@ -59,6 +60,10 @@ export function AttentionList({
   resources: Resource[];
   staff: Staff[];
   members: Member[];
+  /** D12 fallback: the « À régler » tab trigger, focused when the resolved
+   * row's own button is already gone from the DOM by the time a sheet or
+   * dialog closes (the refetch removed it before focus could be restored). */
+  fallbackFocus: RefObject<HTMLElement | null>;
 }) {
   const t = useTranslations('dashboard');
   const role = useRole();
@@ -74,6 +79,20 @@ export function AttentionList({
 
   const scheduleById = useMemo(() => new Map(schedules.map((s) => [s.id, s])), [schedules]);
   const rows = useMemo(() => (today.data ? attentionRows(today.data) : []), [today.data]);
+
+  // D12 fallback, second stage: `restoreFocusTo` below already prefers the
+  // fallback when the row's button is already gone by the time a sheet/dialog
+  // closes. But the refetch this triggers (`refresh`) can also land *after*
+  // Radix has already restored focus onto that same button — the button then
+  // unmounts a beat later, and the browser drops focus to <body> on its own.
+  // Catch that here and send focus to the tab trigger instead.
+  const prevRowCount = useRef(rows.length);
+  useEffect(() => {
+    if (rows.length < prevRowCount.current && document.activeElement === document.body) {
+      fallbackFocus.current?.focus();
+    }
+    prevRowCount.current = rows.length;
+  }, [rows.length, fallbackFocus]);
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(venueId) });
@@ -133,7 +152,7 @@ export function AttentionList({
                 </span>
                 <span className="text-sm text-muted-foreground">{slot.resource_name ?? '—'}</span>
               </div>
-              <div className="flex w-full items-center justify-end gap-3 md:w-auto">
+              <div className="flex w-full flex-wrap items-center justify-end gap-3 md:w-auto">
                 <Badge variant="warning">
                   {t(`attention.reason.${reason}`, {
                     booked: slot.booked_count,
@@ -178,7 +197,7 @@ export function AttentionList({
             setSheetOpen(open);
             if (!open) refresh();
           }}
-          restoreFocusTo={() => focus.get(sheetSlot?.slot_id)}
+          restoreFocusTo={() => focus.get(sheetSlot?.slot_id) ?? fallbackFocus.current}
         />
       ) : null}
       {editing ? (
@@ -193,7 +212,7 @@ export function AttentionList({
             setEditOpen(open);
             if (!open) refresh();
           }}
-          restoreFocusTo={() => focus.get(editing?.slotId)}
+          restoreFocusTo={() => focus.get(editing?.slotId) ?? fallbackFocus.current}
         />
       ) : null}
     </>

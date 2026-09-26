@@ -186,7 +186,9 @@
     "tabs": {
       "label": "Dashboard sections",
       "schedule": "Today's schedule",
+      "scheduleShort": "Schedule",
       "checkins": "Recent check-ins",
+      "checkinsShort": "Check-ins",
       "attention": "Needs attention",
       "attentionCount": "Needs attention ({count})"
     },
