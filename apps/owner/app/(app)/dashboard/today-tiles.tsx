@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRightIcon, CircleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -104,25 +104,32 @@ function SessionTile({ slot, timeZone }: { slot: TodaySlot; timeZone: string | u
 /**
  * « Planning du jour »: the date control, « Voir les N séances du jour → »,
  * then up to four lifecycle tiles (`s8LRy3`). Today's tiles read the shared
- * snapshot; another day runs its own snapshot query (spec T4).
+ * snapshot; another day runs its own snapshot query (spec T4). The picked day
+ * lives in the parent (`DashboardBody`), not here — this component remounts
+ * with each tab switch (it sits inside `TabsContent`), and a picked day
+ * would otherwise silently reset to « Aujourd'hui » every time the owner
+ * looks at another tab and comes back.
  */
 export function TodayTiles({
   venueId,
   timeZone,
   todayKey,
   today,
+  selection,
+  onSelectionChange,
 }: {
   venueId: string;
   timeZone: string | undefined;
   todayKey: string;
   today: QueryLike<TodaySnapshot>;
+  selection: DaySelection;
+  onSelectionChange: (selection: DaySelection) => void;
 }) {
   const t = useTranslations('dashboard');
   const role = useRole();
   const canCreateSchedule =
     (role === 'owner' || role === 'admin') && canAccessPath(role, '/schedules');
 
-  const [selection, setSelection] = useState<DaySelection>({ kind: 'today' });
   const day = resolveDay(selection, todayKey);
   const isToday = day === todayKey;
   const other = useTodaySnapshot(venueId, isToday ? null : day);
@@ -185,7 +192,7 @@ export function TodayTiles({
 
   return (
     <div className="flex w-full flex-col items-center gap-10">
-      <DayControl selection={selection} onChange={setSelection} todayKey={todayKey} />
+      <DayControl selection={selection} onChange={onSelectionChange} todayKey={todayKey} />
       {body}
     </div>
   );

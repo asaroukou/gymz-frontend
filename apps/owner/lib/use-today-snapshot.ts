@@ -16,7 +16,17 @@ export function useTodaySnapshot(venueId: string, date: string | null) {
   return useVenueToday(
     venueId,
     { date: date ?? '' },
-    { query: { select: unwrap, enabled: Boolean(venueId && date) } },
+    {
+      query: {
+        select: unwrap,
+        enabled: Boolean(venueId && date),
+        // A front-desk tablet can sit on the dashboard for hours without
+        // ever losing focus — lifecycles and « Personne n'est arrivé » drift
+        // out of date against wall-clock `now` if the only refetch is on
+        // window focus.
+        refetchInterval: 60_000,
+      },
+    },
   );
 }
 

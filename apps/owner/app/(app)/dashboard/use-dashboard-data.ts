@@ -6,6 +6,7 @@ import { useListResources, useListSchedules, useListStaff } from '@iziwellpass/a
 import { useAllMembers } from '@/lib/all-members';
 import { useCheckInsByDate } from '@/lib/dated-api';
 import { venueToday } from '@/lib/datetime';
+import { useNow } from '@/lib/use-now';
 import { useTodaySnapshot } from '@/lib/use-today-snapshot';
 
 export type { QueryLike } from '@/components/checkin/query-like';
@@ -18,6 +19,11 @@ export type { QueryLike } from '@/components/checkin/query-like';
  * shared by the KPI row, the command bar, the feed and the participants sheet.
  */
 export function useDashboardData(venueId: string, timeZone: string | undefined) {
+  // Re-render at least once a minute so `todayKey` follows the clock — a
+  // dashboard left open across midnight otherwise keeps yesterday's day key
+  // until some unrelated state change forces a render (spec: « Aujourd'hui »
+  // must mean the new day on the next render).
+  useNow(60_000);
   const todayKey = venueToday(timeZone);
 
   const today = useTodaySnapshot(venueId, todayKey);

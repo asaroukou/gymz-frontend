@@ -18,6 +18,7 @@ import {
   getListBookingsForSlotQueryKey,
   getListCheckInsQueryKey,
   getListSlotsQueryKey,
+  getVenueTodayQueryKey,
   useCancelBooking,
   useCheckInManual,
   useCreateBooking,
@@ -101,6 +102,7 @@ function CancelBookingDialog({
             queryKey: getListBookingsForSlotQueryKey(booking.slot_id),
           });
           void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(venueId) });
           onOpenChange(false);
         },
         onError: (err) => {
@@ -212,6 +214,7 @@ function AddParticipant({
           toast.success(t('addBooking.success'));
           void queryClient.invalidateQueries({ queryKey: getListBookingsForSlotQueryKey(slotId) });
           void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(venueId) });
           setMemberId('');
           setInlineError(null);
         },
@@ -228,6 +231,7 @@ function AddParticipant({
               queryKey: getListBookingsForSlotQueryKey(slotId),
             });
             void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
+            void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(venueId) });
             return;
           }
           toast.error(apiErrorMessage(err, t('addBooking.error')));
@@ -332,6 +336,7 @@ export function BookingsSheet({
           void queryClient.invalidateQueries({ queryKey: getListBookingsForSlotQueryKey(slot.id) });
           void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(venueId) });
           void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(venueId) });
         },
         onError: (err) => toast.error(apiErrorMessage(err, t('bookings.validateError'))),
         onSettled: () => setValidatingBookingId(null),

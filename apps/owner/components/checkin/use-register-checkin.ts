@@ -21,7 +21,7 @@ import { useUpgradeToast } from '@/components/capabilities/use-upgrade-toast';
 import { apiErrorMessage } from '@/lib/api-error';
 import { qrErrorMessage, walkinErrorFallback } from '@/lib/checkin-errors';
 import { memberName } from '@/lib/member-search';
-import { isFeatureNotAvailable } from '@/lib/plan-errors';
+import { isFeatureNotAvailable, isForbidden } from '@/lib/plan-errors';
 import { checkinRouteFor, decodeQrToken } from '@/lib/qr-token';
 
 export interface RegisterCheckin {
@@ -98,6 +98,14 @@ export function useRegisterCheckin({
           // generic error (ruling R1); the pass route is never plan-gated.
           if (route !== 'pass' && isFeatureNotAvailable(err)) {
             showUpgrade('qr_checkin', tCap('action.qrCheckin'));
+            return;
+          }
+          // A plain permission 403 on a venue route (spec §6.5/§9): the
+          // member's own toast copy would be misleading, so it gets the
+          // generic « Accès refusé. » instead. The pass route is never
+          // permission-gated the same way — it keeps its own error handling.
+          if (route !== 'pass' && isForbidden(err)) {
+            toast.error(apiErrorMessage(err, tCap('toast.forbidden')));
             return;
           }
           // The pass flow's most common failure: another day, another venue,

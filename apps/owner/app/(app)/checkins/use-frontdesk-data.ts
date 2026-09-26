@@ -16,8 +16,8 @@ export type { QueryLike } from '@/components/checkin/query-like';
  * render of the check-in screen. The shared member list is fetched once and
  * reused by the manual-check-in lookup and the live feed (name resolution);
  * staff resolves the "recorded by" label. All four are threaded down as
- * props; a successful check-in invalidates the check-in + attendance query
- * keys so the feed and stats refresh live.
+ * props; a successful check-in invalidates the check-in, attendance and
+ * today-snapshot query keys so the feed and stats refresh live.
  */
 export function useFrontdeskData(venueId: string, timeZone: string | undefined) {
   // checkins require a `date` param the generated client can't send — see

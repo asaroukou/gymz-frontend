@@ -65,7 +65,8 @@ function LoadingState() {
  * The desk once a venue is selected. `useFrontdeskData` fans out the day
  * snapshot, check-ins, members and staff in parallel; the command, strip and
  * feed render from that shared data. A successful check-in invalidates the
- * check-in and today-snapshot keys, so the feed and stats update live.
+ * check-in, attendance and today-snapshot keys, so the feed and stats update
+ * live.
  */
 function FrontdeskBody({
   venueId,

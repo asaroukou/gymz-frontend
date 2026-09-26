@@ -12,6 +12,7 @@ import { z } from 'zod';
 import {
   getListSchedulesQueryKey,
   getListSlotsQueryKey,
+  getVenueTodayQueryKey,
   useCreateSchedule,
   useUpdateSchedule,
 } from '@iziwellpass/api/generated';
@@ -333,6 +334,7 @@ export function AddScheduleDialog({
           toast.success(t('scheduleDialog.createSuccess'));
           void queryClient.invalidateQueries({ queryKey: getListSchedulesQueryKey(venueId) });
           void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(venueId) });
           resetAll();
           setOpen(false);
         },
@@ -465,6 +467,7 @@ export function EditScheduleDialog({
           toast.success(t('scheduleDialog.updateSuccess'));
           void queryClient.invalidateQueries({ queryKey: getListSchedulesQueryKey(venueId) });
           void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
+          void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(venueId) });
           onOpenChange(false);
         },
         onError: (err) => {

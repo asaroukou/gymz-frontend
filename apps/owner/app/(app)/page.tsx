@@ -20,7 +20,7 @@ import { CheckinFeed } from '@/components/checkin/checkin-feed';
 import type { CheckinMode } from '@/components/checkin/checkin-modes';
 import { useRegisterCheckin } from '@/components/checkin/use-register-checkin';
 import { todayLabel } from '@/lib/datetime';
-import { attentionRows } from '@/lib/today';
+import { attentionRows, type DaySelection } from '@/lib/today';
 import { attendanceOf } from '@/lib/use-today-snapshot';
 import { useVenueContext } from '@/lib/venue-context';
 
@@ -88,6 +88,10 @@ function DashboardBody({
   );
   const [mode, setMode] = useState<CheckinMode>('qr');
   const [tab, setTab] = useState<Tab>('schedule');
+  // Lifted out of `TodayTiles` (which lives inside `TabsContent` and remounts
+  // on every tab switch): the picked day must survive switching to another
+  // tab and back rather than silently resetting to « Aujourd'hui ».
+  const [daySelection, setDaySelection] = useState<DaySelection>({ kind: 'today' });
   // D12 fallback: when a resolved row's own button is gone by the time a
   // sheet/dialog closes (the refetch already removed it), focus goes to the
   // tab trigger rather than the document body.
@@ -133,7 +137,10 @@ function DashboardBody({
           onValueChange={(value) => setTab(value as Tab)}
           className="w-full items-center gap-6"
         >
-          <TabsList aria-label={t('tabs.label')} className="max-w-full overflow-x-auto">
+          <TabsList
+            aria-label={t('tabs.label')}
+            className="-m-2 max-w-full overflow-x-auto p-2"
+          >
             <TabsTrigger value="schedule">
               <span className="md:hidden">{t('tabs.scheduleShort')}</span>
               <span className="hidden md:inline">{t('tabs.schedule')}</span>
@@ -149,7 +156,14 @@ function DashboardBody({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="schedule" className="w-full">
-            <TodayTiles venueId={venueId} timeZone={timeZone} todayKey={todayKey} today={today} />
+            <TodayTiles
+              venueId={venueId}
+              timeZone={timeZone}
+              todayKey={todayKey}
+              today={today}
+              selection={daySelection}
+              onSelectionChange={setDaySelection}
+            />
           </TabsContent>
           <TabsContent value="checkins" className="flex w-full justify-center">
             <CheckinFeed

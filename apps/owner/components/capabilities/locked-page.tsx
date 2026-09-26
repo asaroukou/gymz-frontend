@@ -32,6 +32,11 @@ export function LockedPage({ capability, title }: { capability: Capability; titl
   const locked = CONSOLE_CAPABILITIES.filter((cap) => !has(cap));
   const granted = CONSOLE_CAPABILITIES.filter((cap) => has(cap));
   const salesEmail = process.env.NEXT_PUBLIC_SALES_EMAIL;
+  const upgrade = upgradeHref(salesEmail, t('page.mailSubject', { plan }));
+  // No sales e-mail configured: `upgradeHref` falls back to the internal
+  // `/plan` route, which must go through next/link — a raw <a> would force a
+  // full page reload for a same-app navigation.
+  const isMailUpgrade = upgrade.startsWith('mailto:');
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-6 py-16">
@@ -66,9 +71,11 @@ export function LockedPage({ capability, title }: { capability: Capability; titl
         {canManagePlan(role) ? (
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Button asChild>
-              <a href={upgradeHref(salesEmail, t('page.mailSubject', { plan }))}>
-                {t('locked.upgrade', { plan })}
-              </a>
+              {isMailUpgrade ? (
+                <a href={upgrade}>{t('locked.upgrade', { plan })}</a>
+              ) : (
+                <Link href={upgrade}>{t('locked.upgrade', { plan })}</Link>
+              )}
             </Button>
             <Button asChild variant="ghost">
               <Link href="/plan">{t('locked.compare')}</Link>

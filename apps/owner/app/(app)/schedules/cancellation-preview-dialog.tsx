@@ -10,6 +10,7 @@ import { unwrap } from '@iziwellpass/api/client';
 import {
   getListSchedulesQueryKey,
   getListSlotsQueryKey,
+  getVenueTodayQueryKey,
   useCancelSchedule,
   useCancelSlot,
   useScheduleCancellationPreview,
@@ -125,6 +126,7 @@ export function CancellationPreviewDialog({
         void queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey(venueId) });
         if (target.kind === 'schedule')
           void queryClient.invalidateQueries({ queryKey: getListSchedulesQueryKey(venueId) });
+        void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(venueId) });
         onOpenChange(false);
       },
       onError: (err: unknown) => {

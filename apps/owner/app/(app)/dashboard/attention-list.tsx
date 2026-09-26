@@ -86,10 +86,10 @@ export function AttentionList({
   // Radix has already restored focus onto that same button — the button then
   // unmounts a beat later, and the browser drops focus to <body> on its own.
   // Catch that here, but only for a close *this component* just triggered:
-  // the today snapshot also refetches on window focus and as lifecycles
-  // change over time, and those unrelated refetches must never yank focus
-  // into the page just because it happens to be sitting on <body> (e.g. the
-  // user is in the browser chrome, or on another tab entirely). `armPendingRestore`
+  // the today snapshot also refetches on window focus and on its own 60s
+  // interval, and those unrelated refetches must never yank focus into the
+  // page just because it happens to be sitting on <body> (e.g. the user is in
+  // the browser chrome, or on another tab entirely). `armPendingRestore`
   // records which row's resolution we're watching for and the snapshot in
   // flight when we started watching; the effect below only acts once a *new*
   // snapshot has actually landed, then disarms itself either way so it never
@@ -158,7 +158,7 @@ export function AttentionList({
               key={slot.slot_id}
               className="flex min-h-16 flex-wrap items-center gap-x-6 gap-y-2 py-3"
             >
-              <span className="w-14 font-numeric text-md">{slotTime(slot, timeZone)}</span>
+              <span className="w-20 font-numeric text-lg">{slotTime(slot, timeZone)}</span>
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="flex items-center gap-2 text-base font-medium">
                   <span className="truncate">{slot.title ?? '—'}</span>

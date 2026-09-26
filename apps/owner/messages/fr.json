@@ -289,7 +289,6 @@
     },
     "errors": {
       "venues": "Impossible de charger les établissements",
-      "slots": "Impossible de charger les créneaux",
       "checkins": "Impossible de charger les passages",
       "loadTitle": "Une erreur est survenue",
       "today": "Impossible de charger la journée.",
