@@ -34,7 +34,7 @@ import {
 } from '@iziwellpass/ui/components/select';
 import { Switch } from '@iziwellpass/ui/components/switch';
 
-import { apiErrorMessage } from '@/lib/api-error';
+import { useToastApiError } from '@/components/capabilities/use-upgrade-toast';
 import { venueToday } from '@/lib/datetime';
 import { formatMoney } from '@/lib/money';
 import { useVenueContext } from '@/lib/venue-context';
@@ -51,10 +51,12 @@ import { useVenueContext } from '@/lib/venue-context';
 export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
   const t = useTranslations('members');
   const tCommon = useTranslations('common');
+  const tCap = useTranslations('capabilities');
   const locale = useLocale();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const assign = useAssignSubscription();
+  const toastApiError = useToastApiError();
 
   const { venues, selectedVenueId } = useVenueContext();
   const [venueId, setVenueId] = useState<string>(selectedVenueId ?? '');
@@ -103,7 +105,11 @@ export function AssignSubscriptionDialog({ memberId }: { memberId: string }) {
           setOpen(false);
         },
         onError: (err) =>
-          toast.error(apiErrorMessage(err, t('detail.subscriptions.assignDialog.error'))),
+          toastApiError(err, {
+            fallback: t('detail.subscriptions.assignDialog.error'),
+            capability: 'activity_pricing',
+            action: tCap('action.subscriptionAssign'),
+          }),
       },
     );
   };

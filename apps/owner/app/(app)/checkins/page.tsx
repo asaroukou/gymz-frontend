@@ -21,6 +21,7 @@ import { useRegisterCheckin } from '@/components/checkin/use-register-checkin';
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage } from '@/lib/api-error';
 import { todayLabel } from '@/lib/datetime';
+import { attendanceOf } from '@/lib/use-today-snapshot';
 import { useVenueContext } from '@/lib/venue-context';
 
 import { DayStats } from './day-stats';
@@ -61,10 +62,11 @@ function LoadingState() {
 }
 
 /**
- * The desk once a venue is selected. `useFrontdeskData` fans out attendance,
- * check-ins, members and staff in parallel; the command, strip and feed render
- * from that shared data. A successful check-in invalidates the check-in and
- * attendance keys, so the feed and stats update live.
+ * The desk once a venue is selected. `useFrontdeskData` fans out the day
+ * snapshot, check-ins, members and staff in parallel; the command, strip and
+ * feed render from that shared data. A successful check-in invalidates the
+ * check-in, attendance and today-snapshot keys, so the feed and stats update
+ * live.
  */
 function FrontdeskBody({
   venueId,
@@ -79,7 +81,7 @@ function FrontdeskBody({
 }) {
   const t = useTranslations('frontdesk');
   const tMembers = useTranslations('members');
-  const { attendance, checkIns, members, staff } = useFrontdeskData(venueId, timeZone);
+  const { today, checkIns, members, staff } = useFrontdeskData(venueId, timeZone);
 
   const list = useMemo(() => members.data ?? [], [members.data]);
   const memberById = useMemo(() => new Map(list.map((m) => [m.id, m])), [list]);
@@ -115,7 +117,7 @@ function FrontdeskBody({
         </p>
       </Hero>
       <HubSection>
-        <DayStats attendance={attendance} />
+        <DayStats attendance={attendanceOf(today)} />
       </HubSection>
       <HubSection>
         <CheckinFeed

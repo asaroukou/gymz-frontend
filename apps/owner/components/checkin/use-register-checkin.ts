@@ -9,6 +9,7 @@ import { ApiError } from '@iziwellpass/api/client';
 import {
   getGetAttendanceQueryKey,
   getListCheckInsQueryKey,
+  getVenueTodayQueryKey,
   useCheckInViaQr,
   useCheckInWalkin,
   useCheckInWalkinQr,
@@ -16,9 +17,11 @@ import {
 } from '@iziwellpass/api/generated';
 import type { ApiResponseCheckIn, Member } from '@iziwellpass/api/schemas';
 
+import { useUpgradeToast } from '@/components/capabilities/use-upgrade-toast';
 import { apiErrorMessage } from '@/lib/api-error';
 import { qrErrorMessage, walkinErrorFallback } from '@/lib/checkin-errors';
 import { memberName } from '@/lib/member-search';
+import { isFeatureNotAvailable, isForbidden } from '@/lib/plan-errors';
 import { checkinRouteFor, decodeQrToken } from '@/lib/qr-token';
 
 export interface RegisterCheckin {
@@ -32,11 +35,12 @@ export interface RegisterCheckin {
 
 /**
  * The one check-in engine behind both hubs. Success toasts the member's name
- * (or the pass-visitor label), invalidates the check-in and attendance keys
- * of the venue the SERVER resolved — a pass token sends no venue_id, so a
- * tenant-wide owner with another venue selected would otherwise see a toast
- * while the scanned venue's feed never moves — and then runs `onSuccess` so
- * the caller can clear and refocus the bar for the next scan.
+ * (or the pass-visitor label), invalidates the check-in, attendance and
+ * today-snapshot keys of the venue the SERVER resolved — a pass token sends
+ * no venue_id, so a tenant-wide owner with another venue selected would
+ * otherwise see a toast while the scanned venue's feed never moves — and
+ * then runs `onSuccess` so the caller can clear and refocus the bar for the
+ * next scan.
  */
 export function useRegisterCheckin({
   venueId,
@@ -47,6 +51,8 @@ export function useRegisterCheckin({
 }): RegisterCheckin {
   const t = useTranslations('frontdesk');
   const tCommon = useTranslations('common');
+  const tCap = useTranslations('capabilities');
+  const showUpgrade = useUpgradeToast();
   const queryClient = useQueryClient();
   const viaQr = useCheckInViaQr();
   const walkinQr = useCheckInWalkinQr();
@@ -69,6 +75,7 @@ export function useRegisterCheckin({
       const checkedInVenueId = res.data.venue_id;
       void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(checkedInVenueId) });
       void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(checkedInVenueId) });
+      void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(checkedInVenueId) });
       after?.();
     },
     [memberById, queryClient, t, tCommon],
@@ -87,6 +94,20 @@ export function useRegisterCheckin({
       const handlers = {
         onSuccess: (res: ApiResponseCheckIn) => settle(res, after),
         onError: (err: unknown) => {
+          // Plan-gated venue routes surface the upgrade toast instead of a
+          // generic error (ruling R1); the pass route is never plan-gated.
+          if (route !== 'pass' && isFeatureNotAvailable(err)) {
+            showUpgrade('qr_checkin', tCap('action.qrCheckin'));
+            return;
+          }
+          // A plain permission 403 on a venue route (spec §6.5/§9): the
+          // member's own toast copy would be misleading, so it gets the
+          // generic « Accès refusé. » instead. The pass route is never
+          // permission-gated the same way — it keeps its own error handling.
+          if (route !== 'pass' && isForbidden(err)) {
+            toast.error(apiErrorMessage(err, tCap('toast.forbidden')));
+            return;
+          }
           // The pass flow's most common failure: another day, another venue,
           // or already used. Gets its own copy rather than the generic fallback.
           const isPassNotSettleable =
@@ -111,7 +132,7 @@ export function useRegisterCheckin({
       // authoritative error, and a future token format keeps working.
       viaQr.mutate({ data: { qr_token: token, venue_id: venueId } }, handlers);
     },
-    [isPending, pass, settle, t, venueId, viaQr, walkinQr],
+    [isPending, pass, settle, showUpgrade, t, tCap, venueId, viaQr, walkinQr],
   );
 
   const submitWalkin = useCallback<RegisterCheckin['submitWalkin']>(

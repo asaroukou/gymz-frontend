@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-import type { AttendanceStats } from '@iziwellpass/api/schemas';
+import type { TodayAttendance } from '@iziwellpass/api/schemas';
 import { Stat, StatPanel } from '@iziwellpass/ui/components/stat';
 
 import { useCountUp } from '@/lib/use-count-up';
@@ -15,7 +15,7 @@ import type { QueryLike } from './use-frontdesk-data';
  * short « Uniques » on a phone, as drawn), occupancy. Occupancy eases up when
  * a check-in lands (useCountUp); the other two snap.
  */
-export function DayStats({ attendance }: { attendance: QueryLike<AttendanceStats> }) {
+export function DayStats({ attendance }: { attendance: QueryLike<TodayAttendance> }) {
   const t = useTranslations('frontdesk');
   const isDesktop = useIsDesktop();
   const stats = attendance.isError ? undefined : attendance.data;
@@ -30,7 +30,7 @@ export function DayStats({ attendance }: { attendance: QueryLike<AttendanceStats
       />
       <Stat
         label={isDesktop ? t('stats.uniqueMembers') : t('stats.uniqueMembersShort')}
-        value={stats ? String(stats.unique_members) : null}
+        value={stats ? String(stats.unique_attendees) : null}
         isLoading={attendance.isLoading}
       />
       <Stat

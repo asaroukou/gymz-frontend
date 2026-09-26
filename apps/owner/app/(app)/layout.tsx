@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useAuth, useSession } from '@iziwellpass/auth/provider';
 import { AppShell, type NavGroup } from '@iziwellpass/ui/app-shell';
@@ -26,7 +27,10 @@ import {
 } from '@iziwellpass/ui/components/dropdown-menu';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
-import { navGroupsForRole, type NavLabelKey } from '@/lib/nav';
+import { CapabilitiesProvider, useCapabilities } from '@/components/capabilities/capabilities-provider';
+import { NavLock } from '@/components/capabilities/nav-lock';
+import { PlanRow } from '@/components/capabilities/plan-row';
+import { navGroupsForRole, type NavLabelKey, type OwnerNavGroup } from '@/lib/nav';
 import { VenueProvider } from '@/lib/venue-context';
 import { VenueSwitcher } from '@/components/venue-switcher';
 
@@ -66,11 +70,17 @@ function UserMenu({ variant = 'avatar' }: { variant?: 'avatar' | 'row' }) {
   const { signOut } = useAuth();
   const session = useSession();
   const t = useTranslations('shell');
+  const queryClient = useQueryClient();
   const email = session.status === 'signed-in' ? session.claims.email : null;
   const name = session.status === 'signed-in' ? (session.claims.name ?? email) : null;
   const role = session.status === 'signed-in' ? session.claims.role : null;
 
   const handleSignOut = () => {
+    // Capabilities and every other tenant-scoped query use staleTime Infinity
+    // within a session (spec T6); clearing the cache here — not just on the
+    // next sign-in — is what stops a shared device from carrying tenant A's
+    // plan and locks into tenant B's session (T7).
+    queryClient.clear();
     signOut();
     router.replace('/login');
   };
@@ -124,14 +134,15 @@ function LoadingShell() {
   );
 }
 
-export default function AppLayout({ children }: { children: ReactNode }) {
-  const router = useRouter();
+/**
+ * The shell, rendered inside the venue and capabilities providers so nav
+ * items can carry a plan lock (spec §6.1).
+ */
+function Shell({ groups, children }: { groups: OwnerNavGroup[]; children: ReactNode }) {
   const pathname = usePathname();
-  const session = useSession();
   const tNav = useTranslations('nav');
   const tShell = useTranslations('shell');
-  const groups = session.status === 'signed-in' ? navGroupsForRole(session.claims.role) : [];
-  const navItemCount = groups.reduce((count, group) => count + group.items.length, 0);
+  const { isLocked } = useCapabilities();
   const navGroups: NavGroup[] = groups.map((group) => ({
     label: group.scope === 'org' ? tNav('organizationGroup') : undefined,
     items: group.items.map((item) => {
@@ -140,12 +151,60 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         title: tNav(item.labelKey),
         href: item.href,
         icon: <Icon aria-hidden />,
+        trailing:
+          item.capability && isLocked(item.capability) ? (
+            <NavLock capability={item.capability} />
+          ) : undefined,
       };
     }),
   }));
 
+  return (
+    <AppShell
+      title="IziWellPass"
+      navGroups={navGroups}
+      navFooter={
+        <>
+          <PlanRow />
+          <VenueSwitcher className="w-full" />
+          <UserMenu variant="row" />
+        </>
+      }
+      navFooterCollapsed={
+        <>
+          <PlanRow collapsed />
+          <VenueSwitcher iconOnly />
+          <UserMenu />
+        </>
+      }
+      collapseLabel={tShell('collapseMenu')}
+      expandLabel={tShell('expandMenu')}
+      linkComponent={NavLink}
+      currentPath={pathname}
+      openMenuLabel={tShell('openMenu')}
+      leading={<VenueSwitcher compact className="max-w-[200px]" />}
+      actions={<UserMenu />}
+    >
+      {children}
+    </AppShell>
+  );
+}
+
+export default function AppLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const session = useSession();
+  const queryClient = useQueryClient();
+  const groups = session.status === 'signed-in' ? navGroupsForRole(session.claims.role) : [];
+  const navItemCount = groups.reduce((count, group) => count + group.items.length, 0);
+
   useEffect(() => {
     if (session.status === 'signed-out') {
+      // Belt-and-braces alongside the UserMenu sign-out handler: any path
+      // that lands here signed-out (another tab signing out, a token that
+      // expired) must not leave the previous tenant's capabilities/plan
+      // cached for whoever signs in next on this device (spec T7).
+      queryClient.clear();
       router.replace('/login?next=' + encodeURIComponent(pathname));
       return;
     }
@@ -154,7 +213,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       // instead of stranding them on a dead-end "no access" screen.
       router.replace('/onboarding');
     }
-  }, [session.status, navItemCount, router, pathname]);
+  }, [session.status, navItemCount, router, pathname, queryClient]);
 
   if (session.status === 'loading') {
     return <LoadingShell />;
@@ -174,31 +233,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <VenueProvider>
-      <AppShell
-        title="IziWellPass"
-        navGroups={navGroups}
-        navFooter={
-          <>
-            <VenueSwitcher className="w-full" />
-            <UserMenu variant="row" />
-          </>
-        }
-        navFooterCollapsed={
-          <>
-            <VenueSwitcher iconOnly />
-            <UserMenu />
-          </>
-        }
-        collapseLabel={tShell('collapseMenu')}
-        expandLabel={tShell('expandMenu')}
-        linkComponent={NavLink}
-        currentPath={pathname}
-        openMenuLabel={tShell('openMenu')}
-        leading={<VenueSwitcher compact className="max-w-[200px]" />}
-        actions={<UserMenu />}
-      >
-        {children}
-      </AppShell>
+      <CapabilitiesProvider>
+        <Shell groups={groups}>{children}</Shell>
+      </CapabilitiesProvider>
     </VenueProvider>
   );
 }

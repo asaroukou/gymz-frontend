@@ -55,6 +55,63 @@
     "account": "Compte",
     "signOut": "Se déconnecter"
   },
+  "capabilities": {
+    "plan": {
+      "free": "Gratuit",
+      "starter": "Starter",
+      "pro": "Pro",
+      "enterprise": "Entreprise"
+    },
+    "cap": {
+      "activity_pricing": "Tarification par activité",
+      "qr_checkin": "Entrée par QR",
+      "staff_accounts": "Comptes équipe",
+      "multi_venue": "Plusieurs établissements",
+      "analytics": "Statistiques",
+      "member_self_service": "Espace membre",
+      "member_qr": "QR membre"
+    },
+    "benefit": {
+      "staff_accounts": "Invitez des administrateurs, des coachs et des réceptionnistes, chacun avec son propre accès.",
+      "multi_venue": "Gérez plusieurs établissements depuis la même console.",
+      "activity_pricing": "Créez des offres par activité et attribuez-les à vos membres.",
+      "qr_checkin": "Enregistrez les arrivées en scannant le QR du membre."
+    },
+    "locked": {
+      "availableWith": "Disponible avec le plan {plan}",
+      "description": "Disponible avec le plan {plan}. {benefit}",
+      "upgrade": "Passer au plan {plan}",
+      "compare": "Comparer les plans",
+      "relogin": "Un changement de plan est visible après reconnexion."
+    },
+    "row": {
+      "plan": "Plan {plan}",
+      "change": "Changer"
+    },
+    "toast": {
+      "upgrade": "Passez au plan {plan} pour {action}.",
+      "seePlans": "Voir les plans",
+      "forbidden": "Accès refusé."
+    },
+    "action": {
+      "staffInvite": "inviter un membre de l'équipe",
+      "venueCreate": "ajouter un établissement",
+      "planCreate": "créer une offre",
+      "subscriptionAssign": "attribuer une formule",
+      "qrCheckin": "enregistrer une arrivée par QR"
+    },
+    "page": {
+      "title": "Plan",
+      "current": "Vous êtes sur le plan {plan}.",
+      "feature": "Fonctionnalité",
+      "yours": "Votre plan",
+      "included": "Inclus",
+      "notIncluded": "Non inclus",
+      "contact": "Nous contacter",
+      "unknown": "Plan indisponible pour le moment.",
+      "mailSubject": "Passer au plan {plan}"
+    }
+  },
   "common": {
     "add": "Ajouter",
     "save": "Enregistrer",
@@ -186,11 +243,30 @@
     "tabs": {
       "label": "Sections du tableau de bord",
       "schedule": "Planning du jour",
-      "checkins": "Derniers passages"
+      "scheduleShort": "Planning",
+      "checkins": "Derniers passages",
+      "checkinsShort": "Passages",
+      "attention": "À régler",
+      "attentionCount": "À régler ({count})"
+    },
+    "day": {
+      "label": "Jour affiché",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "pick": "Choisir une date",
+      "input": "Date",
+      "emptyOther": "Aucune séance ce jour-là."
+    },
+    "tile": {
+      "completed": "Terminée",
+      "active": "En cours",
+      "attention": "À régler",
+      "cancelled": "Annulée",
+      "noInstructor": "Aucun intervenant",
+      "stats": "{arrived, plural, =1 {# arrivé} other {# arrivés}} · {booked, plural, =1 {# inscrit} other {# inscrits}} · {capacity, plural, =1 {# place} other {# places}}",
+      "capacityLabel": "{booked} inscrits sur {capacity} places"
     },
     "schedule": {
-      "full": "Complet",
-      "cancelled": "Annulé",
       "seeAll": "{count, plural, one {Voir la séance du jour} other {Voir les # séances du jour}}",
       "emptyTitle": "Aucun créneau aujourd'hui",
       "emptyBody": "Créez un planning pour générer les créneaux de la journée.",
@@ -213,9 +289,22 @@
     },
     "errors": {
       "venues": "Impossible de charger les établissements",
-      "slots": "Impossible de charger les créneaux",
       "checkins": "Impossible de charger les passages",
-      "loadTitle": "Une erreur est survenue"
+      "loadTitle": "Une erreur est survenue",
+      "today": "Impossible de charger la journée.",
+      "forbidden": "Accès refusé."
+    },
+    "attention": {
+      "reason": {
+        "no_instructor": "Aucun intervenant",
+        "over_capacity": "Au-delà de la capacité · {booked}/{capacity}",
+        "no_arrivals": "Personne n'est arrivé",
+        "unknown": "À régler"
+      },
+      "seeRoster": "Voir les participants",
+      "editCourse": "Modifier le cours",
+      "emptyTitle": "Rien à régler pour l'instant.",
+      "emptyBody": "Les séances sans arrivée, au-delà de la capacité ou sans intervenant apparaîtront ici."
     }
   },
   "frontdesk": {

@@ -39,6 +39,7 @@ import {
 } from '@iziwellpass/ui/components/select';
 import { Switch } from '@iziwellpass/ui/components/switch';
 
+import { useToastApiError } from '@/components/capabilities/use-upgrade-toast';
 import { useActivityTypeLabel } from '@/lib/activity-type';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import type { PlanFormValues } from '@/lib/plan-form';
@@ -91,10 +92,12 @@ export function PlanDialog({
 }) {
   const t = useTranslations('plans');
   const tCommon = useTranslations('common');
+  const tCap = useTranslations('capabilities');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const createPlan = useCreatePlan();
   const updatePlan = useUpdatePlan();
+  const toastApiError = useToastApiError();
   const activityLabel = useActivityTypeLabel();
   const isEdit = plan !== undefined;
 
@@ -150,7 +153,15 @@ export function PlanDialog({
       { id: venueId, data: toCreatePlanRequest(values) },
       {
         onSuccess: () => onDone(t('dialog.createSuccess')),
-        onError: (err) => onError(err, t('dialog.createError')),
+        onError: (err) => {
+          if (!applyFieldErrors(form, err)) {
+            toastApiError(err, {
+              fallback: t('dialog.createError'),
+              capability: 'activity_pricing',
+              action: tCap('action.planCreate'),
+            });
+          }
+        },
       },
     );
   };

@@ -19,6 +19,7 @@ import { Input } from '@iziwellpass/ui/components/input';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { WorkingHeader, WorkingPage } from '@iziwellpass/ui/components/working-page';
 
+import { RequireCapability } from '@/components/capabilities/require-capability';
 import { RequirePageAccess } from '@/components/page-access';
 import { RowsSkeleton } from '@/components/rows-skeleton';
 import { apiErrorMessage } from '@/lib/api-error';
@@ -107,9 +108,12 @@ function StaffContent() {
 }
 
 export default function StaffPage() {
+  const t = useTranslations('staff');
   return (
     <RequirePageAccess href="/staff">
-      <StaffContent />
+      <RequireCapability capability="staff_accounts" title={t('title')}>
+        <StaffContent />
+      </RequireCapability>
     </RequirePageAccess>
   );
 }

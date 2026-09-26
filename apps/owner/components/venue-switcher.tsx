@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Building2Icon, ChevronsUpDownIcon, PlusIcon } from 'lucide-react';
+import { Building2Icon, ChevronsUpDownIcon, LockIcon, PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { useRole } from '@iziwellpass/auth/provider';
@@ -19,6 +19,8 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/components/tooltip';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
+import { useCapabilities } from '@/components/capabilities/capabilities-provider';
+import { useUpgradeToast } from '@/components/capabilities/use-upgrade-toast';
 import { useVenueContext } from '@/lib/venue-context';
 
 /** Matches `/venues/<id>` but not `/venues`, `/venues/new`. Captures the id. */
@@ -39,10 +41,13 @@ export function VenueSwitcher({
   iconOnly = false,
 }: { className?: string; compact?: boolean; iconOnly?: boolean } = {}) {
   const t = useTranslations('venueSwitcher');
+  const tCap = useTranslations('capabilities');
   const router = useRouter();
   const pathname = usePathname();
   const role = useRole();
   const canAddVenue = role === 'owner' || role === 'admin';
+  const { isLocked } = useCapabilities();
+  const showUpgrade = useUpgradeToast();
   const { venues, isLoading, isError, selectedVenueId, selectedVenue, setSelectedVenueId } =
     useVenueContext();
 
@@ -151,10 +156,21 @@ export function VenueSwitcher({
         {canAddVenue ? (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => router.push('/venues/new')}>
-              <PlusIcon aria-hidden />
-              {t('addVenue')}
-            </DropdownMenuItem>
+            {isLocked('multi_venue') ? (
+              <DropdownMenuItem
+                aria-disabled="true"
+                className="text-muted-foreground"
+                onSelect={() => showUpgrade('multi_venue', tCap('action.venueCreate'))}
+              >
+                <LockIcon aria-hidden />
+                {t('addVenue')}
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onSelect={() => router.push('/venues/new')}>
+                <PlusIcon aria-hidden />
+                {t('addVenue')}
+              </DropdownMenuItem>
+            )}
           </>
         ) : null}
       </DropdownMenuContent>

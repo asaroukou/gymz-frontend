@@ -21,6 +21,8 @@ export interface NavItem {
   title: string;
   href: string;
   icon?: ReactNode;
+  /** Rendered after the title (e.g. a plan lock); hidden on the collapsed rail. */
+  trailing?: ReactNode;
 }
 
 export interface NavGroup {
@@ -130,6 +132,11 @@ function NavGroupList({
               >
                 {item.icon}
                 <span className={collapsed ? 'sr-only' : undefined}>{item.title}</span>
+                {!collapsed && item.trailing ? (
+                  <span className="ml-auto flex items-center text-muted-foreground">
+                    {item.trailing}
+                  </span>
+                ) : null}
               </LinkComponent>
             );
             if (!collapsed) return link;

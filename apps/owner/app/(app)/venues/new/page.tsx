@@ -16,17 +16,22 @@ import { Button } from '@iziwellpass/ui/components/button';
 import { Form } from '@iziwellpass/ui/components/form';
 import { BackLink, WorkingHeader, WorkingPage } from '@iziwellpass/ui/components/working-page';
 
+import { RequireCapability } from '@/components/capabilities/require-capability';
+import { useToastApiError } from '@/components/capabilities/use-upgrade-toast';
 import { RequirePageAccess } from '@/components/page-access';
 import { VenueFormFields } from '@/components/venue-form-fields';
 import { ACTIVITY_TYPE_VALUES } from '@/lib/activity-type';
-import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import { applyFieldErrors } from '@/lib/api-error';
+import { useVenueContext } from '@/lib/venue-context';
 
 function CreateVenueContent() {
   const t = useTranslations('venues');
   const tCommon = useTranslations('common');
+  const tCap = useTranslations('capabilities');
   const router = useRouter();
   const queryClient = useQueryClient();
   const createVenue = useCreateVenue();
+  const toastApiError = useToastApiError();
 
   const schema = useMemo(
     () =>
@@ -82,7 +87,11 @@ function CreateVenueContent() {
         },
         onError: (err) => {
           if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, t('create.error')));
+            toastApiError(err, {
+              fallback: t('create.error'),
+              capability: 'multi_venue',
+              action: tCap('action.venueCreate'),
+            });
           }
         },
       },
@@ -116,9 +125,17 @@ function CreateVenueContent() {
 }
 
 export default function CreateVenuePage() {
+  const t = useTranslations('venues');
+  const { venues } = useVenueContext();
   return (
     <RequirePageAccess href="/venues">
-      <CreateVenueContent />
+      <RequireCapability
+        capability="multi_venue"
+        title={t('create.title')}
+        when={venues.length > 0}
+      >
+        <CreateVenueContent />
+      </RequireCapability>
     </RequirePageAccess>
   );
 }

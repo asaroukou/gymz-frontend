@@ -1,3 +1,4 @@
+import type { Capability } from '@iziwellpass/api/schemas';
 import type { Role } from '@iziwellpass/auth/claims';
 
 /** Key into the `nav` i18n namespace; the app resolves it to a display label. */
@@ -11,6 +12,8 @@ export interface OwnerNavItem {
   href: string;
   roles: readonly Role[];
   scope: NavScope;
+  /** Plan capability the page needs; the shell shows a lock when the tenant lacks it. */
+  capability?: Capability;
 }
 
 const STAFF_ROLES = ['owner', 'admin', 'trainer', 'receptionist'] as const;
@@ -19,7 +22,7 @@ export const NAV_ITEMS: readonly OwnerNavItem[] = [
   { labelKey: 'dashboard', href: '/', roles: STAFF_ROLES, scope: 'venue' },
   { labelKey: 'frontdesk', href: '/checkins', roles: STAFF_ROLES, scope: 'venue' },
   { labelKey: 'planning', href: '/schedules', roles: STAFF_ROLES, scope: 'venue' },
-  { labelKey: 'plans', href: '/plans', roles: ['owner', 'admin'], scope: 'venue' },
+  { labelKey: 'plans', href: '/plans', roles: ['owner', 'admin'], scope: 'venue', capability: 'activity_pricing' },
   {
     labelKey: 'members',
     href: '/members',
@@ -27,7 +30,7 @@ export const NAV_ITEMS: readonly OwnerNavItem[] = [
     scope: 'org',
   },
   { labelKey: 'venues', href: '/venues', roles: ['owner', 'admin'], scope: 'org' },
-  { labelKey: 'staff', href: '/staff', roles: ['owner', 'admin'], scope: 'org' },
+  { labelKey: 'staff', href: '/staff', roles: ['owner', 'admin'], scope: 'org', capability: 'staff_accounts' },
 ];
 
 export function navForRole(role: Role | null): { labelKey: NavLabelKey; href: string }[] {
@@ -45,7 +48,7 @@ export function navForRole(role: Role | null): { labelKey: NavLabelKey; href: st
 
 export interface OwnerNavGroup {
   scope: NavScope;
-  items: { labelKey: NavLabelKey; href: string }[];
+  items: { labelKey: NavLabelKey; href: string; capability?: Capability }[];
 }
 
 /**
@@ -66,10 +69,18 @@ export function navGroupsForRole(role: Role | null): OwnerNavGroup[] {
       scope,
       items: visible
         .filter((i) => i.scope === scope)
-        .map(({ labelKey, href }) => ({ labelKey, href })),
+        .map(({ labelKey, href, capability }) => ({ labelKey, href, capability })),
     }))
     .filter((g) => g.items.length > 0);
 }
+
+/**
+ * Pages reachable only by URL or in-page links (no nav entry), with the
+ * roles allowed in. `canAccessPath` consults them after `NAV_ITEMS`.
+ */
+const HIDDEN_ROUTES: readonly { href: string; roles: readonly Role[] }[] = [
+  { href: '/plan', roles: ['owner', 'admin'] },
+];
 
 /**
  * True when `role` may access the page at `href`. Platform admins always
@@ -83,7 +94,7 @@ export function canAccessPath(role: Role | null, href: string): boolean {
   if (role === 'platform_admin') {
     return true;
   }
-  const item = NAV_ITEMS.find((i) => i.href === href);
+  const item = NAV_ITEMS.find((i) => i.href === href) ?? HIDDEN_ROUTES.find((i) => i.href === href);
   if (!item) {
     return true;
   }

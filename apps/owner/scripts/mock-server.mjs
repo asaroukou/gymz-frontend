@@ -47,6 +47,13 @@
 //   - Venue gallery: `venue-dakar-01` starts with three seeded photos;
 //     uploads go to the same-origin `/api/backend/__media/<key>` (no auth),
 //     mirroring the presigned S3 PUT; state resets on restart.
+//   - `GET /gms/v1/venues/venue-dakar-01/today` shows all three « À régler »
+//     reasons: `slot-06` is running with nobody arrived, `slot-07`
+//     (« Stretching midi ») has bookings but no instructor, `slot-08` is
+//     overbooked (4 / 3).
+//   - `MOCK_PLAN=free|starter|pro|enterprise` (default `pro`) sets the plan
+//     `GET /gms/v1/capabilities` returns; gated routes answer
+//     403 FEATURE_NOT_AVAILABLE when the plan lacks the capability.
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { crc32, deflateSync } from 'node:zlib';
@@ -659,6 +666,24 @@ const schedules = [
     updated_at: iso(daysFromNow(-150)),
     version: iso(daysFromNow(-1)),
   },
+  {
+    id: 'sch-stretch-01',
+    tenant_id: TENANT_ID,
+    venue_id: VENUE_1,
+    resource_id: 'res-plateau-01',
+    instructor_staff_id: undefined,
+    title: 'Stretching midi',
+    start_time: '12:15:00',
+    end_time: '13:00:00',
+    recurrence_rule: 'FREQ=DAILY',
+    effective_from: dateOnly(daysFromNow(-30)),
+    effective_until: undefined,
+    description: undefined,
+    is_active: true,
+    created_at: iso(daysFromNow(-30)),
+    updated_at: iso(daysFromNow(-30)),
+    version: iso(daysFromNow(-1)),
+  },
 ];
 
 // --- seed: today's slots -----------------------------------------------------
@@ -690,6 +715,10 @@ const slots = [
   mkSlot('slot-03', 'sch-crossfit-01', 'res-plateau-01', VENUE_1, 1, 1, 40),
   mkSlot('slot-04', 'sch-danse-01', 'res-yoga-01', VENUE_1, 3, 1, 20),
   mkSlot('slot-05', 'sch-yoga-01', 'res-yoga-01', VENUE_1, 6, 1, 20),
+  // « À régler » demo hooks (see header).
+  mkSlot('slot-06', 'sch-yoga-01', 'res-yoga-01', VENUE_1, -0.25, 1, 12),
+  mkSlot('slot-07', 'sch-stretch-01', 'res-plateau-01', VENUE_1, 2, 0.75, 16),
+  mkSlot('slot-08', 'sch-crossfit-01', 'res-plateau-01', VENUE_1, 4.5, 1, 3),
 ];
 
 // --- seed: bookings ------------------------------------------------------------
@@ -754,6 +783,16 @@ const bookings = [
   mkBooking('bkg-08', 'slot-04', 'mbr-09', 'confirmed'),
   mkBooking('bkg-09', 'slot-04', 'mbr-11', 'confirmed'),
   mkBooking('bkg-10', 'slot-05', 'mbr-02', 'confirmed'),
+  // slot-06: running, nobody checked in yet.
+  mkBooking('bkg-11', 'slot-06', 'mbr-04', 'confirmed'),
+  mkBooking('bkg-12', 'slot-06', 'mbr-06', 'confirmed'),
+  // slot-07: booked on a course with no instructor.
+  mkBooking('bkg-13', 'slot-07', 'mbr-08', 'confirmed'),
+  // slot-08: overbooked, 4 on 3 places.
+  mkBooking('bkg-14', 'slot-08', 'mbr-02', 'confirmed'),
+  mkBooking('bkg-15', 'slot-08', 'mbr-03', 'confirmed'),
+  mkBooking('bkg-16', 'slot-08', 'mbr-10', 'confirmed'),
+  mkBooking('bkg-17', 'slot-08', 'mbr-12', 'confirmed'),
 ];
 
 // Bumps a slot/schedule's optimistic-concurrency token after a mutation.
@@ -963,6 +1002,64 @@ const validationError = (details) => [
 ];
 const badRequest = (message) => [400, errorBody('VALIDATION_ERROR', message)];
 const unauthorized = (message) => [401, errorBody('UNAUTHORIZED', message)];
+
+// ---- plan capabilities (mirrors capabilities_for) ------------------------------
+const ALL_CAPABILITIES = [
+  'activity_pricing',
+  'qr_checkin',
+  'staff_accounts',
+  'multi_venue',
+  'analytics',
+  'member_self_service',
+  'member_qr',
+];
+const PLAN_CAPABILITIES = {
+  free: [],
+  starter: ['activity_pricing', 'qr_checkin', 'staff_accounts', 'member_self_service'],
+  pro: ALL_CAPABILITIES,
+  enterprise: ALL_CAPABILITIES,
+};
+const MOCK_PLAN = (() => {
+  const plan = process.env.MOCK_PLAN ?? 'pro';
+  if (!(plan in PLAN_CAPABILITIES)) {
+    console.warn(`[mock] unknown MOCK_PLAN "${plan}", using "pro"`);
+    return 'pro';
+  }
+  return plan;
+})();
+const planHas = (cap) => PLAN_CAPABILITIES[MOCK_PLAN].includes(cap);
+
+// Routes the backend guards with `require_feature`. `when` narrows a gate
+// (the first venue is created through onboarding, never refused).
+const FEATURE_GATES = [
+  { method: 'POST', pattern: /^\/gms\/v1\/staff\/invite$/, capability: 'staff_accounts' },
+  {
+    method: 'POST',
+    pattern: /^\/gms\/v1\/venues$/,
+    capability: 'multi_venue',
+    when: () => venues.length > 0,
+  },
+  { method: 'POST', pattern: /^\/gms\/v1\/venues\/[^/]+\/plans$/, capability: 'activity_pricing' },
+  {
+    method: 'POST',
+    pattern: /^\/gms\/v1\/members\/[^/]+\/subscriptions$/,
+    capability: 'activity_pricing',
+  },
+  { method: 'POST', pattern: /^\/gms\/v1\/checkins\/qr$/, capability: 'qr_checkin' },
+  { method: 'POST', pattern: /^\/gms\/v1\/checkins\/walkin\/qr$/, capability: 'qr_checkin' },
+];
+
+function featureGate(method, pathname) {
+  const gate = FEATURE_GATES.find(
+    (g) => g.method === method && g.pattern.test(pathname) && (!g.when || g.when()),
+  );
+  if (!gate || planHas(gate.capability)) return null;
+  return [403, errorBody('FEATURE_NOT_AVAILABLE', `Feature not available: ${gate.capability}`)];
+}
+
+function capabilitiesHandler() {
+  return [200, envelope({ plan: MOCK_PLAN, capabilities: PLAN_CAPABILITIES[MOCK_PLAN] })];
+}
 
 function requireFields(body, fields) {
   const details = [];
@@ -1340,6 +1437,131 @@ function listCheckInsHandler(venueId, query) {
     .filter((c) => c.venue_id === venueId && c.checked_in_at.slice(0, 10) === date)
     .sort((a, b) => b.checked_in_at.localeCompare(a.checked_in_at));
   return [200, envelope(list)];
+}
+
+// ---- today snapshot -------------------------------------------------------------
+function localDateKey(date, timeZone) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+function localRfc3339(date, timeZone) {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+      timeZoneName: 'longOffset',
+    })
+      .formatToParts(date)
+      .map((part) => [part.type, part.value]),
+  );
+  const offset = p.timeZoneName === 'GMT' ? '+00:00' : p.timeZoneName.replace('GMT', '');
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}${offset}`;
+}
+
+function lifecycleOf(slot, at) {
+  if (slot.status === 'cancelled') return 'cancelled';
+  if (Date.parse(slot.end_time) <= at) return 'completed';
+  if (Date.parse(slot.start_time) <= at) return 'active';
+  return 'upcoming';
+}
+
+function todayHandler(venueId, query) {
+  const venue = venues.find((v) => v.id === venueId);
+  if (!venue) return notFound(`Venue ${venueId} not found`);
+  const timeZone = venue.timezone ?? 'Africa/Dakar';
+  const at = Date.now();
+  const date = query.get('date') ?? localDateKey(new Date(at), timeZone);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
+    return badRequest('date must be YYYY-MM-DD');
+  }
+
+  const todaySlots = slots
+    .filter(
+      (s) => s.venue_id === venueId && localDateKey(new Date(s.start_time), timeZone) === date,
+    )
+    .sort((a, b) => a.start_time.localeCompare(b.start_time))
+    .map((s) => {
+      const schedule = schedules.find((x) => x.id === s.schedule_id);
+      const resource = resources.find((r) => r.id === s.resource_id);
+      const instructorId = schedule?.instructor_staff_id ?? null;
+      const instructor = instructorId ? staff.find((m) => m.id === instructorId) : undefined;
+      const lifecycle = lifecycleOf(s, at);
+      const checkedIn = bookings.filter(
+        (b) => b.slot_id === s.id && b.status === 'checked_in',
+      ).length;
+      const needsAttention =
+        lifecycle !== 'cancelled' &&
+        ((lifecycle === 'active' && checkedIn === 0) ||
+          s.booked_count > s.capacity ||
+          (s.booked_count > 0 && !instructorId));
+      return {
+        slot_id: s.id,
+        schedule_id: s.schedule_id,
+        resource_id: s.resource_id,
+        title: schedule?.title ?? null,
+        description: schedule?.description ?? null,
+        activity_type: null,
+        resource_name: resource?.name ?? null,
+        instructor_staff_id: instructorId,
+        instructor_name: instructor ? `${instructor.first_name} ${instructor.last_name}` : null,
+        start_utc: s.start_time,
+        end_utc: s.end_time,
+        start_local: localRfc3339(new Date(s.start_time), timeZone),
+        end_local: localRfc3339(new Date(s.end_time), timeZone),
+        capacity: s.capacity,
+        booked_count: s.booked_count,
+        checked_in_count: checkedIn,
+        lifecycle,
+        needs_attention: needsAttention,
+      };
+    });
+
+  const dayCheckIns = checkIns.filter(
+    (c) => c.venue_id === venueId && localDateKey(new Date(c.checked_in_at), timeZone) === date,
+  );
+  const attendees = new Set(
+    dayCheckIns.map((c) => (c.member_id ? `m:${c.member_id}` : `p:${c.pass_holder_id}`)),
+  );
+  const openCapacity = todaySlots
+    .filter((s) => s.lifecycle !== 'cancelled')
+    .reduce((sum, s) => sum + s.capacity, 0);
+  const idsWhere = (lifecycle) =>
+    todaySlots.filter((s) => s.lifecycle === lifecycle).map((s) => s.slot_id);
+
+  return [
+    200,
+    envelope({
+      venue_id: venueId,
+      timezone: timeZone,
+      local_date: date,
+      generated_at: iso(new Date(at)),
+      attendance: {
+        total_check_ins: dayCheckIns.length,
+        unique_attendees: attendees.size,
+        occupancy_pct:
+          openCapacity > 0 ? Math.round((dayCheckIns.length / openCapacity) * 1000) / 10 : 0,
+      },
+      slots: todaySlots,
+      buckets: {
+        upcoming: idsWhere('upcoming'),
+        active: idsWhere('active'),
+        completed: idsWhere('completed'),
+        cancelled: idsWhere('cancelled'),
+      },
+      needs_attention: todaySlots.filter((s) => s.needs_attention).map((s) => s.slot_id),
+    }),
+  ];
 }
 
 // ---- schedules ------------------------------------------------------------------
@@ -1976,6 +2198,12 @@ const routes = [
     pattern: /^\/gms\/v1\/venues\/([^/]+)$/,
     handler: (m, body) => updateVenueHandler(m[1], body),
   },
+  {
+    method: 'GET',
+    pattern: /^\/gms\/v1\/venues\/([^/]+)\/today$/,
+    handler: (m, _body, query) => todayHandler(m[1], query),
+  },
+  { method: 'GET', pattern: /^\/gms\/v1\/capabilities$/, handler: () => capabilitiesHandler() },
 
   {
     method: 'GET',
@@ -2243,6 +2471,8 @@ function dispatch(method, pathname, body, query) {
   if (method === 'GET' && pathname === '/health') {
     return [200, JSON.stringify({ service: 'iziwellpass-owner-mock', status: 'ok' })];
   }
+  const gated = featureGate(method, pathname);
+  if (gated) return gated;
   for (const route of routes) {
     if (route.method !== method) continue;
     const match = route.pattern.exec(pathname);
@@ -2331,5 +2561,5 @@ http
     res.end(out);
   })
   .listen(PORT, () => {
-    console.log(`[mock] owner API mock on http://localhost:${PORT} (state resets on restart)`);
+    console.log(`[mock] owner API mock on http://localhost:${PORT} (plan ${MOCK_PLAN}, state resets on restart)`);
   });
