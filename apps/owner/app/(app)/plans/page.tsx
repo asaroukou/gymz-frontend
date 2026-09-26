@@ -6,6 +6,7 @@ import { useRole } from '@iziwellpass/auth/provider';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
+import { RequireCapability } from '@/components/capabilities/require-capability';
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage } from '@/lib/api-error';
 import { useVenueContext } from '@/lib/venue-context';
@@ -52,9 +53,12 @@ function PlansContent() {
 }
 
 export default function PlansPage() {
+  const t = useTranslations('plans');
   return (
     <RequirePageAccess href="/plans">
-      <PlansContent />
+      <RequireCapability capability="activity_pricing" title={t('title')}>
+        <PlansContent />
+      </RequireCapability>
     </RequirePageAccess>
   );
 }

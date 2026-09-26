@@ -54,6 +54,7 @@ import {
   SelectValue,
 } from '@iziwellpass/ui/components/select';
 
+import { useToastApiError } from '@/components/capabilities/use-upgrade-toast';
 import { VenueChecklist } from '@/components/venue-checklist';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { staffName } from '@/lib/staff-name';
@@ -98,9 +99,11 @@ function assignableRoleOrFallback(role: Staff['role']): (typeof ASSIGNABLE_ROLES
 export function InviteStaffDialog({ variant = 'default' }: { variant?: 'default' | 'secondary' }) {
   const t = useTranslations('staff');
   const tCommon = useTranslations('common');
+  const tCap = useTranslations('capabilities');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const inviteStaff = useInviteStaff();
+  const toastApiError = useToastApiError();
 
   const schema = useMemo(
     () =>
@@ -159,7 +162,11 @@ export function InviteStaffDialog({ variant = 'default' }: { variant?: 'default'
         },
         onError: (err) => {
           if (!applyFieldErrors(form, err)) {
-            toast.error(apiErrorMessage(err, t('inviteDialog.error')));
+            toastApiError(err, {
+              fallback: t('inviteDialog.error'),
+              capability: 'staff_accounts',
+              action: tCap('action.staffInvite'),
+            });
           }
         },
       },

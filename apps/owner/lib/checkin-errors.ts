@@ -13,10 +13,12 @@ export type Translate = ReturnType<typeof useTranslations<'frontdesk'>>;
  * scan, so expiry is only ever used to phrase an error, not to skip a request.
  *
  * Only enriches when the server actually rejected the TOKEN (400/401) — a
- * plan-gate 403, a duplicate 409, a 404, or a transport failure (offline
- * TypeError, not even an ApiError) has nothing to do with the token's expiry
- * or venue, and must fall straight through to the generic message instead of
- * being mislabelled "expired" just because the local clock is skewed.
+ * duplicate 409, a 404, or a transport failure (offline TypeError, not even
+ * an ApiError) has nothing to do with the token's expiry or venue, and must
+ * fall straight through to the generic message instead of being mislabelled
+ * "expired" just because the local clock is skewed. A plan-gate 403 on a
+ * venue route never reaches here at all: `useRegisterCheckin`'s `onError`
+ * intercepts `FEATURE_NOT_AVAILABLE` first and shows the upgrade toast.
  *
  * The venue-mismatch branch is skipped for `pass_booking` tokens: those carry
  * no venue_id of ours (the server resolves the venue from the token), so

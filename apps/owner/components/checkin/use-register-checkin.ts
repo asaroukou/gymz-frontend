@@ -17,9 +17,11 @@ import {
 } from '@iziwellpass/api/generated';
 import type { ApiResponseCheckIn, Member } from '@iziwellpass/api/schemas';
 
+import { useUpgradeToast } from '@/components/capabilities/use-upgrade-toast';
 import { apiErrorMessage } from '@/lib/api-error';
 import { qrErrorMessage, walkinErrorFallback } from '@/lib/checkin-errors';
 import { memberName } from '@/lib/member-search';
+import { isFeatureNotAvailable } from '@/lib/plan-errors';
 import { checkinRouteFor, decodeQrToken } from '@/lib/qr-token';
 
 export interface RegisterCheckin {
@@ -49,6 +51,8 @@ export function useRegisterCheckin({
 }): RegisterCheckin {
   const t = useTranslations('frontdesk');
   const tCommon = useTranslations('common');
+  const tCap = useTranslations('capabilities');
+  const showUpgrade = useUpgradeToast();
   const queryClient = useQueryClient();
   const viaQr = useCheckInViaQr();
   const walkinQr = useCheckInWalkinQr();
@@ -90,6 +94,12 @@ export function useRegisterCheckin({
       const handlers = {
         onSuccess: (res: ApiResponseCheckIn) => settle(res, after),
         onError: (err: unknown) => {
+          // Plan-gated venue routes surface the upgrade toast instead of a
+          // generic error (ruling R1); the pass route is never plan-gated.
+          if (route !== 'pass' && isFeatureNotAvailable(err)) {
+            showUpgrade('qr_checkin', tCap('action.qrCheckin'));
+            return;
+          }
           // The pass flow's most common failure: another day, another venue,
           // or already used. Gets its own copy rather than the generic fallback.
           const isPassNotSettleable =
@@ -114,7 +124,7 @@ export function useRegisterCheckin({
       // authoritative error, and a future token format keeps working.
       viaQr.mutate({ data: { qr_token: token, venue_id: venueId } }, handlers);
     },
-    [isPending, pass, settle, t, venueId, viaQr, walkinQr],
+    [isPending, pass, settle, showUpgrade, t, tCap, venueId, viaQr, walkinQr],
   );
 
   const submitWalkin = useCallback<RegisterCheckin['submitWalkin']>(

@@ -15,6 +15,8 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { Tile, TileMeta, TileTitle, TileTop } from '@iziwellpass/ui/components/tile';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
+import { useCapabilities } from '@/components/capabilities/capabilities-provider';
+import { LockedButton } from '@/components/capabilities/locked-button';
 import { RequirePageAccess } from '@/components/page-access';
 import { useActivityTypeLabel } from '@/lib/activity-type';
 import { apiErrorMessage } from '@/lib/api-error';
@@ -66,18 +68,26 @@ function VenuesGridSkeleton() {
 
 function VenuesContent() {
   const t = useTranslations('venues');
+  const tCap = useTranslations('capabilities');
   const role = useRole();
   const canManage = role === 'owner' || role === 'admin';
+  const { isLocked } = useCapabilities();
   const venuesQuery = useListVenues({ query: { select: unwrap } });
   const venues = venuesQuery.data ?? [];
 
   const createAction = canManage ? (
-    <Button asChild>
-      <Link href="/venues/new">
-        <PlusIcon aria-hidden="true" />
+    venues.length > 0 && isLocked('multi_venue') ? (
+      <LockedButton capability="multi_venue" action={tCap('action.venueCreate')}>
         {t('create.cta')}
-      </Link>
-    </Button>
+      </LockedButton>
+    ) : (
+      <Button asChild>
+        <Link href="/venues/new">
+          <PlusIcon aria-hidden="true" />
+          {t('create.cta')}
+        </Link>
+      </Button>
+    )
   ) : null;
 
   return (

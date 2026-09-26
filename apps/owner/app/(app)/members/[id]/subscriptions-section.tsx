@@ -14,6 +14,8 @@ import { SectionHeading } from '@iziwellpass/ui/components/working-page';
 import { tintClass, tintForIndex } from '@iziwellpass/ui/lib/tints';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
+import { useCapabilities } from '@/components/capabilities/capabilities-provider';
+import { LockedButton } from '@/components/capabilities/locked-button';
 import { apiErrorMessage } from '@/lib/api-error';
 import { formatCalendarDate } from '@/lib/datetime';
 import { formatMoney } from '@/lib/money';
@@ -133,6 +135,8 @@ export function SubscriptionsSection({
   canManage: boolean;
 }) {
   const t = useTranslations('members');
+  const tCap = useTranslations('capabilities');
+  const { isLocked } = useCapabilities();
 
   const subscriptionsQuery = useListSubscriptions(memberId, undefined, {
     query: { select: unwrap },
@@ -157,7 +161,21 @@ export function SubscriptionsSection({
       <SectionHeading
         title={t('detail.subscriptions.title')}
         description={t('detail.subscriptions.description')}
-        action={canManage ? <AssignSubscriptionDialog memberId={memberId} /> : undefined}
+        action={
+          canManage ? (
+            isLocked('activity_pricing') ? (
+              <LockedButton
+                capability="activity_pricing"
+                action={tCap('action.subscriptionAssign')}
+                size="sm"
+              >
+                {t('detail.subscriptions.assign')}
+              </LockedButton>
+            ) : (
+              <AssignSubscriptionDialog memberId={memberId} />
+            )
+          ) : undefined
+        }
       />
       {subscriptionsQuery.isLoading ? (
         <Skeleton className="h-[78px] w-full rounded-lg" />
