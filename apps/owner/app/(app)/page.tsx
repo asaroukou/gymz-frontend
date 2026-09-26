@@ -20,6 +20,7 @@ import { CheckinFeed } from '@/components/checkin/checkin-feed';
 import type { CheckinMode } from '@/components/checkin/checkin-modes';
 import { useRegisterCheckin } from '@/components/checkin/use-register-checkin';
 import { todayLabel } from '@/lib/datetime';
+import { attendanceOf } from '@/lib/use-today-snapshot';
 import { useVenueContext } from '@/lib/venue-context';
 
 import { KpiRow } from './dashboard/kpi-row';
@@ -73,7 +74,7 @@ function DashboardBody({
   const t = useTranslations('dashboard');
   const tMembers = useTranslations('members');
   const data = useDashboardData(venueId, timeZone);
-  const { attendance, members, slots, schedules, resources, checkIns, staff } = data;
+  const { today, members, schedules, resources, checkIns, staff, slots } = data;
 
   const list = useMemo(() => members.data ?? [], [members.data]);
   const memberById = useMemo(() => new Map(list.map((m) => [m.id, m])), [list]);
@@ -92,7 +93,14 @@ function DashboardBody({
   const hasNoSchedules = !schedules.isError && (schedules.data ?? []).length === 0;
   const hasNoMembers = !members.isError && list.length === 0;
   if (hasNoSchedules && hasNoMembers) {
-    return <Starter dateLine={dateLine} name={name} attendance={attendance} members={members} />;
+    return (
+      <Starter
+        dateLine={dateLine}
+        name={name}
+        attendance={attendanceOf(today)}
+        members={members}
+      />
+    );
   }
 
   return (
@@ -110,7 +118,7 @@ function DashboardBody({
         />
       </HubHero>
       <HubSection>
-        <KpiRow attendance={attendance} members={members} />
+        <KpiRow attendance={attendanceOf(today)} members={members} />
       </HubSection>
       <HubSection>
         <Tabs

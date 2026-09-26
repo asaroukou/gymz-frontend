@@ -215,7 +215,9 @@
       "venues": "Could not load venues",
       "slots": "Could not load slots",
       "checkins": "Could not load check-ins",
-      "loadTitle": "Something went wrong"
+      "loadTitle": "Something went wrong",
+      "today": "Couldn't load the day.",
+      "forbidden": "Access denied."
     }
   },
   "frontdesk": {

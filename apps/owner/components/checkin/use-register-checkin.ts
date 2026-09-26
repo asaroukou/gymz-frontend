@@ -9,6 +9,7 @@ import { ApiError } from '@iziwellpass/api/client';
 import {
   getGetAttendanceQueryKey,
   getListCheckInsQueryKey,
+  getVenueTodayQueryKey,
   useCheckInViaQr,
   useCheckInWalkin,
   useCheckInWalkinQr,
@@ -32,11 +33,12 @@ export interface RegisterCheckin {
 
 /**
  * The one check-in engine behind both hubs. Success toasts the member's name
- * (or the pass-visitor label), invalidates the check-in and attendance keys
- * of the venue the SERVER resolved — a pass token sends no venue_id, so a
- * tenant-wide owner with another venue selected would otherwise see a toast
- * while the scanned venue's feed never moves — and then runs `onSuccess` so
- * the caller can clear and refocus the bar for the next scan.
+ * (or the pass-visitor label), invalidates the check-in, attendance and
+ * today-snapshot keys of the venue the SERVER resolved — a pass token sends
+ * no venue_id, so a tenant-wide owner with another venue selected would
+ * otherwise see a toast while the scanned venue's feed never moves — and
+ * then runs `onSuccess` so the caller can clear and refocus the bar for the
+ * next scan.
  */
 export function useRegisterCheckin({
   venueId,
@@ -69,6 +71,7 @@ export function useRegisterCheckin({
       const checkedInVenueId = res.data.venue_id;
       void queryClient.invalidateQueries({ queryKey: getListCheckInsQueryKey(checkedInVenueId) });
       void queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey(checkedInVenueId) });
+      void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(checkedInVenueId) });
       after?.();
     },
     [memberById, queryClient, t, tCommon],

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { CalendarPlusIcon, ScanLineIcon, UserPlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import type { AttendanceStats, Member } from '@iziwellpass/api/schemas';
+import type { Member, TodayAttendance } from '@iziwellpass/api/schemas';
 import { useRole } from '@iziwellpass/auth/provider';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
@@ -45,7 +45,7 @@ export function Starter({
 }: {
   dateLine: string;
   name: string | null;
-  attendance: QueryLike<AttendanceStats>;
+  attendance: QueryLike<TodayAttendance>;
   members: QueryLike<Member[]>;
 }) {
   const t = useTranslations('dashboard');
