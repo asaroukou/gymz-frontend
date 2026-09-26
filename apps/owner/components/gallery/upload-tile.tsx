@@ -31,10 +31,9 @@ export function UploadTile({
           'flex flex-col justify-end gap-2 rounded-[20px] bg-secondary p-4',
           TILE_CLASS[size],
         )}
-        aria-label={item.name}
       >
         <span className="font-numeric text-sm">{t('progress', { percent: item.progress })}</span>
-        <Progress value={item.progress} className="h-1 bg-background" />
+        <Progress value={item.progress} aria-label={item.name} className="h-1 bg-background" />
       </div>
     );
   }

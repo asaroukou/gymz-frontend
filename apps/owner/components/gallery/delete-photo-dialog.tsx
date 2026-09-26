@@ -66,7 +66,11 @@ export function DeletePhotoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]" restoreFocusTo={restoreFocusTo}>
+      <DialogContent
+        className="sm:max-w-[480px]"
+        showCloseButton={false}
+        restoreFocusTo={restoreFocusTo}
+      >
         <DialogHeader>
           <DialogTitle>{t('deleteDialog.title')}</DialogTitle>
           <DialogDescription>

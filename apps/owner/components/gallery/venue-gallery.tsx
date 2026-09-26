@@ -28,7 +28,7 @@ import { DeletePhotoDialog } from './delete-photo-dialog';
 import { invalidateGallery } from './gallery-queries';
 import { PhotoTile, TILE_CLASS, type TileSize } from './photo-tile';
 import { UploadTile } from './upload-tile';
-import { useGalleryUploads } from './use-gallery-uploads';
+import { occupiesSlot, useGalleryUploads } from './use-gallery-uploads';
 
 export type GalleryVariant = 'section' | 'screen';
 
@@ -97,8 +97,10 @@ export function VenueGallery({
   const headerAddRef = useRef<HTMLButtonElement>(null);
 
   /**
-   * Retry and dismiss remove the button that was clicked, so focus moves to the
-   * next error tile (or the previous one), else to an add control, else the heading.
+   * Retry and dismiss usually remove the button that was clicked, so focus moves
+   * to the next error tile (or the previous one), else to an add control, else
+   * the heading. A retry refused for lack of a free slot keeps the tile failed,
+   * so focus stays on its own dismiss button.
    */
   const leaveErrorTile = (key: string, action: (key: string) => void) => {
     const failed = uploads.items.filter((item) => item.status === 'failed');
@@ -107,6 +109,7 @@ export function VenueGallery({
     flushSync(() => action(key));
     const headerAdd = headerAddRef.current?.disabled ? null : headerAddRef.current;
     const target =
+      focus.get(`upload-${key}`) ||
       (neighbour && focus.get(`upload-${neighbour.key}`)) ||
       addTileRef.current ||
       headerAdd ||
@@ -151,7 +154,7 @@ export function VenueGallery({
   const gridClass = variant === 'section' ? 'grid grid-cols-6 gap-3' : 'grid grid-cols-2 gap-3';
   const canAdd = canEdit && uploads.freeSlots > 0;
   const hasCells = count > 0 || uploads.items.length > 0;
-  const occupied = count + uploads.items.filter((item) => item.status !== 'failed').length;
+  const occupied = count + uploads.items.filter(occupiesSlot).length;
 
   const input = canEdit ? (
     <input

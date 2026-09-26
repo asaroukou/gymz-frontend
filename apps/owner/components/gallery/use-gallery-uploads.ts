@@ -11,7 +11,7 @@ import { putPresigned } from '@/lib/put-presigned';
 
 import { invalidateGallery } from './gallery-queries';
 
-export type UploadStatus = 'queued' | 'uploading' | 'registering' | 'failed';
+export type UploadStatus = 'queued' | 'uploading' | 'registering' | 'done' | 'failed';
 
 export interface UploadItem {
   key: string;
@@ -19,6 +19,15 @@ export interface UploadItem {
   status: UploadStatus;
   progress: number;
   error?: GalleryErrorKind;
+}
+
+/**
+ * Whether the item still claims a gallery slot. A `done` item is already
+ * counted in the stored images (or about to be, once the invalidation lands),
+ * and a `failed` one holds nothing.
+ */
+export function occupiesSlot(item: UploadItem): boolean {
+  return item.status !== 'failed' && item.status !== 'done';
 }
 
 /**
@@ -77,6 +86,9 @@ export function useGalleryUploads(venueId: string, storedCount: number) {
           });
           patch(key, { status: 'registering', progress: 100 });
           await addVenueImage(venueId, { object_key: presigned.object_key });
+          // Registered: the tile stays at 100 % until the refetch lands, but it
+          // no longer counts as pending, so stored + pending never overshoots.
+          patch(key, { status: 'done' });
           await invalidateGallery(queryClient, venueId);
           files.current.delete(key);
           if (mounted.current) setItems((list) => list.filter((item) => item.key !== key));
@@ -91,12 +103,12 @@ export function useGalleryUploads(venueId: string, storedCount: number) {
     }
   }, [patch, queryClient, venueId]);
 
-  const pending = items.filter((item) => item.status !== 'failed').length;
+  const pending = items.filter(occupiesSlot).length;
   const freeSlots = Math.max(0, MAX_IMAGES - storedCount - pending);
 
   const add = useCallback(
     (picked: FileList | readonly File[]) => {
-      const inFlight = itemsRef.current.filter((item) => item.status !== 'failed').length;
+      const inFlight = itemsRef.current.filter(occupiesSlot).length;
       const { accepted, rejected } = acceptFiles(
         Array.from(picked),
         MAX_IMAGES - storedCount - inFlight,
@@ -128,11 +140,20 @@ export function useGalleryUploads(venueId: string, storedCount: number) {
   const retry = useCallback(
     (key: string) => {
       if (!files.current.has(key)) return;
-      patch(key, { status: 'queued', progress: 0, error: undefined });
+      const inFlight = itemsRef.current.filter(occupiesSlot).length;
+      if (MAX_IMAGES - storedCount - inFlight <= 0) {
+        patch(key, { status: 'failed', error: 'full' });
+        return;
+      }
+      const next: Partial<UploadItem> = { status: 'queued', progress: 0, error: undefined };
+      itemsRef.current = itemsRef.current.map((item) =>
+        item.key === key ? { ...item, ...next } : item,
+      );
+      patch(key, next);
       queue.current.push(key);
       void pump();
     },
-    [patch, pump],
+    [patch, pump, storedCount],
   );
 
   const dismiss = useCallback((key: string) => {

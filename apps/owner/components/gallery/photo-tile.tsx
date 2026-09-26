@@ -61,6 +61,7 @@ export function PhotoTile({
         alt={t('alt', { index: position, count })}
         fill
         unoptimized
+        priority={index === 0}
         sizes="(min-width: 768px) 250px, 50vw"
         className="object-cover"
       />
