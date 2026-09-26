@@ -85,14 +85,30 @@ export function AttentionList({
   // closes. But the refetch this triggers (`refresh`) can also land *after*
   // Radix has already restored focus onto that same button — the button then
   // unmounts a beat later, and the browser drops focus to <body> on its own.
-  // Catch that here and send focus to the tab trigger instead.
-  const prevRowCount = useRef(rows.length);
+  // Catch that here, but only for a close *this component* just triggered:
+  // the today snapshot also refetches on window focus and as lifecycles
+  // change over time, and those unrelated refetches must never yank focus
+  // into the page just because it happens to be sitting on <body> (e.g. the
+  // user is in the browser chrome, or on another tab entirely). `armPendingRestore`
+  // records which row's resolution we're watching for and the snapshot in
+  // flight when we started watching; the effect below only acts once a *new*
+  // snapshot has actually landed, then disarms itself either way so it never
+  // stays armed for some unrelated later refetch.
+  const pendingRestoreRef = useRef<{ slotId: string; dataAtClose: TodaySnapshot | undefined } | null>(
+    null,
+  );
+  const armPendingRestore = (slotId: string | undefined) => {
+    if (slotId) pendingRestoreRef.current = { slotId, dataAtClose: today.data };
+  };
   useEffect(() => {
-    if (rows.length < prevRowCount.current && document.activeElement === document.body) {
+    const pending = pendingRestoreRef.current;
+    if (!pending || today.data === pending.dataAtClose) return;
+    const stillFlagged = rows.some((row) => row.slot_id === pending.slotId);
+    if (!stillFlagged && document.activeElement === document.body) {
       fallbackFocus.current?.focus();
     }
-    prevRowCount.current = rows.length;
-  }, [rows.length, fallbackFocus]);
+    pendingRestoreRef.current = null;
+  }, [today.data, rows, fallbackFocus]);
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: getVenueTodayQueryKey(venueId) });
@@ -195,7 +211,10 @@ export function AttentionList({
           open={sheetOpen}
           onOpenChange={(open) => {
             setSheetOpen(open);
-            if (!open) refresh();
+            if (!open) {
+              armPendingRestore(sheetSlot?.slot_id);
+              refresh();
+            }
           }}
           restoreFocusTo={() => focus.get(sheetSlot?.slot_id) ?? fallbackFocus.current}
         />
@@ -210,7 +229,10 @@ export function AttentionList({
           open={editOpen}
           onOpenChange={(open) => {
             setEditOpen(open);
-            if (!open) refresh();
+            if (!open) {
+              armPendingRestore(editing?.slotId);
+              refresh();
+            }
           }}
           restoreFocusTo={() => focus.get(editing?.slotId) ?? fallbackFocus.current}
         />
