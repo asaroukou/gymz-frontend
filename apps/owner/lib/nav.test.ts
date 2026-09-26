@@ -30,3 +30,23 @@ describe('plans nav entry', () => {
     expect(hrefs).toEqual(['/', '/checkins', '/schedules', '/plans']);
   });
 });
+
+describe('nav capabilities', () => {
+  it('tags plan-gated entries with their capability', () => {
+    const items = navGroupsForRole('owner').flatMap((g) => g.items);
+    expect(items.find((i) => i.href === '/staff')?.capability).toBe('staff_accounts');
+    expect(items.find((i) => i.href === '/plans')?.capability).toBe('activity_pricing');
+    expect(items.find((i) => i.href === '/')?.capability).toBeUndefined();
+  });
+});
+
+describe('hidden routes', () => {
+  it('gates /plan to owner and admin without a nav entry', () => {
+    expect(navForRole('owner').some((i) => i.href === '/plan')).toBe(false);
+    expect(canAccessPath('owner', '/plan')).toBe(true);
+    expect(canAccessPath('admin', '/plan')).toBe(true);
+    expect(canAccessPath('platform_admin', '/plan')).toBe(true);
+    expect(canAccessPath('receptionist', '/plan')).toBe(false);
+    expect(canAccessPath('trainer', '/plan')).toBe(false);
+  });
+});
