@@ -89,7 +89,7 @@ Reorder error: toast « Impossible de réordonner les photos ». Load error: « 
 
 ## 9. Venue tiles (`p96Uq`)
 
-`VenueTile` becomes a bordered card link (`rounded-xl border border-border overflow-hidden`): a 130px band — `next/image` cover (`object-cover`) when `cover_image_url` is set, else a tinted band (`tint={index}`, `bg-side` when inactive) with `ImageOff` 22px muted centered; the status `Badge` over the band at `top-3 left-3`; body `p-5` with name 20/500 and « {type} · {ville} » 14 muted. Grid and skeleton heights follow (`h-[232px]`).
+`VenueTile` becomes a bordered card link (`rounded-xl border border-border overflow-hidden`): a 130px band — `next/image` cover (`object-cover`) when `cover_image_url` is set, else a tinted band (`tint={index}`, `bg-side` when inactive) with `ImageOff` 22px muted centered; the status `Badge` over the band at `top-3 left-3`; body `p-5` with name 20/500 and « {type} · {ville} » 14 muted. Grid and skeleton heights follow (`h-[232px]`). The bordered venue card is a sanctioned exception to DESIGN.md's No-Box rule: the canvas `p96Uq` draws it, since the cover band needs a frame.
 
 ## 10. Messages (fr, en mirrored)
 

@@ -910,6 +910,45 @@
             "open_access": "Accès libre"
           }
         }
+      },
+      "photos": {
+        "title": "Photos",
+        "count": "{count, plural, one {# photo} other {# photos}} sur 10 · La première est la couverture",
+        "rules": "Jusqu'à 10 photos · JPEG, PNG ou WebP · 5 Mo max",
+        "add": "Ajouter des photos",
+        "addTile": "Ajouter",
+        "cover": "Couverture",
+        "alt": "Photo {index} sur {count}",
+        "menu": "Actions de la photo {index}",
+        "setCover": "Définir comme couverture",
+        "moveLeft": "Déplacer à gauche",
+        "moveRight": "Déplacer à droite",
+        "delete": "Supprimer",
+        "emptyTitle": "Aucune photo pour l'instant",
+        "emptyBody": "Montrez votre établissement aux membres et sur le marketplace. La première photo devient la couverture.",
+        "full": "Galerie pleine (10/10). Supprimez une photo pour en ajouter une autre.",
+        "progress": "{percent} %",
+        "errors": {
+          "type": "Format non accepté",
+          "size": "Fichier trop lourd (max 5 Mo)",
+          "full": "Galerie pleine (10/10)",
+          "interrupted": "Téléversement interrompu"
+        },
+        "retry": "Réessayer",
+        "dismiss": "Retirer",
+        "loadError": "Impossible de charger les photos",
+        "reorderError": "Impossible de réordonner les photos",
+        "summaryNone": "Aucune photo",
+        "summaryCount": "{count, plural, one {# photo} other {# photos}} sur 10",
+        "deleteDialog": {
+          "title": "Supprimer cette photo",
+          "description": "Elle sera retirée de la galerie et du marketplace.",
+          "coverNote": "La photo suivante deviendra la couverture.",
+          "confirm": "Supprimer",
+          "confirming": "Suppression…",
+          "success": "Photo supprimée",
+          "error": "Impossible de supprimer la photo"
+        }
       }
     }
   },
