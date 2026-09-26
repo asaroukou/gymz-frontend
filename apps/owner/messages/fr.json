@@ -188,9 +188,24 @@
       "schedule": "Planning du jour",
       "checkins": "Derniers passages"
     },
+    "day": {
+      "label": "Jour affiché",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "pick": "Choisir une date",
+      "input": "Date",
+      "emptyOther": "Aucune séance ce jour-là."
+    },
+    "tile": {
+      "completed": "Terminée",
+      "active": "En cours",
+      "attention": "À régler",
+      "cancelled": "Annulée",
+      "noInstructor": "Aucun intervenant",
+      "stats": "{arrived, plural, =1 {# arrivé} other {# arrivés}} · {booked, plural, =1 {# inscrit} other {# inscrits}} · {capacity, plural, =1 {# place} other {# places}}",
+      "capacityLabel": "{booked} inscrits sur {capacity} places"
+    },
     "schedule": {
-      "full": "Complet",
-      "cancelled": "Annulé",
       "seeAll": "{count, plural, one {Voir la séance du jour} other {Voir les # séances du jour}}",
       "emptyTitle": "Aucun créneau aujourd'hui",
       "emptyBody": "Créez un planning pour générer les créneaux de la journée.",
@@ -218,6 +233,14 @@
       "loadTitle": "Une erreur est survenue",
       "today": "Impossible de charger la journée.",
       "forbidden": "Accès refusé."
+    },
+    "attention": {
+      "reason": {
+        "no_instructor": "Aucun intervenant",
+        "over_capacity": "Au-delà de la capacité · {booked}/{capacity}",
+        "no_arrivals": "Personne n'est arrivé",
+        "unknown": "À régler"
+      }
     }
   },
   "frontdesk": {

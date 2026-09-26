@@ -188,9 +188,24 @@
       "schedule": "Today's schedule",
       "checkins": "Recent check-ins"
     },
-    "schedule": {
-      "full": "Full",
+    "day": {
+      "label": "Day shown",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "pick": "Pick a date",
+      "input": "Date",
+      "emptyOther": "No sessions that day."
+    },
+    "tile": {
+      "completed": "Finished",
+      "active": "In progress",
+      "attention": "Needs attention",
       "cancelled": "Cancelled",
+      "noInstructor": "No instructor",
+      "stats": "{arrived} arrived · {booked} booked · {capacity, plural, =1 {# spot} other {# spots}}",
+      "capacityLabel": "{booked} booked out of {capacity} spots"
+    },
+    "schedule": {
       "seeAll": "{count, plural, one {See today's session} other {See today's # sessions}}",
       "emptyTitle": "No slots today",
       "emptyBody": "Create a schedule to generate the day's slots.",
@@ -218,6 +233,14 @@
       "loadTitle": "Something went wrong",
       "today": "Couldn't load the day.",
       "forbidden": "Access denied."
+    },
+    "attention": {
+      "reason": {
+        "no_instructor": "No instructor",
+        "over_capacity": "Over capacity · {booked}/{capacity}",
+        "no_arrivals": "Nobody has arrived",
+        "unknown": "Needs attention"
+      }
     }
   },
   "frontdesk": {

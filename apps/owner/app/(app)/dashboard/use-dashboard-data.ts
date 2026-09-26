@@ -4,7 +4,7 @@ import { unwrap } from '@iziwellpass/api/client';
 import { useListResources, useListSchedules, useListStaff } from '@iziwellpass/api/generated';
 
 import { useAllMembers } from '@/lib/all-members';
-import { useCheckInsByDate, useSlotsByDate } from '@/lib/dated-api';
+import { useCheckInsByDate } from '@/lib/dated-api';
 import { venueToday } from '@/lib/datetime';
 import { useTodaySnapshot } from '@/lib/use-today-snapshot';
 
@@ -16,20 +16,16 @@ export type { QueryLike } from '@/components/checkin/query-like';
  * snapshot (tiles, « À régler », stats); schedules, resources and staff feed
  * the in-place « Modifier le cours » dialog and the feed; the member list is
  * shared by the KPI row, the command bar, the feed and the participants sheet.
- *
- * `slots` is a transitional query kept only so `TodayTiles` still compiles
- * until Task 5 moves it onto `today.data.slots`.
  */
 export function useDashboardData(venueId: string, timeZone: string | undefined) {
   const todayKey = venueToday(timeZone);
 
   const today = useTodaySnapshot(venueId, todayKey);
   const members = useAllMembers();
-  const slots = useSlotsByDate(venueId, todayKey);
   const schedules = useListSchedules(venueId, { query: { select: unwrap } });
   const resources = useListResources(venueId, { query: { select: unwrap } });
   const checkIns = useCheckInsByDate(venueId, todayKey);
   const staff = useListStaff({ query: { select: unwrap } });
 
-  return { today, todayKey, members, schedules, resources, checkIns, staff, slots };
+  return { today, todayKey, members, schedules, resources, checkIns, staff };
 }

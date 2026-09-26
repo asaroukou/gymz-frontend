@@ -1,85 +1,153 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowRightIcon } from 'lucide-react';
+import { ArrowRightIcon, CircleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import type { Resource, Schedule, ScheduleSlot, Staff } from '@iziwellpass/api/schemas';
+import type { TodaySlot, TodaySnapshot } from '@iziwellpass/api/schemas';
 import { useRole } from '@iziwellpass/auth/provider';
+import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
+import { Capacity } from '@iziwellpass/ui/components/capacity';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
-import {
-  Tile,
-  TileCount,
-  TileMeta,
-  TileTime,
-  TileTitle,
-  TileTop,
-} from '@iziwellpass/ui/components/tile';
+import { Tile, TileMeta, TileTime, TileTitle, TileTop } from '@iziwellpass/ui/components/tile';
 
-import { formatTime } from '@/lib/datetime';
 import { canAccessPath } from '@/lib/nav';
-import { isSlotFull, pickTodayTiles, tileTone } from '@/lib/today-tiles';
+import { isForbidden } from '@/lib/plan-errors';
+import {
+  pickTiles,
+  resolveDay,
+  slotTime,
+  tileState,
+  type DaySelection,
+  type TileBadge,
+  type TileTone,
+} from '@/lib/today';
+import { useTodaySnapshot } from '@/lib/use-today-snapshot';
 
+import { DayControl } from './day-control';
 import { SectionError } from './section-error';
 import type { QueryLike } from './use-dashboard-data';
 
+// Lifecycle tints on this surface only (spec §4.2, `s8LRy3`); other tile
+// surfaces keep the positional Tile Rule.
+const TONE_TINT: Record<TileTone, 'bleu' | 'vert'> = {
+  upcoming: 'bleu',
+  active: 'vert',
+  completed: 'bleu',
+  cancelled: 'bleu',
+};
+const TONE_CLASS: Partial<Record<TileTone, string>> = {
+  completed: 'bg-side',
+  cancelled: 'bg-side',
+};
+const BADGE_VARIANT: Record<TileBadge, 'warning' | 'success' | 'default'> = {
+  attention: 'warning',
+  active: 'success',
+  completed: 'default',
+  cancelled: 'default',
+};
+
+function SessionTile({ slot, timeZone }: { slot: TodaySlot; timeZone: string | undefined }) {
+  const t = useTranslations('dashboard');
+  const state = tileState(slot);
+  const isCancelled = state.tone === 'cancelled';
+  const meta = `${slot.resource_name ?? '—'} · ${slot.instructor_name ?? t('tile.noInstructor')}`;
+  return (
+    <Tile tint={TONE_TINT[state.tone]} className={TONE_CLASS[state.tone]}>
+      <TileTop>
+        <TileTime>{slotTime(slot, timeZone)}</TileTime>
+        {state.badge ? (
+          <Badge variant={BADGE_VARIANT[state.badge]}>{t(`tile.${state.badge}`)}</Badge>
+        ) : null}
+      </TileTop>
+      <div className="flex flex-col gap-2">
+        <div>
+          <TileTitle>{slot.title ?? '—'}</TileTitle>
+          <TileMeta>{meta}</TileMeta>
+        </div>
+        {isCancelled ? null : (
+          <>
+            <Capacity
+              booked={slot.booked_count}
+              capacity={slot.capacity}
+              hideCount
+              label={t('tile.capacityLabel', {
+                booked: slot.booked_count,
+                capacity: slot.capacity,
+              })}
+            />
+            <p className="font-numeric text-sm text-muted-strong">
+              {t('tile.stats', {
+                arrived: slot.checked_in_count,
+                booked: slot.booked_count,
+                capacity: slot.capacity,
+              })}
+            </p>
+          </>
+        )}
+        {state.reason && state.reason !== 'unknown' ? (
+          <p className="flex items-center gap-1.5 text-sm font-medium text-warning-foreground">
+            <CircleAlertIcon aria-hidden="true" className="size-3.5" />
+            {t(`attention.reason.${state.reason}`, {
+              booked: slot.booked_count,
+              capacity: slot.capacity,
+            })}
+          </p>
+        ) : null}
+      </div>
+    </Tile>
+  );
+}
+
 /**
- * Today's sessions as four square tiles — time and « booked/capacity » on
- * top, title and « Salle · Instructeur · Complet » at the bottom — then the
- * « Voir les N séances du jour » link to the planning. Tints rotate by
- * position; a full session takes sable, a cancelled one the côté tone.
+ * « Planning du jour »: the date control, « Voir les N séances du jour → »,
+ * then up to four lifecycle tiles (`s8LRy3`). Today's tiles read the shared
+ * snapshot; another day runs its own snapshot query (spec T4).
  */
 export function TodayTiles({
-  slots,
-  schedules,
-  resources,
-  staff,
+  venueId,
   timeZone,
+  todayKey,
+  today,
 }: {
-  slots: QueryLike<ScheduleSlot[]>;
-  schedules: QueryLike<Schedule[]>;
-  resources: QueryLike<Resource[]>;
-  staff: QueryLike<Staff[]>;
+  venueId: string;
   timeZone: string | undefined;
+  todayKey: string;
+  today: QueryLike<TodaySnapshot>;
 }) {
   const t = useTranslations('dashboard');
   const role = useRole();
   const canCreateSchedule =
     (role === 'owner' || role === 'admin') && canAccessPath(role, '/schedules');
 
-  const scheduleById = useMemo(
-    () => new Map((schedules.data ?? []).map((s) => [s.id, s])),
-    [schedules.data],
-  );
-  const resourceNameById = useMemo(
-    () => new Map((resources.data ?? []).map((r) => [r.id, r.name])),
-    [resources.data],
-  );
-  const staffNameById = useMemo(
-    () => new Map((staff.data ?? []).map((s) => [s.id, `${s.first_name} ${s.last_name}`.trim()])),
-    [staff.data],
-  );
-  const { tiles, total } = useMemo(
-    () => pickTodayTiles(slots.data, timeZone),
-    [slots.data, timeZone],
-  );
+  const [selection, setSelection] = useState<DaySelection>({ kind: 'today' });
+  const day = resolveDay(selection, todayKey);
+  const isToday = day === todayKey;
+  const other = useTodaySnapshot(venueId, isToday ? null : day);
+  const query: QueryLike<TodaySnapshot> = isToday ? today : other;
 
-  if (slots.isLoading) {
-    return (
+  const { tiles, total } = useMemo(() => pickTiles(query.data?.slots ?? []), [query.data]);
+
+  let body: ReactNode;
+  if (query.isLoading) {
+    body = (
       <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4" aria-hidden="true">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="aspect-square w-full rounded-xl" />
         ))}
       </div>
     );
-  }
-  if (slots.isError) {
-    return <SectionError error={slots.error} fallback={t('errors.slots')} />;
-  }
-  if (tiles.length === 0) {
-    return (
+  } else if (query.isError) {
+    body = (
+      <SectionError
+        error={query.error}
+        fallback={isForbidden(query.error) ? t('errors.forbidden') : t('errors.today')}
+      />
+    );
+  } else if (tiles.length === 0) {
+    body = isToday ? (
       <div className="flex flex-col items-center gap-4 py-6 text-center">
         <div className="flex flex-col gap-1">
           <p className="text-base">{t('schedule.emptyTitle')}</p>
@@ -91,58 +159,34 @@ export function TodayTiles({
           </Button>
         ) : null}
       </div>
+    ) : (
+      <p className="py-6 text-center text-base text-muted-foreground">{t('day.emptyOther')}</p>
+    );
+  } else {
+    body = (
+      <>
+        <Link
+          href="/schedules"
+          className="inline-flex items-center gap-2 text-md font-medium text-muted-foreground hover:text-foreground"
+        >
+          {t('schedule.seeAll', { count: total })}
+          <ArrowRightIcon aria-hidden="true" className="size-4" />
+        </Link>
+        <ul className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4">
+          {tiles.map((slot) => (
+            <li key={slot.slot_id} className="contents">
+              <SessionTile slot={slot} timeZone={timeZone} />
+            </li>
+          ))}
+        </ul>
+      </>
     );
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-12">
-      <ul className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4">
-        {tiles.map((slot, index) => {
-          const tone = tileTone(slot, index);
-          const isCancelled = slot.status === 'cancelled';
-          const schedule = scheduleById.get(slot.schedule_id);
-          const instructor = schedule?.instructor_staff_id
-            ? staffNameById.get(schedule.instructor_staff_id)
-            : undefined;
-          const meta = isCancelled
-            ? t('schedule.cancelled')
-            : [
-                resourceNameById.get(slot.resource_id) ?? '—',
-                instructor,
-                isSlotFull(slot) ? t('schedule.full') : undefined,
-              ]
-                .filter(Boolean)
-                .join(' · ');
-          return (
-            <li key={slot.id} className="contents">
-              <Tile
-                tint={tone === 'side' ? index : tone}
-                className={tone === 'side' ? 'bg-side' : undefined}
-              >
-                <TileTop>
-                  <TileTime>{formatTime(slot.start_time, timeZone)}</TileTime>
-                  {isCancelled ? null : (
-                    <TileCount>
-                      {slot.booked_count}/{slot.capacity}
-                    </TileCount>
-                  )}
-                </TileTop>
-                <div>
-                  <TileTitle>{schedule?.title ?? '—'}</TileTitle>
-                  <TileMeta>{meta}</TileMeta>
-                </div>
-              </Tile>
-            </li>
-          );
-        })}
-      </ul>
-      <Link
-        href="/schedules"
-        className="inline-flex items-center gap-2 text-md font-medium text-muted-foreground hover:text-foreground"
-      >
-        {t('schedule.seeAll', { count: total })}
-        <ArrowRightIcon aria-hidden="true" className="size-4" />
-      </Link>
+    <div className="flex w-full flex-col items-center gap-10">
+      <DayControl selection={selection} onChange={setSelection} todayKey={todayKey} />
+      {body}
     </div>
   );
 }

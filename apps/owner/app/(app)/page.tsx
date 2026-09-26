@@ -74,7 +74,7 @@ function DashboardBody({
   const t = useTranslations('dashboard');
   const tMembers = useTranslations('members');
   const data = useDashboardData(venueId, timeZone);
-  const { today, members, schedules, resources, checkIns, staff, slots } = data;
+  const { today, todayKey, members, schedules, checkIns, staff } = data;
 
   const list = useMemo(() => members.data ?? [], [members.data]);
   const memberById = useMemo(() => new Map(list.map((m) => [m.id, m])), [list]);
@@ -131,13 +131,7 @@ function DashboardBody({
             <TabsTrigger value="checkins">{t('tabs.checkins')}</TabsTrigger>
           </TabsList>
           <TabsContent value="schedule" className="w-full">
-            <TodayTiles
-              slots={slots}
-              schedules={schedules}
-              resources={resources}
-              staff={staff}
-              timeZone={timeZone}
-            />
+            <TodayTiles venueId={venueId} timeZone={timeZone} todayKey={todayKey} today={today} />
           </TabsContent>
           <TabsContent value="checkins" className="flex w-full justify-center">
             <CheckinFeed
