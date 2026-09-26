@@ -26,7 +26,10 @@ import {
 } from '@iziwellpass/ui/components/dropdown-menu';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 
-import { navGroupsForRole, type NavLabelKey } from '@/lib/nav';
+import { CapabilitiesProvider, useCapabilities } from '@/components/capabilities/capabilities-provider';
+import { NavLock } from '@/components/capabilities/nav-lock';
+import { PlanRow } from '@/components/capabilities/plan-row';
+import { navGroupsForRole, type NavLabelKey, type OwnerNavGroup } from '@/lib/nav';
 import { VenueProvider } from '@/lib/venue-context';
 import { VenueSwitcher } from '@/components/venue-switcher';
 
@@ -124,14 +127,15 @@ function LoadingShell() {
   );
 }
 
-export default function AppLayout({ children }: { children: ReactNode }) {
-  const router = useRouter();
+/**
+ * The shell, rendered inside the venue and capabilities providers so nav
+ * items can carry a plan lock (spec §6.1).
+ */
+function Shell({ groups, children }: { groups: OwnerNavGroup[]; children: ReactNode }) {
   const pathname = usePathname();
-  const session = useSession();
   const tNav = useTranslations('nav');
   const tShell = useTranslations('shell');
-  const groups = session.status === 'signed-in' ? navGroupsForRole(session.claims.role) : [];
-  const navItemCount = groups.reduce((count, group) => count + group.items.length, 0);
+  const { isLocked } = useCapabilities();
   const navGroups: NavGroup[] = groups.map((group) => ({
     label: group.scope === 'org' ? tNav('organizationGroup') : undefined,
     items: group.items.map((item) => {
@@ -140,9 +144,51 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         title: tNav(item.labelKey),
         href: item.href,
         icon: <Icon aria-hidden />,
+        trailing:
+          item.capability && isLocked(item.capability) ? (
+            <NavLock capability={item.capability} />
+          ) : undefined,
       };
     }),
   }));
+
+  return (
+    <AppShell
+      title="IziWellPass"
+      navGroups={navGroups}
+      navFooter={
+        <>
+          <PlanRow />
+          <VenueSwitcher className="w-full" />
+          <UserMenu variant="row" />
+        </>
+      }
+      navFooterCollapsed={
+        <>
+          <PlanRow collapsed />
+          <VenueSwitcher iconOnly />
+          <UserMenu />
+        </>
+      }
+      collapseLabel={tShell('collapseMenu')}
+      expandLabel={tShell('expandMenu')}
+      linkComponent={NavLink}
+      currentPath={pathname}
+      openMenuLabel={tShell('openMenu')}
+      leading={<VenueSwitcher compact className="max-w-[200px]" />}
+      actions={<UserMenu />}
+    >
+      {children}
+    </AppShell>
+  );
+}
+
+export default function AppLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const session = useSession();
+  const groups = session.status === 'signed-in' ? navGroupsForRole(session.claims.role) : [];
+  const navItemCount = groups.reduce((count, group) => count + group.items.length, 0);
 
   useEffect(() => {
     if (session.status === 'signed-out') {
@@ -174,31 +220,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <VenueProvider>
-      <AppShell
-        title="IziWellPass"
-        navGroups={navGroups}
-        navFooter={
-          <>
-            <VenueSwitcher className="w-full" />
-            <UserMenu variant="row" />
-          </>
-        }
-        navFooterCollapsed={
-          <>
-            <VenueSwitcher iconOnly />
-            <UserMenu />
-          </>
-        }
-        collapseLabel={tShell('collapseMenu')}
-        expandLabel={tShell('expandMenu')}
-        linkComponent={NavLink}
-        currentPath={pathname}
-        openMenuLabel={tShell('openMenu')}
-        leading={<VenueSwitcher compact className="max-w-[200px]" />}
-        actions={<UserMenu />}
-      >
-        {children}
-      </AppShell>
+      <CapabilitiesProvider>
+        <Shell groups={groups}>{children}</Shell>
+      </CapabilitiesProvider>
     </VenueProvider>
   );
 }

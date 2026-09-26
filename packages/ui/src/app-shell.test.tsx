@@ -132,6 +132,18 @@ describe('AppShell', () => {
     expect(screen.getByText('venue-and-user')).toBeTruthy();
   });
 
+  it('renders a nav item trailing slot in the expanded column only', () => {
+    render(
+      <AppShell
+        title="IziWellPass"
+        nav={[{ title: 'Équipe', href: '/staff', trailing: <span data-testid="lock">L</span> }]}
+      >
+        <p>content</p>
+      </AppShell>,
+    );
+    expect(screen.getAllByTestId('lock').length).toBeGreaterThan(0);
+  });
+
   it('marks the active item with the pill classes and keeps the rest bare', () => {
     render(
       <AppShell nav={nav} title="IziWellPass" currentPath="/members">

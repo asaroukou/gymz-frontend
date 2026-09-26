@@ -55,6 +55,63 @@
     "account": "Compte",
     "signOut": "Se déconnecter"
   },
+  "capabilities": {
+    "plan": {
+      "free": "Gratuit",
+      "starter": "Starter",
+      "pro": "Pro",
+      "enterprise": "Entreprise"
+    },
+    "cap": {
+      "activity_pricing": "Tarification par activité",
+      "qr_checkin": "Entrée par QR",
+      "staff_accounts": "Comptes équipe",
+      "multi_venue": "Plusieurs établissements",
+      "analytics": "Statistiques",
+      "member_self_service": "Espace membre",
+      "member_qr": "QR membre"
+    },
+    "benefit": {
+      "staff_accounts": "Invitez des administrateurs, des coachs et des réceptionnistes, chacun avec son propre accès.",
+      "multi_venue": "Gérez plusieurs établissements depuis la même console.",
+      "activity_pricing": "Créez des offres par activité et attribuez-les à vos membres.",
+      "qr_checkin": "Enregistrez les arrivées en scannant le QR du membre."
+    },
+    "locked": {
+      "availableWith": "Disponible avec le plan {plan}",
+      "description": "Disponible avec le plan {plan}. {benefit}",
+      "upgrade": "Passer au plan {plan}",
+      "compare": "Comparer les plans",
+      "relogin": "Un changement de plan est visible après reconnexion."
+    },
+    "row": {
+      "plan": "Plan {plan}",
+      "change": "Changer"
+    },
+    "toast": {
+      "upgrade": "Passez au plan {plan} pour {action}.",
+      "seePlans": "Voir les plans",
+      "forbidden": "Accès refusé."
+    },
+    "action": {
+      "staffInvite": "inviter un membre de l'équipe",
+      "venueCreate": "ajouter un établissement",
+      "planCreate": "créer une offre",
+      "subscriptionAssign": "attribuer une formule",
+      "qrCheckin": "enregistrer une arrivée par QR"
+    },
+    "page": {
+      "title": "Plan",
+      "current": "Vous êtes sur le plan {plan}.",
+      "feature": "Fonctionnalité",
+      "yours": "Votre plan",
+      "included": "Inclus",
+      "notIncluded": "Non inclus",
+      "contact": "Nous contacter",
+      "unknown": "Plan indisponible pour le moment.",
+      "mailSubject": "Passer au plan {plan}"
+    }
+  },
   "common": {
     "add": "Ajouter",
     "save": "Enregistrer",

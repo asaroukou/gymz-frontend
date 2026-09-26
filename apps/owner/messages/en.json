@@ -55,6 +55,63 @@
     "account": "Account",
     "signOut": "Sign out"
   },
+  "capabilities": {
+    "plan": {
+      "free": "Free",
+      "starter": "Starter",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "cap": {
+      "activity_pricing": "Pricing per activity",
+      "qr_checkin": "QR check-in",
+      "staff_accounts": "Team accounts",
+      "multi_venue": "Multiple venues",
+      "analytics": "Statistics",
+      "member_self_service": "Member space",
+      "member_qr": "Member QR"
+    },
+    "benefit": {
+      "staff_accounts": "Invite admins, coaches and receptionists, each with their own access.",
+      "multi_venue": "Manage several venues from the same console.",
+      "activity_pricing": "Create offers per activity and assign them to your members.",
+      "qr_checkin": "Record arrivals by scanning the member's QR code."
+    },
+    "locked": {
+      "availableWith": "Available on the {plan} plan",
+      "description": "Available on the {plan} plan. {benefit}",
+      "upgrade": "Upgrade to {plan}",
+      "compare": "Compare plans",
+      "relogin": "A plan change shows after you sign in again."
+    },
+    "row": {
+      "plan": "{plan} plan",
+      "change": "Change"
+    },
+    "toast": {
+      "upgrade": "Upgrade to {plan} to {action}.",
+      "seePlans": "See plans",
+      "forbidden": "Access denied."
+    },
+    "action": {
+      "staffInvite": "invite a team member",
+      "venueCreate": "add a venue",
+      "planCreate": "create an offer",
+      "subscriptionAssign": "assign a membership",
+      "qrCheckin": "record a QR check-in"
+    },
+    "page": {
+      "title": "Plan",
+      "current": "You're on the {plan} plan.",
+      "feature": "Feature",
+      "yours": "Your plan",
+      "included": "Included",
+      "notIncluded": "Not included",
+      "contact": "Contact us",
+      "unknown": "Plan unavailable right now.",
+      "mailSubject": "Upgrade to {plan}"
+    }
+  },
   "common": {
     "add": "Add",
     "save": "Save",
