@@ -38,12 +38,12 @@ export function PlanRow({ collapsed = false }: { collapsed?: boolean }) {
   }
 
   return (
-    <div className="flex h-9 w-full items-center gap-2 px-3.5 text-sm">
+    <div className="flex h-9 w-full items-center gap-2 px-3.5 text-sm max-md:h-11">
       <SparklesIcon aria-hidden="true" className="size-4 text-muted-foreground" />
       <span className="text-muted-foreground">{label}</span>
       <Link
         href="/plan"
-        className="ml-auto inline-flex min-h-9 items-center font-medium text-foreground hover:underline max-md:min-h-11"
+        className="ml-auto inline-flex h-full items-center font-medium text-foreground hover:underline"
       >
         {t('change')}
       </Link>
