@@ -20,16 +20,18 @@ import { CheckinFeed } from '@/components/checkin/checkin-feed';
 import type { CheckinMode } from '@/components/checkin/checkin-modes';
 import { useRegisterCheckin } from '@/components/checkin/use-register-checkin';
 import { todayLabel } from '@/lib/datetime';
+import { attentionRows } from '@/lib/today';
 import { attendanceOf } from '@/lib/use-today-snapshot';
 import { useVenueContext } from '@/lib/venue-context';
 
+import { AttentionList } from './dashboard/attention-list';
 import { KpiRow } from './dashboard/kpi-row';
 import { SectionError } from './dashboard/section-error';
 import { Starter } from './dashboard/starter';
 import { TodayTiles } from './dashboard/today-tiles';
 import { useDashboardData } from './dashboard/use-dashboard-data';
 
-type Tab = 'schedule' | 'checkins';
+type Tab = 'schedule' | 'checkins' | 'attention';
 
 function LoadingHub({ dateLine }: { dateLine: string }) {
   return (
@@ -74,7 +76,8 @@ function DashboardBody({
   const t = useTranslations('dashboard');
   const tMembers = useTranslations('members');
   const data = useDashboardData(venueId, timeZone);
-  const { today, todayKey, members, schedules, checkIns, staff } = data;
+  const { today, todayKey, members, schedules, resources, checkIns, staff } = data;
+  const attentionCount = today.data ? attentionRows(today.data).length : 0;
 
   const list = useMemo(() => members.data ?? [], [members.data]);
   const memberById = useMemo(() => new Map(list.map((m) => [m.id, m])), [list]);
@@ -129,6 +132,11 @@ function DashboardBody({
           <TabsList aria-label={t('tabs.label')}>
             <TabsTrigger value="schedule">{t('tabs.schedule')}</TabsTrigger>
             <TabsTrigger value="checkins">{t('tabs.checkins')}</TabsTrigger>
+            <TabsTrigger value="attention">
+              {attentionCount > 0
+                ? t('tabs.attentionCount', { count: attentionCount })
+                : t('tabs.attention')}
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="schedule" className="w-full">
             <TodayTiles venueId={venueId} timeZone={timeZone} todayKey={todayKey} today={today} />
@@ -140,6 +148,17 @@ function DashboardBody({
               staff={staff}
               timeZone={timeZone}
               limit={8}
+            />
+          </TabsContent>
+          <TabsContent value="attention" className="flex w-full justify-center">
+            <AttentionList
+              venueId={venueId}
+              timeZone={timeZone}
+              today={today}
+              schedules={schedules.data ?? []}
+              resources={resources.data ?? []}
+              staff={staff.data ?? []}
+              members={list}
             />
           </TabsContent>
         </Tabs>

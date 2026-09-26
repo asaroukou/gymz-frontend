@@ -186,7 +186,9 @@
     "tabs": {
       "label": "Sections du tableau de bord",
       "schedule": "Planning du jour",
-      "checkins": "Derniers passages"
+      "checkins": "Derniers passages",
+      "attention": "À régler",
+      "attentionCount": "À régler ({count})"
     },
     "day": {
       "label": "Jour affiché",
@@ -240,7 +242,11 @@
         "over_capacity": "Au-delà de la capacité · {booked}/{capacity}",
         "no_arrivals": "Personne n'est arrivé",
         "unknown": "À régler"
-      }
+      },
+      "seeRoster": "Voir les participants",
+      "editCourse": "Modifier le cours",
+      "emptyTitle": "Rien à régler pour l'instant.",
+      "emptyBody": "Les séances sans arrivée, au-delà de la capacité ou sans intervenant apparaîtront ici."
     }
   },
   "frontdesk": {

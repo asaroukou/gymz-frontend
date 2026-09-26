@@ -186,7 +186,9 @@
     "tabs": {
       "label": "Dashboard sections",
       "schedule": "Today's schedule",
-      "checkins": "Recent check-ins"
+      "checkins": "Recent check-ins",
+      "attention": "Needs attention",
+      "attentionCount": "Needs attention ({count})"
     },
     "day": {
       "label": "Day shown",
@@ -240,7 +242,11 @@
         "over_capacity": "Over capacity · {booked}/{capacity}",
         "no_arrivals": "Nobody has arrived",
         "unknown": "Needs attention"
-      }
+      },
+      "seeRoster": "See participants",
+      "editCourse": "Edit course",
+      "emptyTitle": "Nothing needs attention right now.",
+      "emptyBody": "Sessions with no arrivals, over capacity or without an instructor will show up here."
     }
   },
   "frontdesk": {
