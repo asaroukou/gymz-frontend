@@ -31,7 +31,8 @@
   },
   "peerDependencies": {
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0"
   },
   "devDependencies": {
     "@iziwellpass/config": "workspace:*",
@@ -43,6 +44,7 @@
     "jsdom": "^26.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0",
     "typescript": "^5.8.0",
     "vitest": "^3.1.0"
   }
