@@ -1,4 +1,4 @@
-const { colors, radius } = require('./lib/theme');
+const { colors, radius, fonts } = require('./lib/theme');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -7,28 +7,44 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        ink: { DEFAULT: colors.ink, hover: colors.inkHover },
         background: colors.background,
-        foreground: colors.foreground,
+        side: colors.side,
+        secondary: colors.secondary,
+        muted: colors.muted,
+        'muted-strong': colors.mutedStrong,
         border: colors.border,
-        neutral: colors.neutral,
-        primary: colors.primary,
-        destructive: colors.destructive,
+        danger: colors.danger,
+        wash: colors.wash,
         success: colors.success,
         warning: colors.warning,
+        destructive: colors.destructive,
         info: colors.info,
+        tint: colors.tint,
+        // Legacy aliases (plan R3) — removed in Task 9.
+        foreground: colors.foreground,
+        primary: colors.primary,
+        neutral: colors.neutral,
       },
-      borderRadius: { DEFAULT: `${radius.DEFAULT}px`, xl: `${radius.xl}px`, pill: '9999px' },
-      // Each weight is a distinct loaded font file (RN does not synthesize
-      // weights from a single family), so weights are addressed by family name,
-      // not the fontWeight utility. Keys avoid the `font-medium`/`font-semibold`
-      // fontWeight collisions by prefixing with the family.
+      borderRadius: {
+        field: `${radius.field}px`,
+        card: `${radius.card}px`,
+        panel: `${radius.panel}px`,
+        pill: `${radius.pill}px`,
+        // Legacy aliases (plan R3) — removed in Task 9.
+        DEFAULT: `${radius.field}px`,
+        xl: `${radius.card}px`,
+      },
+      // Each weight is its own loaded font file (RN does not synthesize weights),
+      // so weights are addressed by family name, never by fontWeight.
       fontFamily: {
-        sans: ['HankenGrotesk_400Regular'],
-        'sans-medium': ['HankenGrotesk_500Medium'],
-        'sans-semibold': ['HankenGrotesk_600SemiBold'],
-        'sans-bold': ['HankenGrotesk_700Bold'],
-        mono: ['GeistMono_400Regular'],
-        'mono-medium': ['GeistMono_500Medium'],
+        sans: [fonts.regular],
+        'sans-medium': [fonts.medium],
+        'sans-semibold': [fonts.semibold],
+        // Legacy aliases (plan R3) — removed in Task 9.
+        'sans-bold': [fonts.semibold],
+        mono: [fonts.regular],
+        'mono-medium': [fonts.medium],
       },
     },
   },
