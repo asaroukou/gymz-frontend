@@ -133,7 +133,9 @@ export default function QrScreen() {
                 {t('qr.expiredHint')}
               </AppText>
             </View>
-            <Button label={t('qr.refresh')} icon={RefreshCw} onPress={doMint} loading={mint.isPending} fullWidth={false} />
+            <View className="w-full max-w-[288px]">
+              <Button label={t('qr.refresh')} icon={RefreshCw} onPress={doMint} loading={mint.isPending} />
+            </View>
           </>
         ) : (
           <>
@@ -143,19 +145,20 @@ export default function QrScreen() {
             <AppText variant="label" className="max-w-[288px] text-center">
               {t('qr.beforeHint')}
             </AppText>
-            <Button
-              label={t('qr.generate')}
-              icon={QrCode}
-              onPress={doMint}
-              loading={mint.isPending || venues.isLoading}
-              fullWidth={false}
-            />
+            <View className="w-full max-w-[288px]">
+              <Button
+                label={t('qr.generate')}
+                icon={QrCode}
+                onPress={doMint}
+                loading={mint.isPending || venues.isLoading}
+              />
+            </View>
           </>
         )}
       </View>
 
       {live && name ? (
-        <View className="mb-4 flex-row items-center gap-3 rounded-panel border border-border px-4 py-3">
+        <View className="flex-row items-center gap-3 border-t border-border py-3">
           <Avatar name={name} />
           <View className="flex-1">
             <AppText variant="bodyStrong" numberOfLines={1}>
