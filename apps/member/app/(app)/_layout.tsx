@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CalendarCheck, QrCode, Wallet, type LucideIcon } from 'lucide-react-native';
 import { t } from '@/lib/i18n';
+import { TAB_BAR_CONTENT_HEIGHT } from '@/lib/layout';
 import { colors, fonts } from '@/lib/theme';
 
 // The canvas pill wraps the icon AND the label together (NgWGe/d14X6), so the
@@ -31,6 +33,7 @@ function TabIcon({
 }
 
 export default function AppLayout() {
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -42,7 +45,12 @@ export default function AppLayout() {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 84,
+          // React Navigation applies `paddingBottom: insets.bottom` on top of
+          // a numeric height, so the inset is added here too or the pill's
+          // content zone shrinks to `height - insets.bottom` on notched
+          // devices (plan fix round 1).
+          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
+          paddingBottom: insets.bottom,
           paddingTop: 8,
         },
       }}

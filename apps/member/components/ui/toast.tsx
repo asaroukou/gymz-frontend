@@ -2,11 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from './text';
+import { TAB_BAR_CONTENT_HEIGHT } from '@/lib/layout';
 
 type ToastInput = { title: string; description?: string };
 const ToastContext = createContext<{ show: (t: ToastInput) => void }>({ show: () => {} });
 
-const TAB_BAR_HEIGHT = 84;
 const DURATION_MS = 4000;
 
 /** One transient dark pill above the tab bar (canvas H8Zdj4, spec M10). */
@@ -33,7 +33,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           accessibilityLiveRegion="polite"
           accessibilityRole="alert"
           className="absolute left-5 right-5 rounded-panel bg-ink px-5 py-3.5"
-          style={{ bottom: TAB_BAR_HEIGHT + Math.max(insets.bottom - 34, 0) + 12 }}
+          style={{ bottom: TAB_BAR_CONTENT_HEIGHT + insets.bottom + 12 }}
         >
           <AppText variant="bodyStrong" className="text-white">
             {toast.title}
