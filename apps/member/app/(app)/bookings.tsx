@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { CalendarX2 } from 'lucide-react-native';
@@ -25,7 +25,7 @@ import { formatDayNumber, formatShortDate, formatTime, formatWeekdayShort } from
 function DateBlock({ startsAt, upcoming }: { startsAt: string | null; upcoming: boolean }) {
   return (
     <View className={`h-14 w-12 items-center justify-center rounded-card ${upcoming ? 'bg-tint-bleu' : 'bg-side'}`}>
-      <AppText variant="numeric" className="text-[20px] leading-[24px]">
+      <AppText variant="numeric" style={{ fontSize: 20, lineHeight: 24 }}>
         {startsAt ? formatDayNumber(startsAt) : '—'}
       </AppText>
       {startsAt ? <AppText variant="caption">{formatWeekdayShort(startsAt)}</AppText> : null}
@@ -50,11 +50,14 @@ function Row({
           <AppText variant="bodyStrong">{t('bookings.session')}</AppText>
           <StatusBadge label={t(bookingStatusLabelKey(view.status))} variant={statusBadgeVariant(view.status)} />
         </View>
-        <AppText variant={view.startsAt ? 'numeric' : 'label'} className="text-[13px] text-muted">
+        <AppText variant={view.startsAt ? 'meta' : 'label'}>
           {view.startsAt ? formatTime(view.startsAt) : t('bookings.dateUnknown')}
         </AppText>
         {isCancellable(view.status) && upcoming ? (
-          <View className="-ml-4 self-start">
+          // Button always pads `px-6` (24px) regardless of size, so -ml-6
+          // cancels it exactly and the label's left edge lines up with
+          // « Séance » above it (finding 7, compare with d14X6.png).
+          <View className="-ml-6 self-start">
             <Button label={t('bookings.cancel')} variant="ghost" size="sm" fullWidth={false} onPress={() => onCancel(view)} />
           </View>
         ) : null}
@@ -99,7 +102,10 @@ export default function BookingsScreen() {
   const list = useMeListBookings(undefined, { query: { select: unwrap } });
   const venues = useMeVenues(undefined, { query: { select: unwrap } });
   const venueId = venues.data?.[0];
-  const range = useMemo(() => slotWindow(), []);
+  // Recomputed per render, not memoized: `slotWindow()` reads the current
+  // day, and TanStack Query keys hash by value, so a stale memoized window
+  // would only ever refetch after a full remount (finding 4).
+  const range = slotWindow();
   const slots = useMeSlots(
     { venue_id: venueId ?? '', from: range.from, to: range.to },
     { query: { select: unwrap, enabled: !!venueId } },
@@ -134,7 +140,7 @@ export default function BookingsScreen() {
       </AppText>
 
       <QueryBoundary
-        isLoading={list.isLoading}
+        isLoading={list.isLoading || venues.isLoading || slots.isLoading}
         isError={list.isError}
         errorText={t('bookings.error')}
         onRetry={() => void list.refetch()}
@@ -144,7 +150,7 @@ export default function BookingsScreen() {
           <View className="items-center gap-4 py-16">
             <IconMedallion icon={CalendarX2} />
             <AppText variant="heading">{t('bookings.empty')}</AppText>
-            <AppText variant="body" className="max-w-[300px] text-center text-muted">
+            <AppText variant="body" tone="muted" className="max-w-[300px] text-center">
               {t('bookings.emptyHint')}
             </AppText>
           </View>
