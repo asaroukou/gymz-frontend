@@ -6,8 +6,8 @@
     "password": "Password",
     "passwordRequired": "Enter your password.",
     "emailInvalid": "Invalid email address.",
-    "passwordTooShort": "8 characters minimum.",
     "passwordMismatch": "Passwords do not match.",
+    "passwordPolicy": "The password doesn't meet the rules.",
     "submit": "Sign in",
     "newPasswordTitle": "Choose a password",
     "newPasswordHint": "Create your password to finish activating your account.",
@@ -16,7 +16,14 @@
     "newPasswordSubmit": "Confirm",
     "back": "Back",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "footer": "Your access is created by your gym. Ask the front desk if needed.",
+    "rules": {
+      "length": "At least 12 characters",
+      "uppercase": "One uppercase letter",
+      "lowercase": "One lowercase letter",
+      "digit": "One number"
+    }
   },
   "auth": {
     "error": {

@@ -6,8 +6,8 @@
     "password": "Mot de passe",
     "passwordRequired": "Saisissez votre mot de passe.",
     "emailInvalid": "Adresse e-mail invalide.",
-    "passwordTooShort": "8 caractères minimum.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "passwordPolicy": "Le mot de passe ne respecte pas les règles.",
     "submit": "Se connecter",
     "newPasswordTitle": "Choisir un mot de passe",
     "newPasswordHint": "Créez votre mot de passe pour terminer l'activation.",
@@ -16,7 +16,14 @@
     "newPasswordSubmit": "Valider",
     "back": "Retour",
     "showPassword": "Afficher le mot de passe",
-    "hidePassword": "Masquer le mot de passe"
+    "hidePassword": "Masquer le mot de passe",
+    "footer": "Votre accès est créé par votre salle. Contactez l'accueil si besoin.",
+    "rules": {
+      "length": "12 caractères minimum",
+      "uppercase": "Une majuscule",
+      "lowercase": "Une minuscule",
+      "digit": "Un chiffre"
+    }
   },
   "auth": {
     "error": {
