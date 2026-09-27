@@ -125,7 +125,7 @@ Radii: `field` 12, `card` 16, `panel` 24, `pill` 999. `tailwind.config.js` maps 
 | components | §4 |
 | screens | `app/(auth)/login.tsx`, `app/(app)/index.tsx`, `app/(app)/qr.tsx`, `app/(app)/bookings.tsx`, `app/(app)/_layout.tsx`, `app/_layout.tsx` (fonts) |
 | `messages/fr.json`, `messages/en.json` | Canvas copy (§5); keys kept in parity (existing `lib/i18n.test.ts` guard) |
-| `scripts/mock-server.mjs` | Adds `GET /gms/v1/me/memberships` (one membership « Studio Dakar Plateau » for the mock venue) and `GET /gms/v1/me/slots` (slots matching the seeded bookings' `slot_id`s, incl. one past and one outside the window); seeded bookings gain `slot_id`s and include confirmed, checked-in, no-show; a booking cancel returns 409 for one fixed booking to demo `H8Zdj4`; `MOCK_CARD=active\|pack\|expired\|none` (default `active`) selects the subscription shape for the Carte states and `MOCK_BOOKINGS=empty` returns no bookings |
+| `scripts/mock-server.mjs` | Adds `GET /gms/v1/me/memberships` (one membership « Studio Dakar Plateau » for the mock venue) and `GET /gms/v1/me/slots` (slots matching the seeded bookings' `slot_id`s, incl. one past and one outside the window); seeded bookings gain `slot_id`s and include confirmed, checked-in, no-show; a booking cancel returns 409 for one fixed booking to demo `H8Zdj4`; `MOCK_CARD=active\|pack\|expired\|none` (default `active`) selects the subscription shape for the Carte states `MOCK_BOOKINGS=empty` returns no bookings, and `MOCK_QR=unavailable` makes `POST /me/qr` answer `403 FEATURE_NOT_AVAILABLE` |
 
 ## 7. Errors
 
@@ -146,7 +146,7 @@ Radii: `field` 12, `card` 16, `panel` 24, `pill` 999. `tailwind.config.js` maps 
 - Vitest (node) for every `lib/*` unit above, incl. `cardView` for all four states and both renewal cases, the slot join with a missing slot and an unknown date, the window bounds (< 62 days), password rules against the policy, `pickMembership` fallback, and the theme pin test.
 - Existing member tests stay green (`status-badge.logic`, `bookings`, `card-status`, `countdown`, `format`, `i18n`, `login-schema`, `nav`); update them where the behaviour intentionally changes (theme values, login schema rules).
 - Gates: `pnpm --filter @iziwellpass/member typecheck lint test`, `expo export --platform web` (the member `build`), plus the repo-wide `pnpm check:design && pnpm typecheck && pnpm lint && pnpm test`.
-- Visual check on Expo web (`expo start --web`) at 390×844 against each PNG in `docs/design-refs/comptoir-clair/member/`, driving the member mock server: all 15 states reachable with the offline auth (`EXPO_PUBLIC_AUTH_MOCK=1`: password `wrong` → error notice, `invite` → new-password screen), `MOCK_CARD` for the four Carte states, the QR flow (generate, wait 60 s for expiry, 403 via the existing mock hook), the cancel sheet, the 409 toast, and `MOCK_BOOKINGS=empty`.
+- Visual check on Expo web (`expo start --web`) at 390×844 against each PNG in `docs/design-refs/comptoir-clair/member/`, driving the member mock server: all 15 states reachable with the offline auth (`EXPO_PUBLIC_AUTH_MOCK=1`: password `wrong` → error notice, `invite` → new-password screen), `MOCK_CARD` for the four Carte states, the QR flow (generate, wait 60 s for expiry, `MOCK_QR=unavailable` for the 403 panel), the cancel sheet, the 409 toast, and `MOCK_BOOKINGS=empty`.
 
 ## 9. Out of scope
 
