@@ -11,17 +11,19 @@ describe('credentialsSchema', () => {
 });
 
 describe('newPasswordSchema', () => {
-  it('requires 8+ chars and matching confirmation', () => {
+  it('enforces the password policy', () => {
+    const r = newPasswordSchema.safeParse({ newPassword: 'longenough', confirmPassword: 'longenough' });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe('policy');
+  });
+  it('requires a matching confirmation', () => {
+    const r = newPasswordSchema.safeParse({ newPassword: 'Motdepasse12', confirmPassword: 'Motdepasse13' });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe('mismatch');
+  });
+  it('accepts a valid pair', () => {
     expect(
-      newPasswordSchema.safeParse({ newPassword: 'short', confirmPassword: 'short' }).success,
-    ).toBe(false);
-    expect(
-      newPasswordSchema.safeParse({ newPassword: 'longenough', confirmPassword: 'different' })
-        .success,
-    ).toBe(false);
-    expect(
-      newPasswordSchema.safeParse({ newPassword: 'longenough', confirmPassword: 'longenough' })
-        .success,
+      newPasswordSchema.safeParse({ newPassword: 'Motdepasse12', confirmPassword: 'Motdepasse12' }).success,
     ).toBe(true);
   });
 });

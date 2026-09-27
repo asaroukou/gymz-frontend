@@ -14,9 +14,8 @@ import { Button, IconMedallion } from '@/components/ui/button';
 import { StatusBadge, statusBadgeVariant } from '@/components/ui/status-badge';
 import { QueryBoundary } from '@/components/ui/query-boundary';
 import { t } from '@/lib/i18n';
-import { bookingStatusLabelKey, isCancellable, splitBookings } from '@/lib/bookings';
-
-type Booking = { id: string; status: string; booked_at: string };
+import { bookingStatusLabelKey, isCancellable } from '@/lib/bookings';
+import { joinBookings, splitBookingViews } from '@/lib/booking-slots';
 
 function parts(iso: string) {
   const d = new Date(iso);
@@ -48,16 +47,16 @@ function BookingRow({
   onCancel,
   canceling,
 }: {
-  booking: Booking;
+  booking: { id: string; status: string; startsAt: string | null };
   muted?: boolean;
   onCancel: (id: string) => void;
   canceling: boolean;
 }) {
-  const p = parts(booking.booked_at);
+  const p = parts(booking.startsAt ?? '');
   return (
     <View className={`border-b border-border py-4 ${muted ? 'opacity-60' : ''}`}>
       <View className="flex-row items-center gap-4">
-        <DateChip iso={booking.booked_at} />
+        <DateChip iso={booking.startsAt ?? ""} />
         <View className="flex-1">
           <AppText variant="mono" className="text-[17px]">
             {p?.time ?? '—'}
@@ -135,7 +134,8 @@ export default function BookingsScreen() {
       },
     ]);
 
-  const { upcoming, past } = splitBookings((list.data ?? []) as Booking[]);
+  const bookingViews = joinBookings(list.data ?? [], undefined);
+  const { upcoming, past } = splitBookingViews(bookingViews);
   const isEmpty = list.data && list.data.length === 0;
   const cancelingId = cancel.isPending ? cancel.variables?.bid : undefined;
 
