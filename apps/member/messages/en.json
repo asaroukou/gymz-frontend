@@ -14,7 +14,9 @@
     "newPassword": "New password",
     "confirmPassword": "Confirm password",
     "newPasswordSubmit": "Confirm",
-    "back": "Back"
+    "back": "Back",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "auth": {
     "error": {

@@ -1,10 +1,26 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
-export function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <View className={`rounded-xl border border-border bg-neutral-50 p-5 ${className ?? ''}`}>
-      {children}
-    </View>
-  );
+type Tint = 'bleu' | 'vert' | 'sable' | 'rose' | 'lavande';
+
+const TINT: Record<Tint, string> = {
+  bleu: 'bg-tint-bleu',
+  vert: 'bg-tint-vert',
+  sable: 'bg-tint-sable',
+  rose: 'bg-tint-rose',
+  lavande: 'bg-tint-lavande',
+};
+
+/** A 24-radius panel: tinted (the pass) or white with a hairline. */
+export function Card({
+  children,
+  className,
+  tint,
+}: {
+  children: ReactNode;
+  className?: string;
+  tint?: Tint;
+}) {
+  const surface = tint ? TINT[tint] : 'border border-border bg-background';
+  return <View className={`rounded-panel p-5 ${surface} ${className ?? ''}`}>{children}</View>;
 }

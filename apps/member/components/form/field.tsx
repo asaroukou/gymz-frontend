@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
-import { TextInput, View } from 'react-native';
-import type { LucideIcon } from 'lucide-react-native';
+import { Pressable, TextInput, View } from 'react-native';
+import { Eye, EyeOff, type LucideIcon } from 'lucide-react-native';
 import { AppText } from '@/components/ui/text';
+import { t } from '@/lib/i18n';
 import { colors } from '@/lib/theme';
 
 export function TextField<T extends FieldValues>({
@@ -22,37 +23,32 @@ export function TextField<T extends FieldValues>({
   keyboardType?: 'email-address' | 'default';
   errorText?: string;
   icon?: LucideIcon;
-  autoComplete?: 'email' | 'password' | 'off';
+  autoComplete?: 'email' | 'password' | 'new-password' | 'off';
 }) {
   const [focused, setFocused] = useState(false);
-  // Focus and error both recolor the pill border, matching the owner app's
-  // ring-on-focus / erreur-on-invalid convention.
-  const borderClass = errorText
-    ? 'border-destructive'
-    : focused
-      ? 'border-primary'
-      : 'border-border';
+  const [revealed, setRevealed] = useState(false);
+  const border = errorText ? 'border-danger' : focused ? 'border-ink' : 'border-border';
   return (
     <View className="gap-1.5">
-      <AppText variant="label">{label}</AppText>
+      <AppText variant="label" className="font-sans-medium text-ink">
+        {label}
+      </AppText>
       <Controller
         control={control}
         name={name}
         render={({ field: { onChange, onBlur, value } }) => (
           <View
-            className={`h-12 flex-row items-center gap-2.5 rounded-pill border bg-neutral-50 px-4 ${borderClass}`}
+            className={`h-[52px] flex-row items-center gap-2.5 rounded-pill border bg-background px-5 ${border}`}
           >
-            {Icon ? (
-              <Icon color={focused ? colors.primary.DEFAULT : colors.neutral[400]} size={18} />
-            ) : null}
+            {Icon ? <Icon color={focused ? colors.ink : colors.muted} size={18} strokeWidth={1.5} /> : null}
             <TextInput
               accessibilityLabel={label}
-              className="h-12 flex-1 font-sans text-[15px] text-foreground"
-              placeholderTextColor={colors.neutral[400]}
+              className="h-[52px] flex-1 font-sans text-[15px] text-ink"
+              placeholderTextColor={colors.muted}
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete={autoComplete}
-              secureTextEntry={secure}
+              secureTextEntry={secure && !revealed}
               keyboardType={keyboardType ?? 'default'}
               onBlur={() => {
                 setFocused(false);
@@ -62,6 +58,20 @@ export function TextField<T extends FieldValues>({
               onChangeText={onChange}
               value={value ?? ''}
             />
+            {secure ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={revealed ? t('login.hidePassword') : t('login.showPassword')}
+                onPress={() => setRevealed((r) => !r)}
+                className="-mr-2 h-11 w-11 items-center justify-center"
+              >
+                {revealed ? (
+                  <EyeOff color={colors.muted} size={20} strokeWidth={1.5} />
+                ) : (
+                  <Eye color={colors.muted} size={20} strokeWidth={1.5} />
+                )}
+              </Pressable>
+            ) : null}
           </View>
         )}
       />

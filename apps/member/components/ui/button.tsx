@@ -2,26 +2,29 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { colors } from '@/lib/theme';
 
-type Variant = 'primary' | 'ghost' | 'outline';
-type Size = 'md' | 'lg';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
+type LegacyVariant = Variant | 'outline'; // Legacy alias (plan R3) — removed in Task 9.
+type Size = 'md' | 'sm';
 
 const CONTAINER: Record<Variant, string> = {
-  primary: 'bg-primary active:bg-primary-hover',
-  ghost: 'bg-transparent active:bg-neutral-100',
-  outline: 'bg-background border border-border active:bg-neutral-100',
+  primary: 'bg-ink active:bg-ink-hover',
+  secondary: 'border border-border bg-background active:bg-side',
+  ghost: 'bg-transparent active:bg-side',
+  destructive: 'bg-destructive active:opacity-80',
 };
 
 const LABEL: Record<Variant, string> = {
-  primary: 'text-primary-foreground',
-  ghost: 'text-primary',
-  outline: 'text-foreground',
+  primary: 'text-white',
+  secondary: 'text-ink',
+  ghost: 'text-ink',
+  destructive: 'text-destructive-foreground',
 };
 
-// Icon/spinner tint per variant (RN SVG needs an explicit color, not a class).
 const INK: Record<Variant, string> = {
-  primary: colors.primary.foreground,
-  ghost: colors.primary.DEFAULT,
-  outline: colors.foreground,
+  primary: colors.white,
+  secondary: colors.ink,
+  ghost: colors.ink,
+  destructive: colors.destructive.foreground,
 };
 
 export function Button({
@@ -29,7 +32,7 @@ export function Button({
   onPress,
   disabled,
   loading,
-  variant = 'primary',
+  variant: rawVariant = 'primary',
   size = 'md',
   icon: Icon,
   fullWidth = true,
@@ -38,26 +41,29 @@ export function Button({
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  variant?: Variant;
+  variant?: LegacyVariant;
   size?: Size;
   icon?: LucideIcon;
   fullWidth?: boolean;
 }) {
-  const height = size === 'lg' ? 'h-14' : 'h-12';
+  const variant: Variant = rawVariant === 'outline' ? 'secondary' : rawVariant;
+  const height = size === 'sm' ? 'h-11' : 'h-[52px]';
+  const inactive = disabled || loading;
   return (
     <Pressable
       accessibilityRole="button"
-      disabled={disabled || loading}
+      accessibilityState={{ disabled: !!inactive, busy: !!loading }}
+      disabled={inactive}
       onPress={onPress}
-      className={`${height} ${fullWidth ? 'w-full' : 'self-start px-6'} flex-row items-center justify-center gap-2 rounded-pill px-5 ${CONTAINER[variant]} ${
-        disabled || loading ? 'opacity-40' : ''
+      className={`${height} ${fullWidth ? 'w-full' : 'self-start'} flex-row items-center justify-center gap-2 rounded-pill px-6 ${CONTAINER[variant]} ${
+        disabled && !loading ? 'opacity-40' : ''
       }`}
     >
       {loading ? (
         <ActivityIndicator color={INK[variant]} />
       ) : (
         <>
-          {Icon ? <Icon color={INK[variant]} size={18} strokeWidth={2} /> : null}
+          {Icon ? <Icon color={INK[variant]} size={18} strokeWidth={1.5} /> : null}
           <Text className={`font-sans-semibold text-[15px] ${LABEL[variant]}`}>{label}</Text>
         </>
       )}
@@ -65,12 +71,12 @@ export function Button({
   );
 }
 
-/** Icon-only pressable for quiet trailing actions (e.g. regenerate, cancel). */
+/** Icon-only pressable for quiet trailing actions. */
 export function IconButton({
   icon: Icon,
   onPress,
   label,
-  tint = colors.neutral[500],
+  tint = colors.muted,
   loading,
 }: {
   icon: LucideIcon;
@@ -85,22 +91,18 @@ export function IconButton({
       accessibilityLabel={label}
       disabled={loading}
       onPress={onPress}
-      className="h-11 w-11 items-center justify-center rounded-pill active:bg-neutral-100"
+      className="h-11 w-11 items-center justify-center rounded-pill active:bg-side"
     >
-      {loading ? (
-        <ActivityIndicator color={tint} />
-      ) : (
-        <Icon color={tint} size={20} strokeWidth={2} />
-      )}
+      {loading ? <ActivityIndicator color={tint} /> : <Icon color={tint} size={20} strokeWidth={1.5} />}
     </Pressable>
   );
 }
 
-/** Small helper so a View can host a centered Lucide icon with a tinted wash. */
+/** A centered Lucide icon on a round chip (empty states). */
 export function IconMedallion({
   icon: Icon,
-  tint = colors.neutral[400],
-  wash = 'bg-neutral-100',
+  tint = colors.muted,
+  wash = 'bg-secondary',
 }: {
   icon: LucideIcon;
   tint?: string;
@@ -108,7 +110,7 @@ export function IconMedallion({
 }) {
   return (
     <View className={`h-14 w-14 items-center justify-center rounded-pill ${wash}`}>
-      <Icon color={tint} size={26} strokeWidth={1.75} />
+      <Icon color={tint} size={24} strokeWidth={1.5} />
     </View>
   );
 }
