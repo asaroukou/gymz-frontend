@@ -180,7 +180,15 @@ export default function BookingsScreen() {
           loading={cancel.isPending}
           onPress={() => pending && cancel.mutate({ bid: pending.id })}
         />
-        <Button label={t('bookings.keep')} variant="secondary" disabled={cancel.isPending} onPress={() => setPending(null)} />
+        <View className="flex-row justify-center">
+          <Button
+            label={t('bookings.keep')}
+            variant="ghost"
+            fullWidth={false}
+            disabled={cancel.isPending}
+            onPress={() => setPending(null)}
+          />
+        </View>
       </Sheet>
     </Screen>
   );
