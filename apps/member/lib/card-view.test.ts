@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardView, planLineText } from './card-view';
+import { cardView, planLabel, planLineText } from './card-view';
 
 const now = new Date(2026, 8, 20, 12);
 const profile = { membership_type: 'monthly', membership_end: '2026-12-31', membership_status: 'active' };
@@ -66,5 +66,34 @@ describe('cardView', () => {
     expect(planLineText(annual.planLine, tr)).toBe('Annuel illimité · Renouvelé chaque année');
     const odd = cardView({ ...profile, membership_type: 'standard' }, { status: 'active', expires_on: '2027-01-01', entries_remaining: null }, now);
     expect(planLineText(odd.planLine, tr)).toBeNull();
+  });
+});
+
+describe('planLabel', () => {
+  it('active: type label + illimité, no renewal suffix', () => {
+    const v = cardView(profile, { status: 'active', expires_on: '2026-09-30', entries_remaining: null }, now);
+    expect(planLabel(v.planLine, tr)).toBe('Mensuel illimité');
+  });
+
+  it('entry pack: type label only, no illimité and no renewal suffix', () => {
+    const v = cardView(profile, { status: 'active', expires_on: '2026-10-30', entries_remaining: 3 }, now);
+    expect(planLabel(v.planLine, tr)).toBe('Mensuel');
+  });
+
+  it('expired: type label + illimité, no renewal suffix', () => {
+    const v = cardView(profile, { status: 'expired', expires_on: '2026-08-31', entries_remaining: null }, now);
+    expect(planLabel(v.planLine, tr)).toBe('Mensuel illimité');
+  });
+
+  it('annual renewal and unknown type', () => {
+    const annual = cardView({ ...profile, membership_type: 'annual' }, { status: 'active', expires_on: '2027-01-01', entries_remaining: null }, now);
+    expect(planLabel(annual.planLine, tr)).toBe('Annuel illimité');
+    const odd = cardView({ ...profile, membership_type: 'standard' }, { status: 'active', expires_on: '2027-01-01', entries_remaining: null }, now);
+    expect(planLabel(odd.planLine, tr)).toBeNull();
+  });
+
+  it('null typeKey (no plan line, e.g. no subscription) returns null', () => {
+    const v = cardView(profile, undefined, now);
+    expect(planLabel(v.planLine, tr)).toBeNull();
   });
 });

@@ -93,3 +93,15 @@ export function planLineText(line: PlanLine | null, translate: (key: string) => 
   const head = line.unlimited ? `${translate(line.typeKey)} ${translate('card.unlimited')}` : translate(line.typeKey);
   return line.renewalKey ? `${head} · ${translate(line.renewalKey)}` : head;
 }
+
+/**
+ * « Mensuel illimité » — type label plus « illimité » when unlimited, never the
+ * renewal suffix. Used where the plan shares a line with the venue name (QR
+ * strip): `planLineText` already ends in « · Renouvelé chaque mois », so
+ * appending the venue after it truncates before the venue ever renders.
+ * Null when the type is unknown (no plan line at all).
+ */
+export function planLabel(line: PlanLine | null, translate: (key: string) => string): string | null {
+  if (!line?.typeKey) return null;
+  return line.unlimited ? `${translate(line.typeKey)} ${translate('card.unlimited')}` : translate(line.typeKey);
+}

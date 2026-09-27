@@ -22,7 +22,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { t } from '@/lib/i18n';
 import { secondsUntil } from '@/lib/countdown';
 import { formatCountdown } from '@/lib/format';
-import { cardView, planLineText } from '@/lib/card-view';
+import { cardView, planLabel } from '@/lib/card-view';
 import { pickMembership } from '@/lib/venue';
 import { colors } from '@/lib/theme';
 
@@ -88,7 +88,11 @@ export default function QrScreen() {
 
   const venue = pickMembership(memberships.data, venues.data)?.gym_name ?? '';
   const view = profile.data ? cardView(profile.data, subs.data?.[0]) : null;
-  const plan = view ? planLineText(view.planLine, (key) => t(key)) : null;
+  // Packs show no plan line on the strip either (Carte ruling), and the plan
+  // label never carries the renewal suffix here — the strip already reads
+  // `[plan, venue].join(' · ')`, so a trailing « · Renouvelé … » would push
+  // the venue past view before it ever renders.
+  const plan = view && view.state !== 'pack' ? planLabel(view.planLine, (key) => t(key)) : null;
   const name = profile.data ? `${profile.data.first_name} ${profile.data.last_name}`.trim() : '';
 
   return (
@@ -96,7 +100,7 @@ export default function QrScreen() {
       <AppText variant="title" className="mt-1 text-center">
         {t('qr.title')}
       </AppText>
-      <AppText variant="body" className="mt-1 text-center text-muted">
+      <AppText variant="body" tone="muted" className="mt-1 text-center">
         {t('qr.subtitle')}
       </AppText>
 
@@ -120,7 +124,7 @@ export default function QrScreen() {
             </View>
             <View className="w-full max-w-[288px] gap-2">
               <ProgressBar value={remaining / lifetime} label={t('qr.expiresIn', { time: formatCountdown(remaining) })} />
-              <AppText variant="numeric" className="text-center text-muted">
+              <AppText variant="numeric" tone="muted" className="text-center">
                 {t('qr.expiresIn', { time: formatCountdown(remaining) })}
               </AppText>
             </View>
@@ -129,7 +133,7 @@ export default function QrScreen() {
           <>
             <View className={`${QR_BOX} gap-2 bg-side`}>
               <AppText variant="heading">{t('qr.expired')}</AppText>
-              <AppText variant="body" className="text-muted">
+              <AppText variant="body" tone="muted">
                 {t('qr.expiredHint')}
               </AppText>
             </View>
@@ -168,7 +172,10 @@ export default function QrScreen() {
               {[plan, venue].filter(Boolean).join(' · ')}
             </AppText>
           </View>
-          <StatusBadge label={t('qr.active')} variant="success" />
+          <StatusBadge
+            label={view ? t(view.badgeKey) : t('qr.active')}
+            variant={view ? view.badgeVariant : 'success'}
+          />
         </View>
       ) : null}
     </Screen>
