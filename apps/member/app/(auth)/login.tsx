@@ -36,13 +36,18 @@ function Checklist({ value }: { value: string }) {
   return (
     <View className="gap-1.5" accessibilityRole="list">
       {passwordChecks(value).map(({ key, met }) => (
-        <View key={key} className="flex-row items-center gap-2">
+        <View
+          key={key}
+          className="flex-row items-center gap-2"
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: met }}
+        >
           {met ? (
             <Check color={colors.success.foreground} size={16} strokeWidth={1.5} />
           ) : (
             <Circle color={colors.muted} size={8} fill={colors.muted} strokeWidth={0} />
           )}
-          <AppText variant="label" className={met ? 'text-success-foreground' : 'text-muted'}>
+          <AppText variant="label" tone={met ? 'success' : 'muted'}>
             {t(`login.rules.${key}`)}
           </AppText>
         </View>
@@ -112,7 +117,7 @@ export default function Login() {
         </View>
         <View className="gap-2">
           <AppText variant="title">{t('login.newPasswordTitle')}</AppText>
-          <AppText variant="body" className="text-muted">
+          <AppText variant="body" tone="muted">
             {t('login.newPasswordHint')}
           </AppText>
         </View>
@@ -145,7 +150,7 @@ export default function Login() {
           <AppText variant="display" className="text-center">
             {t('login.title')}
           </AppText>
-          <AppText variant="body" className="text-center text-muted">
+          <AppText variant="body" tone="muted" className="text-center">
             {t('login.welcome')}
           </AppText>
         </View>
