@@ -22,7 +22,7 @@ function TabIcon({
 }): ReactNode {
   return (
     <View
-      className={`items-center justify-center gap-1 rounded-pill px-4 py-1.5 ${focused ? 'bg-secondary' : ''}`}
+      className={`items-center justify-center gap-1 rounded-pill px-4 py-1 ${focused ? 'bg-secondary' : ''}`}
     >
       <Icon color={color} size={20} strokeWidth={1.5} />
       <Text style={{ fontFamily: focused ? fonts.semibold : fonts.medium, fontSize: 12, color }}>
@@ -48,10 +48,12 @@ export default function AppLayout() {
           // React Navigation applies `paddingBottom: insets.bottom` on top of
           // a numeric height, so the inset is added here too or the pill's
           // content zone shrinks to `height - insets.bottom` on notched
-          // devices (plan fix round 1).
+          // devices (plan fix round 1). `paddingTop: 4` (not 8) so the
+          // content zone (50 - 4 = 46) fits the pill (`py-1` here, ≈ 46:
+          // 4 + 20 icon + 4 gap + ~14 label + 4) at inset 0 (finding 3).
           height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
           paddingBottom: insets.bottom,
-          paddingTop: 8,
+          paddingTop: 4,
         },
       }}
     >
