@@ -12,7 +12,7 @@ export function Avatar({ name, tint = 'bg-tint-vert' }: { name: string; tint?: s
       .join('') || '?';
   return (
     <View className={`h-10 w-10 items-center justify-center rounded-pill ${tint}`}>
-      <AppText variant="label" className="font-sans-semibold text-ink">
+      <AppText variant="label" tone="ink" className="font-sans-semibold">
         {initials}
       </AppText>
     </View>

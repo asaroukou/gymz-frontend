@@ -41,46 +41,46 @@ function Pass({ profile, subscription, venue }: { profile: Profile; subscription
   return (
     <Card tint={TINT_BY_STATE[view.state]} className="gap-4">
       <View className="flex-row items-center justify-between gap-3">
-        <AppText variant="label" className="flex-1 text-muted-strong" numberOfLines={1}>
+        <AppText variant="label" tone="mutedStrong" className="flex-1" numberOfLines={1}>
           {venue ?? ''}
         </AppText>
         <StatusBadge label={t(view.badgeKey)} variant={view.badgeVariant} />
       </View>
-      <AppText variant="heading" className="text-[22px] leading-[28px]">
+      <AppText variant="heading" style={{ fontSize: 22, lineHeight: 28 }}>
         {name}
       </AppText>
 
       <View className="gap-1">
         {view.state === 'active' && view.validUntil ? (
-          <AppText variant="bodyStrong" className="text-[17px]">
+          <AppText variant="bodyStrong" style={{ fontSize: 17 }}>
             {t('card.validUntil', { date: formatDate(view.validUntil) })}
           </AppText>
         ) : null}
         {view.state === 'pack' && view.entries !== null ? (
           <View className="flex-row items-baseline gap-2">
             <AppText variant="numericLarge">{String(view.entries)}</AppText>
-            <AppText variant="label" className="text-muted-strong">
+            <AppText variant="label" tone="mutedStrong">
               {t('card.entriesUnit', { count: view.entries })}
             </AppText>
           </View>
         ) : null}
         {view.state === 'expired' ? (
-          <AppText variant="bodyStrong" className="text-[17px]">
+          <AppText variant="bodyStrong" style={{ fontSize: 17 }}>
             {view.expiredOn ? t('card.expiredOn', { date: formatDate(view.expiredOn) }) : t(view.badgeKey)}
           </AppText>
         ) : null}
         {view.state === 'none' ? (
           <>
-            <AppText variant="bodyStrong" className="text-[17px]">
+            <AppText variant="bodyStrong" style={{ fontSize: 17 }}>
               {t('card.noSubscription')}
             </AppText>
-            <AppText variant="label" className="text-muted-strong">
+            <AppText variant="label" tone="mutedStrong">
               {t('card.noSubscriptionHint')}
             </AppText>
           </>
         ) : null}
         {plan ? (
-          <AppText variant="label" className="text-muted-strong">
+          <AppText variant="label" tone="mutedStrong">
             {plan}
           </AppText>
         ) : null}
@@ -88,12 +88,12 @@ function Pass({ profile, subscription, venue }: { profile: Profile; subscription
 
       <View className="flex-row items-end justify-between">
         <View>
-          <AppText variant="caption" className="text-muted-strong">
+          <AppText variant="caption" tone="mutedStrong">
             {t('card.memberNo')}
           </AppText>
           <AppText variant="numeric">{profile.id.slice(0, 8).toUpperCase()}</AppText>
         </View>
-        <AppText variant="caption" className="text-muted-strong">
+        <AppText variant="caption" tone="mutedStrong">
           {t('card.memberSince', { date: formatMonthYear(profile.membership_start) })}
         </AppText>
       </View>

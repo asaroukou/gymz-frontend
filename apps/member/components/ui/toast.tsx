@@ -35,11 +35,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           className="absolute left-5 right-5 rounded-panel bg-ink px-5 py-3.5"
           style={{ bottom: TAB_BAR_CONTENT_HEIGHT + insets.bottom + 12 }}
         >
-          <AppText variant="bodyStrong" className="text-white">
+          <AppText variant="bodyStrong" tone="white">
             {toast.title}
           </AppText>
           {toast.description ? (
-            <AppText variant="label" className="text-white/70">
+            <AppText variant="label" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
               {toast.description}
             </AppText>
           ) : null}

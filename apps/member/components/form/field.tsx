@@ -30,7 +30,7 @@ export function TextField<T extends FieldValues>({
   const border = errorText ? 'border-danger' : focused ? 'border-ink' : 'border-border';
   return (
     <View className="gap-1.5">
-      <AppText variant="label" className="font-sans-medium text-ink">
+      <AppText variant="label" tone="ink" className="font-sans-medium">
         {label}
       </AppText>
       <Controller
@@ -76,7 +76,7 @@ export function TextField<T extends FieldValues>({
         )}
       />
       {errorText ? (
-        <AppText variant="label" className="text-destructive-foreground">
+        <AppText variant="label" tone="destructive">
           {errorText}
         </AppText>
       ) : null}
