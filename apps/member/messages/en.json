@@ -80,14 +80,16 @@
   "qr": {
     "title": "My entry QR",
     "subtitle": "Show this code at the front desk.",
-    "expiresIn": "Expires in {seconds}s",
+    "expiresIn": "Expires in {time}",
     "expired": "QR expired",
     "expiredHint": "Refresh it to get in.",
     "refresh": "Refresh",
     "generate": "Generate my QR",
     "error": "Could not generate the QR",
     "unavailable": "QR unavailable",
-    "unavailableHint": "The entry QR is not enabled for your venue."
+    "unavailableHint": "Entry QR isn't enabled for your gym. Give your name at the front desk.",
+    "beforeHint": "The code is valid for 5 minutes once generated.",
+    "active": "Active"
   },
   "bookings": {
     "title": "My bookings",
