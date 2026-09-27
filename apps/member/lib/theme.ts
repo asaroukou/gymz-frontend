@@ -26,22 +26,6 @@ export const colors = {
     rose: '#f6ecf2',
     lavande: '#eee9f8',
   },
-  // Legacy aliases (plan R3) — removed in Task 9. Do not use in new code.
-  foreground: ink,
-  primary: { DEFAULT: ink, hover: '#333333', foreground: '#ffffff' },
-  neutral: {
-    50: '#fafafa',
-    100: '#eceef2',
-    200: '#dcdcdc',
-    300: '#dcdcdc',
-    400: '#9aa0a6',
-    500: '#5f6368',
-    600: '#4d5156',
-    700: ink,
-    800: ink,
-    900: ink,
-    950: ink,
-  },
 } as const;
 
 export const radius = { field: 12, card: 16, panel: 24, pill: 999 } as const;

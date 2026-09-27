@@ -12,11 +12,7 @@ type Variant =
   | 'label'
   | 'caption'
   | 'numeric'
-  | 'numericLarge'
-  // Legacy aliases (plan R3) — removed in Task 9.
-  | 'section'
-  | 'mono'
-  | 'monoLarge';
+  | 'numericLarge';
 
 const CLASS: Record<Variant, string> = {
   display: 'font-sans-medium text-[32px] leading-[38px] tracking-[-0.6px] text-ink',
@@ -28,12 +24,9 @@ const CLASS: Record<Variant, string> = {
   caption: 'font-sans text-[12px] leading-[16px] text-muted',
   numeric: 'font-sans-medium text-[15px] leading-[20px] text-ink',
   numericLarge: 'font-sans-medium text-[40px] leading-[44px] tracking-[-1px] text-ink',
-  section: 'font-sans-semibold text-[17px] leading-[22px] text-ink',
-  mono: 'font-sans-medium text-[15px] leading-[20px] text-ink',
-  monoLarge: 'font-sans-medium text-[40px] leading-[44px] tracking-[-1px] text-ink',
 };
 
-const TABULAR = new Set<Variant>(['numeric', 'numericLarge', 'mono', 'monoLarge']);
+const TABULAR = new Set<Variant>(['numeric', 'numericLarge']);
 
 export function AppText({
   variant = 'body',

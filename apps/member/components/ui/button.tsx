@@ -3,7 +3,6 @@ import type { LucideIcon } from 'lucide-react-native';
 import { colors } from '@/lib/theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
-type LegacyVariant = Variant | 'outline'; // Legacy alias (plan R3) — removed in Task 9.
 type Size = 'md' | 'sm';
 
 const CONTAINER: Record<Variant, string> = {
@@ -32,7 +31,7 @@ export function Button({
   onPress,
   disabled,
   loading,
-  variant: rawVariant = 'primary',
+  variant = 'primary',
   size = 'md',
   icon: Icon,
   fullWidth = true,
@@ -41,12 +40,11 @@ export function Button({
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  variant?: LegacyVariant;
+  variant?: Variant;
   size?: Size;
   icon?: LucideIcon;
   fullWidth?: boolean;
 }) {
-  const variant: Variant = rawVariant === 'outline' ? 'secondary' : rawVariant;
   const height = size === 'sm' ? 'h-11' : 'h-[52px]';
   const inactive = disabled || loading;
   return (
