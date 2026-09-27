@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from './text';
+import { t } from '@/lib/i18n';
 
 /** Bottom sheet over a scrim (canvas Y1K4c). `children` are the stacked actions. */
 export function Sheet({
@@ -23,7 +24,7 @@ export function Sheet({
       <View className="flex-1 justify-end">
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={title}
+          accessibilityLabel={t('common.close')}
           onPress={onClose}
           className="absolute inset-0 bg-ink/25"
         />
@@ -35,7 +36,7 @@ export function Sheet({
           <View className="h-1 w-10 self-center rounded-pill bg-border" />
           <View className="gap-2">
             <AppText variant="heading">{title}</AppText>
-            {description ? <AppText variant="body" className="text-muted">{description}</AppText> : null}
+            {description ? <AppText variant="body" tone="muted">{description}</AppText> : null}
           </View>
           <View className="gap-3">{children}</View>
         </View>

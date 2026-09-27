@@ -7,7 +7,6 @@
     "passwordRequired": "Enter your password.",
     "emailInvalid": "Invalid email address.",
     "passwordMismatch": "Passwords do not match.",
-    "passwordPolicy": "The password doesn't meet the rules.",
     "submit": "Sign in",
     "newPasswordTitle": "Choose a password",
     "newPasswordHint": "Create your password to finish activating your account.",
@@ -118,5 +117,5 @@
       "unknown": "Unknown"
     }
   },
-  "common": { "retry": "Retry", "loading": "Loading…" }
+  "common": { "retry": "Retry", "loading": "Loading…", "close": "Close" }
 }

@@ -7,7 +7,6 @@
     "passwordRequired": "Saisissez votre mot de passe.",
     "emailInvalid": "Adresse e-mail invalide.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
-    "passwordPolicy": "Le mot de passe ne respecte pas les règles.",
     "submit": "Se connecter",
     "newPasswordTitle": "Choisir un mot de passe",
     "newPasswordHint": "Créez votre mot de passe pour terminer l'activation.",
@@ -118,5 +117,5 @@
       "unknown": "Inconnu"
     }
   },
-  "common": { "retry": "Réessayer", "loading": "Chargement…" }
+  "common": { "retry": "Réessayer", "loading": "Chargement…", "close": "Fermer" }
 }
