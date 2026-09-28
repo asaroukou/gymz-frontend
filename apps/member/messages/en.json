@@ -6,7 +6,6 @@
     "password": "Password",
     "passwordRequired": "Enter your password.",
     "emailInvalid": "Invalid email address.",
-    "passwordTooShort": "8 characters minimum.",
     "passwordMismatch": "Passwords do not match.",
     "submit": "Sign in",
     "newPasswordTitle": "Choose a password",
@@ -14,7 +13,16 @@
     "newPassword": "New password",
     "confirmPassword": "Confirm password",
     "newPasswordSubmit": "Confirm",
-    "back": "Back"
+    "back": "Back",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "footer": "Your access is created by your gym. Ask the front desk if needed.",
+    "rules": {
+      "length": "At least 12 characters",
+      "uppercase": "One uppercase letter",
+      "lowercase": "One lowercase letter",
+      "digit": "One number"
+    }
   },
   "auth": {
     "error": {
@@ -29,14 +37,18 @@
   "card": {
     "greeting": "Hello {name}",
     "greetingNoName": "Hello",
-    "plan": "Plan",
-    "status": "Status",
     "venue": "Venue",
     "validUntil": "Valid until {date}",
-    "validLabel": "Valid until",
     "entriesRemaining": { "one": "{count} entry left", "other": "{count} entries left" },
     "entriesUnit": { "one": "entry left", "other": "entries left" },
     "noSubscription": "No active subscription",
+    "badge": { "none": "No subscription" },
+    "unlimited": "unlimited",
+    "renewal": { "monthly": "Renews every month", "annual": "Renews every year" },
+    "expiredOn": "Expired on {date}",
+    "noSubscriptionHint": "Ask the front desk to take one out.",
+    "email": "Email",
+    "phone": "Phone",
     "showQr": "Show my QR",
     "memberNo": "Member no.",
     "memberSince": "Member since {date}",
@@ -67,30 +79,36 @@
   "qr": {
     "title": "My entry QR",
     "subtitle": "Show this code at the front desk.",
-    "expiresIn": "Expires in {seconds}s",
+    "expiresIn": "Expires in {time}",
     "expired": "QR expired",
     "expiredHint": "Refresh it to get in.",
     "refresh": "Refresh",
     "generate": "Generate my QR",
     "error": "Could not generate the QR",
     "unavailable": "QR unavailable",
-    "unavailableHint": "The entry QR is not enabled for your venue."
+    "unavailableHint": "Entry QR isn't enabled for your gym. Give your name at the front desk.",
+    "beforeHint": "The code is valid for 5 minutes once generated.",
+    "active": "Active"
   },
   "bookings": {
     "title": "My bookings",
     "upcoming": "Upcoming",
     "past": "Past",
     "empty": "No bookings",
-    "emptyHint": "Your upcoming sessions will show up here.",
+    "emptyHint": "Your next sessions will show up here. Book at the front desk or with your coach.",
     "cancel": "Cancel",
     "cancelConfirmTitle": "Cancel this booking?",
-    "cancelConfirmBody": "This action cannot be undone.",
+    "cancelConfirmBody": "{when}. This can't be undone.",
     "cancelConfirm": "Cancel booking",
     "keep": "Keep",
     "error": "Could not load your bookings",
-    "cancelError": "Could not cancel the booking",
     "cancelWindowClosedTitle": "Cannot cancel",
     "cancelWindowClosed": "The cancellation window has closed.",
+    "cancelErrorHint": "Try again in a moment.",
+    "session": "Session",
+    "dateUnknown": "Date unavailable",
+    "when": "Session · {weekday} {date} at {time}",
+    "whenUnknown": "Session",
     "status": {
       "confirmed": "Confirmed",
       "cancelled": "Cancelled",
@@ -99,5 +117,5 @@
       "unknown": "Unknown"
     }
   },
-  "common": { "retry": "Retry", "loading": "Loading…" }
+  "common": { "retry": "Retry", "loading": "Loading…", "close": "Close" }
 }

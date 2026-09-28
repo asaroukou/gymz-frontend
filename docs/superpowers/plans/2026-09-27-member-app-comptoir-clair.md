@@ -1155,18 +1155,18 @@ import {
 } from './format';
 
 describe('screen formats (local time)', () => {
-  const session = new Date(2026, 8, 22, 6, 30).toISOString(); // Mon 22 Sep 2026 06:30 local
+  const session = new Date(2026, 8, 21, 6, 30).toISOString(); // Mon 21 Sep 2026 06:30 local
   it('day line capitalises the weekday', () => {
-    expect(formatDayLine(new Date(2026, 8, 20, 12))).toBe('Samedi 20 septembre');
+    expect(formatDayLine(new Date(2026, 8, 20, 12))).toBe('Dimanche 20 septembre');
   });
   it('month and year', () => {
     expect(formatMonthYear(new Date(2026, 2, 3).toISOString())).toBe('mars 2026');
   });
   it('short weekday, day number, time, short date', () => {
     expect(formatWeekdayShort(session)).toBe('Lun');
-    expect(formatDayNumber(session)).toBe('22');
+    expect(formatDayNumber(session)).toBe('21');
     expect(formatTime(session)).toBe('06:30');
-    expect(formatShortDate(session)).toBe('22 sept.');
+    expect(formatShortDate(session)).toBe('21 sept.');
   });
   it('invalid input gives an em dash', () => {
     for (const f of [formatMonthYear, formatWeekdayShort, formatDayNumber, formatTime, formatShortDate]) {

@@ -6,7 +6,6 @@
     "password": "Mot de passe",
     "passwordRequired": "Saisissez votre mot de passe.",
     "emailInvalid": "Adresse e-mail invalide.",
-    "passwordTooShort": "8 caractères minimum.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "submit": "Se connecter",
     "newPasswordTitle": "Choisir un mot de passe",
@@ -14,7 +13,16 @@
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmer le mot de passe",
     "newPasswordSubmit": "Valider",
-    "back": "Retour"
+    "back": "Retour",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "footer": "Votre accès est créé par votre salle. Contactez l'accueil si besoin.",
+    "rules": {
+      "length": "12 caractères minimum",
+      "uppercase": "Une majuscule",
+      "lowercase": "Une minuscule",
+      "digit": "Un chiffre"
+    }
   },
   "auth": {
     "error": {
@@ -29,14 +37,18 @@
   "card": {
     "greeting": "Bonjour {name}",
     "greetingNoName": "Bonjour",
-    "plan": "Abonnement",
-    "status": "Statut",
     "venue": "Salle",
     "validUntil": "Valable jusqu'au {date}",
-    "validLabel": "Valable jusqu'au",
     "entriesRemaining": { "one": "{count} entrée restante", "other": "{count} entrées restantes" },
     "entriesUnit": { "one": "entrée restante", "other": "entrées restantes" },
     "noSubscription": "Aucun abonnement actif",
+    "badge": { "none": "Aucun abonnement" },
+    "unlimited": "illimité",
+    "renewal": { "monthly": "Renouvelé chaque mois", "annual": "Renouvelé chaque année" },
+    "expiredOn": "Expiré le {date}",
+    "noSubscriptionHint": "Rapprochez-vous de l'accueil pour en souscrire un.",
+    "email": "E-mail",
+    "phone": "Téléphone",
     "showQr": "Afficher mon QR",
     "memberNo": "Nº membre",
     "memberSince": "Membre depuis {date}",
@@ -67,30 +79,36 @@
   "qr": {
     "title": "Mon QR d'entrée",
     "subtitle": "Présentez ce code à l'accueil.",
-    "expiresIn": "Expire dans {seconds} s",
+    "expiresIn": "Expire dans {time}",
     "expired": "QR expiré",
     "expiredHint": "Régénérez-le pour entrer.",
     "refresh": "Régénérer",
     "generate": "Générer mon QR",
     "error": "Impossible de générer le QR",
     "unavailable": "QR indisponible",
-    "unavailableHint": "Le QR d'entrée n'est pas activé pour votre salle."
+    "unavailableHint": "Le QR d'entrée n'est pas activé pour votre salle. Présentez votre nom à l'accueil.",
+    "beforeHint": "Le code est valable 5 minutes après génération.",
+    "active": "Actif"
   },
   "bookings": {
     "title": "Mes réservations",
     "upcoming": "À venir",
     "past": "Passées",
     "empty": "Aucune réservation",
-    "emptyHint": "Vos prochaines séances apparaîtront ici.",
+    "emptyHint": "Vos prochaines séances apparaîtront ici. Réservez à l'accueil ou auprès de votre coach.",
     "cancel": "Annuler",
     "cancelConfirmTitle": "Annuler la réservation ?",
-    "cancelConfirmBody": "Cette action est définitive.",
+    "cancelConfirmBody": "{when}. Cette action est définitive.",
     "cancelConfirm": "Annuler la réservation",
     "keep": "Garder",
     "error": "Impossible de charger vos réservations",
-    "cancelError": "Impossible d'annuler la réservation",
     "cancelWindowClosedTitle": "Annulation impossible",
     "cancelWindowClosed": "Le délai d'annulation est dépassé.",
+    "cancelErrorHint": "Réessayez dans un instant.",
+    "session": "Séance",
+    "dateUnknown": "Date indisponible",
+    "when": "Séance · {weekday} {date} à {time}",
+    "whenUnknown": "Séance",
     "status": {
       "confirmed": "Confirmée",
       "cancelled": "Annulée",
@@ -99,5 +117,5 @@
       "unknown": "Inconnu"
     }
   },
-  "common": { "retry": "Réessayer", "loading": "Chargement…" }
+  "common": { "retry": "Réessayer", "loading": "Chargement…", "close": "Fermer" }
 }

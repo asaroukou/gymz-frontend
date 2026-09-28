@@ -1,29 +1,39 @@
-// DESIGN.md tokens ported OKLCH -> hex for React Native (RN OKLCH is unreliable).
-// Single source of truth: tailwind.config.js consumes this object.
+// « Le comptoir clair » tokens for React Native (hex; RN OKLCH is unreliable).
+// Pinned to packages/ui/src/styles/globals.css by theme.test.ts.
+// Single source of truth: tailwind.config.js consumes these objects.
+const ink = '#1f1f1f';
+
 export const colors = {
-  background: '#fffefd',
-  foreground: '#1c1917',
-  border: '#e7e5e4',
-  neutral: {
-    50: '#fafaf9',
-    100: '#f5f5f4',
-    200: '#e7e5e4',
-    300: '#d6d3d1',
-    400: '#a8a29e',
-    500: '#78716c',
-    600: '#57534e',
-    700: '#44403c',
-    800: '#292524',
-    900: '#1c1917',
-    950: '#0c0a09',
+  ink,
+  inkHover: '#333333',
+  background: '#ffffff',
+  side: '#fafafa',
+  secondary: '#eceef2',
+  muted: '#5f6368',
+  mutedStrong: '#4d5156',
+  border: '#dcdcdc',
+  danger: '#b23a2a',
+  wash: '#dfe8fa',
+  white: '#ffffff',
+  success: { DEFAULT: '#e9f3ee', foreground: '#1d5c3c' },
+  warning: { DEFAULT: '#fbf1dc', foreground: '#7a5c10' },
+  destructive: { DEFAULT: '#fbe9e7', foreground: '#8f2f22' },
+  info: { DEFAULT: '#e8eefb', foreground: '#2c4f8a' },
+  tint: {
+    bleu: '#e8eefb',
+    vert: '#e9f3ee',
+    sable: '#fbf1dc',
+    rose: '#f6ecf2',
+    lavande: '#eee9f8',
   },
-  primary: { DEFAULT: '#0c3d22', hover: '#19482c', foreground: '#fafaf9' },
-  destructive: { DEFAULT: '#dc2626', foreground: '#991b1b' },
-  success: { DEFAULT: '#16a34a', foreground: '#166534' },
-  warning: { DEFAULT: '#f59e0b', foreground: '#92400e' },
-  info: { DEFAULT: '#2563eb', foreground: '#1d4ed8' },
 } as const;
 
-export const radius = { DEFAULT: 10, xl: 16, pill: 9999 } as const;
+export const radius = { field: 12, card: 16, panel: 24, pill: 999 } as const;
+
+export const fonts = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semibold: 'Inter_600SemiBold',
+} as const;
 
 export type Theme = typeof colors;

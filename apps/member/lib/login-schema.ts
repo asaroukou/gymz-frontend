@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { meetsPasswordPolicy } from './password-rules';
 
 export const credentialsSchema = z.object({
   email: z.email(),
@@ -7,8 +8,8 @@ export const credentialsSchema = z.object({
 
 export const newPasswordSchema = z
   .object({
-    newPassword: z.string().min(8),
-    confirmPassword: z.string().min(8),
+    newPassword: z.string().refine(meetsPasswordPolicy, { message: 'policy' }),
+    confirmPassword: z.string().min(1, { message: 'mismatch' }),
   })
   .refine((v) => v.newPassword === v.confirmPassword, {
     path: ['confirmPassword'],
