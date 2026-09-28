@@ -566,8 +566,7 @@
         "description": "Ces actions modifient l'accès du membre. À utiliser avec précaution.",
         "suspend": "Suspendre le membre",
         "suspended": "Membre suspendu",
-        "reactivate": "Réactiver",
-        "reactivateSoon": "Bientôt disponible"
+        "reactivate": "Réactiver"
       },
       "suspendDialog": {
         "title": "Suspendre le membre",
@@ -575,7 +574,17 @@
         "confirm": "Suspendre",
         "confirming": "Suspension…",
         "success": "Membre suspendu",
+        "notActive": "Ce membre n'est plus actif.",
         "error": "Impossible de suspendre le membre"
+      },
+      "reactivateDialog": {
+        "title": "Réactiver ce membre ?",
+        "description": "{name} retrouvera l'accès à ses salles et pourra de nouveau réserver.",
+        "confirm": "Réactiver",
+        "confirming": "Réactivation…",
+        "success": "Membre réactivé",
+        "notSuspended": "Ce membre n'est plus suspendu.",
+        "error": "Impossible de réactiver ce membre."
       },
       "access": {
         "title": "Accès aux établissements",

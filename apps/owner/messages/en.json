@@ -566,8 +566,7 @@
         "description": "These actions change the member's access. Use with care.",
         "suspend": "Suspend member",
         "suspended": "Member suspended",
-        "reactivate": "Reactivate",
-        "reactivateSoon": "Coming soon"
+        "reactivate": "Reactivate"
       },
       "suspendDialog": {
         "title": "Suspend member",
@@ -575,7 +574,17 @@
         "confirm": "Suspend",
         "confirming": "Suspending…",
         "success": "Member suspended",
+        "notActive": "This member is no longer active.",
         "error": "Could not suspend member"
+      },
+      "reactivateDialog": {
+        "title": "Reactivate this member?",
+        "description": "{name} will get access to their venues back and can book again.",
+        "confirm": "Reactivate",
+        "confirming": "Reactivating…",
+        "success": "Member reactivated",
+        "notSuspended": "This member is no longer suspended.",
+        "error": "Couldn't reactivate this member."
       },
       "access": {
         "title": "Venue access",
