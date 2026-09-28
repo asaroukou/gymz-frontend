@@ -34,12 +34,23 @@ export type TokenGetter = () => Promise<string | null>;
  */
 export type UnauthorizedHandler = () => Promise<string | null | undefined>;
 
+/**
+ * Called when the backend refuses an owner/admin whose token lacks the MFA
+ * enrolment claim (403 `MFA_ENROLLMENT_REQUIRED`). Apps route the user to
+ * their enrolment screen; the ApiError is still thrown to the caller.
+ */
+export type MfaRequiredHandler = () => void;
+
+/** Error code of the backend's owner/admin MFA gate (`require_staff`). */
+export const MFA_ENROLLMENT_REQUIRED = 'MFA_ENROLLMENT_REQUIRED';
+
 interface ApiConfig {
   baseUrl: string;
   /** Base URL for control-plane routes (onboarding, register-owner, admin, billing). */
   controlPlaneBaseUrl?: string;
   getToken: TokenGetter;
   onUnauthorized?: UnauthorizedHandler;
+  onMfaRequired?: MfaRequiredHandler;
 }
 
 // Process-wide mutable state: call configureApi() from CLIENT code only.
@@ -64,6 +75,7 @@ export function configureApi(next: Partial<ApiConfig>): void {
 export const CONTROL_PLANE_PREFIXES = [
   '/platform/v1/auth/',
   '/platform/v1/onboarding/',
+  '/platform/v1/mfa/',
   '/platform/v1/admin/',
   '/platform/v1/billing/',
 ] as const;
@@ -150,7 +162,11 @@ export async function customFetch<T>(url: string, options: RequestInit): Promise
   }
 
   if (!response.ok) {
-    throw await parseErrorResponse(response);
+    const error = await parseErrorResponse(response);
+    if (error.status === 403 && error.code === MFA_ENROLLMENT_REQUIRED) {
+      config.onMfaRequired?.();
+    }
+    throw error;
   }
 
   if (response.status === 204) {
