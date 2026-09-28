@@ -1,4 +1,4 @@
-import type { Member, MembershipStatus } from '@iziwellpass/api/schemas';
+import type { StaffMemberView, MembershipStatus } from '@iziwellpass/api/schemas';
 
 import { daysUntilCalendarDate } from './datetime';
 
@@ -20,7 +20,7 @@ export function memberStatusBadgeVariant(
 export const EXPIRING_SOON_DAYS = 7;
 
 /** Active membership whose end date is within the next `EXPIRING_SOON_DAYS`. */
-export function isExpiringSoon(member: Member): boolean {
+export function isExpiringSoon(member: StaffMemberView): boolean {
   if (member.membership_status !== 'active') return false;
   const days = daysUntilCalendarDate(member.membership_end);
   return days !== null && days >= 0 && days <= EXPIRING_SOON_DAYS;

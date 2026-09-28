@@ -15,7 +15,7 @@ import {
   useCheckInWalkinQr,
   usePassCheckin,
 } from '@iziwellpass/api/generated';
-import type { ApiResponseCheckIn, Member } from '@iziwellpass/api/schemas';
+import type { ApiResponseCheckIn, StaffMemberView } from '@iziwellpass/api/schemas';
 
 import { useUpgradeToast } from '@/components/capabilities/use-upgrade-toast';
 import { apiErrorMessage } from '@/lib/api-error';
@@ -47,7 +47,7 @@ export function useRegisterCheckin({
   memberById,
 }: {
   venueId: string;
-  memberById: ReadonlyMap<string, Member>;
+  memberById: ReadonlyMap<string, StaffMemberView>;
 }): RegisterCheckin {
   const t = useTranslations('frontdesk');
   const tCommon = useTranslations('common');

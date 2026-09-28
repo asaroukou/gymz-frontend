@@ -9,7 +9,7 @@ import {
   getListMembersQueryKey,
   useSuspendMember,
 } from '@iziwellpass/api/generated';
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberView } from '@iziwellpass/api/schemas';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
@@ -34,7 +34,7 @@ export function SuspendMemberDialog({
   onOpenChange,
   restoreFocusTo,
 }: {
-  member: Member;
+  member: StaffMemberView;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   restoreFocusTo?: () => HTMLElement | null | undefined;

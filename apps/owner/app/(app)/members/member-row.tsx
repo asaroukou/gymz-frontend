@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { BanIcon, EyeIcon, MoreHorizontalIcon, PencilIcon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberView } from '@iziwellpass/api/schemas';
 import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
@@ -22,11 +22,11 @@ import { memberInitials, memberName } from '@/lib/member-search';
 import { isExpiringSoon, memberStatusBadgeVariant } from '@/lib/member-status';
 
 export interface MemberRowProps {
-  member: Member;
+  member: StaffMemberView;
   /** Row index on the page, drives the avatar tint rotation. */
   index: number;
   canManage: boolean;
-  onSuspend: (member: Member) => void;
+  onSuspend: (member: StaffMemberView) => void;
   menuRef?: (el: HTMLButtonElement | null) => void;
 }
 
@@ -77,7 +77,7 @@ export function MemberActions({
   );
 }
 
-function useEndCell(member: Member) {
+function useEndCell(member: StaffMemberView) {
   const t = useTranslations('members');
   const locale = useLocale();
   return {

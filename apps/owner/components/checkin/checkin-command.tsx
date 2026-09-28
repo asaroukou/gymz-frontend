@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { CheckIcon, ChevronDownIcon, QrCodeIcon, UserSearchIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import type { Member, MembershipStatus } from '@iziwellpass/api/schemas';
+import type { MembershipStatus, StaffMemberView } from '@iziwellpass/api/schemas';
 import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
 import { Button } from '@iziwellpass/ui/components/button';
 import { CommandBar } from '@iziwellpass/ui/components/command-bar';
@@ -27,7 +27,7 @@ export interface CheckinCommandProps {
   mode: CheckinMode;
   onModeChange: (mode: CheckinMode) => void;
   /** The loaded member list (walk-in type-ahead). */
-  members: readonly Member[];
+  members: readonly StaffMemberView[];
   /** True when the member list failed to load — swaps the empty-list row for an error one. */
   membersError?: boolean;
   register: RegisterCheckin;
@@ -89,7 +89,7 @@ export function CheckinCommand({
   }, [results.length]);
 
   const select = useCallback(
-    (member: Member) => {
+    (member: StaffMemberView) => {
       setQuery(memberLabel(member, statusLabel(member.membership_status)));
       setSelectedId(member.id);
       setOpen(false);

@@ -7,10 +7,10 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { getVenueTodayQueryKey } from '@iziwellpass/api/generated';
 import type {
-  Member,
   Resource,
   Schedule,
   Staff,
+  StaffMemberView,
   TodaySlot,
   TodaySnapshot,
 } from '@iziwellpass/api/schemas';
@@ -59,7 +59,7 @@ export function AttentionList({
   schedules: Schedule[];
   resources: Resource[];
   staff: Staff[];
-  members: Member[];
+  members: StaffMemberView[];
   /** D12 fallback: the « À régler » tab trigger, focused when the resolved
    * row's own button is already gone from the DOM by the time a sheet or
    * dialog closes (the refetch removed it before focus could be restored). */

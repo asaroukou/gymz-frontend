@@ -31,10 +31,12 @@ import type {
   ApiResponseCreditBalance,
   ApiResponseMarketplaceStatus,
   ApiResponseMeQrResponseSchema,
-  ApiResponseMember,
-  ApiResponseMemberSubscription,
+  ApiResponseMemberAccessView,
+  ApiResponseMemberAttendanceResponse,
+  ApiResponseMemberCreatedResponse,
   ApiResponseMyProfileResponse,
   ApiResponseOnboardVenueResponse,
+  ApiResponseOperationView,
   ApiResponsePassBooking,
   ApiResponsePassBookingQrResponse,
   ApiResponsePassBookingResult,
@@ -44,16 +46,18 @@ import type {
   ApiResponseResourceType,
   ApiResponseSchedule,
   ApiResponseStaff,
+  ApiResponseStaffMemberProfile,
+  ApiResponseStaffMemberView,
+  ApiResponseStaffSubscriptionView,
   ApiResponseTenantCapabilitiesResponse,
+  ApiResponseTenantSettingsResponse,
   ApiResponseTenantSummary,
   ApiResponseTenantUsage,
   ApiResponseTodaySnapshot,
-  ApiResponseUpdateTenantSettingsRequest,
   ApiResponseVecActivityPlan,
   ApiResponseVecBooking,
   ApiResponseVecCheckIn,
   ApiResponseVecMarketplaceSlot,
-  ApiResponseVecMemberSubscription,
   ApiResponseVecMyMembershipResponse,
   ApiResponseVecMySubscriptionResponse,
   ApiResponseVecResource,
@@ -62,6 +66,7 @@ import type {
   ApiResponseVecScheduleSlot,
   ApiResponseVecSlotRosterEntry,
   ApiResponseVecStaff,
+  ApiResponseVecStaffSubscriptionView,
   ApiResponseVecString,
   ApiResponseVecTenantSummary,
   ApiResponseVecVenue,
@@ -80,6 +85,7 @@ import type {
   CancelSlotParams,
   ChangePlanRequest,
   ChangeRoleRequest,
+  ConfirmMyEmailChangeParams,
   CreateBookingRequest,
   CreateMemberRequest,
   CreatePlanRequest,
@@ -87,6 +93,7 @@ import type {
   CreateResourceTypeRequest,
   CreateScheduleRequest,
   CreateVenueRequest,
+  EmailChangeRequest,
   ErrorResponse,
   GetAttendanceParams,
   GetVenueMetricsParams,
@@ -114,10 +121,12 @@ import type {
   MeVenuesParams,
   MeWalkinCheckinParams,
   MeWalkinCheckinRequest,
+  MemberAttendanceParams,
+  MemberSearchRequest,
   MintMemberQrParams,
   OnboardVenueRequest,
-  PaginatedApiResponseVecMember,
   PaginatedApiResponseVecPassBooking,
+  PaginatedApiResponseVecStaffMemberView,
   PaginatedApiResponseVecVenueCatalogEntry,
   PassCheckinRequest,
   PresignImageRequest,
@@ -127,7 +136,9 @@ import type {
   RegisterPassHolderRequest,
   ReorderImagesRequest,
   SetMarketplaceRequest,
+  SetMemberAccessParams,
   SetMemberAccessRequest,
+  SetMemberVenuesParams,
   SetMemberVenuesRequest,
   SetPreferencesRequest,
   SetStaffVenuesRequest,
@@ -135,6 +146,7 @@ import type {
   SetTenantStatusRequest,
   TenantBilling200,
   TenantUsageParams,
+  UpdateMemberParams,
   UpdateMemberRequest,
   UpdatePlanRequest,
   UpdateResourceRequest,
@@ -1602,6 +1614,120 @@ export const useMeWalkinCheckin = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
+ * The backend checks Cognito itself (the new email must be the login's
+verified email), then switches the member's email in one transaction
+(`state: verified`); the identity worker revokes every session (sign in
+again with the new email). Idempotent: when the latest change is already
+verified or completed it is returned with 200 and its state (`verified` or
+`completed`, including a change completed earlier). 409
+`NO_EMAIL_CHANGE_PENDING` when there is no change at all or the latest one
+failed or expired. Venue selection as for every `/me` route.
+`GET /gms/v1/me` exposes `pending_email_change` so the app knows to show
+the code screen; verify with Cognito `VerifyUserAttribute`
+(`AttributeName=email`) and resend a code with
+`GetUserAttributeVerificationCode` (`AttributeName=email`), both with the
+member's own access token. A 500 (identity provider unavailable) is safe to
+retry.
+ * @summary Confirm my secure email change (member self-service, after entering the
+code sent to the new address in the member app, which verifies it with
+Cognito `VerifyUserAttribute` using the member's own access token).
+ */
+export const getConfirmMyEmailChangeUrl = (params?: ConfirmMyEmailChangeParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/gms/v1/me/email-change/confirm?${stringifiedParams}`
+    : `/gms/v1/me/email-change/confirm`;
+};
+
+export const confirmMyEmailChange = async (
+  params?: ConfirmMyEmailChangeParams,
+  options?: RequestInit,
+): Promise<ApiResponseOperationView> => {
+  return customFetch<ApiResponseOperationView>(getConfirmMyEmailChangeUrl(params), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getConfirmMyEmailChangeMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof confirmMyEmailChange>>,
+    TError,
+    { params?: ConfirmMyEmailChangeParams },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof confirmMyEmailChange>>,
+  TError,
+  { params?: ConfirmMyEmailChangeParams },
+  TContext
+> => {
+  const mutationKey = ['confirmMyEmailChange'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof confirmMyEmailChange>>,
+    { params?: ConfirmMyEmailChangeParams }
+  > = (props) => {
+    const { params } = props ?? {};
+
+    return confirmMyEmailChange(params, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ConfirmMyEmailChangeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof confirmMyEmailChange>>
+>;
+
+export type ConfirmMyEmailChangeMutationError = ErrorResponse;
+
+/**
+ * @summary Confirm my secure email change (member self-service, after entering the
+code sent to the new address in the member app, which verifies it with
+Cognito `VerifyUserAttribute` using the member's own access token).
+ */
+export const useConfirmMyEmailChange = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof confirmMyEmailChange>>,
+      TError,
+      { params?: ConfirmMyEmailChangeParams },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof confirmMyEmailChange>>,
+  TError,
+  { params?: ConfirmMyEmailChangeParams },
+  TContext
+> => {
+  const mutationOptions = getConfirmMyEmailChangeMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
  * Cross-tenant: resolved from the verified `sub` via the SECURITY DEFINER
 resolver, so it lists every gym the caller is an active member of (a
 converted owner still sees their old member gym). The returned `venue_id`s
@@ -2245,8 +2371,8 @@ export const getListMembersUrl = (params?: ListMembersParams) => {
 export const listMembers = async (
   params?: ListMembersParams,
   options?: RequestInit,
-): Promise<PaginatedApiResponseVecMember> => {
-  return customFetch<PaginatedApiResponseVecMember>(getListMembersUrl(params), {
+): Promise<PaginatedApiResponseVecStaffMemberView> => {
+  return customFetch<PaginatedApiResponseVecStaffMemberView>(getListMembersUrl(params), {
     ...options,
     method: 'GET',
   });
@@ -2363,6 +2489,23 @@ export function useListMembers<
 `venue_scoped`, default `venue_scoped`) plus `venue_ids` (required non-empty
 for `venue_scoped`). A venue-scoped staff caller may only assign venues they
 have access to.
+
+The tenant's member-login policy decides the account mode, reported as
+`effective_mode`:
+- `roster`: a record only, no sign-in; `provisioning` is null.
+- `login`: `email` is required. The member is created with a
+  `provisioning` operation in state `requested`, and its login is created
+  ASYNCHRONOUSLY by the identity worker (Cognito then emails the invitation).
+  Poll `GET /gms/v1/members/{mid}` until `account.provisioning.state` is
+  terminal: `completed` (`result_code` `invitation_sent`, or
+  `existing_identity_linked` when the person already had an account and NO
+  invitation was sent) or `failed` (`failure_code` `invalid_email`,
+  `identity_already_linked`, `missing_email`, `provider_unavailable`). Do not
+  tell the user an invitation was sent until then. Normally terminal within
+  seconds; while Cognito is unavailable the backend retries (queue, then a
+  15-minute reconciler) and gives up after 24 h with `provider_unavailable`.
+  Two concurrent registrations of one login email: one succeeds, the other
+  gets 409.
  * @summary Register a new member in the current tenant.
  */
 export const getRegisterMemberUrl = () => {
@@ -2372,8 +2515,8 @@ export const getRegisterMemberUrl = () => {
 export const registerMember = async (
   createMemberRequest: CreateMemberRequest,
   options?: RequestInit,
-): Promise<ApiResponseMember> => {
-  return customFetch<ApiResponseMember>(getRegisterMemberUrl(), {
+): Promise<ApiResponseMemberCreatedResponse> => {
+  return customFetch<ApiResponseMemberCreatedResponse>(getRegisterMemberUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2447,14 +2590,127 @@ export const useRegisterMember = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
- * @summary Get one member by id.
+ * Search criteria travel in the body, never the URL, because names, emails and
+phone numbers are PII (a URL reaches tracing, gateway logs and browser
+history). Unknown fields are rejected with 400.
+
+Scope is explicit, exactly one of:
+- `venue_id`: the selected venue. Lists chain-wide members plus venue-scoped
+  members assigned to it. The caller must have access to that venue.
+- `all_venues: true`: every venue in the tenant, owner/admin only.
+
+`status` is exact: `active`, `expired`, `suspended`, or `all` (default: every
+non-cancelled record). Cancelled members are never listed. `q` (1-100 chars,
+trimmed) matches first name, last name, full name, email and phone,
+case-insensitively; `%` and `_` match literally. Cursor pagination: `limit`
+1-100 (default 20), `meta.next_cursor` is the next page's `cursor`.
+ * @summary Venue-console member directory search.
+ */
+export const getSearchMembersUrl = () => {
+  return `/gms/v1/members/search`;
+};
+
+export const searchMembers = async (
+  memberSearchRequest: MemberSearchRequest,
+  options?: RequestInit,
+): Promise<PaginatedApiResponseVecStaffMemberView> => {
+  return customFetch<PaginatedApiResponseVecStaffMemberView>(getSearchMembersUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(memberSearchRequest),
+  });
+};
+
+export const getSearchMembersMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof searchMembers>>,
+    TError,
+    { data: MemberSearchRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof searchMembers>>,
+  TError,
+  { data: MemberSearchRequest },
+  TContext
+> => {
+  const mutationKey = ['searchMembers'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof searchMembers>>,
+    { data: MemberSearchRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return searchMembers(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SearchMembersMutationResult = NonNullable<Awaited<ReturnType<typeof searchMembers>>>;
+export type SearchMembersMutationBody = MemberSearchRequest;
+export type SearchMembersMutationError = ErrorResponse;
+
+/**
+ * @summary Venue-console member directory search.
+ */
+export const useSearchMembers = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof searchMembers>>,
+      TError,
+      { data: MemberSearchRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof searchMembers>>,
+  TError,
+  { data: MemberSearchRequest },
+  TContext
+> => {
+  const mutationOptions = getSearchMembersMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * The staff member view plus, in the same read, the explicit venue
+entitlements (`access`) and a display-safe account summary: `account.mode`
+(`roster` or `login`; a member counts as `login` as soon as provisioning was
+requested), `account.invitation` (`not_applicable`, `pending`, `sent`,
+`linked_existing`, `failed`, `untracked` for logins created before invitation
+tracking, `accepted` once the login was observed active),
+`account.invitation_resend` / `account.session_revocation` (the latest of
+each, to poll after a 202), `account.email` (`not_applicable`, `verified`,
+`change_pending`, `change_failed`) with `account.email_change` (the latest
+secure change; never the new address) and `account.provisioning` (the latest
+provisioning operation's state and machine codes, or null). No
+identity-provider identifier and no requester identity is ever returned.
+ * @summary Get one member's base profile.
  */
 export const getGetMemberUrl = (mid: string) => {
   return `/gms/v1/members/${mid}`;
 };
 
-export const getMember = async (mid: string, options?: RequestInit): Promise<ApiResponseMember> => {
-  return customFetch<ApiResponseMember>(getGetMemberUrl(mid), {
+export const getMember = async (
+  mid: string,
+  options?: RequestInit,
+): Promise<ApiResponseStaffMemberProfile> => {
+  return customFetch<ApiResponseStaffMemberProfile>(getGetMemberUrl(mid), {
     ...options,
     method: 'GET',
   });
@@ -2532,7 +2788,7 @@ export function useGetMember<TData = Awaited<ReturnType<typeof getMember>>, TErr
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Get one member by id.
+ * @summary Get one member's base profile.
  */
 
 export function useGetMember<TData = Awaited<ReturnType<typeof getMember>>, TError = ErrorResponse>(
@@ -2555,18 +2811,34 @@ export function useGetMember<TData = Awaited<ReturnType<typeof getMember>>, TErr
 }
 
 /**
+ * Unknown fields are rejected with 400. In particular the former `is_active`
+field (accepted but never applied) is no longer part of this contract: use
+the explicit suspend/reactivate operations to change lifecycle state.
  * @summary Update a member.
  */
-export const getUpdateMemberUrl = (mid: string) => {
-  return `/gms/v1/members/${mid}`;
+export const getUpdateMemberUrl = (mid: string, params?: UpdateMemberParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/gms/v1/members/${mid}?${stringifiedParams}`
+    : `/gms/v1/members/${mid}`;
 };
 
 export const updateMember = async (
   mid: string,
   updateMemberRequest: UpdateMemberRequest,
+  params?: UpdateMemberParams,
   options?: RequestInit,
-): Promise<ApiResponseMember> => {
-  return customFetch<ApiResponseMember>(getUpdateMemberUrl(mid), {
+): Promise<ApiResponseStaffMemberView> => {
+  return customFetch<ApiResponseStaffMemberView>(getUpdateMemberUrl(mid, params), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2581,14 +2853,14 @@ export const getUpdateMemberMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof updateMember>>,
     TError,
-    { mid: string; data: UpdateMemberRequest },
+    { mid: string; data: UpdateMemberRequest; params?: UpdateMemberParams },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof updateMember>>,
   TError,
-  { mid: string; data: UpdateMemberRequest },
+  { mid: string; data: UpdateMemberRequest; params?: UpdateMemberParams },
   TContext
 > => {
   const mutationKey = ['updateMember'];
@@ -2600,11 +2872,11 @@ export const getUpdateMemberMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof updateMember>>,
-    { mid: string; data: UpdateMemberRequest }
+    { mid: string; data: UpdateMemberRequest; params?: UpdateMemberParams }
   > = (props) => {
-    const { mid, data } = props ?? {};
+    const { mid, data, params } = props ?? {};
 
-    return updateMember(mid, data, requestOptions);
+    return updateMember(mid, data, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -2622,7 +2894,7 @@ export const useUpdateMember = <TError = ErrorResponse, TContext = unknown>(
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof updateMember>>,
       TError,
-      { mid: string; data: UpdateMemberRequest },
+      { mid: string; data: UpdateMemberRequest; params?: UpdateMemberParams },
       TContext
     >;
     request?: SecondParameter<typeof customFetch>;
@@ -2631,7 +2903,7 @@ export const useUpdateMember = <TError = ErrorResponse, TContext = unknown>(
 ): UseMutationResult<
   Awaited<ReturnType<typeof updateMember>>,
   TError,
-  { mid: string; data: UpdateMemberRequest },
+  { mid: string; data: UpdateMemberRequest; params?: UpdateMemberParams },
   TContext
 > => {
   const mutationOptions = getUpdateMemberMutationOptions(options);
@@ -2645,16 +2917,29 @@ the member to already have venue entitlements (set via
 `PUT /gms/v1/members/{mid}/venues` first).
  * @summary Flip a member's access scope (chain_wide vs venue_scoped).
  */
-export const getSetMemberAccessUrl = (mid: string) => {
-  return `/gms/v1/members/${mid}/access`;
+export const getSetMemberAccessUrl = (mid: string, params?: SetMemberAccessParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/gms/v1/members/${mid}/access?${stringifiedParams}`
+    : `/gms/v1/members/${mid}/access`;
 };
 
 export const setMemberAccess = async (
   mid: string,
   setMemberAccessRequest: SetMemberAccessRequest,
+  params?: SetMemberAccessParams,
   options?: RequestInit,
-): Promise<ApiResponseMember> => {
-  return customFetch<ApiResponseMember>(getSetMemberAccessUrl(mid), {
+): Promise<ApiResponseStaffMemberView> => {
+  return customFetch<ApiResponseStaffMemberView>(getSetMemberAccessUrl(mid, params), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2669,14 +2954,14 @@ export const getSetMemberAccessMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof setMemberAccess>>,
     TError,
-    { mid: string; data: SetMemberAccessRequest },
+    { mid: string; data: SetMemberAccessRequest; params?: SetMemberAccessParams },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof setMemberAccess>>,
   TError,
-  { mid: string; data: SetMemberAccessRequest },
+  { mid: string; data: SetMemberAccessRequest; params?: SetMemberAccessParams },
   TContext
 > => {
   const mutationKey = ['setMemberAccess'];
@@ -2688,11 +2973,11 @@ export const getSetMemberAccessMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof setMemberAccess>>,
-    { mid: string; data: SetMemberAccessRequest }
+    { mid: string; data: SetMemberAccessRequest; params?: SetMemberAccessParams }
   > = (props) => {
-    const { mid, data } = props ?? {};
+    const { mid, data, params } = props ?? {};
 
-    return setMemberAccess(mid, data, requestOptions);
+    return setMemberAccess(mid, data, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -2712,7 +2997,7 @@ export const useSetMemberAccess = <TError = ErrorResponse, TContext = unknown>(
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof setMemberAccess>>,
       TError,
-      { mid: string; data: SetMemberAccessRequest },
+      { mid: string; data: SetMemberAccessRequest; params?: SetMemberAccessParams },
       TContext
     >;
     request?: SecondParameter<typeof customFetch>;
@@ -2721,7 +3006,7 @@ export const useSetMemberAccess = <TError = ErrorResponse, TContext = unknown>(
 ): UseMutationResult<
   Awaited<ReturnType<typeof setMemberAccess>>,
   TError,
-  { mid: string; data: SetMemberAccessRequest },
+  { mid: string; data: SetMemberAccessRequest; params?: SetMemberAccessParams },
   TContext
 > => {
   const mutationOptions = getSetMemberAccessMutationOptions(options);
@@ -2730,9 +3015,570 @@ export const useSetMemberAccess = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
- * Optional `status` query param filters to one lifecycle state; omit it to
-return all statuses. An unrecognized status value is rejected with 400.
- * @summary List a member's subscriptions.
+ * Range `[from, to)` as RFC 3339 instants (use `Z`, or percent-encode a `+`
+offset): `to` defaults to now, `from` to `to` minus 30 days; at most 366
+days. Presets (7, 30, 90 days) are computed by the console. Page size
+`limit` 1..=100 (default 50). Next pages: send only `cursor` (the
+`next_cursor` of the previous page); it carries the first page's range and
+venue, which are reused as is, so the list and `total_visits` cannot drift;
+`from`/`to`/`venue_id` sent with a cursor must match it (else 400).
+Venue scope: owner/admin see every venue (or one, with `venue_id`); other
+staff see only the check-ins at their assigned venues, and a `venue_id`
+outside them is 403. `total_visits` counts the range within that scope;
+`last_visit_at` is the most recent visit within that scope at any time.
+Items never carry who performed the check-in.
+ * @summary A member's visits (Phase 5A DR-6): check-ins newest first over a bounded
+range, with the range's visit count and the last visit.
+ */
+export const getMemberAttendanceUrl = (mid: string, params?: MemberAttendanceParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/gms/v1/members/${mid}/attendance?${stringifiedParams}`
+    : `/gms/v1/members/${mid}/attendance`;
+};
+
+export const memberAttendance = async (
+  mid: string,
+  params?: MemberAttendanceParams,
+  options?: RequestInit,
+): Promise<ApiResponseMemberAttendanceResponse> => {
+  return customFetch<ApiResponseMemberAttendanceResponse>(getMemberAttendanceUrl(mid, params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getMemberAttendanceQueryKey = (mid?: string, params?: MemberAttendanceParams) => {
+  return [`/gms/v1/members/${mid}/attendance`, ...(params ? [params] : [])] as const;
+};
+
+export const getMemberAttendanceQueryOptions = <
+  TData = Awaited<ReturnType<typeof memberAttendance>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  params?: MemberAttendanceParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof memberAttendance>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getMemberAttendanceQueryKey(mid, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof memberAttendance>>> = ({ signal }) =>
+    memberAttendance(mid, params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: !!mid, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof memberAttendance>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type MemberAttendanceQueryResult = NonNullable<Awaited<ReturnType<typeof memberAttendance>>>;
+export type MemberAttendanceQueryError = ErrorResponse;
+
+export function useMemberAttendance<
+  TData = Awaited<ReturnType<typeof memberAttendance>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  params: undefined | MemberAttendanceParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof memberAttendance>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberAttendance>>,
+          TError,
+          Awaited<ReturnType<typeof memberAttendance>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useMemberAttendance<
+  TData = Awaited<ReturnType<typeof memberAttendance>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  params?: MemberAttendanceParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof memberAttendance>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberAttendance>>,
+          TError,
+          Awaited<ReturnType<typeof memberAttendance>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useMemberAttendance<
+  TData = Awaited<ReturnType<typeof memberAttendance>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  params?: MemberAttendanceParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof memberAttendance>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A member's visits (Phase 5A DR-6): check-ins newest first over a bounded
+range, with the range's visit count and the last visit.
+ */
+
+export function useMemberAttendance<
+  TData = Awaited<ReturnType<typeof memberAttendance>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  params?: MemberAttendanceParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof memberAttendance>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getMemberAttendanceQueryOptions(mid, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * `Idempotency-Key` header REQUIRED: a replay with the same key and body
+returns the stored 202 (header `Idempotency-Replayed: true`); the same key
+with a different body is 422 `IDEMPOTENCY_KEY_REUSED`; a request with the
+same key still being processed is 409 `IDEMPOTENCY_KEY_IN_PROGRESS` (retry
+later with the same key; if it persists, the outcome is UNKNOWN: send the
+same body again with a NEW key, which is safe: a change already in flight
+to that address is returned as is (202), one to another address answers
+409 `EMAIL_CHANGE_IN_PROGRESS`).
+Asynchronous: the
+identity worker asks Cognito to change the email; Cognito keeps the CURRENT
+email as the sign-in email and sends a code to the new address
+(`state: pending_verification`). The member enters it in the member app,
+which then calls `POST /gms/v1/me/email-change/confirm`; only then does the
+member's `email` switch, and every session is revoked (`completed`,
+`email_changed`; `email_changed_sessions_kept` if the login became shared
+meanwhile, since a global sign-out would reach the other organization). A
+login still INVITED (never signed in) cannot verify a code: its address is
+replaced and a fresh invitation sent there instead (`email_changed_reinvited`;
+receiving it proves possession; if the invitee signs in with the original
+invitation first, their address is restored and a code sent instead). No
+staff override for an active login:
+staff can never mark a new address verified. Failure codes:
+`email_unavailable` (the address is already a sign-in email on IziWellPass,
+checked before any code is sent; the other account is never revealed),
+`invalid_email`, `identity_shared`, `member_cancelled`, `account_not_found`,
+`verification_expired` (code not entered within 24 h of the backend sending
+the first one, a code re-requested from the app does not extend it; the
+pending address is withdrawn and the old email stays), `provider_unavailable`.
+The new address never appears in any response.
+ * @summary Securely change a login member's sign-in email (owner/admin, DR-4).
+ */
+export const getChangeLoginEmailUrl = (mid: string) => {
+  return `/gms/v1/members/${mid}/email-change`;
+};
+
+export const changeLoginEmail = async (
+  mid: string,
+  emailChangeRequest: EmailChangeRequest,
+  options?: RequestInit,
+): Promise<ApiResponseOperationView> => {
+  return customFetch<ApiResponseOperationView>(getChangeLoginEmailUrl(mid), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(emailChangeRequest),
+  });
+};
+
+export const getChangeLoginEmailMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof changeLoginEmail>>,
+    TError,
+    { mid: string; data: EmailChangeRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof changeLoginEmail>>,
+  TError,
+  { mid: string; data: EmailChangeRequest },
+  TContext
+> => {
+  const mutationKey = ['changeLoginEmail'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof changeLoginEmail>>,
+    { mid: string; data: EmailChangeRequest }
+  > = (props) => {
+    const { mid, data } = props ?? {};
+
+    return changeLoginEmail(mid, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ChangeLoginEmailMutationResult = NonNullable<
+  Awaited<ReturnType<typeof changeLoginEmail>>
+>;
+export type ChangeLoginEmailMutationBody = EmailChangeRequest;
+export type ChangeLoginEmailMutationError = ErrorResponse;
+
+/**
+ * @summary Securely change a login member's sign-in email (owner/admin, DR-4).
+ */
+export const useChangeLoginEmail = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof changeLoginEmail>>,
+      TError,
+      { mid: string; data: EmailChangeRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof changeLoginEmail>>,
+  TError,
+  { mid: string; data: EmailChangeRequest },
+  TContext
+> => {
+  const mutationOptions = getChangeLoginEmailMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Asynchronous: records an `invitation_resend` operation and returns `202`
+with it (`OperationView`). The identity worker reads the login's status in
+Cognito: an invited login gets a new invitation (new temporary password,
+`result_code` `invitation_sent`); an active one fails
+`account_already_active` and the member then reads `account.invitation =
+accepted` (later resends are refused synchronously with 409). Other failure
+codes: `account_not_invited`, `account_not_found`, `account_email_mismatch`
+(the member's email no longer signs in to the linked login),
+`identity_shared`, `member_cancelled`, `login_not_provisioned`,
+`invalid_email`, `missing_email`, `provider_unavailable`. Refused (409
+`IDENTITY_SHARED`) for a login another organization or a staff invite also
+uses, since a resend would invalidate their temporary password. Poll
+`GET /gms/v1/members/{mid}` (`account.invitation_resend`).
+
+For a login member whose provisioning FAILED (no login yet), this retries
+the provisioning instead: a new `provisioning` operation (`kind:
+provisioning` in the 202), only while the tenant's effective policy still
+creates logins. While a provisioning (a login still being created, e.g.
+right after registration) or a resend is in flight, the request returns
+that operation (202, `kind` telling which) without dispatching again.
+ * @summary Resend a member's login invitation (owner/admin).
+ */
+export const getResendInvitationUrl = (mid: string) => {
+  return `/gms/v1/members/${mid}/invitation-resend`;
+};
+
+export const resendInvitation = async (
+  mid: string,
+  options?: RequestInit,
+): Promise<ApiResponseOperationView> => {
+  return customFetch<ApiResponseOperationView>(getResendInvitationUrl(mid), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getResendInvitationMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resendInvitation>>,
+    TError,
+    { mid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resendInvitation>>,
+  TError,
+  { mid: string },
+  TContext
+> => {
+  const mutationKey = ['resendInvitation'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resendInvitation>>,
+    { mid: string }
+  > = (props) => {
+    const { mid } = props ?? {};
+
+    return resendInvitation(mid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResendInvitationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof resendInvitation>>
+>;
+
+export type ResendInvitationMutationError = ErrorResponse;
+
+/**
+ * @summary Resend a member's login invitation (owner/admin).
+ */
+export const useResendInvitation = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof resendInvitation>>,
+      TError,
+      { mid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof resendInvitation>>,
+  TError,
+  { mid: string },
+  TContext
+> => {
+  const mutationOptions = getResendInvitationMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * The only way back from suspension. Returns 204 with no body. Same scope and
+semantics as suspend: a member that is not suspended is a 409
+`INVALID_LIFECYCLE_TRANSITION` with `details.current_status`. Audited
+(`member.reactivated`) in the same transaction.
+ * @summary Reactivate a suspended member (`suspended` -> `active`).
+ */
+export const getReactivateMemberUrl = (mid: string) => {
+  return `/gms/v1/members/${mid}/reactivate`;
+};
+
+export const reactivateMember = async (mid: string, options?: RequestInit): Promise<void> => {
+  return customFetch<void>(getReactivateMemberUrl(mid), {
+    ...options,
+    method: 'PUT',
+  });
+};
+
+export const getReactivateMemberMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reactivateMember>>,
+    TError,
+    { mid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reactivateMember>>,
+  TError,
+  { mid: string },
+  TContext
+> => {
+  const mutationKey = ['reactivateMember'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reactivateMember>>,
+    { mid: string }
+  > = (props) => {
+    const { mid } = props ?? {};
+
+    return reactivateMember(mid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReactivateMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof reactivateMember>>
+>;
+
+export type ReactivateMemberMutationError = ErrorResponse;
+
+/**
+ * @summary Reactivate a suspended member (`suspended` -> `active`).
+ */
+export const useReactivateMember = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof reactivateMember>>,
+      TError,
+      { mid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof reactivateMember>>,
+  TError,
+  { mid: string },
+  TContext
+> => {
+  const mutationOptions = getReactivateMemberMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Asynchronous: records a `session_revocation` operation and returns `202`
+with it. The identity worker performs a Cognito global sign-out (all refresh
+tokens revoked; an already-issued token keeps working until it expires, and
+with the API authorizer's cache access ends within about 10 minutes) and
+completes with `sessions_revoked` (also when the login no longer exists:
+nothing left to revoke). Other failure codes: `identity_shared`,
+`login_not_provisioned`, `provider_unavailable`. Refused when the login is also used by another
+IziWellPass organization or a staff console, because a global sign-out
+would reach them too: 409 `IDENTITY_SHARED` (checked again by the worker,
+failure code `identity_shared`). A repeat while one is in flight returns it;
+once completed, a new request creates a new operation. Poll
+`GET /gms/v1/members/{mid}` (`account.session_revocation`).
+ * @summary Revoke every session of a member's login (owner/admin).
+ */
+export const getRevokeSessionsUrl = (mid: string) => {
+  return `/gms/v1/members/${mid}/session-revocation`;
+};
+
+export const revokeSessions = async (
+  mid: string,
+  options?: RequestInit,
+): Promise<ApiResponseOperationView> => {
+  return customFetch<ApiResponseOperationView>(getRevokeSessionsUrl(mid), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getRevokeSessionsMutationOptions = <
+  TError = ErrorResponse,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeSessions>>,
+    TError,
+    { mid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof revokeSessions>>,
+  TError,
+  { mid: string },
+  TContext
+> => {
+  const mutationKey = ['revokeSessions'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof revokeSessions>>,
+    { mid: string }
+  > = (props) => {
+    const { mid } = props ?? {};
+
+    return revokeSessions(mid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RevokeSessionsMutationResult = NonNullable<Awaited<ReturnType<typeof revokeSessions>>>;
+
+export type RevokeSessionsMutationError = ErrorResponse;
+
+/**
+ * @summary Revoke every session of a member's login (owner/admin).
+ */
+export const useRevokeSessions = <TError = ErrorResponse, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof revokeSessions>>,
+      TError,
+      { mid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof revokeSessions>>,
+  TError,
+  { mid: string },
+  TContext
+> => {
+  const mutationOptions = getRevokeSessionsMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+
+/**
+ * Newest first, each with its plan name and kind, venue name and the display
+name of the staff member who assigned it, joined server-side (one request
+per panel). Never the assigning staff member's Cognito identifier. Optional
+`status` filters to one lifecycle state; an unrecognized value is a 400
+naming the field (the value is not echoed). A read: not gated by the
+ActivityPricing capability, so a tenant that downgraded still sees its
+members' existing subscriptions (assigning is gated). Venue-scoped staff
+(receptionist, trainer) see only the subscriptions held at their assigned
+venues; owner/admin see every venue.
+ * @summary List a member's subscriptions (staff panel, Phase 5A slice 10).
  */
 export const getListSubscriptionsUrl = (mid: string, params?: ListSubscriptionsParams) => {
   const normalizedParams = new URLSearchParams();
@@ -2754,8 +3600,8 @@ export const listSubscriptions = async (
   mid: string,
   params?: ListSubscriptionsParams,
   options?: RequestInit,
-): Promise<ApiResponseVecMemberSubscription> => {
-  return customFetch<ApiResponseVecMemberSubscription>(getListSubscriptionsUrl(mid, params), {
+): Promise<ApiResponseVecStaffSubscriptionView> => {
+  return customFetch<ApiResponseVecStaffSubscriptionView>(getListSubscriptionsUrl(mid, params), {
     ...options,
     method: 'GET',
   });
@@ -2848,7 +3694,7 @@ export function useListSubscriptions<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary List a member's subscriptions.
+ * @summary List a member's subscriptions (staff panel, Phase 5A slice 10).
  */
 
 export function useListSubscriptions<
@@ -2875,6 +3721,8 @@ export function useListSubscriptions<
 }
 
 /**
+ * Requires the ActivityPricing capability. Audited in the same transaction
+(`member.subscription_assigned`). Answers the same staff view as the list.
  * @summary Assign a plan to a member as a held subscription.
  */
 export const getAssignSubscriptionUrl = (mid: string) => {
@@ -2885,8 +3733,8 @@ export const assignSubscription = async (
   mid: string,
   assignSubscriptionRequest: AssignSubscriptionRequest,
   options?: RequestInit,
-): Promise<ApiResponseMemberSubscription> => {
-  return customFetch<ApiResponseMemberSubscription>(getAssignSubscriptionUrl(mid), {
+): Promise<ApiResponseStaffSubscriptionView> => {
+  return customFetch<ApiResponseStaffSubscriptionView>(getAssignSubscriptionUrl(mid), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2963,7 +3811,11 @@ export const useAssignSubscription = <TError = ErrorResponse, TContext = unknown
 
 /**
  * Set `payment_status` to mark paid; set `cancel=true` to cancel. At least one
-of the two must be provided.
+of the two must be provided. Audited in the same transaction
+(`member.subscription_payment_changed` / `member.subscription_cancelled`)
+when the value actually changes; a repeat is a no-op. Venue-scoped staff
+may only change subscriptions held at their assigned venues (else 403).
+Answers the staff view.
  * @summary Mark a subscription paid or cancel it.
  */
 export const getUpdateSubscriptionUrl = (mid: string, sid: string) => {
@@ -2975,8 +3827,8 @@ export const updateSubscription = async (
   sid: string,
   updateSubscriptionRequest: UpdateSubscriptionRequest,
   options?: RequestInit,
-): Promise<ApiResponseMemberSubscription> => {
-  return customFetch<ApiResponseMemberSubscription>(getUpdateSubscriptionUrl(mid, sid), {
+): Promise<ApiResponseStaffSubscriptionView> => {
+  return customFetch<ApiResponseStaffSubscriptionView>(getUpdateSubscriptionUrl(mid, sid), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3052,17 +3904,21 @@ export const useUpdateSubscription = <TError = ErrorResponse, TContext = unknown
 };
 
 /**
- * @summary Suspend a member.
+ * Returns 204 with no body. Owner, admin, or a receptionist for a member in
+their venues. Only an `active` member can be suspended; a member that exists
+but is not active (already suspended, expired or cancelled; a repeat counts)
+is a 409 `INVALID_LIFECYCLE_TRANSITION` whose `details.current_status` gives
+the actual status. Nothing is deleted; bookings, attendance, subscriptions
+and audit history are kept. Audited (`member.suspended`) in the same
+transaction.
+ * @summary Suspend an active member (`active` -> `suspended`).
  */
 export const getSuspendMemberUrl = (mid: string) => {
   return `/gms/v1/members/${mid}/suspend`;
 };
 
-export const suspendMember = async (
-  mid: string,
-  options?: RequestInit,
-): Promise<ApiResponseMember> => {
-  return customFetch<ApiResponseMember>(getSuspendMemberUrl(mid), {
+export const suspendMember = async (mid: string, options?: RequestInit): Promise<void> => {
+  return customFetch<void>(getSuspendMemberUrl(mid), {
     ...options,
     method: 'PUT',
   });
@@ -3108,7 +3964,7 @@ export type SuspendMemberMutationResult = NonNullable<Awaited<ReturnType<typeof 
 export type SuspendMemberMutationError = ErrorResponse;
 
 /**
- * @summary Suspend a member.
+ * @summary Suspend an active member (`active` -> `suspended`).
  */
 export const useSuspendMember = <TError = ErrorResponse, TContext = unknown>(
   options?: {
@@ -3133,23 +3989,164 @@ export const useSuspendMember = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
- * Down-scope guarded: narrowing access is rejected with 409 if the member still
-has future non-cancelled bookings at any venue not in the new set (this
+ * @summary Read a member's current venue entitlement (scope + explicit venue ids).
+ */
+export const getGetMemberVenuesUrl = (mid: string) => {
+  return `/gms/v1/members/${mid}/venues`;
+};
+
+export const getMemberVenues = async (
+  mid: string,
+  options?: RequestInit,
+): Promise<ApiResponseMemberAccessView> => {
+  return customFetch<ApiResponseMemberAccessView>(getGetMemberVenuesUrl(mid), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetMemberVenuesQueryKey = (mid?: string) => {
+  return [`/gms/v1/members/${mid}/venues`] as const;
+};
+
+export const getGetMemberVenuesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMemberVenues>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberVenues>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMemberVenuesQueryKey(mid);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMemberVenues>>> = ({ signal }) =>
+    getMemberVenues(mid, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: !!mid, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMemberVenues>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMemberVenuesQueryResult = NonNullable<Awaited<ReturnType<typeof getMemberVenues>>>;
+export type GetMemberVenuesQueryError = ErrorResponse;
+
+export function useGetMemberVenues<
+  TData = Awaited<ReturnType<typeof getMemberVenues>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberVenues>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMemberVenues>>,
+          TError,
+          Awaited<ReturnType<typeof getMemberVenues>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMemberVenues<
+  TData = Awaited<ReturnType<typeof getMemberVenues>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberVenues>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMemberVenues>>,
+          TError,
+          Awaited<ReturnType<typeof getMemberVenues>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMemberVenues<
+  TData = Awaited<ReturnType<typeof getMemberVenues>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberVenues>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Read a member's current venue entitlement (scope + explicit venue ids).
+ */
+
+export function useGetMemberVenues<
+  TData = Awaited<ReturnType<typeof getMemberVenues>>,
+  TError = ErrorResponse,
+>(
+  mid: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberVenues>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMemberVenuesQueryOptions(mid, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * Down-scope guarded: narrowing access is rejected with 409
+`ACCESS_DOWNSCOPE_BLOCKED` if the member still has future non-cancelled
+bookings (slot date today or later) at any venue not in the new set (this
 applies to chain-wide members being scoped down as well as to shrinking an
-existing set). A venue-scoped staff caller may only assign venues they have
-access to, and only for members already in their scope.
+existing set). `error.details.affected_venues` lists each such venue with
+its count: `[{"venue_id", "future_bookings"}]`; nothing is written. The
+check runs under the member's row lock, which booking creation also takes,
+so a booking made concurrently is either counted or refused. A
+venue-scoped staff caller may only assign venues they have access to, and
+only for members already in their scope.
  * @summary Replace a member's venue entitlements (implies access_scope=venue_scoped).
  */
-export const getSetMemberVenuesUrl = (mid: string) => {
-  return `/gms/v1/members/${mid}/venues`;
+export const getSetMemberVenuesUrl = (mid: string, params?: SetMemberVenuesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/gms/v1/members/${mid}/venues?${stringifiedParams}`
+    : `/gms/v1/members/${mid}/venues`;
 };
 
 export const setMemberVenues = async (
   mid: string,
   setMemberVenuesRequest: SetMemberVenuesRequest,
+  params?: SetMemberVenuesParams,
   options?: RequestInit,
 ): Promise<ApiResponseVecVenueId> => {
-  return customFetch<ApiResponseVecVenueId>(getSetMemberVenuesUrl(mid), {
+  return customFetch<ApiResponseVecVenueId>(getSetMemberVenuesUrl(mid, params), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3164,14 +4161,14 @@ export const getSetMemberVenuesMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof setMemberVenues>>,
     TError,
-    { mid: string; data: SetMemberVenuesRequest },
+    { mid: string; data: SetMemberVenuesRequest; params?: SetMemberVenuesParams },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof setMemberVenues>>,
   TError,
-  { mid: string; data: SetMemberVenuesRequest },
+  { mid: string; data: SetMemberVenuesRequest; params?: SetMemberVenuesParams },
   TContext
 > => {
   const mutationKey = ['setMemberVenues'];
@@ -3183,11 +4180,11 @@ export const getSetMemberVenuesMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof setMemberVenues>>,
-    { mid: string; data: SetMemberVenuesRequest }
+    { mid: string; data: SetMemberVenuesRequest; params?: SetMemberVenuesParams }
   > = (props) => {
-    const { mid, data } = props ?? {};
+    const { mid, data, params } = props ?? {};
 
-    return setMemberVenues(mid, data, requestOptions);
+    return setMemberVenues(mid, data, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -3207,7 +4204,7 @@ export const useSetMemberVenues = <TError = ErrorResponse, TContext = unknown>(
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof setMemberVenues>>,
       TError,
-      { mid: string; data: SetMemberVenuesRequest },
+      { mid: string; data: SetMemberVenuesRequest; params?: SetMemberVenuesParams },
       TContext
     >;
     request?: SecondParameter<typeof customFetch>;
@@ -3216,7 +4213,7 @@ export const useSetMemberVenues = <TError = ErrorResponse, TContext = unknown>(
 ): UseMutationResult<
   Awaited<ReturnType<typeof setMemberVenues>>,
   TError,
-  { mid: string; data: SetMemberVenuesRequest },
+  { mid: string; data: SetMemberVenuesRequest; params?: SetMemberVenuesParams },
   TContext
 > => {
   const mutationOptions = getSetMemberVenuesMutationOptions(options);
@@ -4872,9 +5869,135 @@ export const useSetStaffVenues = <TError = ErrorResponse, TContext = unknown>(
 };
 
 /**
+ * Returns the configured mode, the mode new-member provisioning actually
+applies (`effective_mode`), whether the plan includes the required
+capability, and `downgrade_reason` when `login` is configured but the plan
+does not allow it (new members are then created as roster). The policy is
+tenant-wide, never per venue or per member.
+ * @summary Read the tenant's member-login policy. Owner/admin only.
+ */
+export const getGetTenantSettingsUrl = () => {
+  return `/gms/v1/tenant/settings`;
+};
+
+export const getTenantSettings = async (
+  options?: RequestInit,
+): Promise<ApiResponseTenantSettingsResponse> => {
+  return customFetch<ApiResponseTenantSettingsResponse>(getGetTenantSettingsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetTenantSettingsQueryKey = () => {
+  return [`/gms/v1/tenant/settings`] as const;
+};
+
+export const getGetTenantSettingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTenantSettings>>,
+  TError = ErrorResponse,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenantSettings>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetTenantSettingsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTenantSettings>>> = ({ signal }) =>
+    getTenantSettings({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTenantSettings>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetTenantSettingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTenantSettings>>
+>;
+export type GetTenantSettingsQueryError = ErrorResponse;
+
+export function useGetTenantSettings<
+  TData = Awaited<ReturnType<typeof getTenantSettings>>,
+  TError = ErrorResponse,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenantSettings>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTenantSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getTenantSettings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetTenantSettings<
+  TData = Awaited<ReturnType<typeof getTenantSettings>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenantSettings>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTenantSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getTenantSettings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetTenantSettings<
+  TData = Awaited<ReturnType<typeof getTenantSettings>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenantSettings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Read the tenant's member-login policy. Owner/admin only.
+ */
+
+export function useGetTenantSettings<
+  TData = Awaited<ReturnType<typeof getTenantSettings>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTenantSettings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetTenantSettingsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
  * @summary Set the tenant's member-login policy (login vs roster). Owner/admin only;
 enabling login requires the MemberSelfService capability (Starter+).
-Switching to roster is always allowed (downgrade is never blocked).
+Switching to roster is always allowed (downgrade is never blocked) and
+affects NEW members only: existing login identities are not removed. The
+change and its audit row are written in one transaction. The response is the
+same policy view as the GET (the configured `member_login_mode` is kept at
+the top level for existing readers).
  */
 export const getPatchTenantSettingsUrl = () => {
   return `/gms/v1/tenant/settings`;
@@ -4883,8 +6006,8 @@ export const getPatchTenantSettingsUrl = () => {
 export const patchTenantSettings = async (
   updateTenantSettingsRequest: UpdateTenantSettingsRequest,
   options?: RequestInit,
-): Promise<ApiResponseUpdateTenantSettingsRequest> => {
-  return customFetch<ApiResponseUpdateTenantSettingsRequest>(getPatchTenantSettingsUrl(), {
+): Promise<ApiResponseTenantSettingsResponse> => {
+  return customFetch<ApiResponseTenantSettingsResponse>(getPatchTenantSettingsUrl(), {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -4937,7 +6060,11 @@ export type PatchTenantSettingsMutationError = ErrorResponse;
 /**
  * @summary Set the tenant's member-login policy (login vs roster). Owner/admin only;
 enabling login requires the MemberSelfService capability (Starter+).
-Switching to roster is always allowed (downgrade is never blocked).
+Switching to roster is always allowed (downgrade is never blocked) and
+affects NEW members only: existing login identities are not removed. The
+change and its audit row are written in one transaction. The response is the
+same policy view as the GET (the configured `member_login_mode` is kept at
+the top level for existing readers).
  */
 export const usePatchTenantSettings = <TError = ErrorResponse, TContext = unknown>(
   options?: {

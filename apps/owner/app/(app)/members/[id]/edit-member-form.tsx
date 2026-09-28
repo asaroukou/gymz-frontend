@@ -13,7 +13,7 @@ import {
   getListMembersQueryKey,
   useUpdateMember,
 } from '@iziwellpass/api/generated';
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberView } from '@iziwellpass/api/schemas';
 import { MembershipType } from '@iziwellpass/api/schemas';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
@@ -46,7 +46,7 @@ const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
 // Edit form (existing update contract)
 // ---------------------------------------------------------------------------
 
-export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: boolean }) {
+export function EditMemberForm({ member, canEdit }: { member: StaffMemberView; canEdit: boolean }) {
   const t = useTranslations('members');
   const queryClient = useQueryClient();
   const updateMember = useUpdateMember();
@@ -60,7 +60,6 @@ export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: b
         phone: z.string(),
         membership_type: z.enum(MEMBERSHIP_TYPE_VALUES),
         membership_end: z.string(),
-        is_active: z.enum(['active', 'inactive']),
         notes: z.string(),
       }),
     [t],
@@ -68,14 +67,13 @@ export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: b
 
   type EditMemberValues = z.infer<typeof schema>;
 
-  const toDefaults = (m: Member): EditMemberValues => ({
+  const toDefaults = (m: StaffMemberView): EditMemberValues => ({
     first_name: m.first_name,
     last_name: m.last_name,
     email: m.email ?? '',
     phone: m.phone ?? '',
     membership_type: m.membership_type,
     membership_end: m.membership_end ?? '',
-    is_active: m.is_active ? 'active' : 'inactive',
     notes: m.notes ?? '',
   });
 
@@ -99,7 +97,6 @@ export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: b
           phone: values.phone || null,
           membership_type: values.membership_type,
           membership_end: values.membership_end || null,
-          is_active: values.is_active === 'active',
           notes: values.notes || null,
         },
       },
@@ -221,35 +218,6 @@ export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: b
               )}
             />
           </div>
-          {/*
-            `UpdateMemberRequest` exposes `is_active` (boolean), not the
-            `membership_status` enum — so this select is the only editable
-            account-status proxy here. The authoritative status transition
-            is the dedicated `suspendMember` endpoint in the danger zone
-            below; this toggle only flips the `is_active` flag.
-          */}
-          <FormField
-            control={form.control}
-            name="is_active"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('detail.edit.active')}</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="active">{t('detail.edit.activeOption')}</SelectItem>
-                    <SelectItem value="inactive">{t('detail.edit.inactiveOption')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground">{t('detail.edit.activeHint')}</p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="notes"

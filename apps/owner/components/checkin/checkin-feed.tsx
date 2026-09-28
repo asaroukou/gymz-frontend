@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import type { CheckIn, Member, Staff } from '@iziwellpass/api/schemas';
+import type { CheckIn, Staff, StaffMemberView } from '@iziwellpass/api/schemas';
 import { CheckInMethod } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
@@ -20,7 +20,7 @@ import type { QueryLike } from './query-like';
 
 export interface CheckinFeedProps {
   checkIns: QueryLike<CheckIn[]>;
-  members: QueryLike<Member[]>;
+  members: QueryLike<StaffMemberView[]>;
   staff: QueryLike<Staff[]>;
   timeZone: string | undefined;
   /** 22/500 heading. Omitted under the dashboard tab (the tab is the heading). */
@@ -41,7 +41,7 @@ function CheckinRow({
 }: {
   checkIn: CheckIn;
   index: number;
-  member: Member | undefined;
+  member: StaffMemberView | undefined;
   staffByUserId: ReadonlyMap<string, Staff>;
   timeZone: string | undefined;
   justArrived: boolean;

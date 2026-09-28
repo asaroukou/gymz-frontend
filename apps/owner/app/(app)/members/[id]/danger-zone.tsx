@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberView } from '@iziwellpass/api/schemas';
 import { Button } from '@iziwellpass/ui/components/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/components/tooltip';
 import { SectionHeading } from '@iziwellpass/ui/components/working-page';
@@ -11,7 +11,7 @@ import { SectionHeading } from '@iziwellpass/ui/components/working-page';
 import { SuspendMemberDialog } from '../suspend-member-dialog';
 
 /** « Zone sensible » (canvas `L6sMyP`): danger « Suspendre le membre » + secondary « Réactiver ». */
-export function DangerZone({ member }: { member: Member }) {
+export function DangerZone({ member }: { member: StaffMemberView }) {
   const t = useTranslations('members');
   const [suspendOpen, setSuspendOpen] = useState(false);
   const isSuspended = member.membership_status === 'suspended';

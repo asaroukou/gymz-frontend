@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberView } from '@iziwellpass/api/schemas';
 import { isExpiringSoon, memberStatusBadgeVariant } from './member-status';
 
-function member(overrides: Partial<Member>): Member {
+function member(overrides: Partial<StaffMemberView>): StaffMemberView {
   return {
     id: 'm1',
     tenant_id: 't1',
@@ -19,8 +19,9 @@ function member(overrides: Partial<Member>): Member {
     notes: null,
     created_at: '2026-03-03T00:00:00Z',
     updated_at: '2026-03-03T00:00:00Z',
+    version: '2026-09-01T00:00:00Z',
     ...overrides,
-  } as Member;
+  } as StaffMemberView;
 }
 
 function daysFromNow(days: number): string {

@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
 import { getListPlansQueryOptions, useListSubscriptions } from '@iziwellpass/api/generated';
-import type { MemberSubscription } from '@iziwellpass/api/schemas';
+import type { StaffSubscriptionView } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Skeleton } from '@iziwellpass/ui/components/skeleton';
@@ -36,7 +36,7 @@ function SubscriptionTile({
   memberId,
   canManage,
 }: {
-  subscription: MemberSubscription;
+  subscription: StaffSubscriptionView;
   planName: string;
   index: number;
   memberId: string;

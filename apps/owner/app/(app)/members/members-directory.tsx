@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { SearchIcon, SearchXIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberView } from '@iziwellpass/api/schemas';
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from '@iziwellpass/ui/components/empty';
 import { Input } from '@iziwellpass/ui/components/input';
 import { Pagination } from '@iziwellpass/ui/components/pagination';
@@ -37,7 +37,7 @@ export function MembersDirectory({
   members,
   canManage,
 }: {
-  members: Member[];
+  members: StaffMemberView[];
   canManage: boolean;
 }) {
   const t = useTranslations('members');
@@ -45,11 +45,11 @@ export function MembersDirectory({
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [page, setPage] = useState(1);
-  const [suspendTarget, setSuspendTarget] = useState<Member | null>(null);
+  const [suspendTarget, setSuspendTarget] = useState<StaffMemberView | null>(null);
   const [suspendOpen, setSuspendOpen] = useState(false);
   const focus = useFocusRegistry();
 
-  const handleSuspend = (member: Member) => {
+  const handleSuspend = (member: StaffMemberView) => {
     setSuspendTarget(member);
     setSuspendOpen(true);
   };

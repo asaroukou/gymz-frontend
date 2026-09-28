@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 import { getListSubscriptionsQueryKey, useUpdateSubscription } from '@iziwellpass/api/generated';
-import type { MemberSubscription } from '@iziwellpass/api/schemas';
+import type { StaffSubscriptionView } from '@iziwellpass/api/schemas';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
@@ -31,7 +31,7 @@ export function CancelSubscriptionDialog({
   planName,
 }: {
   memberId: string;
-  subscription: MemberSubscription;
+  subscription: StaffSubscriptionView;
   planName: string;
 }) {
   const t = useTranslations('members');

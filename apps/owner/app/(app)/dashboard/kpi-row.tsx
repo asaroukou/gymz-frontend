@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-import type { Member, TodayAttendance } from '@iziwellpass/api/schemas';
+import type { StaffMemberView, TodayAttendance } from '@iziwellpass/api/schemas';
 import { MembershipStatus } from '@iziwellpass/api/schemas';
 import { Stat, StatPanel } from '@iziwellpass/ui/components/stat';
 
@@ -24,7 +24,7 @@ export function KpiRow({
   members,
 }: {
   attendance: QueryLike<TodayAttendance>;
-  members: QueryLike<Member[]>;
+  members: QueryLike<StaffMemberView[]>;
 }) {
   const t = useTranslations('dashboard');
 
