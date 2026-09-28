@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +11,7 @@ import { z } from 'zod';
 
 import { useAuth } from '@iziwellpass/auth/provider';
 import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
+import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Form,
@@ -25,18 +26,22 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@iziwellpass/ui/compone
 
 import { AuthCard } from '@/components/auth-card';
 import { AuthCardSkeleton } from '@/components/auth-card-skeleton';
+import { CodeInput } from '@/components/auth/code-input';
 import { PasswordChecklist } from '@/components/password-checklist';
 import { PasswordInput } from '@/components/password-input';
+import { singleFlight } from '@/lib/async-guards';
 import { useAuthError } from '@/lib/auth-errors';
+import { initials } from '@/lib/initials';
 import { sanitizeNext } from '@/lib/next-path';
 import { makePasswordSchema } from '@/lib/password';
+import { CODE_LENGTH, totpErrorOutcome } from '@/lib/totp-code';
 
 type CredentialsValues = { email: string; password: string };
 type NewPasswordValues = { newPassword: string; confirmPassword: string };
 
-type Challenge = {
-  complete: (newPassword: string) => Promise<{ idToken: string }>;
-};
+type Challenge =
+  | { kind: 'new-password'; complete: (newPassword: string) => Promise<{ idToken: string }> }
+  | { kind: 'totp'; email: string; submit: (code: string) => Promise<{ idToken: string }> };
 
 function NewPasswordCard({
   onComplete,
@@ -143,13 +148,123 @@ function NewPasswordCard({
   );
 }
 
+function TotpCard({
+  email,
+  submit,
+  onSignedIn,
+  onExpired,
+}: {
+  email: string;
+  submit: (code: string) => Promise<{ idToken: string }>;
+  onSignedIn: () => Promise<void>;
+  onExpired: () => void;
+}) {
+  const t = useTranslations('auth');
+  const resolveError = useAuthError();
+  const [code, setCode] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const verify = useMemo(
+    () =>
+      singleFlight(async (value: string) => {
+        setPending(true);
+        setError(null);
+        try {
+          await submit(value);
+          // Stays pending through the post-login navigation.
+          await onSignedIn();
+        } catch (err) {
+          const outcome = totpErrorOutcome(err);
+          if (outcome === 'expired') {
+            onExpired();
+            return;
+          }
+          setError(
+            outcome === 'invalid'
+              ? t('errors.codeMismatchTotp')
+              : resolveError(err, t('login.error')).message,
+          );
+          setCode('');
+          setPending(false);
+          requestAnimationFrame(() => inputRef.current?.focus());
+        }
+      }),
+    [submit, onSignedIn, onExpired, t, resolveError],
+  );
+
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (code.length === CODE_LENGTH) void verify(code);
+  };
+
+  return (
+    <AuthCard title={t('totp.title')} subtitle={t('totp.subtitle')}>
+      <form onSubmit={onSubmit} className="grid gap-7">
+        <div className="mx-auto flex max-w-full items-center gap-2.5 rounded-full bg-side py-2 pr-3.5 pl-2">
+          <Avatar size="sm">
+            <AvatarFallback tint="bleu">{initials(email)}</AvatarFallback>
+          </Avatar>
+          <span className="truncate text-md font-medium">{email}</span>
+        </div>
+        <div className="grid gap-2.5">
+          <CodeInput
+            inputRef={inputRef}
+            value={code}
+            onChange={(value) => {
+              setCode(value);
+              if (error) setError(null);
+            }}
+            onComplete={(value) => void verify(value)}
+            invalid={Boolean(error)}
+            disabled={pending}
+            label={t('totp.codeLabel')}
+            describedBy={error ? 'totp-error' : undefined}
+            autoFocus
+          />
+          {error ? (
+            <p id="totp-error" role="alert" className="text-center text-sm text-destructive-foreground">
+              {error}
+            </p>
+          ) : null}
+        </div>
+        <Button type="submit" disabled={pending || code.length < CODE_LENGTH} className="w-full">
+          {pending ? t('totp.submitting') : t('totp.submit')}
+        </Button>
+        <div className="grid justify-items-center gap-3 text-center">
+          <button
+            type="button"
+            aria-expanded={showHelp}
+            aria-controls="totp-help"
+            onClick={() => setShowHelp((v) => !v)}
+            className="text-md font-medium text-muted-foreground underline-offset-4 hover:underline"
+          >
+            {t('totp.lostAccess')}
+          </button>
+          {showHelp ? (
+            <p id="totp-help" className="text-sm text-muted-foreground">
+              {t('totp.lostAccessHelp')}
+            </p>
+          ) : null}
+        </div>
+      </form>
+    </AuthCard>
+  );
+}
+
 function CredentialsCard({
   next,
   onboarded,
+  initialEmail,
+  notice,
   onChallenge,
 }: {
   next: string;
   onboarded: boolean;
+  initialEmail?: string;
+  notice?: 'sessionExpired';
   onChallenge: (challenge: Challenge) => void;
 }) {
   const router = useRouter();
@@ -168,7 +283,7 @@ function CredentialsCard({
 
   const form = useForm<CredentialsValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: initialEmail ?? '', password: '' },
   });
 
   // Hold the pending state across the post-login navigation: router.replace
@@ -196,11 +311,10 @@ function CredentialsCard({
         return;
       }
       if (result.kind === 'new-password-required') {
-        onChallenge({ complete: result.complete });
+        onChallenge({ kind: 'new-password', complete: result.complete });
         return;
       }
-      // The TOTP code step arrives in the next task; until then say so.
-      form.setError('root', { message: t('login.error') });
+      onChallenge({ kind: 'totp', email: values.email, submit: result.submit });
     } catch (err) {
       const { message } = resolveError(err, t('login.error'));
       form.setError('root', { message });
@@ -225,6 +339,11 @@ function CredentialsCard({
     >
       <Form {...form}>
         <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="grid gap-[18px]">
+          {notice === 'sessionExpired' ? (
+            <Alert>
+              <AlertDescription>{t('errors.sessionExpired')}</AlertDescription>
+            </Alert>
+          ) : null}
           {onboarded ? (
             <Alert variant="success">
               <CircleCheckIcon aria-hidden="true" />
@@ -310,8 +429,19 @@ function LoginView() {
   const next = sanitizeNext(searchParams.get('next'));
   const onboarded = searchParams.get('onboarded') === '1';
   const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [expired, setExpired] = useState<{ email: string } | null>(null);
 
-  if (challenge) {
+  const totpEmail = challenge?.kind === 'totp' ? challenge.email : null;
+  const onTotpSignedIn = useCallback(async () => {
+    await refresh();
+    router.replace(next);
+  }, [refresh, router, next]);
+  const onTotpExpired = useCallback(() => {
+    if (totpEmail) setExpired({ email: totpEmail });
+    setChallenge(null);
+  }, [totpEmail]);
+
+  if (challenge?.kind === 'new-password') {
     return (
       <NewPasswordCard
         onBack={() => setChallenge(null)}
@@ -324,7 +454,29 @@ function LoginView() {
     );
   }
 
-  return <CredentialsCard next={next} onboarded={onboarded} onChallenge={setChallenge} />;
+  if (challenge?.kind === 'totp') {
+    return (
+      <TotpCard
+        email={challenge.email}
+        submit={challenge.submit}
+        onSignedIn={onTotpSignedIn}
+        onExpired={onTotpExpired}
+      />
+    );
+  }
+
+  return (
+    <CredentialsCard
+      next={next}
+      onboarded={onboarded}
+      initialEmail={expired?.email}
+      notice={expired ? 'sessionExpired' : undefined}
+      onChallenge={(c) => {
+        setExpired(null);
+        setChallenge(c);
+      }}
+    />
+  );
 }
 
 export default function LoginPage() {

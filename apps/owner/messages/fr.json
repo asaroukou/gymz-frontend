@@ -158,6 +158,15 @@
       "back": "Retour à la connexion",
       "error": "Impossible de définir le nouveau mot de passe"
     },
+    "totp": {
+      "title": "Code de vérification",
+      "subtitle": "Entrez le code à 6 chiffres de votre application d'authentification.",
+      "codeLabel": "Code à 6 chiffres",
+      "submit": "Vérifier",
+      "submitting": "Vérification…",
+      "lostAccess": "Je n'ai plus accès à mon application",
+      "lostAccessHelp": "Sans accès à votre application, contactez le support : la réinitialisation n'est pas en libre-service."
+    },
     "signup": {
       "title": "Créer un compte",
       "subtitle": "Vous recevrez un mot de passe provisoire par e-mail.",
@@ -198,6 +207,7 @@
       "codeMismatch": "Code incorrect. Vérifiez les 6 chiffres reçus par e-mail.",
       "codeExpired": "Ce code a expiré. Renvoyez-en un nouveau.",
       "sessionExpired": "Votre session a expiré. Reconnectez-vous.",
+      "codeMismatchTotp": "Code invalide. Vérifiez l'heure de votre téléphone et réessayez.",
       "usernameExists": "Un compte existe déjà avec cet e-mail.",
       "network": "Connexion impossible. Vérifiez votre connexion et réessayez."
     }
