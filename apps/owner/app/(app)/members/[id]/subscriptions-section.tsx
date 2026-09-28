@@ -1,11 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useQueries } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { unwrap } from '@iziwellpass/api/client';
-import { getListPlansQueryOptions, useListSubscriptions } from '@iziwellpass/api/generated';
+import { useListSubscriptions } from '@iziwellpass/api/generated';
 import type { StaffSubscriptionView } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Badge } from '@iziwellpass/ui/components/badge';
@@ -80,7 +79,9 @@ function SubscriptionTile({
             <Badge variant="warning">{t('detail.subscriptions.unpaid')}</Badge>
           ) : null}
         </div>
-        <p className="text-sm text-muted-strong">{terms ? `${terms} · ${price}` : price}</p>
+        <p className="text-sm text-muted-strong">
+          {[subscription.venue_name, terms, price].filter(Boolean).join(' · ')}
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <span
@@ -103,30 +104,6 @@ function SubscriptionTile({
   );
 }
 
-/**
- * Plan names live on the venue's plan list, not on the subscription, so every
- * venue represented in the list needs its own plan query. `useQueries` runs
- * that variable-length set in parallel and `combine` folds it into one id→name
- * map plus one aggregate pending flag.
- *
- * Archived plans are included: a member can hold a subscription to a plan that
- * was archived afterwards. Callers must distinguish "still loading" from "no
- * such plan".
- */
-function useVenuePlanNames(venueIds: string[]) {
-  return useQueries({
-    queries: venueIds.map((venueId) =>
-      getListPlansQueryOptions(venueId, { include_archived: true }, { query: { select: unwrap } }),
-    ),
-    combine: (results) => ({
-      names: Object.fromEntries(
-        results.flatMap((result) => (result.data ?? []).map((plan) => [plan.id, plan.name])),
-      ) as Record<string, string>,
-      isPending: results.some((result) => result.isPending),
-    }),
-  });
-}
-
 export function SubscriptionsSection({
   memberId,
   canManage,
@@ -142,19 +119,6 @@ export function SubscriptionsSection({
     query: { select: unwrap },
   });
   const subscriptions = useMemo(() => subscriptionsQuery.data ?? [], [subscriptionsQuery.data]);
-
-  // Memoised so the query list handed to useQueries keeps a stable identity.
-  const venueIds = useMemo(
-    () => [...new Set(subscriptions.map((s) => s.venue_id))],
-    [subscriptions],
-  );
-  const planNames = useVenuePlanNames(venueIds);
-
-  // Until the plan queries settle, a name we don't have yet is unknown to us,
-  // not unknown to the system: show a neutral dash rather than claiming
-  // « Offre inconnue ».
-  const planNameFor = (planId: string) =>
-    planNames.names[planId] ?? (planNames.isPending ? '—' : t('detail.subscriptions.unknownPlan'));
 
   return (
     <section className="flex flex-col gap-4">
@@ -193,7 +157,7 @@ export function SubscriptionsSection({
             <SubscriptionTile
               key={subscription.id}
               subscription={subscription}
-              planName={planNameFor(subscription.plan_id)}
+              planName={subscription.plan_name}
               index={index}
               memberId={memberId}
               canManage={canManage}
