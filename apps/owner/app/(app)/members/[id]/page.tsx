@@ -18,6 +18,7 @@ import { describeAccount, type AccountAction } from '@/lib/member-account';
 import { useAccountTracking } from '@/lib/use-account-tracking';
 
 import { AccountSection } from './account-section';
+import { AttendanceSection } from './attendance-section';
 import { ChangeEmailDialog } from './change-email-dialog';
 import { DangerZone } from './danger-zone';
 import { EditMemberForm } from './edit-member-form';
@@ -115,6 +116,7 @@ function MemberDetailContent() {
         <div className="flex flex-col gap-10">
           <MembershipSection member={member} />
           <SubscriptionsSection memberId={member.id} canManage={canEdit} />
+          <AttendanceSection memberId={member.id} />
         </div>
         <div className="flex flex-col gap-10">
           <EditMemberForm

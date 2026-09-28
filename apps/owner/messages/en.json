@@ -747,6 +747,28 @@
         "notProvisioned": "The member's access has not been created yet.",
         "processing": "Request being processed. Try again in a moment."
       }
+    },
+    "attendance": {
+      "title": "Attendance",
+      "count": "{count, plural, =0 {0 visit} one {# visit} other {# visits}} over {days} days",
+      "lastToday": "Last visit today at {time}",
+      "lastYesterday": "Last visit yesterday at {time}",
+      "lastDate": "Last visit on {date}",
+      "period": "{days} days",
+      "allVenues": "All venues",
+      "method": {
+        "qr": "QR",
+        "manual": "Manual",
+        "wallet": "Wallet"
+      },
+      "kind": {
+        "booked": "Booking",
+        "walkIn": "Walk-in"
+      },
+      "emptyPeriod": "No visits in the last {days} days.",
+      "lastDateSentence": "Last visit on {date}.",
+      "never": "No recorded visits for this member.",
+      "error": "Couldn't load attendance."
     }
   },
   "planning": {

@@ -747,6 +747,28 @@
         "notProvisioned": "L'accès du membre n'est pas encore créé.",
         "processing": "Demande en cours de traitement. Réessayez dans un instant."
       }
+    },
+    "attendance": {
+      "title": "Présences",
+      "count": "{count, plural, =0 {0 passage} one {# passage} other {# passages}} sur {days} jours",
+      "lastToday": "Dernier passage aujourd'hui à {time}",
+      "lastYesterday": "Dernier passage hier à {time}",
+      "lastDate": "Dernier passage le {date}",
+      "period": "{days} jours",
+      "allVenues": "Tous les établissements",
+      "method": {
+        "qr": "QR",
+        "manual": "Manuel",
+        "wallet": "Wallet"
+      },
+      "kind": {
+        "booked": "Réservation",
+        "walkIn": "Sans réservation"
+      },
+      "emptyPeriod": "Aucun passage sur les {days} derniers jours.",
+      "lastDateSentence": "Dernier passage le {date}.",
+      "never": "Aucun passage enregistré pour ce membre.",
+      "error": "Impossible de charger les présences."
     }
   },
   "planning": {
