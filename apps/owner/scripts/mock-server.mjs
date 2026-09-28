@@ -2407,6 +2407,12 @@ function registerMemberHandler(body) {
   if (effective === 'login' && !body?.email) {
     details.push({ field: 'email', message: 'email is required for login members' });
   }
+  if (body?.email) {
+    const emailLower = body.email.trim().toLowerCase();
+    if (members.some((m) => m.email && m.email.toLowerCase() === emailLower)) {
+      return conflict('Un membre utilise déjà cette adresse.');
+    }
+  }
   if (details.length) return validationError(details);
   const id = newId('mbr');
   const member = {

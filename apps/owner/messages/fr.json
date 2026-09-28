@@ -473,9 +473,15 @@
     "addDialog": {
       "title": "Ajouter un membre",
       "description": "Enregistrez un nouveau membre dans cet établissement.",
+      "hintLogin": "Le membre recevra une invitation par e-mail pour utiliser l'app.",
+      "hintRoster": "Fiche sans accès à l'app. L'équipe gère tout depuis la console.",
       "firstName": "Prénom",
       "lastName": "Nom",
       "email": "E-mail",
+      "emailOptional": "E-mail (facultatif)",
+      "emailHelpLogin": "Obligatoire : il sert d'identifiant dans l'app.",
+      "emailRequired": "L'e-mail est obligatoire : ce club donne accès à l'app à ses membres.",
+      "emailTaken": "Un membre utilise déjà cette adresse.",
       "phone": "Téléphone",
       "type": "Type d'abonnement",
       "start": "Début d'abonnement",
@@ -489,6 +495,7 @@
       "submitAndAnother": "Ajouter et enchaîner",
       "submitting": "Ajout…",
       "success": "Membre ajouté",
+      "successLogin": "Membre ajouté. Envoi de l'invitation…",
       "error": "Impossible d'ajouter le membre"
     },
     "validation": {

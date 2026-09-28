@@ -473,9 +473,15 @@
     "addDialog": {
       "title": "Add member",
       "description": "Enroll a new member at this venue.",
+      "hintLogin": "The member will receive an email invitation to use the app.",
+      "hintRoster": "Record only, no app access. The team manages everything from the console.",
       "firstName": "First name",
       "lastName": "Last name",
       "email": "Email",
+      "emailOptional": "Email (optional)",
+      "emailHelpLogin": "Required: it is used as the app login.",
+      "emailRequired": "Email is required: this club gives its members access to the app.",
+      "emailTaken": "A member already uses this address.",
       "phone": "Phone",
       "type": "Membership type",
       "start": "Membership start",
@@ -489,6 +495,7 @@
       "submitAndAnother": "Add and continue",
       "submitting": "Adding…",
       "success": "Member added",
+      "successLogin": "Member added. Sending the invitation…",
       "error": "Could not add member"
     },
     "validation": {
