@@ -13,9 +13,20 @@ export type AuthErrorCode =
   | 'invalidPassword'
   | 'codeMismatch'
   | 'codeExpired'
+  | 'sessionExpired'
   | 'usernameExists'
   | 'network'
   | 'unknown';
+
+/** `.name` of the error the client rejects with when no user is signed in. */
+export const NOT_SIGNED_IN = 'NotSignedInError';
+
+/** Rejection for enrolment calls made without a valid session. */
+export function notSignedInError(): Error {
+  const err = new Error('No signed-in user');
+  err.name = NOT_SIGNED_IN;
+  return err;
+}
 
 function exceptionName(err: unknown): string {
   if (err && typeof err === 'object') {
@@ -45,9 +56,13 @@ export function authErrorCode(err: unknown): AuthErrorCode {
 
   switch (name) {
     case 'NotAuthorizedException':
-      // Cognito reuses this for both wrong password and lockout; the English
-      // message is the only discriminator it gives us.
-      return /attempts exceeded/i.test(message) ? 'tooManyAttempts' : 'invalidCredentials';
+      // Cognito reuses this for wrong password, lockout, and an expired
+      // MFA/challenge session; the English message is the only discriminator.
+      if (/attempts exceeded/i.test(message)) return 'tooManyAttempts';
+      if (/session is expired|invalid session/i.test(message)) return 'sessionExpired';
+      return 'invalidCredentials';
+    case NOT_SIGNED_IN:
+      return 'sessionExpired';
     case 'UserNotFoundException':
       return 'invalidCredentials';
     case 'UserNotConfirmedException':
@@ -61,6 +76,8 @@ export function authErrorCode(err: unknown): AuthErrorCode {
     case 'TooManyFailedAttemptsException':
       return 'tooManyAttempts';
     case 'CodeMismatchException':
+    // Wrong first code during TOTP enrolment (VerifySoftwareToken).
+    case 'EnableSoftwareTokenMFAException':
       return 'codeMismatch';
     case 'ExpiredCodeException':
       return 'codeExpired';

@@ -1,8 +1,10 @@
 // Mock app-plane server for owner-app dev: real Cognito login, fake data.
 // Serves the `/gms/v1/*` app-plane routes the owner app calls, plus the
 // `/platform/v1/checkins/pass` app-plane route (marketplace pass check-in).
-// Control-plane routes (/platform/v1/auth|onboarding|admin|billing) are
-// out of scope — the app never calls them through this proxy target.
+// Control-plane routes (/platform/v1/auth|onboarding|admin|billing) are out of
+// scope, except `POST /platform/v1/mfa/finalize`: point
+// CONTROL_PLANE_PROXY_TARGET (and NEXT_PUBLIC_CONTROL_PLANE_BASE_URL=/api/control)
+// at this server to use it.
 //
 // Usage:
 //   pnpm dev:mock                 # localhost:8090
@@ -54,6 +56,13 @@
 //   - `MOCK_PLAN=free|starter|pro|enterprise` (default `pro`) sets the plan
 //     `GET /gms/v1/capabilities` returns; gated routes answer
 //     403 FEATURE_NOT_AVAILABLE when the plan lacks the capability.
+//   - `MOCK_MFA=required` mirrors the backend's owner/admin MFA gate: every
+//     `/gms/v1/*` call whose bearer token decodes to role owner/admin without
+//     an `mfa_enrolled_at` claim answers 403 MFA_ENROLLMENT_REQUIRED. With the
+//     offline auth mock, the password `totp` (or any e-mail enrolled on /mfa)
+//     signs in with the claim.
+//   - `MOCK_MFA_FINALIZE=fail` makes `POST /platform/v1/mfa/finalize` answer
+//     500 (the enrolment page's retry path).
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { crc32, deflateSync } from 'node:zlib';
@@ -1059,6 +1068,36 @@ function featureGate(method, pathname) {
 
 function capabilitiesHandler() {
   return [200, envelope({ plan: MOCK_PLAN, capabilities: PLAN_CAPABILITIES[MOCK_PLAN] })];
+}
+
+// --- MFA (owner/admin enrolment gate, finalize) ------------------------------
+const MOCK_MFA = process.env.MOCK_MFA === 'required';
+const MOCK_MFA_FINALIZE_FAIL = process.env.MOCK_MFA_FINALIZE === 'fail';
+
+/** The bearer token's claims, or null. Reads the payload only, never verifies. */
+function bearerClaims(header) {
+  const token = String(header ?? '').replace(/^Bearer\s+/i, '');
+  const payload = token.split('.')[1];
+  if (!payload) return null;
+  try {
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function mfaGate(pathname, authorization) {
+  if (!MOCK_MFA || !pathname.startsWith('/gms/v1/')) return null;
+  const claims = bearerClaims(authorization);
+  if (!claims || !['owner', 'admin'].includes(claims.role) || claims.mfa_enrolled_at) return null;
+  return [403, errorBody('MFA_ENROLLMENT_REQUIRED', 'MFA enrollment required')];
+}
+
+function finalizeMfaHandler() {
+  if (MOCK_MFA_FINALIZE_FAIL) {
+    return [500, errorBody('INTERNAL', 'Mock finalize failure')];
+  }
+  return [200, envelope({ mfa_enrolled_at: iso(now()) })];
 }
 
 function requireFields(body, fields) {
@@ -2186,6 +2225,11 @@ function passCheckinHandler(body) {
 // Router
 // =============================================================================
 const routes = [
+  {
+    method: 'POST',
+    pattern: /^\/platform\/v1\/mfa\/finalize$/,
+    handler: () => finalizeMfaHandler(),
+  },
   { method: 'GET', pattern: /^\/gms\/v1\/venues$/, handler: () => listVenuesHandler() },
   {
     method: 'POST',
@@ -2550,7 +2594,9 @@ http
       return;
     }
 
-    const [status, out] = dispatch(req.method ?? 'GET', url.pathname, body, url.searchParams);
+    const [status, out] =
+      mfaGate(url.pathname, req.headers.authorization) ??
+      dispatch(req.method ?? 'GET', url.pathname, body, url.searchParams);
     console.log(`[mock] ${req.method} ${url.pathname} -> ${status}`);
     if (status === 204) {
       res.writeHead(204);
@@ -2561,5 +2607,7 @@ http
     res.end(out);
   })
   .listen(PORT, () => {
-    console.log(`[mock] owner API mock on http://localhost:${PORT} (plan ${MOCK_PLAN}, state resets on restart)`);
+    console.log(
+      `[mock] owner API mock on http://localhost:${PORT} (plan ${MOCK_PLAN}${MOCK_MFA ? ', MFA required' : ''}, state resets on restart)`,
+    );
   });

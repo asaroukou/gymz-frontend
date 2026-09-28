@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { configureApi } from '@iziwellpass/api/client';
 import { ApiProvider } from '@iziwellpass/api/provider';
@@ -9,6 +9,8 @@ import { createMockAuthClient } from '@iziwellpass/auth/mock';
 import { AuthProvider, useAuth } from '@iziwellpass/auth/provider';
 import { clearSessionCookie } from '@iziwellpass/auth/session-cookie';
 import { Toaster } from '@iziwellpass/ui/components/sonner';
+
+import { createMfaRedirect } from '@/lib/mfa-redirect';
 
 /**
  * A no-op AuthClient used only when real Cognito config isn't available yet.
@@ -28,17 +30,33 @@ function noopAuthClient(): AuthClient {
     signOut: () => undefined,
     getIdToken: () => Promise.resolve(null),
     forceRefreshSession: () => Promise.resolve(null),
+    startTotpSetup: () => Promise.reject(new Error('Auth client not configured')),
+    confirmTotpSetup: () => Promise.reject(new Error('Auth client not configured')),
+    isTotpEnabled: () => Promise.reject(new Error('Auth client not configured')),
   };
 }
 
 /** Wires the auth token getter into the api client exactly once (client-side only). */
 function ApiConfigurator({ children }: { children: ReactNode }) {
   const { getToken, client } = useAuth();
+
+  // Backend 403 MFA_ENROLLMENT_REQUIRED → the enrolment page, once per burst.
+  // Goes silent on its own when the backend stops enforcing MFA.
+  const onMfaRequired = useMemo(
+    () =>
+      createMfaRedirect({
+        getLocation: () => ({ pathname: window.location.pathname, search: window.location.search }),
+        assign: (url) => window.location.assign(url),
+      }),
+    [],
+  );
+
   useEffect(() => {
     configureApi({
       baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? '',
       controlPlaneBaseUrl: process.env.NEXT_PUBLIC_CONTROL_PLANE_BASE_URL ?? '',
       getToken,
+      onMfaRequired,
       onUnauthorized: async () => {
         // In unconfigured envs `client` is the noopAuthClient, whose
         // forceRefreshSession() always resolves null — that's fine here:
@@ -55,7 +73,7 @@ function ApiConfigurator({ children }: { children: ReactNode }) {
         return token;
       },
     });
-  }, [getToken, client]);
+  }, [getToken, client, onMfaRequired]);
   return children;
 }
 

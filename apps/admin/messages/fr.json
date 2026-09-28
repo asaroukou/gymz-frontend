@@ -13,7 +13,8 @@
       "onboardedNotice": "Votre établissement est prêt — connectez-vous pour continuer.",
       "forgotPassword": "Mot de passe oublié ?",
       "forgotPasswordSoon": "Bientôt disponible",
-      "error": "E-mail ou mot de passe incorrect"
+      "error": "E-mail ou mot de passe incorrect",
+      "totpUnsupported": "La double authentification n'est pas encore prise en charge ici."
     },
     "newPassword": {
       "title": "Choisissez un nouveau mot de passe",
@@ -46,6 +47,7 @@
       "tooManyAttempts": "Trop de tentatives. Patientez quelques minutes avant de réessayer.",
       "passwordResetRequired": "Votre mot de passe doit être réinitialisé. Contactez la personne qui vous a donné accès.",
       "invalidPassword": "Ce mot de passe ne respecte pas les règles de sécurité.",
+      "sessionExpired": "Votre session a expiré. Reconnectez-vous.",
       "network": "Connexion impossible. Vérifiez votre connexion et réessayez."
     }
   },

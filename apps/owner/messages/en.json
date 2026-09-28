@@ -158,6 +158,15 @@
       "back": "Back to sign in",
       "error": "Could not set new password"
     },
+    "totp": {
+      "title": "Verification code",
+      "subtitle": "Enter the 6-digit code from your authenticator app.",
+      "codeLabel": "6-digit code",
+      "submit": "Verify",
+      "submitting": "Verifying…",
+      "lostAccess": "I no longer have access to my app",
+      "lostAccessHelp": "Without your app, contact support: reset isn't self-service."
+    },
     "signup": {
       "title": "Create an account",
       "subtitle": "You'll receive a temporary password by email.",
@@ -197,8 +206,40 @@
       "invalidPassword": "This password doesn't meet the security rules.",
       "codeMismatch": "Incorrect code. Check the 6 digits from your email.",
       "codeExpired": "This code has expired. Request a new one.",
+      "sessionExpired": "Your session expired. Sign in again.",
+      "codeMismatchTotp": "Invalid code. Check your phone's clock and try again.",
       "usernameExists": "An account already exists with this email.",
       "network": "Can't connect. Check your connection and try again."
+    }
+  },
+  "mfa": {
+    "setup": {
+      "title": "Turn on two-factor authentication",
+      "intro": "Scan this code with an authenticator app (Google Authenticator, 1Password, Authy…).",
+      "qrAlt": "QR code to scan with your authenticator app",
+      "manualLabel": "Or enter the key manually",
+      "copy": "Copy key",
+      "copied": "Key copied",
+      "continue": "Continue",
+      "footnote": "You'll enter a 6-digit code each time you sign in.",
+      "error": "Couldn't prepare setup."
+    },
+    "verify": {
+      "title": "Check the code",
+      "subtitle": "Enter the 6-digit code shown in your app.",
+      "submit": "Verify",
+      "finalizing": "Turning on…",
+      "back": "Back to the QR code",
+      "error": "Couldn't verify the code. Try again."
+    },
+    "finalize": {
+      "error": "Setup couldn't be completed."
+    },
+    "retry": "Try again",
+    "done": {
+      "title": "Two-factor authentication is on",
+      "body": "For your security, all your sessions were closed. Sign in again with your password and a code from your app.",
+      "cta": "Sign in again"
     }
   },
   "onboarding": {

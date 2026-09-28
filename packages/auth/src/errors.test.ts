@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { authErrorCode } from './errors';
+import { authErrorCode, notSignedInError, NOT_SIGNED_IN } from './errors';
 
 function cognito(name: string, message = ''): Error {
   const err = new Error(message);
@@ -23,6 +23,12 @@ describe('authErrorCode', () => {
 
   it('folds an unknown user into invalidCredentials (no account enumeration)', () => {
     expect(authErrorCode(cognito('UserNotFoundException'))).toBe('invalidCredentials');
+  });
+
+  it('maps an unsupported sign-in challenge to unknown', () => {
+    expect(
+      authErrorCode(cognito('UnsupportedChallengeError', 'Unsupported sign-in challenge: SMS_MFA')),
+    ).toBe('unknown');
   });
 
   it('flags an unconfirmed account', () => {
@@ -60,5 +66,33 @@ describe('authErrorCode', () => {
     expect(authErrorCode(cognito('SomeNewException'))).toBe('unknown');
     expect(authErrorCode(null)).toBe('unknown');
     expect(authErrorCode('boom')).toBe('unknown');
+  });
+
+  it('maps an expired MFA session to sessionExpired', () => {
+    expect(
+      authErrorCode(
+        cognito('NotAuthorizedException', 'Invalid session for the user, session is expired.'),
+      ),
+    ).toBe('sessionExpired');
+    expect(authErrorCode(cognito('NotAuthorizedException', 'Invalid session for the user.'))).toBe(
+      'sessionExpired',
+    );
+  });
+
+  it('keeps the lockout check ahead of the session check', () => {
+    expect(
+      authErrorCode(cognito('NotAuthorizedException', 'Password attempts exceeded')),
+    ).toBe('tooManyAttempts');
+  });
+
+  it('maps a missing signed-in user to sessionExpired', () => {
+    expect(notSignedInError().name).toBe(NOT_SIGNED_IN);
+    expect(authErrorCode(notSignedInError())).toBe('sessionExpired');
+  });
+
+  it('maps a wrong first code at enrolment to codeMismatch', () => {
+    expect(
+      authErrorCode(cognito('EnableSoftwareTokenMFAException', 'Code mismatch and fail enable')),
+    ).toBe('codeMismatch');
   });
 });

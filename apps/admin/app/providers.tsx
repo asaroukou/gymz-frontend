@@ -27,6 +27,9 @@ function noopAuthClient(): AuthClient {
     signOut: () => undefined,
     getIdToken: () => Promise.resolve(null),
     forceRefreshSession: () => Promise.resolve(null),
+    startTotpSetup: () => Promise.reject(new Error('Auth client not configured')),
+    confirmTotpSetup: () => Promise.reject(new Error('Auth client not configured')),
+    isTotpEnabled: () => Promise.reject(new Error('Auth client not configured')),
   };
 }
 

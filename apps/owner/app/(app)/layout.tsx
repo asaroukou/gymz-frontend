@@ -30,6 +30,7 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { CapabilitiesProvider, useCapabilities } from '@/components/capabilities/capabilities-provider';
 import { NavLock } from '@/components/capabilities/nav-lock';
 import { PlanRow } from '@/components/capabilities/plan-row';
+import { initials } from '@/lib/initials';
 import { navGroupsForRole, type NavLabelKey, type OwnerNavGroup } from '@/lib/nav';
 import { VenueProvider } from '@/lib/venue-context';
 import { VenueSwitcher } from '@/components/venue-switcher';
@@ -55,14 +56,6 @@ const NAV_ICONS: Record<NavLabelKey, LucideIcon> = {
  */
 function NavLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return <Link href={props.href ?? '#'} {...props} />;
-}
-
-function initials(nameOrEmail: string): string {
-  const local = nameOrEmail.split('@')[0] ?? '';
-  const parts = local.split(/[\s._+-]+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? '';
-  const second = parts[1]?.[0] ?? '';
-  return (first + second).toUpperCase() || '?';
 }
 
 function UserMenu({ variant = 'avatar' }: { variant?: 'avatar' | 'row' }) {

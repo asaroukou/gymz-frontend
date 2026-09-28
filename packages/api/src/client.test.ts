@@ -258,10 +258,11 @@ describe('resolveBaseUrl', () => {
     ).toThrowError(/controlPlaneBaseUrl/);
   });
 
-  it('covers exactly the four documented prefixes', () => {
+  it('covers exactly the five documented prefixes', () => {
     expect(CONTROL_PLANE_PREFIXES).toEqual([
       '/platform/v1/auth/',
       '/platform/v1/onboarding/',
+      '/platform/v1/mfa/',
       '/platform/v1/admin/',
       '/platform/v1/billing/',
     ]);
@@ -366,5 +367,74 @@ describe('customFetch plane routing and empty bodies', () => {
       customFetch('/platform/v1/onboarding/venue', { method: 'POST', body: '{}' }),
     ).rejects.toThrow(/controlPlaneBaseUrl/);
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('MFA routing and gate', () => {
+  beforeEach(() => {
+    configureApi({
+      baseUrl: 'https://api.test/v1',
+      controlPlaneBaseUrl: 'https://control.test',
+      getToken: () => Promise.resolve('tok'),
+      onUnauthorized: undefined,
+      onMfaRequired: undefined,
+    });
+    vi.stubGlobal('fetch', vi.fn());
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const error403 = (code: string) =>
+    jsonResponse(403, { error: { code, message: 'nope' }, request_id: 'r' });
+
+  it('routes /platform/v1/mfa/finalize to the control plane', () => {
+    expect(CONTROL_PLANE_PREFIXES).toContain('/platform/v1/mfa/');
+    expect(
+      resolveBaseUrl('/platform/v1/mfa/finalize', {
+        baseUrl: 'https://api.test',
+        controlPlaneBaseUrl: 'https://control.test',
+      }),
+    ).toBe('https://control.test');
+  });
+
+  it('calls onMfaRequired once on 403 MFA_ENROLLMENT_REQUIRED and still throws', async () => {
+    const onMfaRequired = vi.fn();
+    configureApi({ onMfaRequired });
+    vi.mocked(fetch).mockResolvedValue(error403('MFA_ENROLLMENT_REQUIRED'));
+    await expect(customFetch('/gms/v1/venues', { method: 'GET' })).rejects.toMatchObject({
+      status: 403,
+      code: 'MFA_ENROLLMENT_REQUIRED',
+    });
+    expect(onMfaRequired).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['FEATURE_NOT_AVAILABLE', 'FORBIDDEN'])('ignores a 403 %s', async (code) => {
+    const onMfaRequired = vi.fn();
+    configureApi({ onMfaRequired });
+    vi.mocked(fetch).mockResolvedValue(error403(code));
+    await expect(customFetch('/gms/v1/venues', { method: 'GET' })).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect(onMfaRequired).not.toHaveBeenCalled();
+  });
+
+  it('ignores a 401 carrying the MFA code', async () => {
+    const onMfaRequired = vi.fn();
+    configureApi({ onMfaRequired });
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(401, { error: { code: 'MFA_ENROLLMENT_REQUIRED', message: 'x' } }),
+    );
+    await expect(customFetch('/gms/v1/venues', { method: 'GET' })).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect(onMfaRequired).not.toHaveBeenCalled();
+  });
+
+  it('throws normally when no onMfaRequired is configured', async () => {
+    vi.mocked(fetch).mockResolvedValue(error403('MFA_ENROLLMENT_REQUIRED'));
+    await expect(customFetch('/gms/v1/venues', { method: 'GET' })).rejects.toMatchObject({
+      code: 'MFA_ENROLLMENT_REQUIRED',
+    });
   });
 });
