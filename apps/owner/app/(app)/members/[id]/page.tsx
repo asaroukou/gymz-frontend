@@ -18,10 +18,13 @@ import { describeAccount, type AccountAction } from '@/lib/member-account';
 import { useAccountTracking } from '@/lib/use-account-tracking';
 
 import { AccountSection } from './account-section';
+import { ChangeEmailDialog } from './change-email-dialog';
 import { DangerZone } from './danger-zone';
 import { EditMemberForm } from './edit-member-form';
 import { MemberHeader } from './member-header';
 import { MembershipSection } from './membership-section';
+import { ResendInvitationDialog } from './resend-invitation-dialog';
+import { SignOutEverywhereDialog } from './sign-out-everywhere-dialog';
 import { SubscriptionsSection } from './subscriptions-section';
 
 function MemberDetailContent() {
@@ -41,8 +44,21 @@ function MemberDetailContent() {
   const view = member
     ? describeAccount(member.account, { role, watched: tracking.watched, stale: tracking.stale })
     : null;
-  // Task 7 renders the account dialogs from `dialog`.
-  const [, setDialog] = useState<AccountAction | 'signOut' | null>(null);
+  const [dialog, setDialog] = useState<AccountAction | 'signOut' | null>(null);
+  // Latched so the resend/relaunch dialog keeps its copy while it animates out.
+  const [resendMode, setResendMode] = useState<'resend' | 'relaunch'>('resend');
+  const openAction = (action: AccountAction) => {
+    if (action === 'resend' || action === 'relaunch') setResendMode(action);
+    setDialog(action);
+  };
+  const closeDialog = (open: boolean) => {
+    if (!open) setDialog(null);
+  };
+  // A started operation is watched and gets a fresh 30 s polling window.
+  const onStarted = (operationId: string) => {
+    tracking.watch(operationId);
+    tracking.refresh();
+  };
 
   const backLink = (
     <BackLink href="/members" linkComponent={Link}>
@@ -111,18 +127,32 @@ function MemberDetailContent() {
             onChangeEmail={() => setDialog('changeEmail')}
           />
           {canEdit ? (
-            <AccountSection
-              member={member}
-              view={view}
-              tracking={tracking}
-              onAction={(action) => setDialog(action)}
-            />
+            <AccountSection member={member} view={view} tracking={tracking} onAction={openAction} />
           ) : null}
           {canEdit ? (
             <DangerZone member={member} view={view} onSignOut={() => setDialog('signOut')} />
           ) : null}
         </div>
       </div>
+      <ResendInvitationDialog
+        member={member}
+        mode={resendMode}
+        open={dialog === 'resend' || dialog === 'relaunch'}
+        onOpenChange={closeDialog}
+        onStarted={onStarted}
+      />
+      <ChangeEmailDialog
+        member={member}
+        open={dialog === 'changeEmail'}
+        onOpenChange={closeDialog}
+        onStarted={onStarted}
+      />
+      <SignOutEverywhereDialog
+        member={member}
+        open={dialog === 'signOut'}
+        onOpenChange={closeDialog}
+        onStarted={onStarted}
+      />
     </WorkingPage>
   );
 }

@@ -622,7 +622,11 @@
     "account": {
       "title": "Accès à l'app",
       "subtitle": "Connexion du membre à l'app IziWellPass : carte, QR code, réservations.",
-      "rows": { "access": "Accès", "email": "Adresse de connexion", "lastAction": "Dernière action" },
+      "rows": {
+        "access": "Accès",
+        "email": "Adresse de connexion",
+        "lastAction": "Dernière action"
+      },
       "badge": {
         "none": "Sans app",
         "pending": "Création en cours",
@@ -664,7 +668,10 @@
         "changeLink": "Changer l'adresse de connexion"
       },
       "signOut": {
-        "open": "Déconnecter de tous les appareils"
+        "open": "Déconnecter de tous les appareils",
+        "title": "Déconnecter {name} de tous ses appareils ?",
+        "body": "Une nouvelle connexion avec le mot de passe sera nécessaire. L'effet peut prendre jusqu'à 10 minutes.",
+        "confirm": "Déconnecter"
       },
       "last": {
         "invitationSent": "Invitation envoyée le {date} à {time}",
@@ -707,6 +714,38 @@
         "signOutShared": "Ce compte sert aussi dans une autre organisation ou pour un accès équipe : une déconnexion les toucherait aussi. Contactez le support.",
         "signOutNotProvisioned": "L'accès du membre n'est pas encore créé : aucune session à fermer.",
         "signOutFailed": "La déconnexion n'a pas abouti."
+      },
+      "resendDialog": {
+        "title": "Renvoyer l'invitation ?",
+        "body": "{name} recevra un nouvel e-mail avec un nouveau mot de passe temporaire. Le précédent ne fonctionnera plus.",
+        "confirm": "Renvoyer",
+        "cancel": "Annuler"
+      },
+      "relaunchDialog": {
+        "title": "Relancer la création de l'accès ?",
+        "body": "Une invitation sera envoyée à {email}.",
+        "confirm": "Relancer"
+      },
+      "refusal": {
+        "loginNotAvailable": "Votre club ne donne plus accès à l'app aux nouveaux membres. Modifiez ce réglage dans Réglages.",
+        "openSettings": "Ouvrir les réglages",
+        "forbidden": "Accès refusé"
+      },
+      "emailDialog": {
+        "title": "Changer l'adresse de connexion",
+        "current": "Adresse actuelle",
+        "new": "Nouvelle adresse",
+        "explain": "Le membre recevra un code à la nouvelle adresse et devra le saisir dans l'app. D'ici là, il continue de se connecter avec l'adresse actuelle. Sans confirmation sous 24 h, le changement est annulé.",
+        "explainInvited": "S'il ne s'est jamais connecté, l'adresse est remplacée tout de suite et une nouvelle invitation y est envoyée.",
+        "confirm": "Envoyer le code",
+        "sent": "Code envoyé à {email}",
+        "same": "C'est déjà l'adresse actuelle.",
+        "invalid": "Adresse e-mail invalide.",
+        "taken": "Cette adresse est déjà utilisée.",
+        "inProgress": "Un changement vers une autre adresse est déjà en cours. Attendez qu'il aboutisse ou expire (24 h).",
+        "shared": "Ce compte sert aussi ailleurs sur IziWellPass : contactez le support.",
+        "notProvisioned": "L'accès du membre n'est pas encore créé.",
+        "processing": "Demande en cours de traitement. Réessayez dans un instant."
       }
     }
   },

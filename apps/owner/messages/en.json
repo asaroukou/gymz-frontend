@@ -622,7 +622,11 @@
     "account": {
       "title": "App access",
       "subtitle": "The member's access to the IziWellPass app: card, QR code, bookings.",
-      "rows": { "access": "Access", "email": "Sign-in address", "lastAction": "Last action" },
+      "rows": {
+        "access": "Access",
+        "email": "Sign-in address",
+        "lastAction": "Last action"
+      },
       "badge": {
         "none": "No app access",
         "pending": "Creating access",
@@ -664,7 +668,10 @@
         "changeLink": "Change the sign-in address"
       },
       "signOut": {
-        "open": "Sign out of all devices"
+        "open": "Sign out of all devices",
+        "title": "Sign {name} out of all devices?",
+        "body": "Signing in again with the password will be required. It can take up to 10 minutes to take effect.",
+        "confirm": "Sign out"
       },
       "last": {
         "invitationSent": "Invitation sent on {date} at {time}",
@@ -707,6 +714,38 @@
         "signOutShared": "This account is also used in another organization or for a team access: a sign-out would affect those too. Contact support.",
         "signOutNotProvisioned": "The member's access isn't created yet: no session to close.",
         "signOutFailed": "The sign-out didn't go through."
+      },
+      "resendDialog": {
+        "title": "Resend the invitation?",
+        "body": "{name} will get a new e-mail with a new temporary password. The previous one will stop working.",
+        "confirm": "Resend",
+        "cancel": "Cancel"
+      },
+      "relaunchDialog": {
+        "title": "Retry creating the access?",
+        "body": "An invitation will be sent to {email}.",
+        "confirm": "Retry"
+      },
+      "refusal": {
+        "loginNotAvailable": "Your club no longer gives new members access to the app. Change this in Settings.",
+        "openSettings": "Open settings",
+        "forbidden": "Access denied"
+      },
+      "emailDialog": {
+        "title": "Change the sign-in address",
+        "current": "Current address",
+        "new": "New address",
+        "explain": "The member will get a code at the new address and must enter it in the app. Until then, they keep signing in with the current address. Without confirmation within 24 h, the change is cancelled.",
+        "explainInvited": "If they have never signed in, the address is replaced right away and a new invitation is sent to it.",
+        "confirm": "Send the code",
+        "sent": "Code sent to {email}",
+        "same": "This is already the current address.",
+        "invalid": "Invalid e-mail address.",
+        "taken": "This address is already in use.",
+        "inProgress": "A change to another address is already in progress. Wait until it completes or expires (24 h).",
+        "shared": "This account is also used elsewhere on IziWellPass: contact support.",
+        "notProvisioned": "The member's access has not been created yet.",
+        "processing": "Request being processed. Try again in a moment."
       }
     }
   },
