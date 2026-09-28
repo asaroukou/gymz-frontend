@@ -56,7 +56,12 @@ describe('classifyMemberError', () => {
     expect(
       classifyMemberError(
         api(409, 'ACCESS_DOWNSCOPE_BLOCKED', {
-          affected_venues: [{ venue_id: 'v2' }, { venue_id: 4, future_bookings: 1 }, null, { venue_id: 'v5', future_bookings: 3 }],
+          affected_venues: [
+            { venue_id: 'v2' },
+            { venue_id: 4, future_bookings: 1 },
+            null,
+            { venue_id: 'v5', future_bookings: 3 },
+          ],
         }),
       ),
     ).toEqual({ kind: 'downscopeBlocked', affected: [{ venueId: 'v5', futureBookings: 3 }] });
@@ -104,8 +109,8 @@ describe('downscopeLines', () => {
   });
 
   it('labels an unknown venue', () => {
-    expect(downscopeLines([{ venueId: 'v9', futureBookings: 4 }], venues, 'Salle inconnue')).toEqual([
-      { venueId: 'v9', name: 'Salle inconnue', count: 4 },
-    ]);
+    expect(
+      downscopeLines([{ venueId: 'v9', futureBookings: 4 }], venues, 'Salle inconnue'),
+    ).toEqual([{ venueId: 'v9', name: 'Salle inconnue', count: 4 }]);
   });
 });

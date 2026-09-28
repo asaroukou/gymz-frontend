@@ -4,7 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 
 import { customFetch } from '@iziwellpass/api/client';
 import { getListMembersQueryKey, getListMembersUrl } from '@iziwellpass/api/generated';
-import type { PaginatedApiResponseVecStaffMemberView, StaffMemberView } from '@iziwellpass/api/schemas';
+import type {
+  PaginatedApiResponseVecStaffMemberView,
+  StaffMemberView,
+} from '@iziwellpass/api/schemas';
 
 /**
  * Materialize the FULL member list via cursor pagination.

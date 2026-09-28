@@ -94,9 +94,10 @@ export function AttentionList({
   // flight when we started watching; the effect below only acts once a *new*
   // snapshot has actually landed, then disarms itself either way so it never
   // stays armed for some unrelated later refetch.
-  const pendingRestoreRef = useRef<{ slotId: string; dataAtClose: TodaySnapshot | undefined } | null>(
-    null,
-  );
+  const pendingRestoreRef = useRef<{
+    slotId: string;
+    dataAtClose: TodaySnapshot | undefined;
+  } | null>(null);
   const armPendingRestore = (slotId: string | undefined) => {
     if (slotId) pendingRestoreRef.current = { slotId, dataAtClose: today.data };
   };

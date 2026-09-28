@@ -283,7 +283,10 @@ function AddParticipant({
 }
 
 /** The slot fields the sheet reads; the dashboard adapts a `TodaySlot` to it. */
-export type SheetSlot = Pick<ScheduleSlot, 'id' | 'booked_count' | 'capacity' | 'start_time' | 'end_time'>;
+export type SheetSlot = Pick<
+  ScheduleSlot,
+  'id' | 'booked_count' | 'capacity' | 'start_time' | 'end_time'
+>;
 
 export function BookingsSheet({
   slot,

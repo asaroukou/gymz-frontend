@@ -99,7 +99,9 @@ export function EditAccessDialog({
     }
     if (error.kind === 'downscopeBlocked') {
       setConflict(false);
-      setBlocked(downscopeLines(error.affected, venuesQuery.data ?? [], t('detail.access.unknownVenue')));
+      setBlocked(
+        downscopeLines(error.affected, venuesQuery.data ?? [], t('detail.access.unknownVenue')),
+      );
       return;
     }
     if (isForbidden(err)) {

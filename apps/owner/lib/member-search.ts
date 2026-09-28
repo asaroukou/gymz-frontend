@@ -26,7 +26,11 @@ export function memberInitials(member: StaffMemberView | undefined): string {
  * the full name, or the full name itself (« awa n » → Awa Ndiaye). Case and
  * diacritics are ignored. Input order is preserved; `limit` caps the list.
  */
-export function searchMembers(members: readonly StaffMemberView[], query: string, limit = 8): StaffMemberView[] {
+export function searchMembers(
+  members: readonly StaffMemberView[],
+  query: string,
+  limit = 8,
+): StaffMemberView[] {
   // Strip a trailing « · Actif » status suffix before folding: continuing to
   // type after picking a member (the field then reads « Awa Ndiaye · Actif »)
   // must keep searching the name, not match against the status text.

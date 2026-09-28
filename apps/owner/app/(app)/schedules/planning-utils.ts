@@ -3,7 +3,12 @@
 import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 
-import type { BookingSource, BookingStatus, SlotStatus, StaffMemberView } from '@iziwellpass/api/schemas';
+import type {
+  BookingSource,
+  BookingStatus,
+  SlotStatus,
+  StaffMemberView,
+} from '@iziwellpass/api/schemas';
 
 import { summarizeRecurrenceRule, type Weekday } from '@/lib/recurrence';
 
