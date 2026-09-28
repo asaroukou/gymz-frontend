@@ -91,8 +91,11 @@ const PROGRESS: Record<OperationView['kind'], { key: string; action: RunningActi
   session_revocation: { key: 'account.status.signingOut', action: 'signOut' },
 };
 
-const RUNNING = new Set(['requested', 'dispatched']);
+// `verified` is email_change after the member confirmed the code, before the
+// worker switches the address: still in flight, so it counts as running.
+const RUNNING = new Set(['requested', 'dispatched', 'verified']);
 const TERMINAL = new Set(['completed', 'failed', 'expired']);
+const LAST_ACTION_ELIGIBLE = new Set([...TERMINAL, 'pending_verification', 'verified']);
 
 function operations(account: MemberAccountSummary): OperationView[] {
   return [
@@ -104,7 +107,7 @@ function operations(account: MemberAccountSummary): OperationView[] {
 }
 
 function newest(ops: OperationView[]): OperationView | undefined {
-  return [...ops].sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0];
+  return [...ops].sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))[0];
 }
 
 export function hasRunningOperation(account: MemberAccountSummary): boolean {
@@ -130,13 +133,22 @@ function statusRow(
   const running = newest(ops.filter((op) => RUNNING.has(op.state)));
   if (running) {
     const p = PROGRESS[running.kind];
-    return { kind: 'progress', key: stale ? 'account.status.stillRunning' : p.key, runningAction: p.action };
+    const finalizing = running.kind === 'email_change' && running.state === 'verified';
+    const key = stale ? 'account.status.stillRunning' : finalizing ? 'account.status.finalizing' : p.key;
+    return { kind: 'progress', key, runningAction: p.action };
   }
   if (account.email_change?.state === 'pending_verification') {
     return { kind: 'waiting', key: 'account.status.waiting' };
   }
   const finished = newest(ops.filter((op) => TERMINAL.has(op.state) && watched.has(op.id)));
   if (finished) {
+    if (
+      finished.kind === 'invitation_resend' &&
+      finished.state === 'completed' &&
+      account.invitation === 'accepted'
+    ) {
+      return { kind: 'done', key: 'account.result.alreadyActive', at: finished.updated_at };
+    }
     const result = operationResult(finished);
     return { kind: result.kind, key: result.key, at: finished.updated_at };
   }
@@ -176,9 +188,7 @@ export function describeAccount(
           }
         : null;
 
-  const lastOp = newest(
-    operations(account).filter((op) => TERMINAL.has(op.state) || op.state === 'pending_verification'),
-  );
+  const lastOp = newest(operations(account).filter((op) => LAST_ACTION_ELIGIBLE.has(op.state)));
 
   return {
     badge: BADGES[invitation],

@@ -660,6 +660,7 @@
         "sending": "Envoi de l'invitation…",
         "creating": "Création de l'accès…",
         "sendingCode": "Envoi du code à la nouvelle adresse…",
+        "finalizing": "Confirmation reçue. Mise à jour de l'adresse…",
         "signingOut": "Déconnexion en cours…",
         "stillRunning": "Toujours en cours. Cela peut prendre quelques minutes.",
         "refresh": "Actualiser",

@@ -214,6 +214,31 @@ describe('describeAccount: status row priority', () => {
     const resend = op({ id: 'op-9', kind: 'invitation_resend', state: 'completed' });
     expect(describeAccount(acc({ invitation: 'sent', invitation_resend: resend }), owner).status).toBeNull();
   });
+
+  it('shows finalizing while a confirmed e-mail change is being applied', () => {
+    const view = describeAccount(
+      acc({ email: 'change_pending', email_change: op({ kind: 'email_change', state: 'verified' }) }),
+      owner,
+    );
+    expect(view.status).toEqual({
+      kind: 'progress',
+      key: 'account.status.finalizing',
+      runningAction: 'changeEmail',
+    });
+  });
+
+  it('reports already active when a watched resend completes after the member accepted', () => {
+    const resend = op({ id: 'op-9', kind: 'invitation_resend', state: 'completed', result_code: 'invitation_sent' });
+    const view = describeAccount(acc({ invitation: 'accepted', invitation_resend: resend }), {
+      ...owner,
+      watched: new Set(['op-9']),
+    });
+    expect(view.status).toEqual({
+      kind: 'done',
+      key: 'account.result.alreadyActive',
+      at: resend.updated_at,
+    });
+  });
 });
 
 describe('describeAccount: last action', () => {
@@ -231,6 +256,19 @@ describe('describeAccount: last action', () => {
 
   it('is null for a roster member', () => {
     expect(describeAccount(acc({ mode: 'roster', invitation: 'not_applicable' }), owner).lastAction).toBeNull();
+  });
+
+  it('orders by real time, not lexical string order, across fractional seconds', () => {
+    // "…:00Z" sorts after "…:00.500Z" lexically (`.` < `Z`), even though
+    // the fractional timestamp is 500ms later in real time.
+    const view = describeAccount(
+      acc({
+        provisioning: op({ kind: 'provisioning', state: 'completed', result_code: 'invitation_sent', updated_at: '2026-09-25T14:32:00Z' }),
+        session_revocation: op({ kind: 'session_revocation', state: 'completed', updated_at: '2026-09-25T14:32:00.500Z' }),
+      }),
+      owner,
+    );
+    expect(view.lastAction).toEqual({ key: 'account.last.signedOut', at: '2026-09-25T14:32:00.500Z' });
   });
 });
 
@@ -270,6 +308,7 @@ describe('member-account-copy', () => {
     [op({ kind: 'session_revocation', state: 'completed' }), 'account.last.signedOut'],
     [op({ kind: 'session_revocation', state: 'failed' }), 'account.last.signOutFailed'],
     [op({ kind: 'email_change', state: 'pending_verification' }), 'account.last.emailRequested'],
+    [op({ kind: 'email_change', state: 'verified' }), 'account.last.emailRequested'],
     [op({ kind: 'email_change', state: 'completed' }), 'account.last.emailChanged'],
     [op({ kind: 'email_change', state: 'expired' }), 'account.last.emailFailed'],
   ])('last action %o → %s', (operation, key) => {
@@ -282,6 +321,10 @@ describe('running operations', () => {
     expect(hasRunningOperation(acc())).toBe(false);
     expect(hasRunningOperation(acc({ provisioning: op({ kind: 'provisioning', state: 'requested' }) }))).toBe(true);
     expect(hasRunningOperation(acc({ email_change: op({ kind: 'email_change', state: 'pending_verification' }) }))).toBe(false);
+  });
+
+  it('treats a verified e-mail change (confirmed, not yet applied) as running', () => {
+    expect(hasRunningOperation(acc({ email_change: op({ kind: 'email_change', state: 'verified' }) }))).toBe(true);
   });
 
   it('lists the running ids', () => {
@@ -308,19 +351,71 @@ describe('formatOpMoment', () => {
 });
 
 describe('members.account copy', () => {
-  it('every key the mapper can emit exists in fr.json', async () => {
+  const readMessages = async (file: 'fr.json' | 'en.json') => {
     const { readFileSync } = await import('node:fs');
-    const fr = JSON.parse(readFileSync(new URL('../messages/fr.json', import.meta.url), 'utf-8'));
+    return JSON.parse(readFileSync(new URL(`../messages/${file}`, import.meta.url), 'utf-8'));
+  };
+
+  it('every key the mapper can emit exists in fr.json', async () => {
+    const fr = await readMessages('fr.json');
     const get = (path: string) =>
       path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], fr.members);
     const keys = [
       ...['none', 'pending', 'sent', 'linkedExisting', 'accepted', 'untracked', 'failed'].map((k) => `account.badge.${k}`),
       ...['none', 'pending', 'sent', 'linkedExisting', 'accepted', 'untracked', 'failedFix'].map((k) => `account.explain.${k}`),
       ...['invalid_email', 'missing_email', 'identity_already_linked', 'provider_unavailable'].map((k) => `account.provisioningFailure.${k}`),
-      ...['sending', 'creating', 'sendingCode', 'signingOut', 'stillRunning', 'waiting'].map((k) => `account.status.${k}`),
-      ...Object.keys(fr.members.account.result).map((k) => `account.result.${k}`),
-      ...Object.keys(fr.members.account.last).map((k) => `account.last.${k}`),
+      ...['changePending', 'changePendingLine', 'changeFailed', 'changeFailedKeep'].map((k) => `account.emailState.${k}`),
+      ...['sending', 'creating', 'sendingCode', 'finalizing', 'signingOut', 'stillRunning', 'waiting'].map(
+        (k) => `account.status.${k}`,
+      ),
+      // The literal keys `operationResult` can return (excludes `emailConflict`,
+      // which is copy for a different task's dialog, not emitted by this mapper).
+      ...[
+        'invitationSentAt',
+        'linkedNoInvite',
+        'resendFailed',
+        'alreadyActive',
+        'identityShared',
+        'emailMismatch',
+        'providerUnavailable',
+        'emailChangedSignedOut',
+        'emailReinvited',
+        'emailChanged',
+        'emailExpired',
+        'emailUnavailable',
+        'emailFailed',
+        'signedOutAt',
+        'signOutShared',
+        'signOutNotProvisioned',
+        'signOutFailed',
+      ].map((k) => `account.result.${k}`),
+      // The literal keys `lastActionKey` can return.
+      ...[
+        'invitationSent',
+        'linkedExisting',
+        'provisioningFailed',
+        'resent',
+        'resendFailed',
+        'signedOut',
+        'signOutFailed',
+        'emailRequested',
+        'emailChanged',
+        'emailFailed',
+      ].map((k) => `account.last.${k}`),
     ];
     for (const key of keys) expect(typeof get(key), key).toBe('string');
+  });
+
+  it('mirrors the same members.account key paths in en.json as in fr.json', async () => {
+    const [fr, en] = await Promise.all([readMessages('fr.json'), readMessages('en.json')]);
+
+    const paths = (node: unknown, prefix = ''): string[] => {
+      if (typeof node !== 'object' || node === null) return [prefix];
+      return Object.entries(node as Record<string, unknown>).flatMap(([key, value]) =>
+        paths(value, prefix ? `${prefix}.${key}` : key),
+      );
+    };
+
+    expect(paths(en.members.account).sort()).toEqual(paths(fr.members.account).sort());
   });
 });

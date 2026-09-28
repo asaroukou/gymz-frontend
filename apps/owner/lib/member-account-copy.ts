@@ -95,7 +95,9 @@ export function lastActionKey(op: OperationView): string {
     case 'session_revocation':
       return ok ? 'account.last.signedOut' : 'account.last.signOutFailed';
     case 'email_change':
-      if (op.state === 'pending_verification') return 'account.last.emailRequested';
+      if (op.state === 'pending_verification' || op.state === 'verified') {
+        return 'account.last.emailRequested';
+      }
       return ok ? 'account.last.emailChanged' : 'account.last.emailFailed';
     default:
       return 'account.last.resent';
