@@ -203,7 +203,7 @@ function TotpCard({
   return (
     <AuthCard title={t('totp.title')} subtitle={t('totp.subtitle')}>
       <form onSubmit={onSubmit} className="grid gap-7">
-        <div className="mx-auto flex max-w-full items-center gap-2.5 rounded-full bg-side py-2 pr-3.5 pl-2">
+        <div className="mx-auto flex max-w-full min-w-0 items-center gap-2.5 rounded-full bg-side py-2 pr-3.5 pl-2">
           <Avatar size="sm">
             <AvatarFallback tint="bleu">{initials(email)}</AvatarFallback>
           </Avatar>

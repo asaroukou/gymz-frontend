@@ -9,7 +9,9 @@ import { CODE_LENGTH, normalizeCode } from '@/lib/totp-code';
 
 /**
  * Six code boxes (PmD8D / OKurh / PCsCv): 52×56, radius 16, hairline, ink on
- * the active box, the destructive tone when the code was refused. One real
+ * the active box, the destructive tone when the code was refused. The boxes
+ * share the row and cap at 52px, so on phones narrower than the canvas
+ * (6×52 + 5×8 = 352px) they narrow instead of overflowing the column. One real
  * input underneath, so paste, SMS/password-manager autofill and screen readers
  * see a single 6-digit field.
  */
@@ -51,13 +53,13 @@ export function CodeInput({
       aria-describedby={describedBy}
       containerClassName="justify-center"
     >
-      <InputOTPGroup>
+      <InputOTPGroup className="w-full justify-center">
         {Array.from({ length: CODE_LENGTH }, (_, index) => (
           <InputOTPSlot
             key={index}
             index={index}
             className={cn(
-              'h-14 w-[52px] rounded-[16px] text-[22px] font-medium',
+              'h-14 min-w-0 max-w-[52px] flex-1 rounded-[16px] text-[22px] font-medium',
               invalid &&
                 'border-destructive-foreground data-[active=true]:border-destructive-foreground',
             )}
