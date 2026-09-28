@@ -17,6 +17,7 @@ function checkIn(at: string, extra: Partial<CheckIn> = {}): CheckIn {
 
 const LABELS = {
   self: 'Auto (QR)',
+  selfWallet: 'Auto (Wallet)',
   unknownStaff: "l'équipe",
   by: (name: string) => `par ${name}`,
 };
@@ -48,6 +49,11 @@ describe('recordedByLabel', () => {
   ]);
   it('self for QR without a recorder', () => {
     expect(recordedByLabel(checkIn('a'), staff, LABELS)).toBe('Auto (QR)');
+  });
+  it('the wallet self label for a wallet check-in without a recorder', () => {
+    expect(recordedByLabel(checkIn('a', { method: 'wallet' }), staff, LABELS)).toBe(
+      'Auto (Wallet)',
+    );
   });
   it('by <staff name> when resolvable', () => {
     expect(

@@ -7,8 +7,10 @@ export function feedRows(checkIns: readonly CheckIn[] | undefined, limit?: numbe
 }
 
 export interface RecordedByLabels {
-  /** « Auto (QR) » — a QR self check-in has no recorder. */
+  /** « Auto (QR) » — a QR (or any non-wallet) self check-in has no recorder. */
   self: string;
+  /** « Auto (Wallet) » — a wallet self check-in has no recorder. */
+  selfWallet: string;
   /** « l'équipe » — a recorder we cannot resolve; never the raw user id. */
   unknownStaff: string;
   /** « par {name} ». */
@@ -20,7 +22,11 @@ export function recordedByLabel(
   staffByUserId: ReadonlyMap<string, Staff>,
   labels: RecordedByLabels,
 ): string {
-  if (!checkIn.checked_in_by) return labels.self;
+  if (!checkIn.checked_in_by) {
+    // A wallet check-in without a recorder is still self-service, but the
+    // « Wallet » method badge next to it would contradict an "Auto (QR)" label.
+    return checkIn.method === 'wallet' ? labels.selfWallet : labels.self;
+  }
   const staff = staffByUserId.get(checkIn.checked_in_by);
   return labels.by(staff ? `${staff.first_name} ${staff.last_name}`.trim() : labels.unknownStaff);
 }

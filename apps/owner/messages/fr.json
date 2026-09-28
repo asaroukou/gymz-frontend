@@ -399,6 +399,7 @@
       "methodManual": "Manuel",
       "methodWallet": "Wallet",
       "self": "Auto (QR)",
+      "selfWallet": "Auto (Wallet)",
       "unknownMember": "Membre",
       "unknownStaff": "l'équipe",
       "byLabel": "par {name}",

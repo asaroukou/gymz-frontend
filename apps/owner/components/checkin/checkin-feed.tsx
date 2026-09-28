@@ -57,6 +57,7 @@ function CheckinRow({
   const badge = methodBadge(checkIn.method);
   const meta = recordedByLabel(checkIn, staffByUserId, {
     self: t('feed.self'),
+    selfWallet: t('feed.selfWallet'),
     unknownStaff: t('feed.unknownStaff'),
     by: (who) => t('feed.byLabel', { name: who }),
   });
