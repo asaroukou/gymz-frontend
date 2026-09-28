@@ -10,21 +10,26 @@ import { Button } from '@iziwellpass/ui/components/button';
 
 import { useAccessScopeLabel } from '@/lib/access-scope';
 import { formatCalendarDate } from '@/lib/datetime';
+import type { AccountView } from '@/lib/member-account';
 import { memberInitials, memberName } from '@/lib/member-search';
 import { memberStatusBadgeVariant } from '@/lib/member-status';
 
+import { AccountStatusBadge } from './account-section';
 import { EditAccessDialog } from './edit-access-dialog';
 
 /**
  * Canvas `L6sMyP`: a 72px tinted avatar, the 32px name over a badge row
- * (type, status, access + « Gérer l'accès »), and the contact block on the
- * right (email 15/500, phone, « Membre depuis le … » 13px).
+ * (type, status, access, app badge + « Gérer l'accès »), and the contact
+ * block on the right (email 15/500, phone, « Membre depuis le … » 13px).
+ * `x7QjF`: a pending e-mail change adds a 12/500 muted line under the e-mail.
  */
 export function MemberHeader({
   member,
+  account,
   canManage,
 }: {
   member: StaffMemberProfile;
+  account: AccountView;
   canManage: boolean;
 }) {
   const t = useTranslations('members');
@@ -50,6 +55,7 @@ export function MemberHeader({
             <Badge variant={member.access_scope === 'chain_wide' ? 'info' : 'default'}>
               {scopeLabel(member.access_scope)}
             </Badge>
+            <AccountStatusBadge badge={account.badge} />
             {canManage ? (
               <Button variant="ghost" size="sm" onClick={() => setAccessOpen(true)}>
                 {t('detail.access.manage')}
@@ -62,6 +68,11 @@ export function MemberHeader({
         <p className={member.email ? 'font-medium' : 'text-muted-foreground'}>
           {member.email ?? t('detail.noEmail')}
         </p>
+        {member.account.email === 'change_pending' ? (
+          <p className="text-xs font-medium text-muted-foreground">
+            {t('account.header.changePending')}
+          </p>
+        ) : null}
         <p className="font-numeric text-muted-foreground">{member.phone ?? t('detail.noPhone')}</p>
         {/*
           `created_at` is a date-time instant, but members are org-scoped with

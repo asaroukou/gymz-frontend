@@ -567,7 +567,8 @@
         "firstName": "Prénom",
         "lastName": "Nom",
         "email": "E-mail",
-        "emailLockedHint": "Adresse de connexion : elle se change par une procédure sécurisée, bientôt disponible ici.",
+        "emailLockedHint": "Adresse de connexion : elle se change par une procédure sécurisée.",
+        "emailFailedHint": "Corrigez l'adresse si besoin, enregistrez, puis relancez la création de l'accès.",
         "phone": "Téléphone",
         "type": "Type d'abonnement",
         "end": "Fin d'abonnement",
@@ -579,9 +580,8 @@
       },
       "danger": {
         "title": "Zone sensible",
-        "description": "Ces actions modifient l'accès du membre. À utiliser avec précaution.",
+        "description": "Ces actions modifient l'accès du membre.",
         "suspend": "Suspendre le membre",
-        "suspended": "Membre suspendu",
         "reactivate": "Réactiver"
       },
       "suspendDialog": {
@@ -659,6 +659,13 @@
         "changeEmail": "Changer l'adresse"
       },
       "receptionistNote": "Seul un propriétaire ou un administrateur peut agir sur l'accès à l'app.",
+      "header": {
+        "changePending": "Changement d'adresse en attente",
+        "changeLink": "Changer l'adresse de connexion"
+      },
+      "signOut": {
+        "open": "Déconnecter de tous les appareils"
+      },
       "last": {
         "invitationSent": "Invitation envoyée le {date} à {time}",
         "linkedExisting": "Compte existant lié le {date} à {time}",

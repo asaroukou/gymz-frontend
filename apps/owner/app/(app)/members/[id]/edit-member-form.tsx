@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { TriangleAlertIcon } from 'lucide-react';
+import { LockIcon, TriangleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -55,9 +55,14 @@ const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
 export function EditMemberForm({
   member,
   canEdit,
+  canChangeEmail,
+  onChangeEmail,
 }: {
   member: StaffMemberProfile;
   canEdit: boolean;
+  /** Owner/admin, and the account is in a state that allows a change. */
+  canChangeEmail: boolean;
+  onChangeEmail?: () => void;
 }) {
   const t = useTranslations('members');
   const tCap = useTranslations('capabilities');
@@ -68,6 +73,7 @@ export function EditMemberForm({
   // with — unless provisioning failed, in which case there is no identity
   // yet and the backend lets the e-mail be corrected through this route.
   const emailLocked = member.account.mode === 'login' && member.account.invitation !== 'failed';
+  const emailFailed = member.account.mode === 'login' && member.account.invitation === 'failed';
   const [conflict, setConflict] = useState(false);
   // After a VERSION_MISMATCH the member is refetched; keep what the user typed
   // instead of resetting the form to the refetched values (H5).
@@ -207,11 +213,42 @@ export function EditMemberForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('detail.edit.email')}</FormLabel>
-                  <FormControl>
-                    <Input type="email" {...field} disabled={!canEdit || emailLocked} />
-                  </FormControl>
+                  {emailLocked ? (
+                    // Read-only field (INVENTORY « Shared patterns »): still
+                    // focusable and legible, unlike a disabled input.
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          type="email"
+                          {...field}
+                          readOnly
+                          className="bg-side pr-11 text-muted-strong"
+                        />
+                      </FormControl>
+                      <LockIcon
+                        aria-hidden
+                        strokeWidth={1.5}
+                        className="pointer-events-none absolute top-1/2 right-[18px] size-4 -translate-y-1/2 text-muted-strong"
+                      />
+                    </div>
+                  ) : (
+                    <FormControl>
+                      <Input type="email" {...field} disabled={!canEdit} />
+                    </FormControl>
+                  )}
                   {emailLocked ? (
                     <FormDescription>{t('detail.edit.emailLockedHint')}</FormDescription>
+                  ) : emailFailed ? (
+                    <FormDescription>{t('detail.edit.emailFailedHint')}</FormDescription>
+                  ) : null}
+                  {emailLocked && canChangeEmail && onChangeEmail ? (
+                    <button
+                      type="button"
+                      onClick={onChangeEmail}
+                      className="justify-self-start text-sm font-medium text-foreground underline underline-offset-4"
+                    >
+                      {t('account.header.changeLink')}
+                    </button>
                   ) : null}
                   <FormMessage />
                 </FormItem>

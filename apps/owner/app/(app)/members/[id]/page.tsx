@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -13,7 +14,10 @@ import { BackLink, WorkingPage } from '@iziwellpass/ui/components/working-page';
 
 import { RequirePageAccess } from '@/components/page-access';
 import { apiErrorMessage } from '@/lib/api-error';
+import { describeAccount, type AccountAction } from '@/lib/member-account';
+import { useAccountTracking } from '@/lib/use-account-tracking';
 
+import { AccountSection } from './account-section';
 import { DangerZone } from './danger-zone';
 import { EditMemberForm } from './edit-member-form';
 import { MemberHeader } from './member-header';
@@ -28,6 +32,13 @@ function MemberDetailContent() {
   const canEdit = role === 'owner' || role === 'admin' || role === 'receptionist';
 
   const memberQuery = useGetMember(memberId, { query: { select: unwrap } });
+  const member = memberQuery.data;
+  const tracking = useAccountTracking(member?.account, memberQuery.refetch);
+  const view = member
+    ? describeAccount(member.account, { role, watched: tracking.watched, stale: tracking.stale })
+    : null;
+  // Task 7 renders the account dialogs from `dialog`.
+  const [, setDialog] = useState<AccountAction | 'signOut' | null>(null);
 
   const backLink = (
     <BackLink href="/members" linkComponent={Link}>
@@ -65,8 +76,7 @@ function MemberDetailContent() {
     );
   }
 
-  const member = memberQuery.data;
-  if (!member) {
+  if (!member || !view) {
     return (
       <WorkingPage>
         {backLink}
@@ -78,15 +88,31 @@ function MemberDetailContent() {
   return (
     <WorkingPage>
       {backLink}
-      <MemberHeader member={member} canManage={canEdit} />
+      <MemberHeader member={member} account={view} canManage={canEdit} />
       <div className="grid gap-10 md:grid-cols-2 md:gap-16">
         <div className="flex flex-col gap-10">
           <MembershipSection member={member} />
           <SubscriptionsSection memberId={member.id} canManage={canEdit} />
         </div>
         <div className="flex flex-col gap-10">
-          <EditMemberForm key={member.id} member={member} canEdit={canEdit} />
-          {canEdit ? <DangerZone member={member} /> : null}
+          <EditMemberForm
+            key={member.id}
+            member={member}
+            canEdit={canEdit}
+            canChangeEmail={view.actions.includes('changeEmail')}
+            onChangeEmail={() => setDialog('changeEmail')}
+          />
+          {canEdit ? (
+            <AccountSection
+              member={member}
+              view={view}
+              tracking={tracking}
+              onAction={(action) => setDialog(action)}
+            />
+          ) : null}
+          {canEdit ? (
+            <DangerZone member={member} view={view} onSignOut={() => setDialog('signOut')} />
+          ) : null}
         </div>
       </div>
     </WorkingPage>

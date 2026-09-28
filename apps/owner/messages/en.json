@@ -567,7 +567,8 @@
         "firstName": "First name",
         "lastName": "Last name",
         "email": "Email",
-        "emailLockedHint": "Sign-in address: it changes through a secure procedure, coming here soon.",
+        "emailLockedHint": "Sign-in address: it changes through a secure procedure.",
+        "emailFailedHint": "Correct the address if needed, save, then relaunch access creation.",
         "phone": "Phone",
         "type": "Membership type",
         "end": "Membership end",
@@ -579,9 +580,8 @@
       },
       "danger": {
         "title": "Danger zone",
-        "description": "These actions change the member's access. Use with care.",
+        "description": "These actions change the member's access.",
         "suspend": "Suspend member",
-        "suspended": "Member suspended",
         "reactivate": "Reactivate"
       },
       "suspendDialog": {
@@ -659,6 +659,13 @@
         "changeEmail": "Change the address"
       },
       "receptionistNote": "Only an owner or an admin can act on app access.",
+      "header": {
+        "changePending": "Address change pending",
+        "changeLink": "Change the sign-in address"
+      },
+      "signOut": {
+        "open": "Sign out of all devices"
+      },
       "last": {
         "invitationSent": "Invitation sent on {date} at {time}",
         "linkedExisting": "Existing account linked on {date} at {time}",
