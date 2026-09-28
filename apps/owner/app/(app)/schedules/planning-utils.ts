@@ -3,7 +3,12 @@
 import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 
-import type { BookingSource, BookingStatus, Member, SlotStatus } from '@iziwellpass/api/schemas';
+import type {
+  BookingSource,
+  BookingStatus,
+  SlotStatus,
+  StaffMemberView,
+} from '@iziwellpass/api/schemas';
 
 import { summarizeRecurrenceRule, type Weekday } from '@/lib/recurrence';
 
@@ -11,7 +16,7 @@ import { summarizeRecurrenceRule, type Weekday } from '@/lib/recurrence';
 // Pure helpers (no i18n)
 // ---------------------------------------------------------------------------
 
-export function memberName(member: Member): string {
+export function memberName(member: StaffMemberView): string {
   return `${member.first_name} ${member.last_name}`.trim();
 }
 

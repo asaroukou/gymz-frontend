@@ -85,7 +85,7 @@ function MemberDetailContent() {
           <SubscriptionsSection memberId={member.id} canManage={canEdit} />
         </div>
         <div className="flex flex-col gap-10">
-          <EditMemberForm member={member} canEdit={canEdit} />
+          <EditMemberForm key={member.id} member={member} canEdit={canEdit} />
           {canEdit ? <DangerZone member={member} /> : null}
         </div>
       </div>

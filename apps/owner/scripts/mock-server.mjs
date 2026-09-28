@@ -63,6 +63,20 @@
 //     signs in with the claim.
 //   - `MOCK_MFA_FINALIZE=fail` makes `POST /platform/v1/mfa/finalize` answer
 //     500 (the enrolment page's retry path).
+//   - Phase 5A members: members carry `version`; `PUT /members/{mid}`, `/access`
+//     and `/venues` honour `?expected_version=` (409 VERSION_MISMATCH). `mbr-05`
+//     (Bineta Cissé) conflicts once on its first versioned write, and the
+//     concurrent change also sets her phone to `+221 77 000 00 05`. Members
+//     created with an e-mail are `login` (their e-mail can't change here: 409
+//     LOGIN_EMAIL_REQUIRES_SECURE_CHANGE), others `roster` (e.g. `mbr-03`).
+//     `mbr-12` (Serigne Mbaye) is `login` with `account.invitation: 'failed'`
+//     (no identity was ever created), so its e-mail can be changed here.
+//     Unknown update fields (incl. `is_active`) are a 400.
+//   - Suspend/reactivate answer 204, or 409 INVALID_LIFECYCLE_TRANSITION with
+//     `details.current_status`; `mbr-06` starts suspended.
+//   - Narrowing `mbr-09` (Ndeye Faye) so venue 2 is dropped is refused with 409
+//     ACCESS_DOWNSCOPE_BLOCKED (2 upcoming bookings at venue 2).
+//   - `chk-wallet-01` is a wallet check-in.
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { crc32, deflateSync } from 'node:zlib';
@@ -322,6 +336,10 @@ const staffVenues = new Map([
 // on the wire — only access_scope; entitlements are read back only through
 // setMemberVenues's response, matching the real API's shape).
 const memberVenues = new Map();
+const memberMode = new Map(); // P3: login when created with an e-mail
+// H2: mbr-12's provisioning failed — no identity was ever created, so unlike
+// a normal login member its e-mail can still be corrected through PUT /members/{mid}.
+const memberInvitation = new Map([['mbr-12', 'failed']]);
 
 const members = [
   mkMember(
@@ -486,7 +504,7 @@ function mkMember(
   accessScope = 'venue_scoped',
 ) {
   memberVenues.set(id, venueIds);
-  return {
+  const member = {
     id,
     tenant_id: TENANT_ID,
     first_name: firstName,
@@ -498,12 +516,16 @@ function mkMember(
     membership_start: dateOnly(daysFromNow(startDaysOffset)),
     membership_end: endDaysOffset === undefined ? undefined : dateOnly(daysFromNow(endDaysOffset)),
     access_scope: accessScope,
-    is_active: true,
+    // Legacy derived flag: true for active and expired, matching the backend
+    // (NOT a lifecycle control; suspend/reactivate flip it separately above).
+    is_active: ['active', 'expired'].includes(membershipStatus),
     notes: undefined,
-    user_id: email ? `user-${id}` : undefined,
     created_at: iso(daysFromNow(startDaysOffset)),
     updated_at: iso(daysFromNow(Math.max(startDaysOffset, -30))),
+    version: iso(daysFromNow(Math.max(startDaysOffset, -30))),
   };
+  memberMode.set(id, email ? 'login' : 'roster');
+  return member;
 }
 
 // --- seed: plans ---------------------------------------------------------------
@@ -899,6 +921,16 @@ const checkIns = [
     undefined,
     undefined,
   ),
+  mkCheckIn(
+    'chk-wallet-01',
+    VENUE_1,
+    'mbr-11',
+    undefined,
+    'wallet',
+    iso(hoursFromNow(-0.5)),
+    undefined,
+    undefined,
+  ),
 ];
 
 // Members with a check-in already recorded today, for walk-in dedupe checks.
@@ -929,7 +961,10 @@ function mkSubscription(id, memberId, planId, venueId, status, opts = {}) {
     entries_remaining: opts.entriesRemaining,
     price_amount_minor: plan?.price_amount_minor ?? 0,
     price_currency: plan?.price_currency ?? 'XOF',
-    assigned_by: 'user-reception-01',
+    plan_name: plan?.name ?? 'Offre',
+    plan_kind: plan?.kind ?? 'subscription',
+    venue_name: venues.find((v) => v.id === venueId)?.name ?? 'Salle',
+    assigned_by_name: 'Fatou (accueil)',
     created_at: opts.startsOn ? iso(new Date(opts.startsOn)) : iso(daysFromNow(-10)),
     updated_at: iso(daysFromNow(-1)),
   };
@@ -1901,6 +1936,80 @@ function setStaffVenuesHandler(staffId, body) {
 }
 
 // ---- members --------------------------------------------------------------------
+let lastVersionMs = 0;
+/** Bump updated_at and the optimistic-concurrency token; strictly increasing. */
+function touch(member) {
+  lastVersionMs = Math.max(Date.now(), lastVersionMs + 1);
+  member.updated_at = iso(new Date(lastVersionMs));
+  member.version = member.updated_at;
+}
+
+function memberAccess(member) {
+  return {
+    access_scope: member.access_scope,
+    venue_ids: member.access_scope === 'chain_wide' ? [] : (memberVenues.get(member.id) ?? []),
+  };
+}
+
+function memberProfile(member) {
+  const login = memberMode.get(member.id) === 'login';
+  const invitation = login ? (memberInvitation.get(member.id) ?? 'accepted') : 'not_applicable';
+  return {
+    ...member,
+    access: memberAccess(member),
+    account: {
+      mode: login ? 'login' : 'roster',
+      invitation,
+      // A failed provisioning never created an identity, so there is no
+      // login e-mail to verify — `not_applicable` fits (see H2 above).
+      email: login && invitation !== 'failed' ? 'verified' : 'not_applicable',
+      email_change: null,
+      invitation_resend: null,
+    },
+  };
+}
+
+// Demo: mbr-05's first versioned write reports a concurrent change (and bumps
+// its version), the retry with the refetched version succeeds.
+const conflictOnce = new Set(['mbr-05']);
+
+function versionConflict(member, query) {
+  const expected = query.get('expected_version');
+  if (!expected) return null;
+  if (conflictOnce.delete(member.id)) {
+    // Make the demo realistic: a colleague really did change something while
+    // this request was in flight, so the browser check can show the merge.
+    member.phone = '+221 77 000 00 05';
+    touch(member);
+    return [409, errorBody('VERSION_MISMATCH', 'The member was modified concurrently')];
+  }
+  if (expected !== member.version) {
+    return [409, errorBody('VERSION_MISMATCH', 'The member was modified concurrently')];
+  }
+  return null;
+}
+
+function lifecycleConflict(member, operation, required) {
+  return [
+    409,
+    errorBody('INVALID_LIFECYCLE_TRANSITION', `Member is not ${required}`, {
+      operation,
+      current_status: member.membership_status,
+      required_status: required,
+    }),
+  ];
+}
+
+const UPDATE_MEMBER_FIELDS = new Set([
+  'email',
+  'first_name',
+  'last_name',
+  'membership_end',
+  'membership_type',
+  'notes',
+  'phone',
+]);
+
 function listMembersHandler(query) {
   const status = query.get('status');
   if (status && !['active', 'inactive'].includes(status)) {
@@ -1978,66 +2087,137 @@ function registerMemberHandler(body) {
     access_scope: accessScope,
     is_active: true,
     notes: body.notes ?? undefined,
-    user_id: body.email ? newId('user') : undefined,
     created_at: iso(now()),
     updated_at: iso(now()),
+    version: iso(now()),
   };
   members.push(member);
   memberVenues.set(id, body.venue_ids ?? []);
-  return [201, envelope(member)];
+  memberMode.set(id, body.email ? 'login' : 'roster');
+  const login = memberMode.get(id) === 'login';
+  return [
+    201,
+    envelope({
+      ...member,
+      effective_mode: login ? 'login' : 'roster',
+      provisioning: login
+        ? { id: newId('op'), kind: 'provisioning', state: 'requested', updated_at: iso(now()) }
+        : null,
+    }),
+  ];
 }
 
 function getMemberHandler(memberId) {
   const member = members.find((m) => m.id === memberId);
   if (!member) return notFound(`Member ${memberId} not found`);
-  return [200, envelope(member)];
+  return [200, envelope(memberProfile(member))];
 }
 
-function updateMemberHandler(memberId, body) {
+function updateMemberHandler(memberId, body, query) {
   const member = members.find((m) => m.id === memberId);
   if (!member) return notFound(`Member ${memberId} not found`);
-  for (const key of [
-    'email',
-    'first_name',
-    'is_active',
-    'last_name',
-    'membership_end',
-    'membership_type',
-    'notes',
-    'phone',
-  ]) {
+  const unknown = Object.keys(body ?? {}).filter((k) => !UPDATE_MEMBER_FIELDS.has(k));
+  if (unknown.length) {
+    return validationError(unknown.map((field) => ({ field, message: 'Unknown field' })));
+  }
+  if (
+    memberMode.get(member.id) === 'login' &&
+    memberInvitation.get(member.id) !== 'failed' &&
+    body?.email !== undefined &&
+    body.email !== member.email
+  ) {
+    return [
+      409,
+      errorBody(
+        'LOGIN_EMAIL_REQUIRES_SECURE_CHANGE',
+        "A login member's email changes through the secure email-change flow",
+      ),
+    ];
+  }
+  const conflict = versionConflict(member, query);
+  if (conflict) return conflict;
+  for (const key of UPDATE_MEMBER_FIELDS) {
     if (body?.[key] !== undefined) member[key] = body[key];
   }
-  member.updated_at = iso(now());
+  touch(member);
   return [200, envelope(member)];
 }
 
-function setMemberAccessHandler(memberId, body) {
+function setMemberAccessHandler(memberId, body, query) {
   const details = requireFields(body, ['scope']);
   if (details.length) return validationError(details);
   const member = members.find((m) => m.id === memberId);
   if (!member) return notFound(`Member ${memberId} not found`);
+  const conflict = versionConflict(member, query);
+  if (conflict) return conflict;
   member.access_scope = body.scope;
-  member.updated_at = iso(now());
+  touch(member);
   return [200, envelope(member)];
 }
 
 function suspendMemberHandler(memberId) {
   const member = members.find((m) => m.id === memberId);
   if (!member) return notFound(`Member ${memberId} not found`);
+  if (member.membership_status !== 'active') return lifecycleConflict(member, 'suspend', 'active');
   member.membership_status = 'suspended';
-  member.updated_at = iso(now());
-  return [200, envelope(member)];
+  member.is_active = false;
+  touch(member);
+  return [204, ''];
 }
 
-function setMemberVenuesHandler(memberId, body) {
+function reactivateMemberHandler(memberId) {
+  const member = members.find((m) => m.id === memberId);
+  if (!member) return notFound(`Member ${memberId} not found`);
+  if (member.membership_status !== 'suspended') {
+    return lifecycleConflict(member, 'reactivate', 'suspended');
+  }
+  member.membership_status = 'active';
+  member.is_active = true;
+  touch(member);
+  return [204, ''];
+}
+
+/** Future, non-cancelled bookings of this member at each venue about to be removed. */
+function blockedVenues(member, nextVenueIds) {
+  const current =
+    member.access_scope === 'chain_wide'
+      ? venues.map((v) => v.id)
+      : (memberVenues.get(member.id) ?? []);
+  const dropped = current.filter((id) => !nextVenueIds.includes(id));
+  const today = dateOnly(now());
+  const counts = new Map();
+  for (const b of bookings) {
+    if (b.member_id !== member.id || b.status === 'cancelled') continue;
+    const slot = slots.find((s) => s.id === b.slot_id);
+    if (!slot || !dropped.includes(slot.venue_id) || slot.date < today) continue;
+    counts.set(slot.venue_id, (counts.get(slot.venue_id) ?? 0) + 1);
+  }
+  // Demo: Ndeye Faye (mbr-09) keeps two upcoming bookings at venue 2.
+  if (member.id === 'mbr-09' && dropped.includes(VENUE_2)) {
+    counts.set(VENUE_2, (counts.get(VENUE_2) ?? 0) + 2);
+  }
+  return [...counts].map(([venue_id, future_bookings]) => ({ venue_id, future_bookings }));
+}
+
+function setMemberVenuesHandler(memberId, body, query) {
   const details = requireFields(body, ['venue_ids']);
   if (details.length) return validationError(details);
   const member = members.find((m) => m.id === memberId);
   if (!member) return notFound(`Member ${memberId} not found`);
+  const conflict = versionConflict(member, query);
+  if (conflict) return conflict;
+  const affected = blockedVenues(member, body.venue_ids);
+  if (affected.length) {
+    return [
+      409,
+      errorBody('ACCESS_DOWNSCOPE_BLOCKED', 'The member still has upcoming bookings there', {
+        affected_venues: affected,
+      }),
+    ];
+  }
   memberVenues.set(memberId, body.venue_ids);
   member.access_scope = 'venue_scoped';
-  member.updated_at = iso(now());
+  touch(member);
   return [200, envelope(body.venue_ids)];
 }
 
@@ -2074,7 +2254,10 @@ function assignSubscriptionHandler(memberId, body) {
     entries_remaining: plan.entry_count,
     price_amount_minor: plan.price_amount_minor,
     price_currency: plan.price_currency,
-    assigned_by: 'user-reception-01',
+    plan_name: plan.name,
+    plan_kind: plan.kind,
+    venue_name: venues.find((v) => v.id === plan.venue_id)?.name ?? 'Salle',
+    assigned_by_name: 'Fatou (accueil)',
     created_at: iso(now()),
     updated_at: iso(now()),
   };
@@ -2449,12 +2632,12 @@ const routes = [
   {
     method: 'PUT',
     pattern: /^\/gms\/v1\/members\/([^/]+)$/,
-    handler: (m, body) => updateMemberHandler(m[1], body),
+    handler: (m, body, q) => updateMemberHandler(m[1], body, q),
   },
   {
     method: 'PUT',
     pattern: /^\/gms\/v1\/members\/([^/]+)\/access$/,
-    handler: (m, body) => setMemberAccessHandler(m[1], body),
+    handler: (m, body, q) => setMemberAccessHandler(m[1], body, q),
   },
   {
     method: 'PUT',
@@ -2463,8 +2646,13 @@ const routes = [
   },
   {
     method: 'PUT',
+    pattern: /^\/gms\/v1\/members\/([^/]+)\/reactivate$/,
+    handler: (m) => reactivateMemberHandler(m[1]),
+  },
+  {
+    method: 'PUT',
     pattern: /^\/gms\/v1\/members\/([^/]+)\/venues$/,
-    handler: (m, body) => setMemberVenuesHandler(m[1], body),
+    handler: (m, body, q) => setMemberVenuesHandler(m[1], body, q),
   },
 
   {

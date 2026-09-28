@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
+import { TriangleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -13,12 +14,14 @@ import {
   getListMembersQueryKey,
   useUpdateMember,
 } from '@iziwellpass/api/generated';
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberProfile } from '@iziwellpass/api/schemas';
 import { MembershipType } from '@iziwellpass/api/schemas';
+import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -36,6 +39,9 @@ import { Textarea } from '@iziwellpass/ui/components/textarea';
 import { SectionHeading } from '@iziwellpass/ui/components/working-page';
 
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import { classifyMemberError } from '@/lib/member-errors';
+import { buildMemberUpdate } from '@/lib/member-update';
+import { isForbidden } from '@/lib/plan-errors';
 
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
@@ -46,36 +52,53 @@ const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
 // Edit form (existing update contract)
 // ---------------------------------------------------------------------------
 
-export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: boolean }) {
+export function EditMemberForm({
+  member,
+  canEdit,
+}: {
+  member: StaffMemberProfile;
+  canEdit: boolean;
+}) {
   const t = useTranslations('members');
+  const tCap = useTranslations('capabilities');
   const queryClient = useQueryClient();
   const updateMember = useUpdateMember();
+
+  // A login member's e-mail is locked to the identity it was provisioned
+  // with — unless provisioning failed, in which case there is no identity
+  // yet and the backend lets the e-mail be corrected through this route.
+  const emailLocked = member.account.mode === 'login' && member.account.invitation !== 'failed';
+  const [conflict, setConflict] = useState(false);
+  // After a VERSION_MISMATCH the member is refetched; keep what the user typed
+  // instead of resetting the form to the refetched values (H5).
+  const keepInputRef = useRef(false);
 
   const schema = useMemo(
     () =>
       z.object({
         first_name: z.string().min(1, t('validation.firstNameRequired')),
         last_name: z.string().min(1, t('validation.lastNameRequired')),
-        email: z.email(t('validation.emailInvalid')).or(z.literal('')),
+        // A locked e-mail is read-only and never sent (H4); validating its
+        // format would block saving every other field if the stored value
+        // happens to be malformed.
+        email: emailLocked ? z.string() : z.email(t('validation.emailInvalid')).or(z.literal('')),
         phone: z.string(),
         membership_type: z.enum(MEMBERSHIP_TYPE_VALUES),
         membership_end: z.string(),
-        is_active: z.enum(['active', 'inactive']),
         notes: z.string(),
       }),
-    [t],
+    [t, emailLocked],
   );
 
   type EditMemberValues = z.infer<typeof schema>;
 
-  const toDefaults = (m: Member): EditMemberValues => ({
+  const toDefaults = (m: StaffMemberProfile): EditMemberValues => ({
     first_name: m.first_name,
     last_name: m.last_name,
     email: m.email ?? '',
     phone: m.phone ?? '',
     membership_type: m.membership_type,
     membership_end: m.membership_end ?? '',
-    is_active: m.is_active ? 'active' : 'inactive',
     notes: m.notes ?? '',
   });
 
@@ -85,31 +108,48 @@ export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: b
   });
 
   useEffect(() => {
+    if (keepInputRef.current) {
+      // Merge in the refetched server values without discarding what the
+      // user typed: untouched fields take the concurrent change, the user's
+      // edited (dirty) fields are preserved for the retry (H1).
+      form.reset(toDefaults(member), { keepDirtyValues: true });
+      return;
+    }
     form.reset(toDefaults(member));
   }, [member, form]);
 
   const onSubmit = (values: EditMemberValues) => {
+    // Read the version at submit time: after a conflict this is the refetched one.
+    const { data, params } = buildMemberUpdate(values, {
+      mode: emailLocked ? 'login' : 'roster',
+      version: member.version,
+    });
     updateMember.mutate(
-      {
-        mid: member.id,
-        data: {
-          first_name: values.first_name,
-          last_name: values.last_name,
-          email: values.email || null,
-          phone: values.phone || null,
-          membership_type: values.membership_type,
-          membership_end: values.membership_end || null,
-          is_active: values.is_active === 'active',
-          notes: values.notes || null,
-        },
-      },
+      { mid: member.id, data, params },
       {
         onSuccess: () => {
+          keepInputRef.current = false;
+          setConflict(false);
           toast.success(t('detail.edit.success'));
           void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
           void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
         },
         onError: (err) => {
+          const error = classifyMemberError(err);
+          if (error.kind === 'versionMismatch') {
+            keepInputRef.current = true;
+            setConflict(true);
+            void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
+            return;
+          }
+          if (error.kind === 'loginEmailLocked') {
+            form.setError('email', { type: 'server', message: t('detail.edit.emailLockedHint') });
+            return;
+          }
+          if (isForbidden(err)) {
+            toast.error(tCap('toast.forbidden'));
+            return;
+          }
           if (!applyFieldErrors(form, err)) {
             toast.error(apiErrorMessage(err, t('detail.edit.error')));
           }
@@ -126,6 +166,12 @@ export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: b
           onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
           className="flex flex-col gap-[18px]"
         >
+          {conflict ? (
+            <Alert variant="warning">
+              <TriangleAlertIcon />
+              <AlertDescription>{t('detail.versionConflict')}</AlertDescription>
+            </Alert>
+          ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
@@ -162,8 +208,11 @@ export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: b
                 <FormItem>
                   <FormLabel>{t('detail.edit.email')}</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} disabled={!canEdit} />
+                    <Input type="email" {...field} disabled={!canEdit || emailLocked} />
                   </FormControl>
+                  {emailLocked ? (
+                    <FormDescription>{t('detail.edit.emailLockedHint')}</FormDescription>
+                  ) : null}
                   <FormMessage />
                 </FormItem>
               )}
@@ -221,35 +270,6 @@ export function EditMemberForm({ member, canEdit }: { member: Member; canEdit: b
               )}
             />
           </div>
-          {/*
-            `UpdateMemberRequest` exposes `is_active` (boolean), not the
-            `membership_status` enum — so this select is the only editable
-            account-status proxy here. The authoritative status transition
-            is the dedicated `suspendMember` endpoint in the danger zone
-            below; this toggle only flips the `is_active` flag.
-          */}
-          <FormField
-            control={form.control}
-            name="is_active"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('detail.edit.active')}</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange} disabled={!canEdit}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="active">{t('detail.edit.activeOption')}</SelectItem>
-                    <SelectItem value="inactive">{t('detail.edit.inactiveOption')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground">{t('detail.edit.activeHint')}</p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="notes"

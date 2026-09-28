@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import type { CheckIn, Member, Staff } from '@iziwellpass/api/schemas';
-import { CheckInMethod } from '@iziwellpass/api/schemas';
+import type { CheckIn, Staff, StaffMemberView } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@iziwellpass/ui/components/alert';
 import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
 import { Badge } from '@iziwellpass/ui/components/badge';
@@ -12,7 +11,7 @@ import { Skeleton } from '@iziwellpass/ui/components/skeleton';
 import { cn } from '@iziwellpass/ui/lib/utils';
 
 import { apiErrorMessage } from '@/lib/api-error';
-import { feedRows, recordedByLabel } from '@/lib/checkin-feed';
+import { feedRows, methodBadge, recordedByLabel } from '@/lib/checkin-feed';
 import { formatTime } from '@/lib/datetime';
 import { memberInitials, memberName } from '@/lib/member-search';
 
@@ -20,7 +19,7 @@ import type { QueryLike } from './query-like';
 
 export interface CheckinFeedProps {
   checkIns: QueryLike<CheckIn[]>;
-  members: QueryLike<Member[]>;
+  members: QueryLike<StaffMemberView[]>;
   staff: QueryLike<Staff[]>;
   timeZone: string | undefined;
   /** 22/500 heading. Omitted under the dashboard tab (the tab is the heading). */
@@ -41,7 +40,7 @@ function CheckinRow({
 }: {
   checkIn: CheckIn;
   index: number;
-  member: Member | undefined;
+  member: StaffMemberView | undefined;
   staffByUserId: ReadonlyMap<string, Staff>;
   timeZone: string | undefined;
   justArrived: boolean;
@@ -55,9 +54,10 @@ function CheckinRow({
     : checkIn.member_id
       ? t('feed.unknownMember')
       : tCommon('passVisitor');
-  const isQr = checkIn.method === CheckInMethod.qr;
+  const badge = methodBadge(checkIn.method);
   const meta = recordedByLabel(checkIn, staffByUserId, {
     self: t('feed.self'),
+    selfWallet: t('feed.selfWallet'),
     unknownStaff: t('feed.unknownStaff'),
     by: (who) => t('feed.byLabel', { name: who }),
   });
@@ -78,9 +78,7 @@ function CheckinRow({
         <p className="truncate text-base font-semibold">{name}</p>
         <p className="truncate text-sm text-muted-foreground">{meta}</p>
       </div>
-      <Badge variant={isQr ? 'info' : 'default'}>
-        {isQr ? t('feed.methodQr') : t('feed.methodManual')}
-      </Badge>
+      <Badge variant={badge.variant}>{t(`feed.${badge.labelKey}`)}</Badge>
       <span className="w-11 shrink-0 text-right font-numeric text-sm font-medium text-muted-foreground">
         {formatTime(checkIn.checked_in_at, timeZone)}
       </span>

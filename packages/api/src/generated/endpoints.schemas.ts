@@ -406,40 +406,13 @@ export interface ApiResponseMeQrResponseSchema {
   request_id: string;
 }
 
-export type ApiResponseMemberDataEmail = string | null;
-
-export type ApiResponseMemberDataMembershipEnd = string | null;
-
-export type ApiResponseMemberDataNotes = string | null;
-
-export type ApiResponseMemberDataPhone = string | null;
-
 /**
- * Auth user_id — None for walk-in members (no account).
+ * A member's venue entitlement, as the console reads and edits it.
  */
-export type ApiResponseMemberDataUserId = string | null;
-
-/**
- * A person enrolled at a venue with a membership.
- */
-export type ApiResponseMemberData = {
+export type ApiResponseMemberAccessViewData = {
   access_scope: AccessScope;
-  created_at: string;
-  email?: ApiResponseMemberDataEmail;
-  first_name: string;
-  id: MemberId;
-  is_active: boolean;
-  last_name: string;
-  membership_end?: ApiResponseMemberDataMembershipEnd;
-  membership_start: string;
-  membership_status: MembershipStatus;
-  membership_type: MembershipType;
-  notes?: ApiResponseMemberDataNotes;
-  phone?: ApiResponseMemberDataPhone;
-  tenant_id: TenantId;
-  updated_at: string;
-  /** Auth user_id — None for walk-in members (no account). */
-  user_id?: ApiResponseMemberDataUserId;
+  /** Explicit venue entitlements. Empty for `chain_wide` (every venue). */
+  venue_ids: VenueId[];
 };
 
 /**
@@ -455,40 +428,38 @@ alongside a `request_id` for traceability:
 }
 ```
  */
-export interface ApiResponseMember {
-  /** A person enrolled at a venue with a membership. */
-  data: ApiResponseMemberData;
+export interface ApiResponseMemberAccessView {
+  /** A member's venue entitlement, as the console reads and edits it. */
+  data: ApiResponseMemberAccessViewData;
   request_id: string;
 }
 
-export type ApiResponseMemberSubscriptionDataAssignedBy = string | null;
-
-export type ApiResponseMemberSubscriptionDataEntriesRemaining = number | null;
-
-export type ApiResponseMemberSubscriptionDataEntriesTotal = number | null;
-
-export type ApiResponseMemberSubscriptionDataExpiresOn = string | null;
+/**
+ * The member's most recent visit within the caller's venue scope, at any
+time (not bounded by the range).
+ */
+export type ApiResponseMemberAttendanceResponseDataLastVisitAt = string | null;
 
 /**
- * A member's held instance of a plan.
+ * Pass back as `cursor` for the next page; `None` on the last page.
  */
-export type ApiResponseMemberSubscriptionData = {
-  assigned_by?: ApiResponseMemberSubscriptionDataAssignedBy;
-  created_at: string;
-  entries_remaining?: ApiResponseMemberSubscriptionDataEntriesRemaining;
-  entries_total?: ApiResponseMemberSubscriptionDataEntriesTotal;
-  expires_on?: ApiResponseMemberSubscriptionDataExpiresOn;
-  id: MemberSubscriptionId;
-  member_id: MemberId;
-  payment_status: PaymentStatus;
-  plan_id: ActivityPlanId;
-  price_amount_minor: number;
-  price_currency: Currency;
-  starts_on: string;
-  status: SubscriptionStatus;
-  tenant_id: TenantId;
-  updated_at: string;
-  venue_id: VenueId;
+export type ApiResponseMemberAttendanceResponseDataNextCursor = string | null;
+
+/**
+ * `GET /gms/v1/members/{mid}/attendance` response.
+ */
+export type ApiResponseMemberAttendanceResponseData = {
+  /** The range actually served, `[from, to)`. */
+  from: string;
+  items: AttendanceItem[];
+  /** The member's most recent visit within the caller's venue scope, at any
+time (not bounded by the range). */
+  last_visit_at?: ApiResponseMemberAttendanceResponseDataLastVisitAt;
+  /** Pass back as `cursor` for the next page; `None` on the last page. */
+  next_cursor?: ApiResponseMemberAttendanceResponseDataNextCursor;
+  to: string;
+  /** Visits in the range (every page, within the caller's venue scope). */
+  total_visits: number;
 };
 
 /**
@@ -504,9 +475,47 @@ alongside a `request_id` for traceability:
 }
 ```
  */
-export interface ApiResponseMemberSubscription {
-  /** A member's held instance of a plan. */
-  data: ApiResponseMemberSubscriptionData;
+export interface ApiResponseMemberAttendanceResponse {
+  /** `GET /gms/v1/members/{mid}/attendance` response. */
+  data: ApiResponseMemberAttendanceResponseData;
+  request_id: string;
+}
+
+export type ApiResponseMemberCreatedResponseDataAllOfProvisioning = null | OperationView;
+
+export type ApiResponseMemberCreatedResponseDataAllOf = {
+  effective_mode: MemberAccountMode;
+  provisioning?: ApiResponseMemberCreatedResponseDataAllOfProvisioning;
+};
+
+/**
+ * `POST /gms/v1/members` response: the created member, the account mode the
+tenant's policy actually applied, and (login mode) the provisioning
+operation. Provisioning is asynchronous: `provisioning.state` starts at
+`requested`; poll the profile's `account` until it is terminal.
+ */
+export type ApiResponseMemberCreatedResponseData = StaffMemberView &
+  ApiResponseMemberCreatedResponseDataAllOf;
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseMemberCreatedResponse {
+  /** `POST /gms/v1/members` response: the created member, the account mode the
+tenant's policy actually applied, and (login mode) the provisioning
+operation. Provisioning is asynchronous: `provisioning.state` starts at
+`requested`; poll the profile's `account` until it is terminal. */
+  data: ApiResponseMemberCreatedResponseData;
   request_id: string;
 }
 
@@ -543,6 +552,10 @@ email requirement, and walk-ins, may have none. */
   membership_status: string;
   /** `MembershipType::as_str()`. */
   membership_type: string;
+  /** A secure email change started by staff is waiting for this member's
+code (show the "enter the code sent to your new address" screen). A flag
+only: the member already knows the address. */
+  pending_email_change: boolean;
   phone?: ApiResponseMyProfileResponseDataPhone;
 };
 
@@ -596,6 +609,41 @@ alongside a `request_id` for traceability:
 export interface ApiResponseOnboardVenueResponse {
   /** Successful onboarding response. */
   data: ApiResponseOnboardVenueResponseData;
+  request_id: string;
+}
+
+export type ApiResponseOperationViewDataFailureCode = string | null;
+
+export type ApiResponseOperationViewDataResultCode = string | null;
+
+/**
+ * Display-safe operation summary (no email, no provider identifiers).
+ */
+export type ApiResponseOperationViewData = {
+  failure_code?: ApiResponseOperationViewDataFailureCode;
+  id: IdentityOperationId;
+  kind: IdentityOperationKind;
+  result_code?: ApiResponseOperationViewDataResultCode;
+  state: IdentityOperationState;
+  updated_at: string;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseOperationView {
+  /** Display-safe operation summary (no email, no provider identifiers). */
+  data: ApiResponseOperationViewData;
   request_id: string;
 }
 
@@ -975,6 +1023,161 @@ export interface ApiResponseStaff {
   request_id: string;
 }
 
+export type ApiResponseStaffMemberProfileDataAllOf = {
+  access: MemberAccessView;
+  account: MemberAccountSummary;
+};
+
+/**
+ * `GET /gms/v1/members/{mid}`: the canonical base profile. The member view
+plus its explicit venue entitlements and a display-safe account summary, in
+one read (no browser fan-out for entitlements).
+ */
+export type ApiResponseStaffMemberProfileData = StaffMemberView &
+  ApiResponseStaffMemberProfileDataAllOf;
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseStaffMemberProfile {
+  /** `GET /gms/v1/members/{mid}`: the canonical base profile. The member view
+plus its explicit venue entitlements and a display-safe account summary, in
+one read (no browser fan-out for entitlements). */
+  data: ApiResponseStaffMemberProfileData;
+  request_id: string;
+}
+
+export type ApiResponseStaffMemberViewDataEmail = string | null;
+
+export type ApiResponseStaffMemberViewDataMembershipEnd = string | null;
+
+export type ApiResponseStaffMemberViewDataNotes = string | null;
+
+export type ApiResponseStaffMemberViewDataPhone = string | null;
+
+/**
+ * A member as the venue console sees it.
+
+Excluded by design: `user_id` (raw Cognito `sub`). Account/identity state is
+exposed separately as a display-safe summary, never as provider identifiers.
+ */
+export type ApiResponseStaffMemberViewData = {
+  access_scope: AccessScope;
+  created_at: string;
+  email?: ApiResponseStaffMemberViewDataEmail;
+  first_name: string;
+  id: MemberId;
+  /** Legacy derived flag kept for existing readers: `true` for `active` and
+`expired` (NOT a lifecycle control; use the suspend/reactivate routes). */
+  is_active: boolean;
+  last_name: string;
+  membership_end?: ApiResponseStaffMemberViewDataMembershipEnd;
+  membership_start: string;
+  membership_status: MembershipStatus;
+  membership_type: MembershipType;
+  notes?: ApiResponseStaffMemberViewDataNotes;
+  phone?: ApiResponseStaffMemberViewDataPhone;
+  tenant_id: TenantId;
+  updated_at: string;
+  /** Optimistic-concurrency token (`updated_at`, RFC 3339). Echo it back as
+`expected_version` on an edit; a mismatch is a 409. */
+  version: string;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseStaffMemberView {
+  /** A member as the venue console sees it.
+
+Excluded by design: `user_id` (raw Cognito `sub`). Account/identity state is
+exposed separately as a display-safe summary, never as provider identifiers. */
+  data: ApiResponseStaffMemberViewData;
+  request_id: string;
+}
+
+/**
+ * Display name of the staff member who assigned it, if still known.
+ */
+export type ApiResponseStaffSubscriptionViewDataAssignedByName = string | null;
+
+export type ApiResponseStaffSubscriptionViewDataEntriesRemaining = number | null;
+
+export type ApiResponseStaffSubscriptionViewDataEntriesTotal = number | null;
+
+export type ApiResponseStaffSubscriptionViewDataExpiresOn = string | null;
+
+/**
+ * Staff view of one member subscription (Phase 5A slice 10): the row plus
+the names a panel shows, joined server-side. Hand-mapped (never a blanket
+conversion): the assigning staff member appears by display name only,
+never by Cognito identifier.
+ */
+export type ApiResponseStaffSubscriptionViewData = {
+  /** Display name of the staff member who assigned it, if still known. */
+  assigned_by_name?: ApiResponseStaffSubscriptionViewDataAssignedByName;
+  created_at: string;
+  entries_remaining?: ApiResponseStaffSubscriptionViewDataEntriesRemaining;
+  entries_total?: ApiResponseStaffSubscriptionViewDataEntriesTotal;
+  expires_on?: ApiResponseStaffSubscriptionViewDataExpiresOn;
+  id: MemberSubscriptionId;
+  member_id: MemberId;
+  payment_status: PaymentStatus;
+  plan_id: ActivityPlanId;
+  plan_kind: PlanKind;
+  plan_name: string;
+  price_amount_minor: number;
+  price_currency: Currency;
+  starts_on: string;
+  status: SubscriptionStatus;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+  venue_name: string;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseStaffSubscriptionView {
+  /** Staff view of one member subscription (Phase 5A slice 10): the row plus
+the names a panel shows, joined server-side. Hand-mapped (never a blanket
+conversion): the assigning staff member appears by display name only,
+never by Cognito identifier. */
+  data: ApiResponseStaffSubscriptionViewData;
+  request_id: string;
+}
+
 /**
  * Response body of `GET /gms/v1/capabilities`: the caller's effective tenant
 plan and the canonical capability set it grants.
@@ -1025,6 +1228,39 @@ A tenant plan change therefore becomes visible only after the caller's token
 is refreshed (re-login), and a change to the capability matrix takes effect
 after backend deployment. */
   data: ApiResponseTenantCapabilitiesResponseData;
+  request_id: string;
+}
+
+/**
+ * `GET`/`PATCH /gms/v1/tenant/settings` response.
+
+`member_login_mode` (the configured mode) keeps the historical PATCH echo
+shape so existing readers keep working; `member_login` is the full view.
+ */
+export type ApiResponseTenantSettingsResponseData = {
+  member_login: MemberLoginPolicy;
+  member_login_mode: MemberLoginMode;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseTenantSettingsResponse {
+  /** `GET`/`PATCH /gms/v1/tenant/settings` response.
+
+`member_login_mode` (the configured mode) keeps the historical PATCH echo
+shape so existing readers keep working; `member_login` is the full view. */
+  data: ApiResponseTenantSettingsResponseData;
   request_id: string;
 }
 
@@ -1136,45 +1372,6 @@ alongside a `request_id` for traceability:
 export interface ApiResponseTodaySnapshot {
   /** The venue-day operational snapshot. */
   data: ApiResponseTodaySnapshotData;
-  request_id: string;
-}
-
-/**
- * Body of `PATCH /gms/v1/tenant/settings`: the tenant's member-login policy.
-
-Deliberately a single required field (not an `Option`): the route is a full
-set of the policy, not a partial merge, so the caller always states the mode
-it wants. Enabling `Login` is feature-gated on `MemberSelfService` at the
-handler; switching to `Roster` is always allowed (a downgrade is never
-blocked).
- */
-export type ApiResponseUpdateTenantSettingsRequestData = {
-  /** The member-login mode to set for this tenant. */
-  member_login_mode: MemberLoginMode;
-};
-
-/**
- * Standard success response envelope matching the LLD format.
-
-All successful API responses wrap the payload in a `data` field
-alongside a `request_id` for traceability:
-
-```json
-{
-  "data": { ... },
-  "request_id": "req_abc123"
-}
-```
- */
-export interface ApiResponseUpdateTenantSettingsRequest {
-  /** Body of `PATCH /gms/v1/tenant/settings`: the tenant's member-login policy.
-
-Deliberately a single required field (not an `Option`): the route is a full
-set of the policy, not a partial merge, so the caller always states the mode
-it wants. Enabling `Login` is feature-gated on `MemberSelfService` at the
-handler; switching to `Roster` is always allowed (a downgrade is never
-blocked). */
-  data: ApiResponseUpdateTenantSettingsRequestData;
   request_id: string;
 }
 
@@ -1350,54 +1547,6 @@ alongside a `request_id` for traceability:
  */
 export interface ApiResponseVecMarketplaceSlot {
   data: ApiResponseVecMarketplaceSlotDataItem[];
-  request_id: string;
-}
-
-export type ApiResponseVecMemberSubscriptionDataItemAssignedBy = string | null;
-
-export type ApiResponseVecMemberSubscriptionDataItemEntriesRemaining = number | null;
-
-export type ApiResponseVecMemberSubscriptionDataItemEntriesTotal = number | null;
-
-export type ApiResponseVecMemberSubscriptionDataItemExpiresOn = string | null;
-
-/**
- * A member's held instance of a plan.
- */
-export type ApiResponseVecMemberSubscriptionDataItem = {
-  assigned_by?: ApiResponseVecMemberSubscriptionDataItemAssignedBy;
-  created_at: string;
-  entries_remaining?: ApiResponseVecMemberSubscriptionDataItemEntriesRemaining;
-  entries_total?: ApiResponseVecMemberSubscriptionDataItemEntriesTotal;
-  expires_on?: ApiResponseVecMemberSubscriptionDataItemExpiresOn;
-  id: MemberSubscriptionId;
-  member_id: MemberId;
-  payment_status: PaymentStatus;
-  plan_id: ActivityPlanId;
-  price_amount_minor: number;
-  price_currency: Currency;
-  starts_on: string;
-  status: SubscriptionStatus;
-  tenant_id: TenantId;
-  updated_at: string;
-  venue_id: VenueId;
-};
-
-/**
- * Standard success response envelope matching the LLD format.
-
-All successful API responses wrap the payload in a `data` field
-alongside a `request_id` for traceability:
-
-```json
-{
-  "data": { ... },
-  "request_id": "req_abc123"
-}
-```
- */
-export interface ApiResponseVecMemberSubscription {
-  data: ApiResponseVecMemberSubscriptionDataItem[];
   request_id: string;
 }
 
@@ -1771,6 +1920,64 @@ alongside a `request_id` for traceability:
  */
 export interface ApiResponseVecStaff {
   data: ApiResponseVecStaffDataItem[];
+  request_id: string;
+}
+
+/**
+ * Display name of the staff member who assigned it, if still known.
+ */
+export type ApiResponseVecStaffSubscriptionViewDataItemAssignedByName = string | null;
+
+export type ApiResponseVecStaffSubscriptionViewDataItemEntriesRemaining = number | null;
+
+export type ApiResponseVecStaffSubscriptionViewDataItemEntriesTotal = number | null;
+
+export type ApiResponseVecStaffSubscriptionViewDataItemExpiresOn = string | null;
+
+/**
+ * Staff view of one member subscription (Phase 5A slice 10): the row plus
+the names a panel shows, joined server-side. Hand-mapped (never a blanket
+conversion): the assigning staff member appears by display name only,
+never by Cognito identifier.
+ */
+export type ApiResponseVecStaffSubscriptionViewDataItem = {
+  /** Display name of the staff member who assigned it, if still known. */
+  assigned_by_name?: ApiResponseVecStaffSubscriptionViewDataItemAssignedByName;
+  created_at: string;
+  entries_remaining?: ApiResponseVecStaffSubscriptionViewDataItemEntriesRemaining;
+  entries_total?: ApiResponseVecStaffSubscriptionViewDataItemEntriesTotal;
+  expires_on?: ApiResponseVecStaffSubscriptionViewDataItemExpiresOn;
+  id: MemberSubscriptionId;
+  member_id: MemberId;
+  payment_status: PaymentStatus;
+  plan_id: ActivityPlanId;
+  plan_kind: PlanKind;
+  plan_name: string;
+  price_amount_minor: number;
+  price_currency: Currency;
+  starts_on: string;
+  status: SubscriptionStatus;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+  venue_name: string;
+};
+
+/**
+ * Standard success response envelope matching the LLD format.
+
+All successful API responses wrap the payload in a `data` field
+alongside a `request_id` for traceability:
+
+```json
+{
+  "data": { ... },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface ApiResponseVecStaffSubscriptionView {
+  data: ApiResponseVecStaffSubscriptionViewDataItem[];
   request_id: string;
 }
 
@@ -2175,6 +2382,32 @@ export interface AssignSubscriptionRequest {
   starts_on?: AssignSubscriptionRequestStartsOn;
 }
 
+export type AttendanceItemBookingId = null | BookingId;
+
+/**
+ * One visit (display-safe: ids, venue name, time, method; never who scanned).
+ */
+export interface AttendanceItem {
+  booking_id?: AttendanceItemBookingId;
+  checked_in_at: string;
+  id: CheckInId;
+  kind: AttendanceKind;
+  method: CheckInMethod;
+  venue_id: VenueId;
+  venue_name: string;
+}
+
+/**
+ * How a visit happened.
+ */
+export type AttendanceKind = (typeof AttendanceKind)[keyof typeof AttendanceKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AttendanceKind = {
+  booked: 'booked',
+  walk_in: 'walk_in',
+} as const;
+
 /**
  * Attendance statistics for a venue on a given date.
  */
@@ -2411,6 +2644,7 @@ export type CheckInMethod = (typeof CheckInMethod)[keyof typeof CheckInMethod];
 export const CheckInMethod = {
   qr: 'qr',
   manual: 'manual',
+  wallet: 'wallet',
 } as const;
 
 /**
@@ -2644,6 +2878,27 @@ export interface DefaultResourceType {
 }
 
 /**
+ * `POST /gms/v1/members/{mid}/email-change`: the new sign-in email for a login
+member (secure change, DR-4). Unknown fields are rejected.
+ */
+export interface EmailChangeRequest {
+  new_email: string;
+}
+
+/**
+ * The member's login email, as the console shows it.
+ */
+export type EmailState = (typeof EmailState)[keyof typeof EmailState];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const EmailState = {
+  not_applicable: 'not_applicable',
+  verified: 'verified',
+  change_pending: 'change_pending',
+  change_failed: 'change_failed',
+} as const;
+
+/**
  * The `error` object.
  */
 export interface ErrorBody {
@@ -2683,6 +2938,53 @@ export interface HealthResponse {
 }
 
 /**
+ * Unique identifier for a member identity operation (provisioning,
+invitation resend, session revocation, secure email change).
+ */
+export type IdentityOperationId = string;
+
+export type IdentityOperationKind =
+  (typeof IdentityOperationKind)[keyof typeof IdentityOperationKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const IdentityOperationKind = {
+  provisioning: 'provisioning',
+  invitation_resend: 'invitation_resend',
+  session_revocation: 'session_revocation',
+  email_change: 'email_change',
+} as const;
+
+export type IdentityOperationState =
+  (typeof IdentityOperationState)[keyof typeof IdentityOperationState];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const IdentityOperationState = {
+  requested: 'requested',
+  dispatched: 'dispatched',
+  pending_verification: 'pending_verification',
+  verified: 'verified',
+  completed: 'completed',
+  failed: 'failed',
+  expired: 'expired',
+} as const;
+
+/**
+ * The member's initial-invitation state, as the console shows it.
+ */
+export type InvitationState = (typeof InvitationState)[keyof typeof InvitationState];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const InvitationState = {
+  not_applicable: 'not_applicable',
+  pending: 'pending',
+  sent: 'sent',
+  linked_existing: 'linked_existing',
+  failed: 'failed',
+  untracked: 'untracked',
+  accepted: 'accepted',
+} as const;
+
+/**
  * Request to invite a new staff member.
  */
 export interface InviteStaffRequest {
@@ -2694,6 +2996,17 @@ export interface InviteStaffRequest {
 venues). Empty for trainer/receptionist = no venue access until assigned. */
   venue_ids?: VenueId[];
 }
+
+/**
+ * Why the effective mode differs from the configured one.
+ */
+export type LoginModeDowngradeReason =
+  (typeof LoginModeDowngradeReason)[keyof typeof LoginModeDowngradeReason];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const LoginModeDowngradeReason = {
+  plan_lacks_member_self_service: 'plan_lacks_member_self_service',
+} as const;
 
 /**
  * Manual check-in request body (mirrors lambdas/checkin ManualCheckInBody).
@@ -2764,41 +3077,108 @@ export interface MeWalkinCheckinRequest {
   venue_id: VenueId;
 }
 
-export type MemberEmail = string | null;
-
-export type MemberMembershipEnd = string | null;
-
-export type MemberNotes = string | null;
-
-export type MemberPhone = string | null;
-
 /**
- * Auth user_id — None for walk-in members (no account).
+ * A member's venue entitlement, as the console reads and edits it.
  */
-export type MemberUserId = string | null;
-
-/**
- * A person enrolled at a venue with a membership.
- */
-export interface Member {
+export interface MemberAccessView {
   access_scope: AccessScope;
-  created_at: string;
-  email?: MemberEmail;
-  first_name: string;
-  id: MemberId;
-  is_active: boolean;
-  last_name: string;
-  membership_end?: MemberMembershipEnd;
-  membership_start: string;
-  membership_status: MembershipStatus;
-  membership_type: MembershipType;
-  notes?: MemberNotes;
-  phone?: MemberPhone;
-  tenant_id: TenantId;
-  updated_at: string;
-  /** Auth user_id — None for walk-in members (no account). */
-  user_id?: MemberUserId;
+  /** Explicit venue entitlements. Empty for `chain_wide` (every venue). */
+  venue_ids: VenueId[];
 }
+
+/**
+ * Whether the member signs in. Display-safe: never the identifier.
+ */
+export type MemberAccountMode = (typeof MemberAccountMode)[keyof typeof MemberAccountMode];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const MemberAccountMode = {
+  roster: 'roster',
+  login: 'login',
+} as const;
+
+export type MemberAccountSummaryEmailChange = null | OperationView;
+
+export type MemberAccountSummaryInvitationResend = null | OperationView;
+
+export type MemberAccountSummaryProvisioning = null | OperationView;
+
+export type MemberAccountSummarySessionRevocation = null | OperationView;
+
+/**
+ * Display-safe account summary: never the identity itself.
+ */
+export interface MemberAccountSummary {
+  /** The login email's state (`not_applicable` for roster). */
+  email: EmailState;
+  email_change?: MemberAccountSummaryEmailChange;
+  /** State of the login invitation (`not_applicable` for roster). */
+  invitation: InvitationState;
+  invitation_resend?: MemberAccountSummaryInvitationResend;
+  mode: MemberAccountMode;
+  provisioning?: MemberAccountSummaryProvisioning;
+  session_revocation?: MemberAccountSummarySessionRevocation;
+}
+
+/**
+ * The member's most recent visit within the caller's venue scope, at any
+time (not bounded by the range).
+ */
+export type MemberAttendanceResponseLastVisitAt = string | null;
+
+/**
+ * Pass back as `cursor` for the next page; `None` on the last page.
+ */
+export type MemberAttendanceResponseNextCursor = string | null;
+
+/**
+ * `GET /gms/v1/members/{mid}/attendance` response.
+ */
+export interface MemberAttendanceResponse {
+  /** The range actually served, `[from, to)`. */
+  from: string;
+  items: AttendanceItem[];
+  /** The member's most recent visit within the caller's venue scope, at any
+time (not bounded by the range). */
+  last_visit_at?: MemberAttendanceResponseLastVisitAt;
+  /** Pass back as `cursor` for the next page; `None` on the last page. */
+  next_cursor?: MemberAttendanceResponseNextCursor;
+  to: string;
+  /** Visits in the range (every page, within the caller's venue scope). */
+  total_visits: number;
+}
+
+export type MemberCreatedResponseAllOfProvisioning = null | OperationView;
+
+export type MemberCreatedResponseAllOf = {
+  effective_mode: MemberAccountMode;
+  provisioning?: MemberCreatedResponseAllOfProvisioning;
+};
+
+/**
+ * `POST /gms/v1/members` response: the created member, the account mode the
+tenant's policy actually applied, and (login mode) the provisioning
+operation. Provisioning is asynchronous: `provisioning.state` starts at
+`requested`; poll the profile's `account` until it is terminal.
+ */
+export type MemberCreatedResponse = StaffMemberView & MemberCreatedResponseAllOf;
+
+/**
+ * Exact directory status filter. Unlike the legacy `MemberActivityFilter`
+(where `active` also admits `expired`), each value admits exactly one stored
+status, and `all` admits every non-cancelled record. Cancelled members are
+never listed.
+ */
+export type MemberDirectoryStatus =
+  (typeof MemberDirectoryStatus)[keyof typeof MemberDirectoryStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const MemberDirectoryStatus = {
+  active: 'active',
+  expired: 'expired',
+  suspended: 'suspended',
+  all: 'all',
+} as const;
 
 /**
  * Unique identifier for a member (person enrolled at a venue).
@@ -2817,34 +3197,61 @@ export const MemberLoginMode = {
   roster: 'roster',
 } as const;
 
-export type MemberSubscriptionAssignedBy = string | null;
-
-export type MemberSubscriptionEntriesRemaining = number | null;
-
-export type MemberSubscriptionEntriesTotal = number | null;
-
-export type MemberSubscriptionExpiresOn = string | null;
+export type MemberLoginPolicyDowngradeReason = null | LoginModeDowngradeReason;
 
 /**
- * A member's held instance of a plan.
+ * The console's view of the tenant member-login policy.
  */
-export interface MemberSubscription {
-  assigned_by?: MemberSubscriptionAssignedBy;
-  created_at: string;
-  entries_remaining?: MemberSubscriptionEntriesRemaining;
-  entries_total?: MemberSubscriptionEntriesTotal;
-  expires_on?: MemberSubscriptionExpiresOn;
-  id: MemberSubscriptionId;
-  member_id: MemberId;
-  payment_status: PaymentStatus;
-  plan_id: ActivityPlanId;
-  price_amount_minor: number;
-  price_currency: Currency;
-  starts_on: string;
-  status: SubscriptionStatus;
-  tenant_id: TenantId;
-  updated_at: string;
-  venue_id: VenueId;
+export interface MemberLoginPolicy {
+  /** Whether the tenant's current plan includes that capability (i.e.
+whether enabling `login` would take effect). */
+  capability_available: boolean;
+  /** What owner/admin configured (defaults to `roster` when never set). */
+  configured_mode: MemberLoginMode;
+  downgrade_reason?: MemberLoginPolicyDowngradeReason;
+  /** What new-member provisioning actually applies right now. */
+  effective_mode: MemberLoginMode;
+  /** The capability `login` requires. */
+  required_capability: Capability;
+}
+
+/**
+ * Opaque cursor from a previous page's `meta.next_cursor`.
+ */
+export type MemberSearchRequestCursor = string | null;
+
+/**
+ * Page size, 1 to 100 (default 20).
+ */
+export type MemberSearchRequestLimit = number | null;
+
+/**
+ * Free-text term matched (case-insensitive, substring) against first name,
+last name, full name, email and phone. `%` and `_` match literally.
+ */
+export type MemberSearchRequestQ = string | null;
+
+export type MemberSearchRequestVenueId = null | VenueId;
+
+/**
+ * Body of `POST /gms/v1/members/search`.
+
+Scope is explicit: exactly one of `venue_id` (the console's selected venue,
+the default view) or `all_venues: true` (owner/admin only).
+ */
+export interface MemberSearchRequest {
+  /** Every venue in the tenant. Owner/admin only. */
+  all_venues?: boolean;
+  /** Opaque cursor from a previous page's `meta.next_cursor`. */
+  cursor?: MemberSearchRequestCursor;
+  /** Page size, 1 to 100 (default 20). */
+  limit?: MemberSearchRequestLimit;
+  /** Free-text term matched (case-insensitive, substring) against first name,
+last name, full name, email and phone. `%` and `_` match literally. */
+  q?: MemberSearchRequestQ;
+  /** Exact status filter; defaults to `all` (every non-cancelled record). */
+  status?: MemberDirectoryStatus;
+  venue_id?: MemberSearchRequestVenueId;
 }
 
 /**
@@ -2926,6 +3333,10 @@ email requirement, and walk-ins, may have none. */
   membership_status: string;
   /** `MembershipType::as_str()`. */
   membership_type: string;
+  /** A secure email change started by staff is waiting for this member's
+code (show the "enter the code sent to your new address" screen). A flag
+only: the member already knows the address. */
+  pending_email_change: boolean;
   phone?: MyProfileResponsePhone;
 }
 
@@ -3011,62 +3422,25 @@ export interface OnboardVenueResponse {
   venue: VenueInfo;
 }
 
+export type OperationViewFailureCode = string | null;
+
+export type OperationViewResultCode = string | null;
+
+/**
+ * Display-safe operation summary (no email, no provider identifiers).
+ */
+export interface OperationView {
+  failure_code?: OperationViewFailureCode;
+  id: IdentityOperationId;
+  kind: IdentityOperationKind;
+  result_code?: OperationViewResultCode;
+  state: IdentityOperationState;
+  updated_at: string;
+}
+
 export interface OrgInfo {
   id: string;
   slug: string;
-}
-
-export type PaginatedApiResponseVecMemberDataItemEmail = string | null;
-
-export type PaginatedApiResponseVecMemberDataItemMembershipEnd = string | null;
-
-export type PaginatedApiResponseVecMemberDataItemNotes = string | null;
-
-export type PaginatedApiResponseVecMemberDataItemPhone = string | null;
-
-/**
- * Auth user_id — None for walk-in members (no account).
- */
-export type PaginatedApiResponseVecMemberDataItemUserId = string | null;
-
-/**
- * A person enrolled at a venue with a membership.
- */
-export type PaginatedApiResponseVecMemberDataItem = {
-  access_scope: AccessScope;
-  created_at: string;
-  email?: PaginatedApiResponseVecMemberDataItemEmail;
-  first_name: string;
-  id: MemberId;
-  is_active: boolean;
-  last_name: string;
-  membership_end?: PaginatedApiResponseVecMemberDataItemMembershipEnd;
-  membership_start: string;
-  membership_status: MembershipStatus;
-  membership_type: MembershipType;
-  notes?: PaginatedApiResponseVecMemberDataItemNotes;
-  phone?: PaginatedApiResponseVecMemberDataItemPhone;
-  tenant_id: TenantId;
-  updated_at: string;
-  /** Auth user_id — None for walk-in members (no account). */
-  user_id?: PaginatedApiResponseVecMemberDataItemUserId;
-};
-
-/**
- * Paginated response envelope with cursor metadata.
-
-```json
-{
-  "data": [...],
-  "meta": { "next_cursor": "abc123" },
-  "request_id": "req_abc123"
-}
-```
- */
-export interface PaginatedApiResponseVecMember {
-  data: PaginatedApiResponseVecMemberDataItem[];
-  meta: PaginationMeta;
-  request_id: string;
 }
 
 export type PaginatedApiResponseVecPassBookingDataItemVenueBookingId = null | BookingId;
@@ -3104,6 +3478,60 @@ export type PaginatedApiResponseVecPassBookingDataItem = {
  */
 export interface PaginatedApiResponseVecPassBooking {
   data: PaginatedApiResponseVecPassBookingDataItem[];
+  meta: PaginationMeta;
+  request_id: string;
+}
+
+export type PaginatedApiResponseVecStaffMemberViewDataItemEmail = string | null;
+
+export type PaginatedApiResponseVecStaffMemberViewDataItemMembershipEnd = string | null;
+
+export type PaginatedApiResponseVecStaffMemberViewDataItemNotes = string | null;
+
+export type PaginatedApiResponseVecStaffMemberViewDataItemPhone = string | null;
+
+/**
+ * A member as the venue console sees it.
+
+Excluded by design: `user_id` (raw Cognito `sub`). Account/identity state is
+exposed separately as a display-safe summary, never as provider identifiers.
+ */
+export type PaginatedApiResponseVecStaffMemberViewDataItem = {
+  access_scope: AccessScope;
+  created_at: string;
+  email?: PaginatedApiResponseVecStaffMemberViewDataItemEmail;
+  first_name: string;
+  id: MemberId;
+  /** Legacy derived flag kept for existing readers: `true` for `active` and
+`expired` (NOT a lifecycle control; use the suspend/reactivate routes). */
+  is_active: boolean;
+  last_name: string;
+  membership_end?: PaginatedApiResponseVecStaffMemberViewDataItemMembershipEnd;
+  membership_start: string;
+  membership_status: MembershipStatus;
+  membership_type: MembershipType;
+  notes?: PaginatedApiResponseVecStaffMemberViewDataItemNotes;
+  phone?: PaginatedApiResponseVecStaffMemberViewDataItemPhone;
+  tenant_id: TenantId;
+  updated_at: string;
+  /** Optimistic-concurrency token (`updated_at`, RFC 3339). Echo it back as
+`expected_version` on an edit; a mismatch is a 409. */
+  version: string;
+};
+
+/**
+ * Paginated response envelope with cursor metadata.
+
+```json
+{
+  "data": [...],
+  "meta": { "next_cursor": "abc123" },
+  "request_id": "req_abc123"
+}
+```
+ */
+export interface PaginatedApiResponseVecStaffMemberView {
+  data: PaginatedApiResponseVecStaffMemberViewDataItem[];
   meta: PaginationMeta;
   request_id: string;
 }
@@ -3784,6 +4212,95 @@ export interface Staff {
  */
 export type StaffId = string;
 
+export type StaffMemberProfileAllOf = {
+  access: MemberAccessView;
+  account: MemberAccountSummary;
+};
+
+/**
+ * `GET /gms/v1/members/{mid}`: the canonical base profile. The member view
+plus its explicit venue entitlements and a display-safe account summary, in
+one read (no browser fan-out for entitlements).
+ */
+export type StaffMemberProfile = StaffMemberView & StaffMemberProfileAllOf;
+
+export type StaffMemberViewEmail = string | null;
+
+export type StaffMemberViewMembershipEnd = string | null;
+
+export type StaffMemberViewNotes = string | null;
+
+export type StaffMemberViewPhone = string | null;
+
+/**
+ * A member as the venue console sees it.
+
+Excluded by design: `user_id` (raw Cognito `sub`). Account/identity state is
+exposed separately as a display-safe summary, never as provider identifiers.
+ */
+export interface StaffMemberView {
+  access_scope: AccessScope;
+  created_at: string;
+  email?: StaffMemberViewEmail;
+  first_name: string;
+  id: MemberId;
+  /** Legacy derived flag kept for existing readers: `true` for `active` and
+`expired` (NOT a lifecycle control; use the suspend/reactivate routes). */
+  is_active: boolean;
+  last_name: string;
+  membership_end?: StaffMemberViewMembershipEnd;
+  membership_start: string;
+  membership_status: MembershipStatus;
+  membership_type: MembershipType;
+  notes?: StaffMemberViewNotes;
+  phone?: StaffMemberViewPhone;
+  tenant_id: TenantId;
+  updated_at: string;
+  /** Optimistic-concurrency token (`updated_at`, RFC 3339). Echo it back as
+`expected_version` on an edit; a mismatch is a 409. */
+  version: string;
+}
+
+/**
+ * Display name of the staff member who assigned it, if still known.
+ */
+export type StaffSubscriptionViewAssignedByName = string | null;
+
+export type StaffSubscriptionViewEntriesRemaining = number | null;
+
+export type StaffSubscriptionViewEntriesTotal = number | null;
+
+export type StaffSubscriptionViewExpiresOn = string | null;
+
+/**
+ * Staff view of one member subscription (Phase 5A slice 10): the row plus
+the names a panel shows, joined server-side. Hand-mapped (never a blanket
+conversion): the assigning staff member appears by display name only,
+never by Cognito identifier.
+ */
+export interface StaffSubscriptionView {
+  /** Display name of the staff member who assigned it, if still known. */
+  assigned_by_name?: StaffSubscriptionViewAssignedByName;
+  created_at: string;
+  entries_remaining?: StaffSubscriptionViewEntriesRemaining;
+  entries_total?: StaffSubscriptionViewEntriesTotal;
+  expires_on?: StaffSubscriptionViewExpiresOn;
+  id: MemberSubscriptionId;
+  member_id: MemberId;
+  payment_status: PaymentStatus;
+  plan_id: ActivityPlanId;
+  plan_kind: PlanKind;
+  plan_name: string;
+  price_amount_minor: number;
+  price_currency: Currency;
+  starts_on: string;
+  status: SubscriptionStatus;
+  tenant_id: TenantId;
+  updated_at: string;
+  venue_id: VenueId;
+  venue_name: string;
+}
+
 /**
  * Lifecycle of a held subscription.
  */
@@ -3855,6 +4372,17 @@ export interface TenantInfo {
   id: TenantId;
   plan: string;
   slug: string;
+}
+
+/**
+ * `GET`/`PATCH /gms/v1/tenant/settings` response.
+
+`member_login_mode` (the configured mode) keeps the historical PATCH echo
+shape so existing readers keep working; `member_login` is the full view.
+ */
+export interface TenantSettingsResponse {
+  member_login: MemberLoginPolicy;
+  member_login_mode: MemberLoginMode;
 }
 
 /**
@@ -4005,8 +4533,6 @@ export type UpdateMemberRequestEmail = string | null;
 
 export type UpdateMemberRequestFirstName = string | null;
 
-export type UpdateMemberRequestIsActive = boolean | null;
-
 export type UpdateMemberRequestLastName = string | null;
 
 export type UpdateMemberRequestMembershipEnd = string | null;
@@ -4019,11 +4545,17 @@ export type UpdateMemberRequestPhone = string | null;
 
 /**
  * Request to update an existing member. All fields optional (COALESCE pattern).
+
+Unknown fields are rejected (400) rather than silently ignored. This is
+load-bearing for a Phase 5A contract correction: the old `is_active` field was
+accepted here but never applied, so a client "reactivating" a member through
+it got a 200 and no change. Lifecycle changes use the explicit
+suspend/reactivate operations; a request still carrying `is_active` now fails
+loudly instead of silently doing nothing.
  */
 export interface UpdateMemberRequest {
   email?: UpdateMemberRequestEmail;
   first_name?: UpdateMemberRequestFirstName;
-  is_active?: UpdateMemberRequestIsActive;
   last_name?: UpdateMemberRequestLastName;
   membership_end?: UpdateMemberRequestMembershipEnd;
   membership_type?: UpdateMemberRequestMembershipType;
@@ -4475,6 +5007,13 @@ export type MeWalkinCheckinParams = {
   venue?: string;
 };
 
+export type ConfirmMyEmailChangeParams = {
+  /**
+   * Selected venue (required when the member belongs to several organizations)
+   */
+  venue?: string;
+};
+
 export type MintMemberQrParams = {
   /**
    * Selected membership venue; required when the caller has memberships in more than one tenant
@@ -4542,11 +5081,55 @@ export type ListMembersParams = {
   status?: string;
 };
 
+export type UpdateMemberParams = {
+  /**
+   * The member's `version` from a prior read. When present, a mismatch is a 409 VERSION_MISMATCH and nothing is written.
+   */
+  expected_version?: string;
+};
+
+export type SetMemberAccessParams = {
+  /**
+   * The member's `version`; a mismatch is a 409 VERSION_MISMATCH.
+   */
+  expected_version?: string;
+};
+
+export type MemberAttendanceParams = {
+  /**
+   * Range start (inclusive), RFC 3339 (default: to minus 30 days)
+   */
+  from?: string;
+  /**
+   * Range end (exclusive), RFC 3339 (default: now)
+   */
+  to?: string;
+  /**
+   * Only this venue (must be one the caller may see)
+   */
+  venue_id?: string;
+  /**
+   * Opaque cursor from the previous page (carries its range and venue)
+   */
+  cursor?: string;
+  /**
+   * Page size, clamped to 1..=100 (default 50)
+   */
+  limit?: number;
+};
+
 export type ListSubscriptionsParams = {
   /**
    * Filter by lifecycle status: active, expired, exhausted, or cancelled.
    */
   status?: string;
+};
+
+export type SetMemberVenuesParams = {
+  /**
+   * The member's `version`; a mismatch is a 409 VERSION_MISMATCH.
+   */
+  expected_version?: string;
 };
 
 export type CancelScheduleParams = {

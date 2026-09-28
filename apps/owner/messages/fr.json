@@ -397,7 +397,9 @@
       "live": "En direct",
       "methodQr": "QR",
       "methodManual": "Manuel",
+      "methodWallet": "Wallet",
       "self": "Auto (QR)",
+      "selfWallet": "Auto (Wallet)",
       "unknownMember": "Membre",
       "unknownStaff": "l'équipe",
       "byLabel": "par {name}",
@@ -491,6 +493,7 @@
       "back": "Retour aux membres",
       "notFound": "Membre introuvable",
       "loadError": "Impossible de charger le membre",
+      "versionConflict": "Ce membre a été modifié entre-temps. Vérifiez puis enregistrez à nouveau.",
       "noEmail": "Aucun e-mail",
       "noPhone": "Aucun téléphone",
       "memberSince": "Membre depuis le {date}",
@@ -508,7 +511,6 @@
         "description": "Les formules achetées par ce membre.",
         "empty": "Aucun abonnement pour le moment.",
         "loadError": "Impossible de charger les abonnements",
-        "unknownPlan": "Offre inconnue",
         "expiresOn": "Expire le {date}",
         "entriesLeft": "{remaining} / {total} entrées restantes",
         "entriesTotal": "{total} entrées au total",
@@ -550,13 +552,10 @@
         "firstName": "Prénom",
         "lastName": "Nom",
         "email": "E-mail",
+        "emailLockedHint": "Adresse de connexion : elle se change par une procédure sécurisée, bientôt disponible ici.",
         "phone": "Téléphone",
         "type": "Type d'abonnement",
         "end": "Fin d'abonnement",
-        "active": "Statut du compte",
-        "activeHint": "Autorise ou bloque l'accès du membre. La suspension de l'abonnement se gère dans la zone dédiée, plus bas.",
-        "activeOption": "Actif",
-        "inactiveOption": "Inactif",
         "notes": "Notes",
         "save": "Enregistrer",
         "saving": "Enregistrement…",
@@ -568,8 +567,7 @@
         "description": "Ces actions modifient l'accès du membre. À utiliser avec précaution.",
         "suspend": "Suspendre le membre",
         "suspended": "Membre suspendu",
-        "reactivate": "Réactiver",
-        "reactivateSoon": "Bientôt disponible"
+        "reactivate": "Réactiver"
       },
       "suspendDialog": {
         "title": "Suspendre le membre",
@@ -577,7 +575,17 @@
         "confirm": "Suspendre",
         "confirming": "Suspension…",
         "success": "Membre suspendu",
+        "notActive": "Ce membre n'est plus actif.",
         "error": "Impossible de suspendre le membre"
+      },
+      "reactivateDialog": {
+        "title": "Réactiver ce membre ?",
+        "description": "{name} retrouvera l'accès à ses salles et pourra de nouveau réserver.",
+        "confirm": "Réactiver",
+        "confirming": "Réactivation…",
+        "success": "Membre réactivé",
+        "notSuspended": "Ce membre n'est plus suspendu.",
+        "error": "Impossible de réactiver ce membre."
       },
       "access": {
         "title": "Accès aux établissements",
@@ -590,7 +598,10 @@
         "submit": "Enregistrer l'accès",
         "submitting": "Enregistrement…",
         "success": "Accès mis à jour",
-        "error": "Impossible de mettre à jour l'accès"
+        "error": "Impossible de mettre à jour l'accès",
+        "downscopeBlocked": "Impossible de retirer ces salles : des réservations à venir y sont encore prévues.",
+        "downscopeVenue": "{venue} · {count, plural, one {# réservation à venir} other {# réservations à venir}}",
+        "unknownVenue": "Salle inconnue"
       }
     }
   },

@@ -4,7 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 
 import { customFetch } from '@iziwellpass/api/client';
 import { getListMembersQueryKey, getListMembersUrl } from '@iziwellpass/api/generated';
-import type { Member, PaginatedApiResponseVecMember } from '@iziwellpass/api/schemas';
+import type {
+  PaginatedApiResponseVecStaffMemberView,
+  StaffMemberView,
+} from '@iziwellpass/api/schemas';
 
 /**
  * Materialize the FULL member list via cursor pagination.
@@ -28,12 +31,12 @@ const PAGE_SIZE = 100;
 const MAX_PAGES = 50;
 
 /** Fetch every member by following `meta.next_cursor` to exhaustion. */
-export async function fetchAllMembers(): Promise<Member[]> {
-  const all: Member[] = [];
+export async function fetchAllMembers(): Promise<StaffMemberView[]> {
+  const all: StaffMemberView[] = [];
   let cursor: string | undefined;
 
   for (let page = 0; page < MAX_PAGES; page += 1) {
-    const response = await customFetch<PaginatedApiResponseVecMember>(
+    const response = await customFetch<PaginatedApiResponseVecStaffMemberView>(
       getListMembersUrl({ limit: PAGE_SIZE, cursor }),
       { method: 'GET' },
     );

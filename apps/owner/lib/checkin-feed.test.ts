@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { CheckIn, Staff } from '@iziwellpass/api/schemas';
 
-import { feedRows, recordedByLabel } from './checkin-feed';
+import { feedRows, methodBadge, recordedByLabel } from './checkin-feed';
 
 function checkIn(at: string, extra: Partial<CheckIn> = {}): CheckIn {
   return {
@@ -17,6 +17,7 @@ function checkIn(at: string, extra: Partial<CheckIn> = {}): CheckIn {
 
 const LABELS = {
   self: 'Auto (QR)',
+  selfWallet: 'Auto (Wallet)',
   unknownStaff: "l'équipe",
   by: (name: string) => `par ${name}`,
 };
@@ -49,6 +50,11 @@ describe('recordedByLabel', () => {
   it('self for QR without a recorder', () => {
     expect(recordedByLabel(checkIn('a'), staff, LABELS)).toBe('Auto (QR)');
   });
+  it('the wallet self label for a wallet check-in without a recorder', () => {
+    expect(recordedByLabel(checkIn('a', { method: 'wallet' }), staff, LABELS)).toBe(
+      'Auto (Wallet)',
+    );
+  });
   it('by <staff name> when resolvable', () => {
     expect(
       recordedByLabel(checkIn('a', { method: 'manual', checked_in_by: 'u1' }), staff, LABELS),
@@ -58,5 +64,13 @@ describe('recordedByLabel', () => {
     expect(
       recordedByLabel(checkIn('a', { method: 'manual', checked_in_by: 'u9' }), staff, LABELS),
     ).toBe("par l'équipe");
+  });
+});
+
+describe('methodBadge', () => {
+  it('labels each check-in method', () => {
+    expect(methodBadge('qr')).toEqual({ labelKey: 'methodQr', variant: 'info' });
+    expect(methodBadge('wallet')).toEqual({ labelKey: 'methodWallet', variant: 'info' });
+    expect(methodBadge('manual')).toEqual({ labelKey: 'methodManual', variant: 'default' });
   });
 });

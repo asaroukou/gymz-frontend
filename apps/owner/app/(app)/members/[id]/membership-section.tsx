@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberView } from '@iziwellpass/api/schemas';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { KeyValueList, KeyValueRow, SectionHeading } from '@iziwellpass/ui/components/working-page';
 
@@ -10,11 +10,11 @@ import { formatCalendarDate } from '@/lib/datetime';
 import { memberStatusBadgeVariant } from '@/lib/member-status';
 
 /**
- * « Adhésion » (canvas `L6sMyP`): the flat membership_* fields on `Member` as
+ * « Adhésion » (canvas `L6sMyP`): the flat membership_* fields on `StaffMemberView` as
  * key/value hairline rows. Distinct from SubscriptionsSection, which lists
- * priced `MemberSubscription` rows.
+ * priced `StaffSubscriptionView` rows.
  */
-export function MembershipSection({ member }: { member: Member }) {
+export function MembershipSection({ member }: { member: StaffMemberView }) {
   const t = useTranslations('members');
   const locale = useLocale();
 

@@ -7,10 +7,10 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { getVenueTodayQueryKey } from '@iziwellpass/api/generated';
 import type {
-  Member,
   Resource,
   Schedule,
   Staff,
+  StaffMemberView,
   TodaySlot,
   TodaySnapshot,
 } from '@iziwellpass/api/schemas';
@@ -59,7 +59,7 @@ export function AttentionList({
   schedules: Schedule[];
   resources: Resource[];
   staff: Staff[];
-  members: Member[];
+  members: StaffMemberView[];
   /** D12 fallback: the « À régler » tab trigger, focused when the resolved
    * row's own button is already gone from the DOM by the time a sheet or
    * dialog closes (the refetch removed it before focus could be restored). */
@@ -94,9 +94,10 @@ export function AttentionList({
   // flight when we started watching; the effect below only acts once a *new*
   // snapshot has actually landed, then disarms itself either way so it never
   // stays armed for some unrelated later refetch.
-  const pendingRestoreRef = useRef<{ slotId: string; dataAtClose: TodaySnapshot | undefined } | null>(
-    null,
-  );
+  const pendingRestoreRef = useRef<{
+    slotId: string;
+    dataAtClose: TodaySnapshot | undefined;
+  } | null>(null);
   const armPendingRestore = (slotId: string | undefined) => {
     if (slotId) pendingRestoreRef.current = { slotId, dataAtClose: today.data };
   };

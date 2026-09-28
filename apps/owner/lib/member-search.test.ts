@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberView } from '@iziwellpass/api/schemas';
 
 import { memberInitials, memberLabel, memberName, searchMembers } from './member-search';
 
-function member(first: string, last: string, id = `${first}-${last}`): Member {
+function member(first: string, last: string, id = `${first}-${last}`): StaffMemberView {
   return {
     id,
     first_name: first,
@@ -17,7 +17,8 @@ function member(first: string, last: string, id = `${first}-${last}`): Member {
     membership_start: '2026-01-01',
     membership_status: 'active',
     membership_type: 'monthly',
-  } as unknown as Member;
+    version: '2026-09-01T00:00:00Z',
+  } as unknown as StaffMemberView;
 }
 
 const MEMBERS = [

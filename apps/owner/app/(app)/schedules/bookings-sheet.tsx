@@ -26,9 +26,9 @@ import {
 } from '@iziwellpass/api/generated';
 import type {
   CreateBookingRequest,
-  Member,
   ScheduleSlot,
   SlotRosterEntry,
+  StaffMemberView,
 } from '@iziwellpass/api/schemas';
 import { BookingSource } from '@iziwellpass/api/schemas';
 import { useRole } from '@iziwellpass/auth/provider';
@@ -151,7 +151,7 @@ function AddParticipant({
 }: {
   slotId: string;
   venueId: string;
-  members: Member[];
+  members: StaffMemberView[];
   bookedMemberIds: Set<string>;
   full: boolean;
 }) {
@@ -170,7 +170,7 @@ function AddParticipant({
   // are kept for the same reason — and so the trigger still shows the name the
   // operator picked when the add comes back 409.
   const options = useMemo(() => {
-    const ineligibleReason = (member: Member): string | null => {
+    const ineligibleReason = (member: StaffMemberView): string | null => {
       if (bookedMemberIds.has(member.id)) return t('addBooking.errors.duplicate');
       if (!member.is_active) return t('addBooking.ineligible.inactive');
       switch (member.membership_status) {
@@ -283,7 +283,10 @@ function AddParticipant({
 }
 
 /** The slot fields the sheet reads; the dashboard adapts a `TodaySlot` to it. */
-export type SheetSlot = Pick<ScheduleSlot, 'id' | 'booked_count' | 'capacity' | 'start_time' | 'end_time'>;
+export type SheetSlot = Pick<
+  ScheduleSlot,
+  'id' | 'booked_count' | 'capacity' | 'start_time' | 'end_time'
+>;
 
 export function BookingsSheet({
   slot,
@@ -305,7 +308,7 @@ export function BookingsSheet({
   /** « Aujourd'hui », « Demain », « Lundi 21 septembre » — the group heading of the slot. */
   dayLabel: string;
   resourceName: string;
-  members: Member[];
+  members: StaffMemberView[];
   canManageBookings: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;

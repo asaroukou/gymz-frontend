@@ -1136,6 +1136,104 @@
         ]
       }
     },
+    "/gms/v1/me/email-change/confirm": {
+      "post": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Confirm my secure email change (member self-service, after entering the\ncode sent to the new address in the member app, which verifies it with\nCognito `VerifyUserAttribute` using the member's own access token).",
+        "description": "The backend checks Cognito itself (the new email must be the login's\nverified email), then switches the member's email in one transaction\n(`state: verified`); the identity worker revokes every session (sign in\nagain with the new email). Idempotent: when the latest change is already\nverified or completed it is returned with 200 and its state (`verified` or\n`completed`, including a change completed earlier). 409\n`NO_EMAIL_CHANGE_PENDING` when there is no change at all or the latest one\nfailed or expired. Venue selection as for every `/me` route.\n`GET /gms/v1/me` exposes `pending_email_change` so the app knows to show\nthe code screen; verify with Cognito `VerifyUserAttribute`\n(`AttributeName=email`) and resend a code with\n`GetUserAttributeVerificationCode` (`AttributeName=email`), both with the\nmember's own access token. A 500 (identity provider unavailable) is safe to\nretry.",
+        "operationId": "confirm_my_email_change",
+        "parameters": [
+          {
+            "name": "venue",
+            "in": "query",
+            "description": "Selected venue (required when the member belongs to several organizations)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Email switched (or already switched)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_OperationView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Venue selection required, or venue is not a valid id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No active membership for the selected venue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Member not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "EMAIL_NOT_VERIFIED (code not entered yet, or the change is not ready for it) or NO_EMAIL_CHANGE_PENDING",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Identity provider unavailable: retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
     "/gms/v1/me/memberships": {
       "get": {
         "tags": [
@@ -1563,7 +1661,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedApiResponse_Vec_Member"
+                  "$ref": "#/components/schemas/PaginatedApiResponse_Vec_StaffMemberView"
                 }
               }
             }
@@ -1610,7 +1708,7 @@
           "member"
         ],
         "summary": "Register a new member in the current tenant.",
-        "description": "The request carries a venue entitlement: `access_scope` (`chain_wide` or\n`venue_scoped`, default `venue_scoped`) plus `venue_ids` (required non-empty\nfor `venue_scoped`). A venue-scoped staff caller may only assign venues they\nhave access to.",
+        "description": "The request carries a venue entitlement: `access_scope` (`chain_wide` or\n`venue_scoped`, default `venue_scoped`) plus `venue_ids` (required non-empty\nfor `venue_scoped`). A venue-scoped staff caller may only assign venues they\nhave access to.\n\nThe tenant's member-login policy decides the account mode, reported as\n`effective_mode`:\n- `roster`: a record only, no sign-in; `provisioning` is null.\n- `login`: `email` is required. The member is created with a\n  `provisioning` operation in state `requested`, and its login is created\n  ASYNCHRONOUSLY by the identity worker (Cognito then emails the invitation).\n  Poll `GET /gms/v1/members/{mid}` until `account.provisioning.state` is\n  terminal: `completed` (`result_code` `invitation_sent`, or\n  `existing_identity_linked` when the person already had an account and NO\n  invitation was sent) or `failed` (`failure_code` `invalid_email`,\n  `identity_already_linked`, `missing_email`, `provider_unavailable`). Do not\n  tell the user an invitation was sent until then. Normally terminal within\n  seconds; while Cognito is unavailable the backend retries (queue, then a\n  15-minute reconciler) and gives up after 24 h with `provider_unavailable`.\n  Two concurrent registrations of one login email: one succeeds, the other\n  gets 409.",
         "operationId": "register_member",
         "requestBody": {
           "content": {
@@ -1624,11 +1722,11 @@
         },
         "responses": {
           "201": {
-            "description": "Member created",
+            "description": "Member created; `effective_mode` and `provisioning` report the account outcome",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Member"
+                  "$ref": "#/components/schemas/ApiResponse_MemberCreatedResponse"
                 }
               }
             }
@@ -1654,7 +1752,94 @@
             }
           },
           "403": {
-            "description": "Caller lacks member:write, or is assigning a venue they do not have access to",
+            "description": "Caller lacks member:write, is assigning a venue they do not have access to, or is a venue-scoped caller creating a chain_wide member (owner/admin only)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A member with this email or phone number already exists (the value is never echoed)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/members/search": {
+      "post": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Venue-console member directory search.",
+        "description": "Search criteria travel in the body, never the URL, because names, emails and\nphone numbers are PII (a URL reaches tracing, gateway logs and browser\nhistory). Unknown fields are rejected with 400.\n\nScope is explicit, exactly one of:\n- `venue_id`: the selected venue. Lists chain-wide members plus venue-scoped\n  members assigned to it. The caller must have access to that venue.\n- `all_venues: true`: every venue in the tenant, owner/admin only.\n\n`status` is exact: `active`, `expired`, `suspended`, or `all` (default: every\nnon-cancelled record). Cancelled members are never listed. `q` (1-100 chars,\ntrimmed) matches first name, last name, full name, email and phone,\ncase-insensitively; `%` and `_` match literally. Cursor pagination: `limit`\n1-100 (default 20), `meta.next_cursor` is the next page's `cursor`.",
+        "operationId": "search_members",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Paginated directory page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedApiResponse_Vec_StaffMemberView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body, unknown field, missing or conflicting scope, or out-of-range value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks member:read, requested all_venues without owner/admin, or selected a venue they cannot access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Selected venue not found in this tenant",
             "content": {
               "application/json": {
                 "schema": {
@@ -1676,7 +1861,8 @@
         "tags": [
           "member"
         ],
-        "summary": "Get one member by id.",
+        "summary": "Get one member's base profile.",
+        "description": "The staff member view plus, in the same read, the explicit venue\nentitlements (`access`) and a display-safe account summary: `account.mode`\n(`roster` or `login`; a member counts as `login` as soon as provisioning was\nrequested), `account.invitation` (`not_applicable`, `pending`, `sent`,\n`linked_existing`, `failed`, `untracked` for logins created before invitation\ntracking, `accepted` once the login was observed active),\n`account.invitation_resend` / `account.session_revocation` (the latest of\neach, to poll after a 202), `account.email` (`not_applicable`, `verified`,\n`change_pending`, `change_failed`) with `account.email_change` (the latest\nsecure change; never the new address) and `account.provisioning` (the latest\nprovisioning operation's state and machine codes, or null). No\nidentity-provider identifier and no requester identity is ever returned.",
         "operationId": "get_member",
         "parameters": [
           {
@@ -1691,11 +1877,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Member",
+            "description": "Member base profile",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Member"
+                  "$ref": "#/components/schemas/ApiResponse_StaffMemberProfile"
                 }
               }
             }
@@ -1742,6 +1928,7 @@
           "member"
         ],
         "summary": "Update a member.",
+        "description": "Unknown fields are rejected with 400. In particular the former `is_active`\nfield (accepted but never applied) is no longer part of this contract: use\nthe explicit suspend/reactivate operations to change lifecycle state.",
         "operationId": "update_member",
         "parameters": [
           {
@@ -1749,6 +1936,15 @@
             "in": "path",
             "description": "Member id (UUID)",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expected_version",
+            "in": "query",
+            "description": "The member's `version` from a prior read. When present, a mismatch is a 409 VERSION_MISMATCH and nothing is written.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -1770,13 +1966,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Member"
+                  "$ref": "#/components/schemas/ApiResponse_StaffMemberView"
                 }
               }
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Validation error, including any unknown field (e.g. the removed is_active) or a malformed expected_version",
             "content": {
               "application/json": {
                 "schema": {
@@ -1814,6 +2010,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "VERSION_MISMATCH (stale expected_version), LOGIN_EMAIL_REQUIRES_SECURE_CHANGE (a login member's email, including one whose login provisioning is still in flight, cannot change here), or CONFLICT (duplicate email/phone, value never echoed)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1840,6 +2046,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "expected_version",
+            "in": "query",
+            "description": "The member's `version`; a mismatch is a 409 VERSION_MISMATCH.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -1858,7 +2073,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Member"
+                  "$ref": "#/components/schemas/ApiResponse_StaffMemberView"
                 }
               }
             }
@@ -1902,6 +2117,484 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "VERSION_MISMATCH (stale expected_version)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/members/{mid}/attendance": {
+      "get": {
+        "tags": [
+          "member"
+        ],
+        "summary": "A member's visits (Phase 5A DR-6): check-ins newest first over a bounded\nrange, with the range's visit count and the last visit.",
+        "description": "Range `[from, to)` as RFC 3339 instants (use `Z`, or percent-encode a `+`\noffset): `to` defaults to now, `from` to `to` minus 30 days; at most 366\ndays. Presets (7, 30, 90 days) are computed by the console. Page size\n`limit` 1..=100 (default 50). Next pages: send only `cursor` (the\n`next_cursor` of the previous page); it carries the first page's range and\nvenue, which are reused as is, so the list and `total_visits` cannot drift;\n`from`/`to`/`venue_id` sent with a cursor must match it (else 400).\nVenue scope: owner/admin see every venue (or one, with `venue_id`); other\nstaff see only the check-ins at their assigned venues, and a `venue_id`\noutside them is 403. `total_visits` counts the range within that scope;\n`last_visit_at` is the most recent visit within that scope at any time.\nItems never carry who performed the check-in.",
+        "operationId": "member_attendance",
+        "parameters": [
+          {
+            "name": "mid",
+            "in": "path",
+            "description": "Member id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Range start (inclusive), RFC 3339 (default: to minus 30 days)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Range end (exclusive), RFC 3339 (default: now)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "venue_id",
+            "in": "query",
+            "description": "Only this venue (must be one the caller may see)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor from the previous page (carries its range and venue)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size, clamped to 1..=100 (default 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The member's visits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_MemberAttendanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid from/to/venue_id/cursor/limit, from not before to, or a range over 366 days (fields named, values never echoed)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks member:read, the member is not in their scope, or venue_id is outside their venues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Member not found (owner/admin; other staff get 403 for a member outside their venues, existing or not)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/members/{mid}/email-change": {
+      "post": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Securely change a login member's sign-in email (owner/admin, DR-4).",
+        "description": "`Idempotency-Key` header REQUIRED: a replay with the same key and body\nreturns the stored 202 (header `Idempotency-Replayed: true`); the same key\nwith a different body is 422 `IDEMPOTENCY_KEY_REUSED`; a request with the\nsame key still being processed is 409 `IDEMPOTENCY_KEY_IN_PROGRESS` (retry\nlater with the same key; if it persists, the outcome is UNKNOWN: send the\nsame body again with a NEW key, which is safe: a change already in flight\nto that address is returned as is (202), one to another address answers\n409 `EMAIL_CHANGE_IN_PROGRESS`).\nAsynchronous: the\nidentity worker asks Cognito to change the email; Cognito keeps the CURRENT\nemail as the sign-in email and sends a code to the new address\n(`state: pending_verification`). The member enters it in the member app,\nwhich then calls `POST /gms/v1/me/email-change/confirm`; only then does the\nmember's `email` switch, and every session is revoked (`completed`,\n`email_changed`; `email_changed_sessions_kept` if the login became shared\nmeanwhile, since a global sign-out would reach the other organization). A\nlogin still INVITED (never signed in) cannot verify a code: its address is\nreplaced and a fresh invitation sent there instead (`email_changed_reinvited`;\nreceiving it proves possession; if the invitee signs in with the original\ninvitation first, their address is restored and a code sent instead). No\nstaff override for an active login:\nstaff can never mark a new address verified. Failure codes:\n`email_unavailable` (the address is already a sign-in email on IziWellPass,\nchecked before any code is sent; the other account is never revealed),\n`invalid_email`, `identity_shared`, `member_cancelled`, `account_not_found`,\n`verification_expired` (code not entered within 24 h of the backend sending\nthe first one, a code re-requested from the app does not extend it; the\npending address is withdrawn and the old email stays), `provider_unavailable`.\nThe new address never appears in any response.",
+        "operationId": "change_login_email",
+        "parameters": [
+          {
+            "name": "mid",
+            "in": "path",
+            "description": "Member id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Required; one key per intended change",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Change recorded (or the in-flight change to the same address)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_OperationView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing Idempotency-Key, invalid new_email, or new_email equal to the current email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not owner/admin or lacks member:write",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOT_A_LOGIN_MEMBER (roster: use the ordinary update), LOGIN_NOT_PROVISIONED, IDENTITY_SHARED, EMAIL_CHANGE_IN_PROGRESS (a change to another address is in flight), INVALID_LIFECYCLE_TRANSITION (cancelled), CONFLICT (another member holds or is changing to this email; never echoed), or IDEMPOTENCY_KEY_IN_PROGRESS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "IDEMPOTENCY_KEY_REUSED: the key was used with a different request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/members/{mid}/invitation-resend": {
+      "post": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Resend a member's login invitation (owner/admin).",
+        "description": "Asynchronous: records an `invitation_resend` operation and returns `202`\nwith it (`OperationView`). The identity worker reads the login's status in\nCognito: an invited login gets a new invitation (new temporary password,\n`result_code` `invitation_sent`); an active one fails\n`account_already_active` and the member then reads `account.invitation =\naccepted` (later resends are refused synchronously with 409). Other failure\ncodes: `account_not_invited`, `account_not_found`, `account_email_mismatch`\n(the member's email no longer signs in to the linked login),\n`identity_shared`, `member_cancelled`, `login_not_provisioned`,\n`invalid_email`, `missing_email`, `provider_unavailable`. Refused (409\n`IDENTITY_SHARED`) for a login another organization or a staff invite also\nuses, since a resend would invalidate their temporary password. Poll\n`GET /gms/v1/members/{mid}` (`account.invitation_resend`).\n\nFor a login member whose provisioning FAILED (no login yet), this retries\nthe provisioning instead: a new `provisioning` operation (`kind:\nprovisioning` in the 202), only while the tenant's effective policy still\ncreates logins. While a provisioning (a login still being created, e.g.\nright after registration) or a resend is in flight, the request returns\nthat operation (202, `kind` telling which) without dispatching again.",
+        "operationId": "resend_invitation",
+        "parameters": [
+          {
+            "name": "mid",
+            "in": "path",
+            "description": "Member id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Operation recorded (or the one already in flight)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_OperationView"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not owner/admin or lacks member:write",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOT_A_LOGIN_MEMBER (roster), ACCOUNT_ALREADY_ACTIVE, IDENTITY_SHARED (login used elsewhere), LOGIN_NOT_AVAILABLE (provisioning retry while the policy no longer creates logins), INVALID_LIFECYCLE_TRANSITION (cancelled member), or CONFLICT (retry: another member now holds this email, never echoed)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/members/{mid}/reactivate": {
+      "put": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Reactivate a suspended member (`suspended` -> `active`).",
+        "description": "The only way back from suspension. Returns 204 with no body. Same scope and\nsemantics as suspend: a member that is not suspended is a 409\n`INVALID_LIFECYCLE_TRANSITION` with `details.current_status`. Audited\n(`member.reactivated`) in the same transaction.",
+        "operationId": "reactivate_member",
+        "parameters": [
+          {
+            "name": "mid",
+            "in": "path",
+            "description": "Member id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Member reactivated (no body)"
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks member:write, or is a venue-scoped staff member and the target member is not entitled to any of the caller's venues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_LIFECYCLE_TRANSITION: member is not suspended; details = {operation, current_status, required_status}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      }
+    },
+    "/gms/v1/members/{mid}/session-revocation": {
+      "post": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Revoke every session of a member's login (owner/admin).",
+        "description": "Asynchronous: records a `session_revocation` operation and returns `202`\nwith it. The identity worker performs a Cognito global sign-out (all refresh\ntokens revoked; an already-issued token keeps working until it expires, and\nwith the API authorizer's cache access ends within about 10 minutes) and\ncompletes with `sessions_revoked` (also when the login no longer exists:\nnothing left to revoke). Other failure codes: `identity_shared`,\n`login_not_provisioned`, `provider_unavailable`. Refused when the login is also used by another\nIziWellPass organization or a staff console, because a global sign-out\nwould reach them too: 409 `IDENTITY_SHARED` (checked again by the worker,\nfailure code `identity_shared`). A repeat while one is in flight returns it;\nonce completed, a new request creates a new operation. Poll\n`GET /gms/v1/members/{mid}` (`account.session_revocation`).",
+        "operationId": "revoke_sessions",
+        "parameters": [
+          {
+            "name": "mid",
+            "in": "path",
+            "description": "Member id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Operation recorded (or the one already in flight)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_OperationView"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not owner/admin or lacks member:write",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOT_A_LOGIN_MEMBER (roster), LOGIN_NOT_PROVISIONED (login not created yet: no sessions), IDENTITY_SHARED (login used elsewhere)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1916,8 +2609,8 @@
         "tags": [
           "member"
         ],
-        "summary": "List a member's subscriptions.",
-        "description": "Optional `status` query param filters to one lifecycle state; omit it to\nreturn all statuses. An unrecognized status value is rejected with 400.",
+        "summary": "List a member's subscriptions (staff panel, Phase 5A slice 10).",
+        "description": "Newest first, each with its plan name and kind, venue name and the display\nname of the staff member who assigned it, joined server-side (one request\nper panel). Never the assigning staff member's Cognito identifier. Optional\n`status` filters to one lifecycle state; an unrecognized value is a 400\nnaming the field (the value is not echoed). A read: not gated by the\nActivityPricing capability, so a tenant that downgraded still sees its\nmembers' existing subscriptions (assigning is gated). Venue-scoped staff\n(receptionist, trainer) see only the subscriptions held at their assigned\nvenues; owner/admin see every venue.",
         "operationId": "list_subscriptions",
         "parameters": [
           {
@@ -1945,7 +2638,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Vec_MemberSubscription"
+                  "$ref": "#/components/schemas/ApiResponse_Vec_StaffSubscriptionView"
                 }
               }
             }
@@ -1971,7 +2664,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks member:read",
+            "description": "Caller lacks member:read, or the member is not in their scope",
             "content": {
               "application/json": {
                 "schema": {
@@ -1981,7 +2674,7 @@
             }
           },
           "404": {
-            "description": "Member not visible",
+            "description": "Member not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2002,6 +2695,7 @@
           "member"
         ],
         "summary": "Assign a plan to a member as a held subscription.",
+        "description": "Requires the ActivityPricing capability. Audited in the same transaction\n(`member.subscription_assigned`). Answers the same staff view as the list.",
         "operationId": "assign_subscription",
         "parameters": [
           {
@@ -2030,7 +2724,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_MemberSubscription"
+                  "$ref": "#/components/schemas/ApiResponse_StaffSubscriptionView"
                 }
               }
             }
@@ -2056,7 +2750,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks member:write, or the member is not entitled to the plan's venue",
+            "description": "Caller lacks member:write or ActivityPricing, the member is not in their scope, the plan's venue is not one of the caller's venues (venue-scoped staff), or the member is not entitled to the plan's venue",
             "content": {
               "application/json": {
                 "schema": {
@@ -2089,7 +2783,7 @@
           "member"
         ],
         "summary": "Mark a subscription paid or cancel it.",
-        "description": "Set `payment_status` to mark paid; set `cancel=true` to cancel. At least one\nof the two must be provided.",
+        "description": "Set `payment_status` to mark paid; set `cancel=true` to cancel. At least one\nof the two must be provided. Audited in the same transaction\n(`member.subscription_payment_changed` / `member.subscription_cancelled`)\nwhen the value actually changes; a repeat is a no-op. Venue-scoped staff\nmay only change subscriptions held at their assigned venues (else 403).\nAnswers the staff view.",
         "operationId": "update_subscription",
         "parameters": [
           {
@@ -2127,7 +2821,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_MemberSubscription"
+                  "$ref": "#/components/schemas/ApiResponse_StaffSubscriptionView"
                 }
               }
             }
@@ -2153,7 +2847,7 @@
             }
           },
           "403": {
-            "description": "Caller lacks member:write",
+            "description": "Caller lacks member:write, the member is not in their scope, or the subscription is held at a venue outside the caller's venues",
             "content": {
               "application/json": {
                 "schema": {
@@ -2185,7 +2879,8 @@
         "tags": [
           "member"
         ],
-        "summary": "Suspend a member.",
+        "summary": "Suspend an active member (`active` -> `suspended`).",
+        "description": "Returns 204 with no body. Owner, admin, or a receptionist for a member in\ntheir venues. Only an `active` member can be suspended; a member that exists\nbut is not active (already suspended, expired or cancelled; a repeat counts)\nis a 409 `INVALID_LIFECYCLE_TRANSITION` whose `details.current_status` gives\nthe actual status. Nothing is deleted; bookings, attendance, subscriptions\nand audit history are kept. Audited (`member.suspended`) in the same\ntransaction.",
         "operationId": "suspend_member",
         "parameters": [
           {
@@ -2199,15 +2894,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Member suspended",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_Member"
-                }
-              }
-            }
+          "204": {
+            "description": "Member suspended (no body)"
           },
           "401": {
             "description": "Missing/invalid ID token",
@@ -2238,6 +2926,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "INVALID_LIFECYCLE_TRANSITION: member is not active; details = {operation, current_status, required_status}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2248,12 +2946,77 @@
       }
     },
     "/gms/v1/members/{mid}/venues": {
+      "get": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Read a member's current venue entitlement (scope + explicit venue ids).",
+        "operationId": "get_member_venues",
+        "parameters": [
+          {
+            "name": "mid",
+            "in": "path",
+            "description": "Member id (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current entitlement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_MemberAccessView"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks member:read, or is a venue-scoped staff member and the member is not in their scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Member not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      },
       "put": {
         "tags": [
           "member"
         ],
         "summary": "Replace a member's venue entitlements (implies access_scope=venue_scoped).",
-        "description": "Down-scope guarded: narrowing access is rejected with 409 if the member still\nhas future non-cancelled bookings at any venue not in the new set (this\napplies to chain-wide members being scoped down as well as to shrinking an\nexisting set). A venue-scoped staff caller may only assign venues they have\naccess to, and only for members already in their scope.",
+        "description": "Down-scope guarded: narrowing access is rejected with 409\n`ACCESS_DOWNSCOPE_BLOCKED` if the member still has future non-cancelled\nbookings (slot date today or later) at any venue not in the new set (this\napplies to chain-wide members being scoped down as well as to shrinking an\nexisting set). `error.details.affected_venues` lists each such venue with\nits count: `[{\"venue_id\", \"future_bookings\"}]`; nothing is written. The\ncheck runs under the member's row lock, which booking creation also takes,\nso a booking made concurrently is either counted or refused. A\nvenue-scoped staff caller may only assign venues they have access to, and\nonly for members already in their scope.",
         "operationId": "set_member_venues",
         "parameters": [
           {
@@ -2261,6 +3024,15 @@
             "in": "path",
             "description": "Member id (UUID)",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expected_version",
+            "in": "query",
+            "description": "The member's `version`; a mismatch is a 409 VERSION_MISMATCH.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -2328,7 +3100,7 @@
             }
           },
           "409": {
-            "description": "Member has future bookings at a venue not in the new set",
+            "description": "ACCESS_DOWNSCOPE_BLOCKED (details.affected_venues: venue_id + future_bookings for each venue outside the new set), or VERSION_MISMATCH",
             "content": {
               "application/json": {
                 "schema": {
@@ -3495,11 +4267,66 @@
       }
     },
     "/gms/v1/tenant/settings": {
+      "get": {
+        "tags": [
+          "member"
+        ],
+        "summary": "Read the tenant's member-login policy. Owner/admin only.",
+        "description": "Returns the configured mode, the mode new-member provisioning actually\napplies (`effective_mode`), whether the plan includes the required\ncapability, and `downgrade_reason` when `login` is configured but the plan\ndoes not allow it (new members are then created as roster). The policy is\ntenant-wide, never per venue or per member.",
+        "operationId": "get_tenant_settings",
+        "responses": {
+          "200": {
+            "description": "Tenant member-login policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_TenantSettingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid ID token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller lacks venue:write (owner/admin only)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cognito_id_token": []
+          }
+        ]
+      },
       "patch": {
         "tags": [
           "member"
         ],
-        "summary": "Set the tenant's member-login policy (login vs roster). Owner/admin only;\nenabling login requires the MemberSelfService capability (Starter+).\nSwitching to roster is always allowed (downgrade is never blocked).",
+        "summary": "Set the tenant's member-login policy (login vs roster). Owner/admin only;\nenabling login requires the MemberSelfService capability (Starter+).\nSwitching to roster is always allowed (downgrade is never blocked) and\naffects NEW members only: existing login identities are not removed. The\nchange and its audit row are written in one transaction. The response is the\nsame policy view as the GET (the configured `member_login_mode` is kept at\nthe top level for existing readers).",
         "operationId": "patch_tenant_settings",
         "requestBody": {
           "content": {
@@ -3513,11 +4340,11 @@
         },
         "responses": {
           "200": {
-            "description": "Updated tenant member-login mode",
+            "description": "Updated tenant member-login policy",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_UpdateTenantSettingsRequest"
+                  "$ref": "#/components/schemas/ApiResponse_TenantSettingsResponse"
                 }
               }
             }
@@ -7040,7 +7867,7 @@
             }
           },
           "422": {
-            "description": "Idempotency-Key reused with a different request body",
+            "description": "IDEMPOTENCY_KEY_REUSED: the Idempotency-Key was already used with a different request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -8274,7 +9101,7 @@
           }
         }
       },
-      "ApiResponse_Member": {
+      "ApiResponse_MemberAccessView": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
         "required": [
@@ -8284,88 +9111,21 @@
         "properties": {
           "data": {
             "type": "object",
-            "description": "A person enrolled at a venue with a membership.",
+            "description": "A member's venue entitlement, as the console reads and edits it.",
             "required": [
-              "id",
-              "tenant_id",
-              "first_name",
-              "last_name",
-              "membership_type",
-              "membership_status",
-              "membership_start",
               "access_scope",
-              "is_active",
-              "created_at",
-              "updated_at"
+              "venue_ids"
             ],
             "properties": {
               "access_scope": {
                 "$ref": "#/components/schemas/AccessScope"
               },
-              "created_at": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "email": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "first_name": {
-                "type": "string"
-              },
-              "id": {
-                "$ref": "#/components/schemas/MemberId"
-              },
-              "is_active": {
-                "type": "boolean"
-              },
-              "last_name": {
-                "type": "string"
-              },
-              "membership_end": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "date"
-              },
-              "membership_start": {
-                "type": "string",
-                "format": "date"
-              },
-              "membership_status": {
-                "$ref": "#/components/schemas/MembershipStatus"
-              },
-              "membership_type": {
-                "$ref": "#/components/schemas/MembershipType"
-              },
-              "notes": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "phone": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "tenant_id": {
-                "$ref": "#/components/schemas/TenantId"
-              },
-              "updated_at": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "user_id": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Auth user_id — None for walk-in members (no account)."
+              "venue_ids": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/VenueId"
+                },
+                "description": "Explicit venue entitlements. Empty for `chain_wide` (every venue)."
               }
             }
           },
@@ -8374,7 +9134,7 @@
           }
         }
       },
-      "ApiResponse_MemberSubscription": {
+      "ApiResponse_MemberAttendanceResponse": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
         "required": [
@@ -8384,90 +9144,92 @@
         "properties": {
           "data": {
             "type": "object",
-            "description": "A member's held instance of a plan.",
+            "description": "`GET /gms/v1/members/{mid}/attendance` response.",
             "required": [
-              "id",
-              "tenant_id",
-              "member_id",
-              "plan_id",
-              "venue_id",
-              "status",
-              "starts_on",
-              "payment_status",
-              "price_amount_minor",
-              "price_currency",
-              "created_at",
-              "updated_at"
+              "from",
+              "to",
+              "total_visits",
+              "items"
             ],
             "properties": {
-              "assigned_by": {
+              "from": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The range actually served, `[from, to)`."
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AttendanceItem"
+                }
+              },
+              "last_visit_at": {
                 "type": [
                   "string",
                   "null"
-                ]
+                ],
+                "format": "date-time",
+                "description": "The member's most recent visit within the caller's venue scope, at any\ntime (not bounded by the range)."
               },
-              "created_at": {
+              "next_cursor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Pass back as `cursor` for the next page; `None` on the last page."
+              },
+              "to": {
                 "type": "string",
                 "format": "date-time"
               },
-              "entries_remaining": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "format": "int32"
-              },
-              "entries_total": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "format": "int32"
-              },
-              "expires_on": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "date"
-              },
-              "id": {
-                "$ref": "#/components/schemas/MemberSubscriptionId"
-              },
-              "member_id": {
-                "$ref": "#/components/schemas/MemberId"
-              },
-              "payment_status": {
-                "$ref": "#/components/schemas/PaymentStatus"
-              },
-              "plan_id": {
-                "$ref": "#/components/schemas/ActivityPlanId"
-              },
-              "price_amount_minor": {
+              "total_visits": {
                 "type": "integer",
-                "format": "int64"
-              },
-              "price_currency": {
-                "$ref": "#/components/schemas/Currency"
-              },
-              "starts_on": {
-                "type": "string",
-                "format": "date"
-              },
-              "status": {
-                "$ref": "#/components/schemas/SubscriptionStatus"
-              },
-              "tenant_id": {
-                "$ref": "#/components/schemas/TenantId"
-              },
-              "updated_at": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "venue_id": {
-                "$ref": "#/components/schemas/VenueId"
+                "format": "int64",
+                "description": "Visits in the range (every page, within the caller's venue scope)."
               }
             }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_MemberCreatedResponse": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffMemberView"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "effective_mode"
+                ],
+                "properties": {
+                  "effective_mode": {
+                    "$ref": "#/components/schemas/MemberAccountMode"
+                  },
+                  "provisioning": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/components/schemas/OperationView"
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "description": "`POST /gms/v1/members` response: the created member, the account mode the\ntenant's policy actually applied, and (login mode) the provisioning\noperation. Provisioning is asynchronous: `provisioning.state` starts at\n`requested`; poll the profile's `account` until it is terminal."
           },
           "request_id": {
             "type": "string"
@@ -8492,7 +9254,8 @@
               "membership_type",
               "membership_status",
               "membership_start",
-              "access_scope"
+              "access_scope",
+              "pending_email_change"
             ],
             "properties": {
               "access_scope": {
@@ -8533,6 +9296,10 @@
               "membership_type": {
                 "type": "string",
                 "description": "`MembershipType::as_str()`."
+              },
+              "pending_email_change": {
+                "type": "boolean",
+                "description": "A secure email change started by staff is waiting for this member's\ncode (show the \"enter the code sent to your new address\" screen). A flag\nonly: the member already knows the address."
               },
               "phone": {
                 "type": [
@@ -8579,6 +9346,56 @@
               },
               "venue": {
                 "$ref": "#/components/schemas/VenueInfo"
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_OperationView": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Display-safe operation summary (no email, no provider identifiers).",
+            "required": [
+              "id",
+              "kind",
+              "state",
+              "updated_at"
+            ],
+            "properties": {
+              "failure_code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "id": {
+                "$ref": "#/components/schemas/IdentityOperationId"
+              },
+              "kind": {
+                "$ref": "#/components/schemas/IdentityOperationKind"
+              },
+              "result_code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "$ref": "#/components/schemas/IdentityOperationState"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
               }
             }
           },
@@ -9205,6 +10022,254 @@
           }
         }
       },
+      "ApiResponse_StaffMemberProfile": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffMemberView"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "access",
+                  "account"
+                ],
+                "properties": {
+                  "access": {
+                    "$ref": "#/components/schemas/MemberAccessView"
+                  },
+                  "account": {
+                    "$ref": "#/components/schemas/MemberAccountSummary"
+                  }
+                }
+              }
+            ],
+            "description": "`GET /gms/v1/members/{mid}`: the canonical base profile. The member view\nplus its explicit venue entitlements and a display-safe account summary, in\none read (no browser fan-out for entitlements)."
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_StaffMemberView": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "A member as the venue console sees it.\n\nExcluded by design: `user_id` (raw Cognito `sub`). Account/identity state is\nexposed separately as a display-safe summary, never as provider identifiers.",
+            "required": [
+              "id",
+              "tenant_id",
+              "first_name",
+              "last_name",
+              "membership_type",
+              "membership_status",
+              "membership_start",
+              "access_scope",
+              "is_active",
+              "created_at",
+              "updated_at",
+              "version"
+            ],
+            "properties": {
+              "access_scope": {
+                "$ref": "#/components/schemas/AccessScope"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "email": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "id": {
+                "$ref": "#/components/schemas/MemberId"
+              },
+              "is_active": {
+                "type": "boolean",
+                "description": "Legacy derived flag kept for existing readers: `true` for `active` and\n`expired` (NOT a lifecycle control; use the suspend/reactivate routes)."
+              },
+              "last_name": {
+                "type": "string"
+              },
+              "membership_end": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              },
+              "membership_start": {
+                "type": "string",
+                "format": "date"
+              },
+              "membership_status": {
+                "$ref": "#/components/schemas/MembershipStatus"
+              },
+              "membership_type": {
+                "$ref": "#/components/schemas/MembershipType"
+              },
+              "notes": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "phone": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tenant_id": {
+                "$ref": "#/components/schemas/TenantId"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "version": {
+                "type": "string",
+                "description": "Optimistic-concurrency token (`updated_at`, RFC 3339). Echo it back as\n`expected_version` on an edit; a mismatch is a 409."
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_StaffSubscriptionView": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Staff view of one member subscription (Phase 5A slice 10): the row plus\nthe names a panel shows, joined server-side. Hand-mapped (never a blanket\nconversion): the assigning staff member appears by display name only,\nnever by Cognito identifier.",
+            "required": [
+              "id",
+              "tenant_id",
+              "member_id",
+              "plan_id",
+              "plan_name",
+              "plan_kind",
+              "venue_id",
+              "venue_name",
+              "status",
+              "starts_on",
+              "payment_status",
+              "price_amount_minor",
+              "price_currency",
+              "created_at",
+              "updated_at"
+            ],
+            "properties": {
+              "assigned_by_name": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Display name of the staff member who assigned it, if still known."
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "entries_remaining": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "int32"
+              },
+              "entries_total": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "int32"
+              },
+              "expires_on": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              },
+              "id": {
+                "$ref": "#/components/schemas/MemberSubscriptionId"
+              },
+              "member_id": {
+                "$ref": "#/components/schemas/MemberId"
+              },
+              "payment_status": {
+                "$ref": "#/components/schemas/PaymentStatus"
+              },
+              "plan_id": {
+                "$ref": "#/components/schemas/ActivityPlanId"
+              },
+              "plan_kind": {
+                "$ref": "#/components/schemas/PlanKind"
+              },
+              "plan_name": {
+                "type": "string"
+              },
+              "price_amount_minor": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "price_currency": {
+                "$ref": "#/components/schemas/Currency"
+              },
+              "starts_on": {
+                "type": "string",
+                "format": "date"
+              },
+              "status": {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              },
+              "tenant_id": {
+                "$ref": "#/components/schemas/TenantId"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "venue_id": {
+                "$ref": "#/components/schemas/VenueId"
+              },
+              "venue_name": {
+                "type": "string"
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse_TenantCapabilitiesResponse": {
         "type": "object",
         "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
@@ -9231,6 +10296,35 @@
               "plan": {
                 "$ref": "#/components/schemas/Plan",
                 "description": "The tenant's current subscription tier (token-context derived)."
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_TenantSettingsResponse": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "`GET`/`PATCH /gms/v1/tenant/settings` response.\n\n`member_login_mode` (the configured mode) keeps the historical PATCH echo\nshape so existing readers keep working; `member_login` is the full view.",
+            "required": [
+              "member_login_mode",
+              "member_login"
+            ],
+            "properties": {
+              "member_login": {
+                "$ref": "#/components/schemas/MemberLoginPolicy"
+              },
+              "member_login_mode": {
+                "$ref": "#/components/schemas/MemberLoginMode"
               }
             }
           },
@@ -9410,32 +10504,6 @@
               },
               "venue_id": {
                 "$ref": "#/components/schemas/VenueId"
-              }
-            }
-          },
-          "request_id": {
-            "type": "string"
-          }
-        }
-      },
-      "ApiResponse_UpdateTenantSettingsRequest": {
-        "type": "object",
-        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
-        "required": [
-          "data",
-          "request_id"
-        ],
-        "properties": {
-          "data": {
-            "type": "object",
-            "description": "Body of `PATCH /gms/v1/tenant/settings`: the tenant's member-login policy.\n\nDeliberately a single required field (not an `Option`): the route is a full\nset of the policy, not a partial merge, so the caller always states the mode\nit wants. Enabling `Login` is feature-gated on `MemberSelfService` at the\nhandler; switching to `Roster` is always allowed (a downgrade is never\nblocked).",
-            "required": [
-              "member_login_mode"
-            ],
-            "properties": {
-              "member_login_mode": {
-                "$ref": "#/components/schemas/MemberLoginMode",
-                "description": "The member-login mode to set for this tenant."
               }
             }
           },
@@ -9785,109 +10853,6 @@
                 },
                 "venue_name": {
                   "type": "string"
-                }
-              }
-            }
-          },
-          "request_id": {
-            "type": "string"
-          }
-        }
-      },
-      "ApiResponse_Vec_MemberSubscription": {
-        "type": "object",
-        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
-        "required": [
-          "data",
-          "request_id"
-        ],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "description": "A member's held instance of a plan.",
-              "required": [
-                "id",
-                "tenant_id",
-                "member_id",
-                "plan_id",
-                "venue_id",
-                "status",
-                "starts_on",
-                "payment_status",
-                "price_amount_minor",
-                "price_currency",
-                "created_at",
-                "updated_at"
-              ],
-              "properties": {
-                "assigned_by": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "created_at": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "entries_remaining": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "format": "int32"
-                },
-                "entries_total": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "format": "int32"
-                },
-                "expires_on": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date"
-                },
-                "id": {
-                  "$ref": "#/components/schemas/MemberSubscriptionId"
-                },
-                "member_id": {
-                  "$ref": "#/components/schemas/MemberId"
-                },
-                "payment_status": {
-                  "$ref": "#/components/schemas/PaymentStatus"
-                },
-                "plan_id": {
-                  "$ref": "#/components/schemas/ActivityPlanId"
-                },
-                "price_amount_minor": {
-                  "type": "integer",
-                  "format": "int64"
-                },
-                "price_currency": {
-                  "$ref": "#/components/schemas/Currency"
-                },
-                "starts_on": {
-                  "type": "string",
-                  "format": "date"
-                },
-                "status": {
-                  "$ref": "#/components/schemas/SubscriptionStatus"
-                },
-                "tenant_id": {
-                  "$ref": "#/components/schemas/TenantId"
-                },
-                "updated_at": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "venue_id": {
-                  "$ref": "#/components/schemas/VenueId"
                 }
               }
             }
@@ -10540,6 +11505,122 @@
                   "format": "date-time"
                 },
                 "user_id": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponse_Vec_StaffSubscriptionView": {
+        "type": "object",
+        "description": "Standard success response envelope matching the LLD format.\n\nAll successful API responses wrap the payload in a `data` field\nalongside a `request_id` for traceability:\n\n```json\n{\n  \"data\": { ... },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Staff view of one member subscription (Phase 5A slice 10): the row plus\nthe names a panel shows, joined server-side. Hand-mapped (never a blanket\nconversion): the assigning staff member appears by display name only,\nnever by Cognito identifier.",
+              "required": [
+                "id",
+                "tenant_id",
+                "member_id",
+                "plan_id",
+                "plan_name",
+                "plan_kind",
+                "venue_id",
+                "venue_name",
+                "status",
+                "starts_on",
+                "payment_status",
+                "price_amount_minor",
+                "price_currency",
+                "created_at",
+                "updated_at"
+              ],
+              "properties": {
+                "assigned_by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Display name of the staff member who assigned it, if still known."
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "entries_remaining": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int32"
+                },
+                "entries_total": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int32"
+                },
+                "expires_on": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "id": {
+                  "$ref": "#/components/schemas/MemberSubscriptionId"
+                },
+                "member_id": {
+                  "$ref": "#/components/schemas/MemberId"
+                },
+                "payment_status": {
+                  "$ref": "#/components/schemas/PaymentStatus"
+                },
+                "plan_id": {
+                  "$ref": "#/components/schemas/ActivityPlanId"
+                },
+                "plan_kind": {
+                  "$ref": "#/components/schemas/PlanKind"
+                },
+                "plan_name": {
+                  "type": "string"
+                },
+                "price_amount_minor": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "price_currency": {
+                  "$ref": "#/components/schemas/Currency"
+                },
+                "starts_on": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "status": {
+                  "$ref": "#/components/schemas/SubscriptionStatus"
+                },
+                "tenant_id": {
+                  "$ref": "#/components/schemas/TenantId"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "venue_id": {
+                  "$ref": "#/components/schemas/VenueId"
+                },
+                "venue_name": {
                   "type": "string"
                 }
               }
@@ -11214,6 +12295,57 @@
           }
         }
       },
+      "AttendanceItem": {
+        "type": "object",
+        "description": "One visit (display-safe: ids, venue name, time, method; never who scanned).",
+        "required": [
+          "id",
+          "venue_id",
+          "venue_name",
+          "checked_in_at",
+          "method",
+          "kind"
+        ],
+        "properties": {
+          "booking_id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BookingId"
+              }
+            ]
+          },
+          "checked_in_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "$ref": "#/components/schemas/CheckInId"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AttendanceKind"
+          },
+          "method": {
+            "$ref": "#/components/schemas/CheckInMethod"
+          },
+          "venue_id": {
+            "$ref": "#/components/schemas/VenueId"
+          },
+          "venue_name": {
+            "type": "string"
+          }
+        }
+      },
+      "AttendanceKind": {
+        "type": "string",
+        "description": "How a visit happened.",
+        "enum": [
+          "booked",
+          "walk_in"
+        ]
+      },
       "AttendanceStats": {
         "type": "object",
         "description": "Attendance statistics for a venue on a given date.",
@@ -11588,7 +12720,8 @@
         "description": "How the check-in was performed.",
         "enum": [
           "qr",
-          "manual"
+          "manual",
+          "wallet"
         ]
       },
       "CheckinScanMode": {
@@ -12015,6 +13148,29 @@
           }
         }
       },
+      "EmailChangeRequest": {
+        "type": "object",
+        "description": "`POST /gms/v1/members/{mid}/email-change`: the new sign-in email for a login\nmember (secure change, DR-4). Unknown fields are rejected.",
+        "required": [
+          "new_email"
+        ],
+        "properties": {
+          "new_email": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmailState": {
+        "type": "string",
+        "description": "The member's login email, as the console shows it.",
+        "enum": [
+          "not_applicable",
+          "verified",
+          "change_pending",
+          "change_failed"
+        ]
+      },
       "ErrorBody": {
         "type": "object",
         "description": "The `error` object.",
@@ -12097,6 +13253,45 @@
           }
         }
       },
+      "IdentityOperationId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "Unique identifier for a member identity operation (provisioning,\ninvitation resend, session revocation, secure email change)."
+      },
+      "IdentityOperationKind": {
+        "type": "string",
+        "enum": [
+          "provisioning",
+          "invitation_resend",
+          "session_revocation",
+          "email_change"
+        ]
+      },
+      "IdentityOperationState": {
+        "type": "string",
+        "enum": [
+          "requested",
+          "dispatched",
+          "pending_verification",
+          "verified",
+          "completed",
+          "failed",
+          "expired"
+        ]
+      },
+      "InvitationState": {
+        "type": "string",
+        "description": "The member's initial-invitation state, as the console shows it.",
+        "enum": [
+          "not_applicable",
+          "pending",
+          "sent",
+          "linked_existing",
+          "failed",
+          "untracked",
+          "accepted"
+        ]
+      },
       "InviteStaffRequest": {
         "type": "object",
         "description": "Request to invite a new staff member.",
@@ -12127,6 +13322,13 @@
             "description": "Venues to assign the new staff member to. Ignored for owner/admin (all\nvenues). Empty for trainer/receptionist = no venue access until assigned."
           }
         }
+      },
+      "LoginModeDowngradeReason": {
+        "type": "string",
+        "description": "Why the effective mode differs from the configured one.",
+        "enum": [
+          "plan_lacks_member_self_service"
+        ]
       },
       "ManualCheckinRequest": {
         "type": "object",
@@ -12273,92 +13475,185 @@
           }
         }
       },
-      "Member": {
+      "MemberAccessView": {
         "type": "object",
-        "description": "A person enrolled at a venue with a membership.",
+        "description": "A member's venue entitlement, as the console reads and edits it.",
         "required": [
-          "id",
-          "tenant_id",
-          "first_name",
-          "last_name",
-          "membership_type",
-          "membership_status",
-          "membership_start",
           "access_scope",
-          "is_active",
-          "created_at",
-          "updated_at"
+          "venue_ids"
         ],
         "properties": {
           "access_scope": {
             "$ref": "#/components/schemas/AccessScope"
           },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "email": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "first_name": {
-            "type": "string"
-          },
-          "id": {
-            "$ref": "#/components/schemas/MemberId"
-          },
-          "is_active": {
-            "type": "boolean"
-          },
-          "last_name": {
-            "type": "string"
-          },
-          "membership_end": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date"
-          },
-          "membership_start": {
-            "type": "string",
-            "format": "date"
-          },
-          "membership_status": {
-            "$ref": "#/components/schemas/MembershipStatus"
-          },
-          "membership_type": {
-            "$ref": "#/components/schemas/MembershipType"
-          },
-          "notes": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "phone": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "tenant_id": {
-            "$ref": "#/components/schemas/TenantId"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "user_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Auth user_id — None for walk-in members (no account)."
+          "venue_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VenueId"
+            },
+            "description": "Explicit venue entitlements. Empty for `chain_wide` (every venue)."
           }
         }
+      },
+      "MemberAccountMode": {
+        "type": "string",
+        "description": "Whether the member signs in. Display-safe: never the identifier.",
+        "enum": [
+          "roster",
+          "login"
+        ]
+      },
+      "MemberAccountSummary": {
+        "type": "object",
+        "description": "Display-safe account summary: never the identity itself.",
+        "required": [
+          "mode",
+          "invitation",
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/EmailState",
+            "description": "The login email's state (`not_applicable` for roster)."
+          },
+          "email_change": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OperationView",
+                "description": "The latest secure email change, if any (never the new address itself:\nthe profile's `email` switches only once the member verified it)."
+              }
+            ]
+          },
+          "invitation": {
+            "$ref": "#/components/schemas/InvitationState",
+            "description": "State of the login invitation (`not_applicable` for roster)."
+          },
+          "invitation_resend": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OperationView",
+                "description": "The latest invitation resend, if any: poll it after a `202`."
+              }
+            ]
+          },
+          "mode": {
+            "$ref": "#/components/schemas/MemberAccountMode"
+          },
+          "provisioning": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OperationView",
+                "description": "The latest login-provisioning operation, if any (codes only, no PII)."
+              }
+            ]
+          },
+          "session_revocation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OperationView",
+                "description": "The latest session revocation, if any: poll it after a `202`."
+              }
+            ]
+          }
+        }
+      },
+      "MemberAttendanceResponse": {
+        "type": "object",
+        "description": "`GET /gms/v1/members/{mid}/attendance` response.",
+        "required": [
+          "from",
+          "to",
+          "total_visits",
+          "items"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The range actually served, `[from, to)`."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceItem"
+            }
+          },
+          "last_visit_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The member's most recent visit within the caller's venue scope, at any\ntime (not bounded by the range)."
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass back as `cursor` for the next page; `None` on the last page."
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "total_visits": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Visits in the range (every page, within the caller's venue scope)."
+          }
+        }
+      },
+      "MemberCreatedResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StaffMemberView"
+          },
+          {
+            "type": "object",
+            "required": [
+              "effective_mode"
+            ],
+            "properties": {
+              "effective_mode": {
+                "$ref": "#/components/schemas/MemberAccountMode"
+              },
+              "provisioning": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/OperationView"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "description": "`POST /gms/v1/members` response: the created member, the account mode the\ntenant's policy actually applied, and (login mode) the provisioning\noperation. Provisioning is asynchronous: `provisioning.state` starts at\n`requested`; poll the profile's `account` until it is terminal."
+      },
+      "MemberDirectoryStatus": {
+        "type": "string",
+        "description": "Exact directory status filter. Unlike the legacy `MemberActivityFilter`\n(where `active` also admits `expired`), each value admits exactly one stored\nstatus, and `all` admits every non-cancelled record. Cancelled members are\nnever listed.",
+        "enum": [
+          "active",
+          "expired",
+          "suspended",
+          "all"
+        ]
       },
       "MemberId": {
         "type": "string",
@@ -12373,92 +13668,92 @@
           "roster"
         ]
       },
-      "MemberSubscription": {
+      "MemberLoginPolicy": {
         "type": "object",
-        "description": "A member's held instance of a plan.",
+        "description": "The console's view of the tenant member-login policy.",
         "required": [
-          "id",
-          "tenant_id",
-          "member_id",
-          "plan_id",
-          "venue_id",
-          "status",
-          "starts_on",
-          "payment_status",
-          "price_amount_minor",
-          "price_currency",
-          "created_at",
-          "updated_at"
+          "configured_mode",
+          "effective_mode",
+          "required_capability",
+          "capability_available"
         ],
         "properties": {
-          "assigned_by": {
-            "type": [
-              "string",
-              "null"
+          "capability_available": {
+            "type": "boolean",
+            "description": "Whether the tenant's current plan includes that capability (i.e.\nwhether enabling `login` would take effect)."
+          },
+          "configured_mode": {
+            "$ref": "#/components/schemas/MemberLoginMode",
+            "description": "What owner/admin configured (defaults to `roster` when never set)."
+          },
+          "downgrade_reason": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LoginModeDowngradeReason",
+                "description": "Set when `effective_mode` differs from `configured_mode`."
+              }
             ]
           },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
+          "effective_mode": {
+            "$ref": "#/components/schemas/MemberLoginMode",
+            "description": "What new-member provisioning actually applies right now."
           },
-          "entries_remaining": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32"
+          "required_capability": {
+            "$ref": "#/components/schemas/Capability",
+            "description": "The capability `login` requires."
+          }
+        }
+      },
+      "MemberSearchRequest": {
+        "type": "object",
+        "description": "Body of `POST /gms/v1/members/search`.\n\nScope is explicit: exactly one of `venue_id` (the console's selected venue,\nthe default view) or `all_venues: true` (owner/admin only).",
+        "properties": {
+          "all_venues": {
+            "type": "boolean",
+            "description": "Every venue in the tenant. Owner/admin only."
           },
-          "entries_total": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32"
-          },
-          "expires_on": {
+          "cursor": {
             "type": [
               "string",
               "null"
             ],
-            "format": "date"
+            "description": "Opaque cursor from a previous page's `meta.next_cursor`."
           },
-          "id": {
-            "$ref": "#/components/schemas/MemberSubscriptionId"
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Page size, 1 to 100 (default 20)."
           },
-          "member_id": {
-            "$ref": "#/components/schemas/MemberId"
-          },
-          "payment_status": {
-            "$ref": "#/components/schemas/PaymentStatus"
-          },
-          "plan_id": {
-            "$ref": "#/components/schemas/ActivityPlanId"
-          },
-          "price_amount_minor": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "price_currency": {
-            "$ref": "#/components/schemas/Currency"
-          },
-          "starts_on": {
-            "type": "string",
-            "format": "date"
+          "q": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Free-text term matched (case-insensitive, substring) against first name,\nlast name, full name, email and phone. `%` and `_` match literally."
           },
           "status": {
-            "$ref": "#/components/schemas/SubscriptionStatus"
-          },
-          "tenant_id": {
-            "$ref": "#/components/schemas/TenantId"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
+            "$ref": "#/components/schemas/MemberDirectoryStatus",
+            "description": "Exact status filter; defaults to `all` (every non-cancelled record)."
           },
           "venue_id": {
-            "$ref": "#/components/schemas/VenueId"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VenueId",
+                "description": "Selected venue. Members entitled to it are listed: chain-wide members\nplus venue-scoped members assigned to this venue."
+              }
+            ]
           }
-        }
+        },
+        "additionalProperties": false
       },
       "MemberSubscriptionId": {
         "type": "string",
@@ -12523,7 +13818,8 @@
           "membership_type",
           "membership_status",
           "membership_start",
-          "access_scope"
+          "access_scope",
+          "pending_email_change"
         ],
         "properties": {
           "access_scope": {
@@ -12564,6 +13860,10 @@
           "membership_type": {
             "type": "string",
             "description": "`MembershipType::as_str()`."
+          },
+          "pending_email_change": {
+            "type": "boolean",
+            "description": "A secure email change started by staff is waiting for this member's\ncode (show the \"enter the code sent to your new address\" screen). A flag\nonly: the member already knows the address."
           },
           "phone": {
             "type": [
@@ -12713,6 +14013,43 @@
           }
         }
       },
+      "OperationView": {
+        "type": "object",
+        "description": "Display-safe operation summary (no email, no provider identifiers).",
+        "required": [
+          "id",
+          "kind",
+          "state",
+          "updated_at"
+        ],
+        "properties": {
+          "failure_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "$ref": "#/components/schemas/IdentityOperationId"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/IdentityOperationKind"
+          },
+          "result_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/IdentityOperationState"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "OrgInfo": {
         "type": "object",
         "required": [
@@ -12724,113 +14061,6 @@
             "type": "string"
           },
           "slug": {
-            "type": "string"
-          }
-        }
-      },
-      "PaginatedApiResponse_Vec_Member": {
-        "type": "object",
-        "description": "Paginated response envelope with cursor metadata.\n\n```json\n{\n  \"data\": [...],\n  \"meta\": { \"next_cursor\": \"abc123\" },\n  \"request_id\": \"req_abc123\"\n}\n```",
-        "required": [
-          "data",
-          "meta",
-          "request_id"
-        ],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "description": "A person enrolled at a venue with a membership.",
-              "required": [
-                "id",
-                "tenant_id",
-                "first_name",
-                "last_name",
-                "membership_type",
-                "membership_status",
-                "membership_start",
-                "access_scope",
-                "is_active",
-                "created_at",
-                "updated_at"
-              ],
-              "properties": {
-                "access_scope": {
-                  "$ref": "#/components/schemas/AccessScope"
-                },
-                "created_at": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "email": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "first_name": {
-                  "type": "string"
-                },
-                "id": {
-                  "$ref": "#/components/schemas/MemberId"
-                },
-                "is_active": {
-                  "type": "boolean"
-                },
-                "last_name": {
-                  "type": "string"
-                },
-                "membership_end": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date"
-                },
-                "membership_start": {
-                  "type": "string",
-                  "format": "date"
-                },
-                "membership_status": {
-                  "$ref": "#/components/schemas/MembershipStatus"
-                },
-                "membership_type": {
-                  "$ref": "#/components/schemas/MembershipType"
-                },
-                "notes": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "phone": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "tenant_id": {
-                  "$ref": "#/components/schemas/TenantId"
-                },
-                "updated_at": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "user_id": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Auth user_id — None for walk-in members (no account)."
-                }
-              }
-            }
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta"
-          },
-          "request_id": {
             "type": "string"
           }
         }
@@ -12900,6 +14130,112 @@
                 "venue_tenant_id": {
                   "$ref": "#/components/schemas/TenantId",
                   "description": "The venue's tenant ID (which tenant owns the venue)."
+                }
+              }
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginatedApiResponse_Vec_StaffMemberView": {
+        "type": "object",
+        "description": "Paginated response envelope with cursor metadata.\n\n```json\n{\n  \"data\": [...],\n  \"meta\": { \"next_cursor\": \"abc123\" },\n  \"request_id\": \"req_abc123\"\n}\n```",
+        "required": [
+          "data",
+          "meta",
+          "request_id"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A member as the venue console sees it.\n\nExcluded by design: `user_id` (raw Cognito `sub`). Account/identity state is\nexposed separately as a display-safe summary, never as provider identifiers.",
+              "required": [
+                "id",
+                "tenant_id",
+                "first_name",
+                "last_name",
+                "membership_type",
+                "membership_status",
+                "membership_start",
+                "access_scope",
+                "is_active",
+                "created_at",
+                "updated_at",
+                "version"
+              ],
+              "properties": {
+                "access_scope": {
+                  "$ref": "#/components/schemas/AccessScope"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "first_name": {
+                  "type": "string"
+                },
+                "id": {
+                  "$ref": "#/components/schemas/MemberId"
+                },
+                "is_active": {
+                  "type": "boolean",
+                  "description": "Legacy derived flag kept for existing readers: `true` for `active` and\n`expired` (NOT a lifecycle control; use the suspend/reactivate routes)."
+                },
+                "last_name": {
+                  "type": "string"
+                },
+                "membership_end": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "membership_start": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "membership_status": {
+                  "$ref": "#/components/schemas/MembershipStatus"
+                },
+                "membership_type": {
+                  "$ref": "#/components/schemas/MembershipType"
+                },
+                "notes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "phone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tenant_id": {
+                  "$ref": "#/components/schemas/TenantId"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "version": {
+                  "type": "string",
+                  "description": "Optimistic-concurrency token (`updated_at`, RFC 3339). Echo it back as\n`expected_version` on an edit; a mismatch is a 409."
                 }
               }
             }
@@ -14131,6 +15467,215 @@
         "format": "uuid",
         "description": "Unique identifier for a staff member."
       },
+      "StaffMemberProfile": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StaffMemberView"
+          },
+          {
+            "type": "object",
+            "required": [
+              "access",
+              "account"
+            ],
+            "properties": {
+              "access": {
+                "$ref": "#/components/schemas/MemberAccessView"
+              },
+              "account": {
+                "$ref": "#/components/schemas/MemberAccountSummary"
+              }
+            }
+          }
+        ],
+        "description": "`GET /gms/v1/members/{mid}`: the canonical base profile. The member view\nplus its explicit venue entitlements and a display-safe account summary, in\none read (no browser fan-out for entitlements)."
+      },
+      "StaffMemberView": {
+        "type": "object",
+        "description": "A member as the venue console sees it.\n\nExcluded by design: `user_id` (raw Cognito `sub`). Account/identity state is\nexposed separately as a display-safe summary, never as provider identifiers.",
+        "required": [
+          "id",
+          "tenant_id",
+          "first_name",
+          "last_name",
+          "membership_type",
+          "membership_status",
+          "membership_start",
+          "access_scope",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "access_scope": {
+            "$ref": "#/components/schemas/AccessScope"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "id": {
+            "$ref": "#/components/schemas/MemberId"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Legacy derived flag kept for existing readers: `true` for `active` and\n`expired` (NOT a lifecycle control; use the suspend/reactivate routes)."
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "membership_end": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "membership_start": {
+            "type": "string",
+            "format": "date"
+          },
+          "membership_status": {
+            "$ref": "#/components/schemas/MembershipStatus"
+          },
+          "membership_type": {
+            "$ref": "#/components/schemas/MembershipType"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/TenantId"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string",
+            "description": "Optimistic-concurrency token (`updated_at`, RFC 3339). Echo it back as\n`expected_version` on an edit; a mismatch is a 409."
+          }
+        }
+      },
+      "StaffSubscriptionView": {
+        "type": "object",
+        "description": "Staff view of one member subscription (Phase 5A slice 10): the row plus\nthe names a panel shows, joined server-side. Hand-mapped (never a blanket\nconversion): the assigning staff member appears by display name only,\nnever by Cognito identifier.",
+        "required": [
+          "id",
+          "tenant_id",
+          "member_id",
+          "plan_id",
+          "plan_name",
+          "plan_kind",
+          "venue_id",
+          "venue_name",
+          "status",
+          "starts_on",
+          "payment_status",
+          "price_amount_minor",
+          "price_currency",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "assigned_by_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display name of the staff member who assigned it, if still known."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "entries_remaining": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "entries_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "expires_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "id": {
+            "$ref": "#/components/schemas/MemberSubscriptionId"
+          },
+          "member_id": {
+            "$ref": "#/components/schemas/MemberId"
+          },
+          "payment_status": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "plan_id": {
+            "$ref": "#/components/schemas/ActivityPlanId"
+          },
+          "plan_kind": {
+            "$ref": "#/components/schemas/PlanKind"
+          },
+          "plan_name": {
+            "type": "string"
+          },
+          "price_amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "price_currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "starts_on": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/TenantId"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "venue_id": {
+            "$ref": "#/components/schemas/VenueId"
+          },
+          "venue_name": {
+            "type": "string"
+          }
+        }
+      },
       "SubscriptionStatus": {
         "type": "string",
         "description": "Lifecycle of a held subscription.",
@@ -14233,6 +15778,22 @@
           },
           "slug": {
             "type": "string"
+          }
+        }
+      },
+      "TenantSettingsResponse": {
+        "type": "object",
+        "description": "`GET`/`PATCH /gms/v1/tenant/settings` response.\n\n`member_login_mode` (the configured mode) keeps the historical PATCH echo\nshape so existing readers keep working; `member_login` is the full view.",
+        "required": [
+          "member_login_mode",
+          "member_login"
+        ],
+        "properties": {
+          "member_login": {
+            "$ref": "#/components/schemas/MemberLoginPolicy"
+          },
+          "member_login_mode": {
+            "$ref": "#/components/schemas/MemberLoginMode"
           }
         }
       },
@@ -14577,7 +16138,7 @@
       },
       "UpdateMemberRequest": {
         "type": "object",
-        "description": "Request to update an existing member. All fields optional (COALESCE pattern).",
+        "description": "Request to update an existing member. All fields optional (COALESCE pattern).\n\nUnknown fields are rejected (400) rather than silently ignored. This is\nload-bearing for a Phase 5A contract correction: the old `is_active` field was\naccepted here but never applied, so a client \"reactivating\" a member through\nit got a 200 and no change. Lifecycle changes use the explicit\nsuspend/reactivate operations; a request still carrying `is_active` now fails\nloudly instead of silently doing nothing.",
         "properties": {
           "email": {
             "type": [
@@ -14588,12 +16149,6 @@
           "first_name": {
             "type": [
               "string",
-              "null"
-            ]
-          },
-          "is_active": {
-            "type": [
-              "boolean",
               "null"
             ]
           },
@@ -14632,7 +16187,8 @@
               "null"
             ]
           }
-        }
+        },
+        "additionalProperties": false
       },
       "UpdatePlanRequest": {
         "type": "object",

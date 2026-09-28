@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
-import type { Member } from '@iziwellpass/api/schemas';
+import type { StaffMemberProfile } from '@iziwellpass/api/schemas';
 import { Avatar, AvatarFallback } from '@iziwellpass/ui/components/avatar';
 import { Badge } from '@iziwellpass/ui/components/badge';
 import { Button } from '@iziwellpass/ui/components/button';
@@ -20,7 +20,13 @@ import { EditAccessDialog } from './edit-access-dialog';
  * (type, status, access + « Gérer l'accès »), and the contact block on the
  * right (email 15/500, phone, « Membre depuis le … » 13px).
  */
-export function MemberHeader({ member, canManage }: { member: Member; canManage: boolean }) {
+export function MemberHeader({
+  member,
+  canManage,
+}: {
+  member: StaffMemberProfile;
+  canManage: boolean;
+}) {
   const t = useTranslations('members');
   const locale = useLocale();
   const scopeLabel = useAccessScopeLabel();
