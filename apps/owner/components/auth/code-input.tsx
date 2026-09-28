@@ -57,7 +57,7 @@ export function CodeInput({
             key={index}
             index={index}
             className={cn(
-              'h-14 w-[52px] rounded-2xl text-[22px] font-medium',
+              'h-14 w-[52px] rounded-[16px] text-[22px] font-medium',
               invalid &&
                 'border-destructive-foreground data-[active=true]:border-destructive-foreground',
             )}
