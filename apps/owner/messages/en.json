@@ -212,6 +212,36 @@
       "network": "Can't connect. Check your connection and try again."
     }
   },
+  "mfa": {
+    "setup": {
+      "title": "Turn on two-factor authentication",
+      "intro": "Scan this code with an authenticator app (Google Authenticator, 1Password, Authy…).",
+      "qrAlt": "QR code to scan with your authenticator app",
+      "manualLabel": "Or enter the key manually",
+      "copy": "Copy key",
+      "copied": "Key copied",
+      "continue": "Continue",
+      "footnote": "You'll enter a 6-digit code each time you sign in.",
+      "error": "Couldn't prepare setup."
+    },
+    "verify": {
+      "title": "Check the code",
+      "subtitle": "Enter the 6-digit code shown in your app.",
+      "submit": "Verify",
+      "finalizing": "Turning on…",
+      "back": "Back to the QR code",
+      "error": "Couldn't verify the code. Try again."
+    },
+    "finalize": {
+      "error": "Setup couldn't be completed."
+    },
+    "retry": "Try again",
+    "done": {
+      "title": "Two-factor authentication is on",
+      "body": "For your security, all your sessions were closed. Sign in again with your password and a code from your app.",
+      "cta": "Sign in again"
+    }
+  },
   "onboarding": {
     "title": "Welcome to IziWellPass",
     "subtitle": "Create your venue in a minute and start managing your members.",

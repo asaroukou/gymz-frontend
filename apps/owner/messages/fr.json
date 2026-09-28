@@ -212,6 +212,36 @@
       "network": "Connexion impossible. Vérifiez votre connexion et réessayez."
     }
   },
+  "mfa": {
+    "setup": {
+      "title": "Activer la double authentification",
+      "intro": "Scannez ce code avec une application d'authentification (Google Authenticator, 1Password, Authy…).",
+      "qrAlt": "Code QR à scanner avec votre application d'authentification",
+      "manualLabel": "Ou saisissez la clé manuellement",
+      "copy": "Copier la clé",
+      "copied": "Clé copiée",
+      "continue": "Continuer",
+      "footnote": "Vous devrez saisir un code à 6 chiffres à chaque connexion.",
+      "error": "Impossible de préparer l'activation."
+    },
+    "verify": {
+      "title": "Vérifier le code",
+      "subtitle": "Entrez le code à 6 chiffres affiché par votre application.",
+      "submit": "Vérifier",
+      "finalizing": "Activation…",
+      "back": "Revenir au code QR",
+      "error": "Vérification impossible. Réessayez."
+    },
+    "finalize": {
+      "error": "L'activation n'a pas pu être finalisée."
+    },
+    "retry": "Réessayer",
+    "done": {
+      "title": "Double authentification activée",
+      "body": "Pour votre sécurité, toutes vos sessions ont été fermées. Reconnectez-vous avec votre mot de passe et un code de votre application.",
+      "cta": "Se reconnecter"
+    }
+  },
   "onboarding": {
     "title": "Bienvenue sur IziWellPass",
     "subtitle": "Créez votre établissement en une minute et commencez à gérer vos membres.",
