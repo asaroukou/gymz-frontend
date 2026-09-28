@@ -47,9 +47,11 @@ export function useAccountTracking(
     });
   }, [runningKey]);
 
+  // Keyed on the running ids, not just `running`: a newly started operation
+  // opens a fresh 30 s window even if another one was already running.
   useEffect(() => {
     setStale(false);
-    if (!running) return;
+    if (!runningKey) return;
     const poll = setInterval(() => void refetchRef.current(), POLL_INTERVAL_MS);
     const windowEnd = setTimeout(() => {
       clearInterval(poll);
@@ -59,7 +61,7 @@ export function useAccountTracking(
       clearInterval(poll);
       clearTimeout(windowEnd);
     };
-  }, [running, epoch]);
+  }, [runningKey, epoch]);
 
   const watch = useCallback((id: string) => {
     setWatched((prev) => (prev.has(id) ? prev : new Set([...prev, id])));

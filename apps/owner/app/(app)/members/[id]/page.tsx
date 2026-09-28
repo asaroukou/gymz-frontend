@@ -33,7 +33,11 @@ function MemberDetailContent() {
 
   const memberQuery = useGetMember(memberId, { query: { select: unwrap } });
   const member = memberQuery.data;
-  const tracking = useAccountTracking(member?.account, memberQuery.refetch);
+  // `cancelRefetch: false`: a poll tick must not cancel a slower in-flight
+  // fetch, or no poll would ever complete on a response slower than 2 s.
+  const tracking = useAccountTracking(member?.account, () =>
+    memberQuery.refetch({ cancelRefetch: false }),
+  );
   const view = member
     ? describeAccount(member.account, { role, watched: tracking.watched, stale: tracking.stale })
     : null;
@@ -62,7 +66,9 @@ function MemberDetailContent() {
     );
   }
 
-  if (memberQuery.isError) {
+  // A failed background refetch keeps the loaded page; only a first load
+  // without data shows the error.
+  if (memberQuery.isError && !member) {
     return (
       <WorkingPage>
         {backLink}
@@ -99,7 +105,9 @@ function MemberDetailContent() {
             key={member.id}
             member={member}
             canEdit={canEdit}
-            canChangeEmail={view.actions.includes('changeEmail')}
+            canChangeEmail={
+              view.actions.includes('changeEmail') && view.status?.runningAction !== 'changeEmail'
+            }
             onChangeEmail={() => setDialog('changeEmail')}
           />
           {canEdit ? (

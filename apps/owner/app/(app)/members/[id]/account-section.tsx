@@ -195,19 +195,25 @@ export function AccountSection({
           </p>
         ) : null}
 
-        {/* The live region stays mounted so each new status line is announced. */}
-        <div role="status" aria-live="polite" className="empty:sr-only">
-          {showStatus ? <StatusLine status={status} /> : null}
+        {/*
+          The live region stays mounted so each new status line is announced;
+          the block leaves the flow (no gap) while the region is empty.
+          « Actualiser » sits outside the region so it is not re-announced.
+        */}
+        <div className="flex flex-col items-start gap-1 has-[>[role=status]:empty]:sr-only">
+          <div role="status" aria-live="polite">
+            {showStatus ? <StatusLine status={status} /> : null}
+          </div>
+          {showStatus && status.key === 'account.status.stillRunning' ? (
+            <button
+              type="button"
+              onClick={tracking.refresh}
+              className="ml-6 inline-flex min-h-11 items-center text-md font-medium text-foreground underline underline-offset-4 md:min-h-0"
+            >
+              {t('account.status.refresh')}
+            </button>
+          ) : null}
         </div>
-        {showStatus && status.key === 'account.status.stillRunning' ? (
-          <button
-            type="button"
-            onClick={tracking.refresh}
-            className="-mt-4 ml-6 self-start text-md font-medium text-foreground underline underline-offset-4"
-          >
-            {t('account.status.refresh')}
-          </button>
-        ) : null}
       </div>
     </section>
   );

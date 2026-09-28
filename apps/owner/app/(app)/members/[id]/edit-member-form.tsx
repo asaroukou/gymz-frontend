@@ -245,7 +245,7 @@ export function EditMemberForm({
                     <button
                       type="button"
                       onClick={onChangeEmail}
-                      className="justify-self-start text-sm font-medium text-foreground underline underline-offset-4"
+                      className="inline-flex min-h-11 items-center justify-self-start text-sm font-medium text-foreground underline underline-offset-4 md:min-h-0"
                     >
                       {t('account.header.changeLink')}
                     </button>
