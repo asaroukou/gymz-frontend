@@ -603,6 +603,88 @@
         "downscopeVenue": "{venue} · {count, plural, one {# upcoming booking} other {# upcoming bookings}}",
         "unknownVenue": "Unknown venue"
       }
+    },
+    "account": {
+      "title": "App access",
+      "subtitle": "The member's access to the IziWellPass app: card, QR code, bookings.",
+      "rows": { "access": "Access", "email": "Sign-in address", "lastAction": "Last action" },
+      "badge": {
+        "none": "No app access",
+        "pending": "Creating access",
+        "sent": "Invitation sent",
+        "linkedExisting": "Existing account linked",
+        "accepted": "App activated",
+        "untracked": "App access",
+        "failed": "Invitation failed"
+      },
+      "explain": {
+        "none": "This member has no app access.",
+        "pending": "Access is being created. The invitation goes out in a few seconds.",
+        "sent": "The member hasn't chosen a password yet.",
+        "linkedExisting": "This person already had an IziWellPass account: no invitation was sent.",
+        "accepted": "The member signs in to the app.",
+        "untracked": "Access created before invitations were tracked.",
+        "failedFix": "Fix the address if needed, then relaunch."
+      },
+      "provisioningFailure": {
+        "invalid_email": "The e-mail address is invalid.",
+        "missing_email": "No e-mail address.",
+        "identity_already_linked": "This address is already linked to another member.",
+        "provider_unavailable": "The sign-in service didn't respond for 24 h."
+      },
+      "emailState": {
+        "changePending": "Change pending",
+        "changePendingLine": "The member must enter the code sent to their new address (24 h). Until then, they sign in with the current address.",
+        "changeFailed": "Change failed",
+        "changeFailedKeep": "The current address remains the sign-in address."
+      },
+      "actions": {
+        "resend": "Resend the invitation",
+        "relaunch": "Relaunch access creation",
+        "changeEmail": "Change the address"
+      },
+      "receptionistNote": "Only an owner or an admin can act on app access.",
+      "last": {
+        "invitationSent": "Invitation sent on {date} at {time}",
+        "linkedExisting": "Existing account linked on {date} at {time}",
+        "provisioningFailed": "Creation failed on {date} at {time}",
+        "resent": "Invitation resent on {date} at {time}",
+        "resendFailed": "Resend failed on {date} at {time}",
+        "signedOut": "Signed out of all devices on {date} at {time}",
+        "signOutFailed": "Sign-out failed on {date} at {time}",
+        "emailRequested": "Change requested on {date} at {time}",
+        "emailChanged": "Address changed on {date} at {time}",
+        "emailFailed": "Address change failed on {date} at {time}"
+      },
+      "status": {
+        "sending": "Sending the invitation…",
+        "creating": "Creating access…",
+        "sendingCode": "Sending the code to the new address…",
+        "signingOut": "Signing out…",
+        "stillRunning": "Still running. This can take a few minutes.",
+        "refresh": "Refresh",
+        "waiting": "Code sent to the new address. Waiting for the member to confirm."
+      },
+      "result": {
+        "invitationSentAt": "Invitation sent at {time}",
+        "linkedNoInvite": "Existing account linked: no invitation sent.",
+        "alreadyActive": "This member already activated their account: nothing was sent.",
+        "identityShared": "This account is also used in another organization or for a team access. Resending would affect those: contact support.",
+        "emailMismatch": "The member's address no longer matches their account. Contact support.",
+        "providerUnavailable": "The sending service is unavailable. Try again later.",
+        "resendFailed": "The invitation couldn't be resent.",
+        "emailConflict": "This address is already used by another member.",
+        "emailChangedSignedOut": "Address changed. The member was signed out and will sign in again with their new address.",
+        "emailChanged": "Address changed.",
+        "emailReinvited": "Address replaced. A new invitation was sent.",
+        "emailExpired": "The member didn't confirm within 24 h. The current address was kept.",
+        "emailUnavailable": "This address isn't available.",
+        "emailFailed": "The address change didn't go through.",
+        "signedOutAt": "Member signed out of all devices at {time}.",
+        "signOutShared": "This account is also used in another organization or for a team access: a sign-out would affect those too. Contact support.",
+        "signOutNotProvisioned": "The member's access isn't created yet: no session to close.",
+        "signOutFailed": "The sign-out didn't go through."
+      }
     }
   },
   "planning": {

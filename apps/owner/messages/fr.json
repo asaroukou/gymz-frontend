@@ -603,6 +603,88 @@
         "downscopeVenue": "{venue} · {count, plural, one {# réservation à venir} other {# réservations à venir}}",
         "unknownVenue": "Salle inconnue"
       }
+    },
+    "account": {
+      "title": "Accès à l'app",
+      "subtitle": "Connexion du membre à l'app IziWellPass : carte, QR code, réservations.",
+      "rows": { "access": "Accès", "email": "Adresse de connexion", "lastAction": "Dernière action" },
+      "badge": {
+        "none": "Sans app",
+        "pending": "Création en cours",
+        "sent": "Invitation envoyée",
+        "linkedExisting": "Compte existant lié",
+        "accepted": "App activée",
+        "untracked": "Accès app",
+        "failed": "Invitation échouée"
+      },
+      "explain": {
+        "none": "Ce membre n'a pas d'accès à l'app.",
+        "pending": "L'accès est en cours de création. L'invitation part dans quelques secondes.",
+        "sent": "Le membre n'a pas encore choisi son mot de passe.",
+        "linkedExisting": "Cette personne avait déjà un compte IziWellPass : aucune invitation n'a été envoyée.",
+        "accepted": "Le membre se connecte à l'app.",
+        "untracked": "Accès créé avant le suivi des invitations.",
+        "failedFix": "Corrigez l'adresse si besoin, puis relancez."
+      },
+      "provisioningFailure": {
+        "invalid_email": "L'adresse e-mail est invalide.",
+        "missing_email": "Aucune adresse e-mail.",
+        "identity_already_linked": "Cette adresse est déjà liée à un autre membre.",
+        "provider_unavailable": "Le service de connexion n'a pas répondu pendant 24 h."
+      },
+      "emailState": {
+        "changePending": "Changement en attente",
+        "changePendingLine": "Le membre doit saisir le code reçu à sa nouvelle adresse (24 h). Il se connecte avec l'adresse actuelle d'ici là.",
+        "changeFailed": "Changement échoué",
+        "changeFailedKeep": "L'adresse actuelle reste l'adresse de connexion."
+      },
+      "actions": {
+        "resend": "Renvoyer l'invitation",
+        "relaunch": "Relancer la création de l'accès",
+        "changeEmail": "Changer l'adresse"
+      },
+      "receptionistNote": "Seul un propriétaire ou un administrateur peut agir sur l'accès à l'app.",
+      "last": {
+        "invitationSent": "Invitation envoyée le {date} à {time}",
+        "linkedExisting": "Compte existant lié le {date} à {time}",
+        "provisioningFailed": "Échec de création le {date} à {time}",
+        "resent": "Invitation renvoyée le {date} à {time}",
+        "resendFailed": "Échec du renvoi le {date} à {time}",
+        "signedOut": "Déconnecté de tous les appareils le {date} à {time}",
+        "signOutFailed": "Échec de la déconnexion le {date} à {time}",
+        "emailRequested": "Changement demandé le {date} à {time}",
+        "emailChanged": "Adresse modifiée le {date} à {time}",
+        "emailFailed": "Échec du changement d'adresse le {date} à {time}"
+      },
+      "status": {
+        "sending": "Envoi de l'invitation…",
+        "creating": "Création de l'accès…",
+        "sendingCode": "Envoi du code à la nouvelle adresse…",
+        "signingOut": "Déconnexion en cours…",
+        "stillRunning": "Toujours en cours. Cela peut prendre quelques minutes.",
+        "refresh": "Actualiser",
+        "waiting": "Code envoyé à la nouvelle adresse. En attente de confirmation par le membre."
+      },
+      "result": {
+        "invitationSentAt": "Invitation envoyée à {time}",
+        "linkedNoInvite": "Compte existant lié : aucune invitation envoyée.",
+        "alreadyActive": "Ce membre a déjà activé son compte : rien n'a été envoyé.",
+        "identityShared": "Ce compte sert aussi dans une autre organisation ou pour un accès équipe. Un renvoi bloquerait ces accès : contactez le support.",
+        "emailMismatch": "L'adresse du membre ne correspond plus à son compte. Contactez le support.",
+        "providerUnavailable": "Le service d'envoi est indisponible. Réessayez plus tard.",
+        "resendFailed": "L'invitation n'a pas pu être renvoyée.",
+        "emailConflict": "Cette adresse est déjà utilisée par un autre membre.",
+        "emailChangedSignedOut": "Adresse modifiée. Le membre a été déconnecté et se reconnecte avec sa nouvelle adresse.",
+        "emailChanged": "Adresse modifiée.",
+        "emailReinvited": "Adresse remplacée. Une nouvelle invitation a été envoyée.",
+        "emailExpired": "Le membre n'a pas confirmé sous 24 h. L'adresse actuelle est conservée.",
+        "emailUnavailable": "Cette adresse n'est pas disponible.",
+        "emailFailed": "Le changement d'adresse n'a pas abouti.",
+        "signedOutAt": "Membre déconnecté de tous ses appareils à {time}.",
+        "signOutShared": "Ce compte sert aussi dans une autre organisation ou pour un accès équipe : une déconnexion les toucherait aussi. Contactez le support.",
+        "signOutNotProvisioned": "L'accès du membre n'est pas encore créé : aucune session à fermer.",
+        "signOutFailed": "La déconnexion n'a pas abouti."
+      }
     }
   },
   "planning": {
