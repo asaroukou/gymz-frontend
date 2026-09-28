@@ -24,6 +24,7 @@ import {
 import { apiErrorMessage } from '@/lib/api-error';
 import { classifyMemberError } from '@/lib/member-errors';
 import { memberName } from '@/lib/member-search';
+import { MEMBER_SEARCH_KEY } from '@/lib/member-search-query';
 import { isForbidden } from '@/lib/plan-errors';
 
 // ---------------------------------------------------------------------------
@@ -55,6 +56,7 @@ export function SuspendMemberDialog({
           toast.success(t('detail.suspendDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
           void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
+          void queryClient.invalidateQueries({ queryKey: MEMBER_SEARCH_KEY });
           onOpenChange(false);
         },
         onError: (err) => {
@@ -62,6 +64,7 @@ export function SuspendMemberDialog({
             toast.error(t('detail.suspendDialog.notActive'));
             void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
             void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
+            void queryClient.invalidateQueries({ queryKey: MEMBER_SEARCH_KEY });
             onOpenChange(false);
             return;
           }

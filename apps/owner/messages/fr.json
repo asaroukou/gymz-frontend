@@ -412,18 +412,22 @@
   },
   "members": {
     "title": "Membres",
-    "subtitle": "{count, plural, =0 {Aucun membre} one {# membre} other {# membres}}",
-    "search": "Rechercher par nom ou e-mail",
+    "search": "Rechercher par nom, e-mail ou téléphone",
+    "searchPhone": "Nom, e-mail ou téléphone",
+    "clearSearch": "Effacer la recherche",
+    "showMore": "Afficher plus",
+    "scope": {
+      "venue": "Cet établissement",
+      "all": "Tous les établissements"
+    },
     "add": "Ajouter un membre",
     "errorTitle": "Une erreur est survenue",
     "loadError": "Impossible de charger les membres",
-    "footer": "{shown, plural, one {# membre} other {# membres}} sur {total}",
     "filters": {
       "all": "Tous",
       "active": "Actifs",
       "expired": "Expirés",
-      "suspended": "Suspendus",
-      "cancelled": "Annulés"
+      "suspended": "Suspendus"
     },
     "columns": {
       "member": "Membre",
@@ -454,13 +458,17 @@
       "suspend": "Suspendre"
     },
     "empty": {
-      "title": "Aucun membre",
-      "body": "Enregistrez votre premier membre pour commencer à gérer les abonnements.",
+      "title": "Ajoutez votre premier membre",
+      "body": "Ses abonnements, ses passages et son accès à l'app se gèrent ensuite depuis sa fiche.",
       "cta": "Ajouter un membre"
     },
     "noResults": {
-      "title": "Aucun résultat",
-      "body": "Aucun membre ne correspond à votre recherche ou à ce filtre."
+      "query": "Aucun membre ne correspond à « {q} »."
+    },
+    "emptyTab": {
+      "active": "Aucun membre actif.",
+      "expired": "Aucun membre expiré.",
+      "suspended": "Aucun membre suspendu."
     },
     "addDialog": {
       "title": "Ajouter un membre",

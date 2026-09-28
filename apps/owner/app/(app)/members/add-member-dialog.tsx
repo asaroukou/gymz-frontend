@@ -43,6 +43,7 @@ import { Textarea } from '@iziwellpass/ui/components/textarea';
 import { VenueChecklist } from '@/components/venue-checklist';
 import { ACCESS_SCOPE_VALUES } from '@/lib/access-scope';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import { MEMBER_SEARCH_KEY } from '@/lib/member-search-query';
 
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
@@ -137,6 +138,7 @@ export function AddMemberDialog({ variant = 'default' }: { variant?: 'default' |
         onSuccess: () => {
           toast.success(t('addDialog.success'));
           void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
+          void queryClient.invalidateQueries({ queryKey: MEMBER_SEARCH_KEY });
           form.reset(defaults);
           if (addAnother) {
             form.setFocus('first_name');

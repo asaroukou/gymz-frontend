@@ -24,6 +24,7 @@ import {
 import { apiErrorMessage } from '@/lib/api-error';
 import { classifyMemberError } from '@/lib/member-errors';
 import { memberName } from '@/lib/member-search';
+import { MEMBER_SEARCH_KEY } from '@/lib/member-search-query';
 import { isForbidden } from '@/lib/plan-errors';
 
 /** Confirm « Réactiver » (danger zone, canvas `L6sMyP`): `PUT /members/{mid}/reactivate`, 204. */
@@ -45,6 +46,7 @@ export function ReactivateMemberDialog({
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
     void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
+    void queryClient.invalidateQueries({ queryKey: MEMBER_SEARCH_KEY });
   };
 
   const handleReactivate = () => {

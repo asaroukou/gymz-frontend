@@ -412,18 +412,22 @@
   },
   "members": {
     "title": "Members",
-    "subtitle": "{count, plural, =0 {No members} one {# member} other {# members}}",
-    "search": "Search by name or email",
+    "search": "Search by name, email or phone",
+    "searchPhone": "Name, email or phone",
+    "clearSearch": "Clear search",
+    "showMore": "Show more",
+    "scope": {
+      "venue": "This venue",
+      "all": "All venues"
+    },
     "add": "Add member",
     "errorTitle": "Something went wrong",
     "loadError": "Could not load members",
-    "footer": "{shown, plural, one {# member} other {# members}} of {total}",
     "filters": {
       "all": "All",
       "active": "Active",
       "expired": "Expired",
-      "suspended": "Suspended",
-      "cancelled": "Cancelled"
+      "suspended": "Suspended"
     },
     "columns": {
       "member": "Member",
@@ -454,13 +458,17 @@
       "suspend": "Suspend"
     },
     "empty": {
-      "title": "No members",
-      "body": "Enroll your first member to start managing subscriptions.",
+      "title": "Add your first member",
+      "body": "Their subscriptions, visits and app access are then managed from their profile.",
       "cta": "Add member"
     },
     "noResults": {
-      "title": "No results",
-      "body": "No members match your search or filter."
+      "query": "No member matches \"{q}\"."
+    },
+    "emptyTab": {
+      "active": "No active members.",
+      "expired": "No expired members.",
+      "suspended": "No suspended members."
     },
     "addDialog": {
       "title": "Add member",
