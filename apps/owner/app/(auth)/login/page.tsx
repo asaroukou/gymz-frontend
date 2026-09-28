@@ -28,6 +28,7 @@ import { AuthCardSkeleton } from '@/components/auth-card-skeleton';
 import { PasswordChecklist } from '@/components/password-checklist';
 import { PasswordInput } from '@/components/password-input';
 import { useAuthError } from '@/lib/auth-errors';
+import { sanitizeNext } from '@/lib/next-path';
 import { makePasswordSchema } from '@/lib/password';
 
 type CredentialsValues = { email: string; password: string };
@@ -36,14 +37,6 @@ type NewPasswordValues = { newPassword: string; confirmPassword: string };
 type Challenge = {
   complete: (newPassword: string) => Promise<{ idToken: string }>;
 };
-
-/** Only allow same-origin, non-protocol-relative paths as a post-login redirect target. */
-function sanitizeNext(next: string | null): string {
-  if (!next || !next.startsWith('/') || next.startsWith('//')) {
-    return '/';
-  }
-  return next;
-}
 
 function NewPasswordCard({
   onComplete,
