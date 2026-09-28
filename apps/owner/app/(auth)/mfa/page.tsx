@@ -90,9 +90,13 @@ function VerifyView({
   const t = useTranslations('mfa');
   const tAuth = useTranslations('auth');
   const [code, setCode] = useState('');
+  // The view remounts on every refused code (key = attempt); typing hides the
+  // previous refusal, as on the login code step.
+  const [errorShown, setErrorShown] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
-  const message =
-    codeError === 'invalid'
+  const message = !errorShown
+    ? null
+    : codeError === 'invalid'
       ? tAuth('errors.codeMismatchTotp')
       : codeError === 'other'
         ? t('verify.error')
@@ -110,9 +114,12 @@ function VerifyView({
           <CodeInput
             inputRef={inputRef}
             value={code}
-            onChange={setCode}
+            onChange={(value) => {
+              setCode(value);
+              setErrorShown(false);
+            }}
             onComplete={onVerify}
-            invalid={Boolean(message) && code.length === 0}
+            invalid={Boolean(message)}
             disabled={busy}
             label={tAuth('totp.codeLabel')}
             describedBy={message ? 'mfa-code-error' : undefined}
@@ -122,9 +129,13 @@ function VerifyView({
             <p
               id="mfa-code-error"
               role="alert"
-              className="flex items-center justify-center gap-1.5 text-sm text-destructive-foreground"
+              className="text-center text-sm text-destructive-foreground"
             >
-              <CircleAlertIcon aria-hidden="true" strokeWidth={1.5} className="size-3.5 shrink-0" />
+              <CircleAlertIcon
+                aria-hidden="true"
+                strokeWidth={1.5}
+                className="mr-1.5 inline size-3.5 align-[-2px]"
+              />
               {message}
             </p>
           ) : null}
@@ -176,6 +187,9 @@ function MfaView() {
       );
     case 'verify':
     case 'finalizing':
+      // Finalizing without a secret was reached straight from loading because
+      // Cognito already had TOTP enabled: nothing to type, only finalize runs.
+      if (!state.setup) return <AuthCardSkeleton />;
       return (
         <VerifyView
           key={state.attempt}

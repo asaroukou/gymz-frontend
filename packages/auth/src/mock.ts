@@ -210,5 +210,11 @@ export function createMockAuthClient(): AuthClient {
       enrol(session.email);
       return Promise.resolve();
     },
+
+    isTotpEnabled: () => {
+      const session = read();
+      if (!session) return Promise.reject(notSignedInError());
+      return Promise.resolve(enrolled().includes(session.email));
+    },
   };
 }

@@ -1,3 +1,4 @@
+import type { AuthClient } from '@iziwellpass/auth/client';
 import type { TotpSetup } from '@iziwellpass/auth/totp';
 
 import { totpErrorOutcome } from './totp-code';
@@ -30,6 +31,8 @@ export const INITIAL_ENROLMENT: EnrolmentState = {
 export type EnrolmentEvent =
   | { type: 'setupLoaded'; setup: TotpSetup }
   | { type: 'setupFailed' }
+  /** Cognito already holds an enabled TOTP factor: only finalize is left. */
+  | { type: 'alreadyEnabled' }
   | { type: 'retrySetup' }
   | { type: 'continue' }
   | { type: 'back' }
@@ -46,6 +49,8 @@ export function enrolmentReducer(state: EnrolmentState, event: EnrolmentEvent): 
       return state.step === 'loading' ? { ...state, step: 'setup', setup: event.setup } : state;
     case 'setupFailed':
       return state.step === 'loading' ? { ...state, step: 'setupError' } : state;
+    case 'alreadyEnabled':
+      return state.step === 'loading' ? { ...state, step: 'finalizing' } : state;
     case 'retrySetup':
       return state.step === 'setupError' ? { ...state, step: 'loading' } : state;
     case 'continue':
@@ -65,6 +70,23 @@ export function enrolmentReducer(state: EnrolmentState, event: EnrolmentEvent): 
     case 'done':
       return state.step === 'finalizing' ? { ...state, step: 'done' } : state;
   }
+}
+
+export type EnrolmentStart = { kind: 'enabled' } | { kind: 'setup'; setup: TotpSetup };
+
+/**
+ * What /mfa opens on. A user whose Cognito TOTP is already enabled (a
+ * half-done enrolment whose finalize never succeeded, or someone who is
+ * simply enrolled) must not get a new secret: AssociateSoftwareToken would
+ * invalidate the authenticator entry they already have. Only finalize is left
+ * for them. A failed status check rejects rather than falling back to a new
+ * secret, for the same reason.
+ */
+export async function startEnrolment(
+  client: Pick<AuthClient, 'isTotpEnabled' | 'startTotpSetup'>,
+): Promise<EnrolmentStart> {
+  if (await client.isTotpEnabled()) return { kind: 'enabled' };
+  return { kind: 'setup', setup: await client.startTotpSetup() };
 }
 
 export interface EnrolmentDeps {

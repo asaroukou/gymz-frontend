@@ -4,6 +4,7 @@ import {
   enrolmentReducer,
   finalizeAndSignOut,
   INITIAL_ENROLMENT,
+  startEnrolment,
   verifyAndFinalize,
   type EnrolmentDeps,
   type EnrolmentEvent,
@@ -71,6 +72,24 @@ describe('enrolmentReducer', () => {
     expect(run([{ type: 'retrySetup' }], s).step).toBe('loading');
   });
 
+  it('goes straight to finalizing when TOTP is already enabled', () => {
+    const s = run([{ type: 'alreadyEnabled' }]);
+    expect(s).toMatchObject({ step: 'finalizing', setup: null });
+    expect(
+      run([{ type: 'finalizeFailed' }, { type: 'retryFinalize' }, { type: 'done' }], s).step,
+    ).toBe('done');
+  });
+
+  it('ignores alreadyEnabled outside loading', () => {
+    const setupStep = run([{ type: 'setupLoaded', setup }]);
+    const verifyStep = run([{ type: 'continue' }], setupStep);
+    const errorStep = run([{ type: 'setupFailed' }]);
+    const doneStep = run([{ type: 'alreadyEnabled' }, { type: 'done' }]);
+    for (const s of [setupStep, verifyStep, errorStep, doneStep]) {
+      expect(enrolmentReducer(s, { type: 'alreadyEnabled' })).toBe(s);
+    }
+  });
+
   it('ignores events that do not apply to the current step', () => {
     const s = run([{ type: 'setupLoaded', setup }]);
     expect(run([{ type: 'done' }, { type: 'retryFinalize' }, { type: 'back' }], s)).toEqual(s);
@@ -136,5 +155,37 @@ describe('finalizeAndSignOut', () => {
     expect(d.confirmTotpSetup).not.toHaveBeenCalled();
     expect(d.finalize).toHaveBeenCalledTimes(1);
     expect(d.signOut).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('startEnrolment', () => {
+  const client = (overrides: { isTotpEnabled?: () => Promise<boolean> } = {}) => ({
+    isTotpEnabled: vi.fn(overrides.isTotpEnabled ?? (() => Promise.resolve(false))),
+    startTotpSetup: vi.fn().mockResolvedValue(setup),
+  });
+
+  it('issues a secret when TOTP is not enabled yet', async () => {
+    const c = client();
+    await expect(startEnrolment(c)).resolves.toEqual({ kind: 'setup', setup });
+    expect(c.isTotpEnabled.mock.invocationCallOrder[0]).toBeLessThan(
+      c.startTotpSetup.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it('never issues a new secret when TOTP is already enabled', async () => {
+    const c = client({ isTotpEnabled: () => Promise.resolve(true) });
+    await expect(startEnrolment(c)).resolves.toEqual({ kind: 'enabled' });
+    expect(c.startTotpSetup).not.toHaveBeenCalled();
+  });
+
+  it('rejects without issuing a secret when the status check fails', async () => {
+    const c = client({ isTotpEnabled: () => Promise.reject(new Error('network')) });
+    await expect(startEnrolment(c)).rejects.toThrow('network');
+    expect(c.startTotpSetup).not.toHaveBeenCalled();
+  });
+
+  it('passes an expired session through for the caller to send to sign-in', async () => {
+    const c = client({ isTotpEnabled: () => Promise.reject(named('NotSignedInError')) });
+    await expect(startEnrolment(c)).rejects.toMatchObject({ name: 'NotSignedInError' });
   });
 });

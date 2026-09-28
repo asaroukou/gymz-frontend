@@ -7,6 +7,7 @@ import {
   CognitoUser,
   CognitoUserPool,
   type CognitoUserSession,
+  type UserData,
 } from 'amazon-cognito-identity-js';
 
 import { notSignedInError } from './errors';
@@ -59,6 +60,38 @@ export interface AuthClient {
    * finalize call comes after this.
    */
   confirmTotpSetup(code: string): Promise<void>;
+  /**
+   * Whether the signed-in user already has TOTP enabled in Cognito (GetUser,
+   * bypassing the SDK's cached user data). Lets the enrolment page finish a
+   * half-done enrolment instead of issuing a new secret. Rejects
+   * `NotSignedInError` without a valid (or with a revoked) session.
+   */
+  isTotpEnabled(): Promise<boolean>;
+}
+
+/** `.name` of the rejection for a sign-in challenge this app cannot answer. */
+export const UNSUPPORTED_CHALLENGE = 'UnsupportedChallengeError';
+
+function unsupportedChallengeError(challenge: string): Error {
+  const err = new Error(`Unsupported sign-in challenge: ${challenge}`);
+  err.name = UNSUPPORTED_CHALLENGE;
+  return err;
+}
+
+/**
+ * A revoked or otherwise refused access token (e.g. another device's MFA
+ * finalize ran a global sign-out) means the session is gone: report it as
+ * NotSignedInError so the screen sends the user back to sign in rather than
+ * offering a retry that can never succeed.
+ */
+function sessionRefusedAsSignedOut(err: unknown): unknown {
+  if (err && typeof err === 'object') {
+    const e = err as { code?: unknown; name?: unknown };
+    if (e.code === 'NotAuthorizedException' || e.name === 'NotAuthorizedException') {
+      return notSignedInError();
+    }
+  }
+  return err;
 }
 
 export function createAuthClient(config: AuthClientConfig): AuthClient {
@@ -156,6 +189,13 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
                   );
                 }),
             }),
+          // Challenges the owner app has no screen for (SMS MFA, MFA choice,
+          // MFA setup at sign-in, custom auth): reject so the promise always
+          // settles; authErrorCode maps this to `unknown`.
+          mfaRequired: () => reject(unsupportedChallengeError('SMS_MFA')),
+          selectMFAType: () => reject(unsupportedChallengeError('SELECT_MFA_TYPE')),
+          mfaSetup: () => reject(unsupportedChallengeError('MFA_SETUP')),
+          customChallenge: () => reject(unsupportedChallengeError('CUSTOM_CHALLENGE')),
         });
       });
     },
@@ -232,7 +272,7 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
         current.associateSoftwareToken({
           associateSecretCode: (secret: string) =>
             resolve({ secret, otpauthUri: buildOtpauthUri(account, secret) }),
-          onFailure: (err: unknown) => reject(err),
+          onFailure: (err: unknown) => reject(sessionRefusedAsSignedOut(err)),
         });
       });
     },
@@ -242,14 +282,31 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
       await new Promise<void>((resolve, reject) => {
         current.verifySoftwareToken(code, TOTP_ISSUER, {
           onSuccess: () => resolve(),
-          onFailure: (err: Error) => reject(err),
+          onFailure: (err: Error) => reject(sessionRefusedAsSignedOut(err)),
         });
       });
       await new Promise<void>((resolve, reject) => {
         current.setUserMfaPreference(null, { PreferredMfa: true, Enabled: true }, (err) =>
-          err ? reject(err) : resolve(),
+          err ? reject(sessionRefusedAsSignedOut(err)) : resolve(),
         );
       });
+    },
+
+    async isTotpEnabled() {
+      const { user: current } = await signedInUser();
+      const data = await new Promise<UserData>((resolve, reject) => {
+        current.getUserData(
+          ((err: unknown, result: UserData | undefined) => {
+            if (err || !result) reject(sessionRefusedAsSignedOut(err ?? new Error('No user data')));
+            else resolve(result);
+          }) as Parameters<CognitoUser['getUserData']>[0],
+          { bypassCache: true },
+        );
+      });
+      return (
+        data.PreferredMfaSetting === 'SOFTWARE_TOKEN_MFA' ||
+        (data.UserMFASettingList ?? []).includes('SOFTWARE_TOKEN_MFA')
+      );
     },
   };
 }

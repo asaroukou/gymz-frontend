@@ -20,6 +20,7 @@ function stubClient(idToken: string | null): AuthClient {
     forceRefreshSession: vi.fn().mockResolvedValue(null),
     startTotpSetup: vi.fn(),
     confirmTotpSetup: vi.fn(),
+    isTotpEnabled: vi.fn(),
   };
 }
 

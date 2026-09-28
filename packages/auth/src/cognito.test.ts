@@ -356,3 +356,133 @@ describe('TOTP enrolment', () => {
     await expect(client.confirmTotpSetup('123456')).rejects.toThrow('boom');
   });
 });
+
+describe('revoked access token during enrolment', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const revoked = () =>
+    Object.assign(new Error('Access Token has been revoked'), {
+      name: 'NotAuthorizedException',
+      code: 'NotAuthorizedException',
+    });
+
+  function signedInWith(overrides: Record<string, unknown>) {
+    const user = {
+      getSession: vi.fn((cb: (err: Error | null, s: unknown) => void) =>
+        cb(null, { isValid: () => true, getIdToken: () => ({ payload: { email: 'a@b.c' } }) }),
+      ),
+      getUsername: () => 'sub-1',
+      ...overrides,
+    };
+    getCurrentUser.mockReturnValue(user);
+    return user;
+  }
+
+  it('startTotpSetup rejects NotSignedInError when AssociateSoftwareToken says the token is revoked', async () => {
+    signedInWith({
+      associateSoftwareToken: vi.fn((callbacks: { onFailure: (e: unknown) => void }) =>
+        callbacks.onFailure(revoked()),
+      ),
+    });
+    await expect(client.startTotpSetup()).rejects.toMatchObject({ name: 'NotSignedInError' });
+  });
+
+  it('confirmTotpSetup rejects NotSignedInError when VerifySoftwareToken says the token is revoked', async () => {
+    signedInWith({
+      verifySoftwareToken: vi.fn(
+        (_code: string, _name: string, callbacks: { onFailure: (e: unknown) => void }) =>
+          callbacks.onFailure(revoked()),
+      ),
+      setUserMfaPreference: vi.fn(),
+    });
+    await expect(client.confirmTotpSetup('123456')).rejects.toMatchObject({
+      name: 'NotSignedInError',
+    });
+  });
+
+  it('confirmTotpSetup rejects NotSignedInError when SetUserMFAPreference says the token is revoked', async () => {
+    signedInWith({
+      verifySoftwareToken: vi.fn(
+        (_code: string, _name: string, callbacks: { onSuccess: (s: unknown) => void }) =>
+          callbacks.onSuccess({}),
+      ),
+      setUserMfaPreference: vi.fn((_sms: unknown, _totp: unknown, cb: (e: unknown) => void) =>
+        cb(revoked()),
+      ),
+    });
+    await expect(client.confirmTotpSetup('123456')).rejects.toMatchObject({
+      name: 'NotSignedInError',
+    });
+  });
+});
+
+describe('isTotpEnabled', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  function withUserData(result: { err?: unknown; data?: unknown }) {
+    const user = {
+      getSession: vi.fn((cb: (err: Error | null, s: unknown) => void) =>
+        cb(null, { isValid: () => true }),
+      ),
+      getUserData: vi.fn((cb: (err: unknown, data?: unknown) => void) =>
+        cb(result.err ?? null, result.data),
+      ),
+    };
+    getCurrentUser.mockReturnValue(user);
+    return user;
+  }
+
+  it('is true when TOTP is the preferred factor, reading past the SDK cache', async () => {
+    const user = withUserData({
+      data: { PreferredMfaSetting: 'SOFTWARE_TOKEN_MFA', UserMFASettingList: ['SOFTWARE_TOKEN_MFA'] },
+    });
+    await expect(client.isTotpEnabled()).resolves.toBe(true);
+    expect(user.getUserData).toHaveBeenCalledWith(expect.any(Function), { bypassCache: true });
+  });
+
+  it('is true when TOTP is enabled but not (yet) preferred', async () => {
+    withUserData({ data: { UserMFASettingList: ['SOFTWARE_TOKEN_MFA'] } });
+    await expect(client.isTotpEnabled()).resolves.toBe(true);
+  });
+
+  it('is false when no MFA factor is set', async () => {
+    withUserData({ data: { Username: 'sub-1', UserAttributes: [] } });
+    await expect(client.isTotpEnabled()).resolves.toBe(false);
+  });
+
+  it('rejects with the SDK error when GetUser fails', async () => {
+    withUserData({ err: Object.assign(new Error('boom'), { name: 'InternalErrorException' }) });
+    await expect(client.isTotpEnabled()).rejects.toMatchObject({ name: 'InternalErrorException' });
+  });
+
+  it('rejects NotSignedInError when the access token is revoked', async () => {
+    withUserData({
+      err: Object.assign(new Error('Access Token has been revoked'), {
+        name: 'NotAuthorizedException',
+        code: 'NotAuthorizedException',
+      }),
+    });
+    await expect(client.isTotpEnabled()).rejects.toMatchObject({ name: 'NotSignedInError' });
+  });
+
+  it('rejects NotSignedInError when nobody is signed in', async () => {
+    getCurrentUser.mockReturnValue(null);
+    await expect(client.isTotpEnabled()).rejects.toMatchObject({ name: 'NotSignedInError' });
+  });
+});
+
+describe('signIn unsupported challenges', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it.each(['mfaRequired', 'selectMFAType', 'mfaSetup', 'customChallenge'])(
+    'rejects UnsupportedChallengeError on %s so the sign-in always settles',
+    async (callback) => {
+      authenticateUser.mockImplementation((_details, callbacks) => {
+        callbacks[callback]('CHALLENGE', {});
+      });
+      await expect(client.signIn('a@b.c', 'pw')).rejects.toMatchObject({
+        name: 'UnsupportedChallengeError',
+      });
+    },
+  );
+});

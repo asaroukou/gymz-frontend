@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -12,9 +20,11 @@ import {
   enrolmentReducer,
   finalizeAndSignOut,
   INITIAL_ENROLMENT,
+  startEnrolment,
   verifyAndFinalize,
   type EnrolmentDeps,
   type EnrolmentOutcome,
+  type EnrolmentStart,
 } from './mfa-enrolment';
 import { totpErrorOutcome } from './totp-code';
 
@@ -25,39 +35,27 @@ export function useMfaEnrolment({ next }: { next: string }) {
   const queryClient = useQueryClient();
   const [state, dispatch] = useReducer(enrolmentReducer, INITIAL_ENROLMENT);
 
-  const toLogin = useCallback(
-    () => router.replace(`/login?next=${encodeURIComponent(next)}`),
-    [router, next],
-  );
+  // SDK storage, session cookie and query cache.
+  const signOutLocally = useCallback(() => {
+    signOut();
+    queryClient.clear();
+  }, [signOut, queryClient]);
 
-  // One AssociateSoftwareToken per page: StrictMode's double effect and a
-  // re-render share the same call (each call replaces the secret).
-  const loadSetup = useMemo(() => onceAsync(() => client.startTotpSetup()), [client]);
-
-  const load = useCallback(() => {
-    loadSetup().then(
-      (setup) => dispatch({ type: 'setupLoaded', setup }),
-      (err: unknown) => {
-        if (totpErrorOutcome(err) === 'expired') toLogin();
-        else dispatch({ type: 'setupFailed' });
-      },
-    );
-  }, [loadSetup, toLogin]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  // The session may already be dead server-side (another device's finalize
+  // ran a global sign-out): drop the local tokens too, or /login would see a
+  // cached session and never ask for the password.
+  const toLogin = useCallback(() => {
+    signOutLocally();
+    router.replace(`/login?next=${encodeURIComponent(next)}`);
+  }, [signOutLocally, router, next]);
 
   const deps = useMemo<EnrolmentDeps>(
     () => ({
       confirmTotpSetup: (code) => client.confirmTotpSetup(code),
       finalize: () => finalizeMfa(),
-      signOut: () => {
-        signOut();
-        queryClient.clear();
-      },
+      signOut: signOutLocally,
     }),
-    [client, signOut, queryClient],
+    [client, signOutLocally],
   );
 
   const apply = useCallback(
@@ -79,14 +77,62 @@ export function useMfaEnrolment({ next }: { next: string }) {
     [deps, apply],
   );
 
-  const retryFinalize = useMemo(
-    () =>
-      singleFlight(async () => {
-        dispatch({ type: 'retryFinalize' });
-        apply(await finalizeAndSignOut(deps));
-      }),
+  const finalize = useMemo(
+    () => singleFlight(async () => apply(await finalizeAndSignOut(deps))),
     [deps, apply],
   );
+
+  // Mount work, held in state (React may drop memos): one status check and at
+  // most one AssociateSoftwareToken per page, however often the effect runs
+  // (StrictMode runs it twice; each association replaces the secret). A
+  // rejection is forgotten, so « Réessayer » re-runs the whole check.
+  const [start] = useState(() => onceAsync(() => startEnrolment(client)));
+  // Finalize for an already-enabled factor starts once per page.
+  const finalizeStarted = useRef(false);
+
+  const onStart = (result: EnrolmentStart) => {
+    if (result.kind === 'setup') {
+      dispatch({ type: 'setupLoaded', setup: result.setup });
+      return;
+    }
+    dispatch({ type: 'alreadyEnabled' });
+    if (!finalizeStarted.current) {
+      finalizeStarted.current = true;
+      void finalize();
+    }
+  };
+  const onStartFailed = (err: unknown) => {
+    if (totpErrorOutcome(err) === 'expired') toLogin();
+    else dispatch({ type: 'setupFailed' });
+  };
+  // Latest handlers for the promise callbacks, so the mount effect itself
+  // never re-runs when the session (and with it signOut) changes.
+  const handlers = useRef({ onStart, onStartFailed });
+  useLayoutEffect(() => {
+    handlers.current = { onStart, onStartFailed };
+  });
+
+  const load = useCallback(
+    (isActive: () => boolean = () => true) => {
+      start().then(
+        (result) => {
+          if (isActive()) handlers.current.onStart(result);
+        },
+        (err: unknown) => {
+          if (isActive()) handlers.current.onStartFailed(err);
+        },
+      );
+    },
+    [start],
+  );
+
+  useEffect(() => {
+    let active = true;
+    load(() => active);
+    return () => {
+      active = false;
+    };
+  }, [load]);
 
   return {
     state,
@@ -97,7 +143,10 @@ export function useMfaEnrolment({ next }: { next: string }) {
     toVerify: () => dispatch({ type: 'continue' }),
     backToSetup: () => dispatch({ type: 'back' }),
     verify,
-    retryFinalize,
+    retryFinalize: () => {
+      dispatch({ type: 'retryFinalize' });
+      return finalize();
+    },
     signInAgain: toLogin,
   };
 }

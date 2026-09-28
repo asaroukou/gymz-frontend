@@ -25,6 +25,12 @@ describe('authErrorCode', () => {
     expect(authErrorCode(cognito('UserNotFoundException'))).toBe('invalidCredentials');
   });
 
+  it('maps an unsupported sign-in challenge to unknown', () => {
+    expect(
+      authErrorCode(cognito('UnsupportedChallengeError', 'Unsupported sign-in challenge: SMS_MFA')),
+    ).toBe('unknown');
+  });
+
   it('flags an unconfirmed account', () => {
     expect(authErrorCode(cognito('UserNotConfirmedException'))).toBe('userNotConfirmed');
   });

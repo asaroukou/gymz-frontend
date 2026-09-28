@@ -126,6 +126,25 @@ describe('mock TOTP', () => {
     expect(rawClaims(idToken).mfa_enrolled_at).toBeTruthy();
   });
 
+  it('reports whether the signed-in e-mail has enrolled TOTP', async () => {
+    const client = createMockAuthClient();
+    await client.signIn('fatou@studio.sn', 'owner');
+    await expect(client.isTotpEnabled()).resolves.toBe(false);
+    await client.startTotpSetup();
+    await expect(client.isTotpEnabled()).resolves.toBe(false);
+    await client.confirmTotpSetup(MOCK_TOTP_CODE);
+    await expect(client.isTotpEnabled()).resolves.toBe(true);
+
+    client.signOut();
+    await client.signIn('other@studio.sn', 'owner');
+    await expect(client.isTotpEnabled()).resolves.toBe(false);
+  });
+
+  it('rejects isTotpEnabled with NotSignedInError when signed out', async () => {
+    const client = createMockAuthClient();
+    await expect(client.isTotpEnabled()).rejects.toMatchObject({ name: 'NotSignedInError' });
+  });
+
   it('rejects enrolment with NotSignedInError when signed out', async () => {
     const client = createMockAuthClient();
     await expect(client.startTotpSetup()).rejects.toMatchObject({ name: 'NotSignedInError' });

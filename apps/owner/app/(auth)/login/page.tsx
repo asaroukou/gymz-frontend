@@ -228,9 +228,13 @@ function TotpCard({
             <p
               id="totp-error"
               role="alert"
-              className="flex items-center justify-center gap-1.5 text-sm text-destructive-foreground"
+              className="text-center text-sm text-destructive-foreground"
             >
-              <CircleAlertIcon aria-hidden="true" strokeWidth={1.5} className="size-3.5 shrink-0" />
+              <CircleAlertIcon
+                aria-hidden="true"
+                strokeWidth={1.5}
+                className="mr-1.5 inline size-3.5 align-[-2px]"
+              />
               {error}
             </p>
           ) : null}
