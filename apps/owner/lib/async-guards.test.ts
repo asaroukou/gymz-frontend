@@ -15,7 +15,7 @@ const deferred = <T>() => {
 describe('singleFlight', () => {
   it('shares one call while it is in flight', async () => {
     const d = deferred<string>();
-    const fn = vi.fn(() => d.promise);
+    const fn = vi.fn<(code: string) => Promise<string>>(() => d.promise);
     const run = singleFlight(fn);
     const a = run('123456');
     const b = run('123456');

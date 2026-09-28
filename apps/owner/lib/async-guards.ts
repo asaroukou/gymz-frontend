@@ -3,17 +3,12 @@
  * instead of starting another one. A code auto-submitted on its sixth digit
  * and then submitted again by Enter must reach Cognito once: a second
  * sendMFACode on the same challenge fails with « Invalid session ».
- *
- * The parameter list is `unknown[]` rather than a generic tied to `fn`'s own
- * arity: TypeScript would otherwise infer the wrapper's arity from `fn`
- * exactly (e.g. zero for a niladic mock), rejecting call sites that legally
- * pass and ignore extra arguments, as JavaScript itself allows.
  */
-export function singleFlight<R>(
-  fn: (...args: unknown[]) => Promise<R>,
-): (...args: unknown[]) => Promise<R> {
+export function singleFlight<A extends unknown[], R>(
+  fn: (...args: A) => Promise<R>,
+): (...args: A) => Promise<R> {
   let inflight: Promise<R> | null = null;
-  return (...args: unknown[]) => {
+  return (...args: A) => {
     if (!inflight) {
       inflight = fn(...args).finally(() => {
         inflight = null;
