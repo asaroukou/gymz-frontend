@@ -48,7 +48,7 @@ SP-F adds the six-digit code step to login, and an enrolment page (`/mfa`) the c
 | `apps/owner/components/auth/code-input.tsx` | Six-box code field on the ui `InputOTP`, numeric only, `autoComplete="one-time-code"`, `inputMode="numeric"`, invalid state, `onComplete(code)` |
 | `apps/owner/app/(auth)/mfa/page.tsx` | Enrolment page: `useMfaEnrolment()` state machine + the four views (§5) |
 | `apps/owner/lib/use-mfa-enrolment.ts` | State machine: `loading → setup → verify → finalizing → done`, with `setupError`, `verifyError`, `finalizeError`; exposes `start()`, `toVerify()`, `backToSetup()`, `verify(code)`, `retryFinalize()` |
-| `apps/owner/components/auth/totp-qr.tsx` | Renders `otpauthUri` as an inline SVG QR (`qrcode` package, `toString(uri, { type: 'svg', margin: 0 })`), in the 164px rounded hairline frame of e2wZj |
+| `apps/owner/components/auth/totp-qr.tsx` | Renders `otpauthUri` as an inline SVG QR (`qrcode` package, `toString(uri, { type: 'svg', margin: 0 })`), in the 240px rounded hairline frame of e2wZj (200px code) |
 | `apps/owner/app/providers.tsx` | `configureApi({ onMfaRequired })` → `window.location.assign('/mfa?next=' + encodeURIComponent(path))`, with the F10 guard |
 | `apps/owner/lib/next-path.ts` | `sanitizeNext(next)`, moved out of `login/page.tsx` so `/mfa` and login share it |
 | `apps/owner/lib/auth-errors.ts` | Maps `sessionExpired` to its copy |
@@ -78,7 +78,7 @@ Layout: the `(auth)` layout (wash, wordmark, 400px column, help line). Not a pub
 | State | Frame | Content |
 | --- | --- | --- |
 | `loading` | — | `AuthCardSkeleton`, while `startTotpSetup()` runs on mount |
-| `setup` | e2wZj | Title « Activer la double authentification »; intro (F1); QR in a hairline 164px rounded frame; label « Ou saisissez la clé manuellement »; the secret in groups of four in a grey field, mono, `select-all`, with a copy icon button (toast « Clé copiée »); primary « Continuer » → `verify`; footnote « Vous devrez saisir un code à 6 chiffres à chaque connexion. » |
+| `setup` | e2wZj | Title « Activer la double authentification »; intro (F1); QR (200px) in a 240px hairline rounded frame; label « Ou saisissez la clé manuellement »; the secret in groups of four in a grey field, mono, `select-all`, with a copy icon button (toast « Clé copiée »); primary « Continuer » → `verify`; footnote « Vous devrez saisir un code à 6 chiffres à chaque connexion. » |
 | `setupError` | — | Inline error « Impossible de préparer l'activation. » + secondary « Réessayer » (re-runs `startTotpSetup`) |
 | `verify` | OKurh / PCsCv | Title « Vérifier le code »; subtitle « Entrez le code à 6 chiffres affiché par votre application. »; code input; primary « Vérifier »; ghost « ← Revenir au code QR » → `setup` (same secret, no new call). Wrong code: PCsCv line, boxes cleared |
 | `finalizing` | — | Same as `verify`, the button reading « Activation… », all inputs disabled |
