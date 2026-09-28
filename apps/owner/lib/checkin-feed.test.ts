@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { CheckIn, Staff } from '@iziwellpass/api/schemas';
 
-import { feedRows, recordedByLabel } from './checkin-feed';
+import { feedRows, methodBadge, recordedByLabel } from './checkin-feed';
 
 function checkIn(at: string, extra: Partial<CheckIn> = {}): CheckIn {
   return {
@@ -58,5 +58,13 @@ describe('recordedByLabel', () => {
     expect(
       recordedByLabel(checkIn('a', { method: 'manual', checked_in_by: 'u9' }), staff, LABELS),
     ).toBe("par l'équipe");
+  });
+});
+
+describe('methodBadge', () => {
+  it('labels each check-in method', () => {
+    expect(methodBadge('qr')).toEqual({ labelKey: 'methodQr', variant: 'info' });
+    expect(methodBadge('wallet')).toEqual({ labelKey: 'methodWallet', variant: 'info' });
+    expect(methodBadge('manual')).toEqual({ labelKey: 'methodManual', variant: 'default' });
   });
 });

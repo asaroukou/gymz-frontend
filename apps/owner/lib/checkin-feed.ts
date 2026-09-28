@@ -1,4 +1,4 @@
-import type { CheckIn, Staff } from '@iziwellpass/api/schemas';
+import type { CheckIn, CheckInMethod, Staff } from '@iziwellpass/api/schemas';
 
 /** Newest first; `limit` slices (the dashboard tab shows eight). */
 export function feedRows(checkIns: readonly CheckIn[] | undefined, limit?: number): CheckIn[] {
@@ -23,4 +23,21 @@ export function recordedByLabel(
   if (!checkIn.checked_in_by) return labels.self;
   const staff = staffByUserId.get(checkIn.checked_in_by);
   return labels.by(staff ? `${staff.first_name} ${staff.last_name}`.trim() : labels.unknownStaff);
+}
+
+export type MethodBadge = {
+  labelKey: 'methodQr' | 'methodWallet' | 'methodManual';
+  variant: 'info' | 'default';
+};
+
+/** Feed badge per check-in method: self-service scans (QR, wallet) in blue, staff entry neutral. */
+export function methodBadge(method: CheckInMethod): MethodBadge {
+  switch (method) {
+    case 'qr':
+      return { labelKey: 'methodQr', variant: 'info' };
+    case 'wallet':
+      return { labelKey: 'methodWallet', variant: 'info' };
+    default:
+      return { labelKey: 'methodManual', variant: 'default' };
+  }
 }
