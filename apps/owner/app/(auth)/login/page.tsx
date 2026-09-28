@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type FormE
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeftIcon, CircleCheckIcon } from 'lucide-react';
+import { ArrowLeftIcon, CircleAlertIcon, CircleCheckIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -225,7 +225,12 @@ function TotpCard({
             autoFocus
           />
           {error ? (
-            <p id="totp-error" role="alert" className="text-center text-sm text-destructive-foreground">
+            <p
+              id="totp-error"
+              role="alert"
+              className="flex items-center justify-center gap-1.5 text-sm text-destructive-foreground"
+            >
+              <CircleAlertIcon aria-hidden="true" strokeWidth={1.5} className="size-3.5 shrink-0" />
               {error}
             </p>
           ) : null}

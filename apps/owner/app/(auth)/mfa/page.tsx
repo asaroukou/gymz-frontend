@@ -2,7 +2,7 @@
 
 import { Suspense, useRef, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeftIcon, CopyIcon, ShieldCheckIcon } from 'lucide-react';
+import { ArrowLeftIcon, CircleAlertIcon, CopyIcon, ShieldCheckIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -19,12 +19,21 @@ import { useMfaEnrolment } from '@/lib/use-mfa-enrolment';
 
 function SetupView({ secret, uri, onContinue }: { secret: string; uri: string; onContinue: () => void }) {
   const t = useTranslations('mfa');
+  const keyRef = useRef<HTMLParagraphElement>(null);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(secret);
       toast.success(t('setup.copied'));
     } catch {
-      // Clipboard blocked: the key stays selectable by hand.
+      // Clipboard blocked: select the key so it can be copied by hand instead.
+      const el = keyRef.current;
+      if (el) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
     }
   };
   return (
@@ -41,8 +50,9 @@ function SetupView({ secret, uri, onContinue }: { secret: string; uri: string; o
           </p>
           <div className="flex items-start gap-2">
             <p
+              ref={keyRef}
               aria-labelledby="mfa-key-label"
-              className="flex min-h-12 min-w-0 flex-1 items-center rounded-3xl bg-side px-[18px] py-3 text-[15px] leading-6 font-medium tracking-wide break-all select-all"
+              className="flex min-h-12 min-w-0 flex-1 items-center rounded-3xl bg-side px-[18px] py-3 text-[15px] leading-6 font-medium tracking-wide break-words select-all"
             >
               {formatSecret(secret)}
             </p>
@@ -109,7 +119,12 @@ function VerifyView({
             autoFocus
           />
           {message ? (
-            <p id="mfa-code-error" role="alert" className="text-center text-sm text-destructive-foreground">
+            <p
+              id="mfa-code-error"
+              role="alert"
+              className="flex items-center justify-center gap-1.5 text-sm text-destructive-foreground"
+            >
+              <CircleAlertIcon aria-hidden="true" strokeWidth={1.5} className="size-3.5 shrink-0" />
               {message}
             </p>
           ) : null}
