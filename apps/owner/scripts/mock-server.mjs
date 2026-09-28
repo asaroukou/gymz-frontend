@@ -916,7 +916,7 @@ const checkIns = [
   mkCheckIn(
     'chk-wallet-01',
     VENUE_1,
-    'mbr-07',
+    'mbr-11',
     undefined,
     'wallet',
     iso(hoursFromNow(-0.5)),
