@@ -65,9 +65,12 @@
 //     500 (the enrolment page's retry path).
 //   - Phase 5A members: members carry `version`; `PUT /members/{mid}`, `/access`
 //     and `/venues` honour `?expected_version=` (409 VERSION_MISMATCH). `mbr-05`
-//     (Bineta Cissé) conflicts once on its first versioned write. Members created
-//     with an e-mail are `login` (their e-mail can't change here: 409
+//     (Bineta Cissé) conflicts once on its first versioned write, and the
+//     concurrent change also sets her phone to `+221 77 000 00 05`. Members
+//     created with an e-mail are `login` (their e-mail can't change here: 409
 //     LOGIN_EMAIL_REQUIRES_SECURE_CHANGE), others `roster` (e.g. `mbr-03`).
+//     `mbr-12` (Serigne Mbaye) is `login` with `account.invitation: 'failed'`
+//     (no identity was ever created), so its e-mail can be changed here.
 //     Unknown update fields (incl. `is_active`) are a 400.
 //   - Suspend/reactivate answer 204, or 409 INVALID_LIFECYCLE_TRANSITION with
 //     `details.current_status`; `mbr-06` starts suspended.
@@ -334,6 +337,9 @@ const staffVenues = new Map([
 // setMemberVenues's response, matching the real API's shape).
 const memberVenues = new Map();
 const memberMode = new Map(); // P3: login when created with an e-mail
+// H2: mbr-12's provisioning failed — no identity was ever created, so unlike
+// a normal login member its e-mail can still be corrected through PUT /members/{mid}.
+const memberInvitation = new Map([['mbr-12', 'failed']]);
 
 const members = [
   mkMember(
@@ -510,7 +516,9 @@ function mkMember(
     membership_start: dateOnly(daysFromNow(startDaysOffset)),
     membership_end: endDaysOffset === undefined ? undefined : dateOnly(daysFromNow(endDaysOffset)),
     access_scope: accessScope,
-    is_active: true,
+    // Legacy derived flag: true for active and expired, matching the backend
+    // (NOT a lifecycle control; suspend/reactivate flip it separately above).
+    is_active: ['active', 'expired'].includes(membershipStatus),
     notes: undefined,
     created_at: iso(daysFromNow(startDaysOffset)),
     updated_at: iso(daysFromNow(Math.max(startDaysOffset, -30))),
@@ -1945,13 +1953,16 @@ function memberAccess(member) {
 
 function memberProfile(member) {
   const login = memberMode.get(member.id) === 'login';
+  const invitation = login ? (memberInvitation.get(member.id) ?? 'accepted') : 'not_applicable';
   return {
     ...member,
     access: memberAccess(member),
     account: {
       mode: login ? 'login' : 'roster',
-      invitation: login ? 'accepted' : 'not_applicable',
-      email: login ? 'verified' : 'not_applicable',
+      invitation,
+      // A failed provisioning never created an identity, so there is no
+      // login e-mail to verify — `not_applicable` fits (see H2 above).
+      email: login && invitation !== 'failed' ? 'verified' : 'not_applicable',
       email_change: null,
       invitation_resend: null,
     },
@@ -1966,6 +1977,9 @@ function versionConflict(member, query) {
   const expected = query.get('expected_version');
   if (!expected) return null;
   if (conflictOnce.delete(member.id)) {
+    // Make the demo realistic: a colleague really did change something while
+    // this request was in flight, so the browser check can show the merge.
+    member.phone = '+221 77 000 00 05';
     touch(member);
     return [409, errorBody('VERSION_MISMATCH', 'The member was modified concurrently')];
   }
@@ -2108,6 +2122,7 @@ function updateMemberHandler(memberId, body, query) {
   }
   if (
     memberMode.get(member.id) === 'login' &&
+    memberInvitation.get(member.id) !== 'failed' &&
     body?.email !== undefined &&
     body.email !== member.email
   ) {
