@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
+import { TriangleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -13,8 +14,9 @@ import {
   getListMembersQueryKey,
   useUpdateMember,
 } from '@iziwellpass/api/generated';
-import type { StaffMemberView } from '@iziwellpass/api/schemas';
+import type { StaffMemberProfile } from '@iziwellpass/api/schemas';
 import { MembershipType } from '@iziwellpass/api/schemas';
+import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Form,
@@ -36,6 +38,8 @@ import { Textarea } from '@iziwellpass/ui/components/textarea';
 import { SectionHeading } from '@iziwellpass/ui/components/working-page';
 
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
+import { classifyMemberError } from '@/lib/member-errors';
+import { buildMemberUpdate } from '@/lib/member-update';
 
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
@@ -46,10 +50,22 @@ const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
 // Edit form (existing update contract)
 // ---------------------------------------------------------------------------
 
-export function EditMemberForm({ member, canEdit }: { member: StaffMemberView; canEdit: boolean }) {
+export function EditMemberForm({
+  member,
+  canEdit,
+}: {
+  member: StaffMemberProfile;
+  canEdit: boolean;
+}) {
   const t = useTranslations('members');
   const queryClient = useQueryClient();
   const updateMember = useUpdateMember();
+
+  const loginMode = member.account.mode === 'login';
+  const [conflict, setConflict] = useState(false);
+  // After a VERSION_MISMATCH the member is refetched; keep what the user typed
+  // instead of resetting the form to the refetched values (H5).
+  const keepInputRef = useRef(false);
 
   const schema = useMemo(
     () =>
@@ -67,7 +83,7 @@ export function EditMemberForm({ member, canEdit }: { member: StaffMemberView; c
 
   type EditMemberValues = z.infer<typeof schema>;
 
-  const toDefaults = (m: StaffMemberView): EditMemberValues => ({
+  const toDefaults = (m: StaffMemberProfile): EditMemberValues => ({
     first_name: m.first_name,
     last_name: m.last_name,
     email: m.email ?? '',
@@ -83,30 +99,38 @@ export function EditMemberForm({ member, canEdit }: { member: StaffMemberView; c
   });
 
   useEffect(() => {
+    if (keepInputRef.current) return;
     form.reset(toDefaults(member));
   }, [member, form]);
 
   const onSubmit = (values: EditMemberValues) => {
+    // Read the version at submit time: after a conflict this is the refetched one.
+    const { data, params } = buildMemberUpdate(values, {
+      mode: member.account.mode,
+      version: member.version,
+    });
     updateMember.mutate(
-      {
-        mid: member.id,
-        data: {
-          first_name: values.first_name,
-          last_name: values.last_name,
-          email: values.email || null,
-          phone: values.phone || null,
-          membership_type: values.membership_type,
-          membership_end: values.membership_end || null,
-          notes: values.notes || null,
-        },
-      },
+      { mid: member.id, data, params },
       {
         onSuccess: () => {
+          keepInputRef.current = false;
+          setConflict(false);
           toast.success(t('detail.edit.success'));
           void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
           void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
         },
         onError: (err) => {
+          const error = classifyMemberError(err);
+          if (error.kind === 'versionMismatch') {
+            keepInputRef.current = true;
+            setConflict(true);
+            void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
+            return;
+          }
+          if (error.kind === 'loginEmailLocked') {
+            form.setError('email', { type: 'server', message: t('detail.edit.emailLockedHint') });
+            return;
+          }
           if (!applyFieldErrors(form, err)) {
             toast.error(apiErrorMessage(err, t('detail.edit.error')));
           }
@@ -123,6 +147,12 @@ export function EditMemberForm({ member, canEdit }: { member: StaffMemberView; c
           onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
           className="flex flex-col gap-[18px]"
         >
+          {conflict ? (
+            <Alert variant="warning">
+              <TriangleAlertIcon />
+              <AlertDescription>{t('detail.versionConflict')}</AlertDescription>
+            </Alert>
+          ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
@@ -159,8 +189,13 @@ export function EditMemberForm({ member, canEdit }: { member: StaffMemberView; c
                 <FormItem>
                   <FormLabel>{t('detail.edit.email')}</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} disabled={!canEdit} />
+                    <Input type="email" {...field} disabled={!canEdit || loginMode} />
                   </FormControl>
+                  {loginMode ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t('detail.edit.emailLockedHint')}
+                    </p>
+                  ) : null}
                   <FormMessage />
                 </FormItem>
               )}
