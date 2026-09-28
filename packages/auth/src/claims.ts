@@ -25,6 +25,8 @@ export interface SessionClaims {
   permissions: string[];
   /** Unix seconds. */
   expiresAt: number;
+  /** True when the ID token carries `mfa_enrolled_at` (owner/admin finished TOTP enrolment). UI only. */
+  mfaEnrolled: boolean;
 }
 
 function pickDisplayName(payload: Record<string, unknown>): string | null {
@@ -77,5 +79,8 @@ export function parseClaims(idToken: string): SessionClaims {
     permissions: parsePermissions(payload.permissions),
     // 0 = treat-as-expired sentinel (fails closed)
     expiresAt: typeof payload.exp === 'number' ? payload.exp : 0,
+    mfaEnrolled:
+      (typeof payload.mfa_enrolled_at === 'string' && payload.mfa_enrolled_at.length > 0) ||
+      typeof payload.mfa_enrolled_at === 'number',
   };
 }
