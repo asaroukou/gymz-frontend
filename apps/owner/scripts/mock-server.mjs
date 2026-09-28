@@ -70,13 +70,53 @@
 //     created with an e-mail are `login` (their e-mail can't change here: 409
 //     LOGIN_EMAIL_REQUIRES_SECURE_CHANGE), others `roster` (e.g. `mbr-03`).
 //     `mbr-12` (Serigne Mbaye) is `login` with `account.invitation: 'failed'`
-//     (no identity was ever created), so its e-mail can be changed here.
+//     (no identity was ever created), so its e-mail can still be changed here
+//     — see the Member management block below for why the failure is real.
 //     Unknown update fields (incl. `is_active`) are a 400.
 //   - Suspend/reactivate answer 204, or 409 INVALID_LIFECYCLE_TRANSITION with
 //     `details.current_status`; `mbr-06` starts suspended.
 //   - Narrowing `mbr-09` (Ndeye Faye) so venue 2 is dropped is refused with 409
 //     ACCESS_DOWNSCOPE_BLOCKED (2 upcoming bookings at venue 2).
 //   - `chk-wallet-01` is a wallet check-in.
+//
+// Member management (SP-MM):
+//   - `MOCK_LOGIN_MODE=roster` starts the tenant with member login disabled
+//     (`configured_mode: 'roster'`); default is `login`. `GET`/`PATCH
+//     /gms/v1/tenant/settings` read/write it; PATCH answers 403
+//     FEATURE_NOT_AVAILABLE when switching to `login` on a plan without
+//     `member_self_service`, and 400 for any other shape. `POST
+//     /gms/v1/members` derives `effective_mode` from this policy (not from
+//     whether the request carries an e-mail) and requires `email` when the
+//     effective mode is `login`.
+//   - Demo members (fixed ids, also seeded with attendance history):
+//     `mbr-01` sent, `mbr-02` accepted (visits every seed period, and its
+//     sessions were revoked 12 Sept), `mbr-03` roster, `mbr-04`
+//     linked_existing, `mbr-08` untracked, `mbr-10` change_pending (an
+//     e-mail change has been pending_verification for the last hour),
+//     `mbr-12` failed with `failure_code: invalid_email` (its seed e-mail
+//     `serigne.mbaye@exemple` has no TLD, so relaunching the invitation
+//     without correcting it fails again), `mbr-13` sent but its resend is
+//     wired to get stuck in `dispatched` forever, `mbr-14` accepted but its
+//     identity is shared (`sharedIdentity`) so every account operation on it
+//     answers 409 IDENTITY_SHARED, `mbr-15` only has visits older than 30
+//     days (so the default 30-day attendance window is empty), `mbr-16`
+//     never visited.
+//   - Operation lifecycle: `provisioning`, `invitation_resend`,
+//     `session_revocation` and `email_change` go `requested` -> `dispatched`
+//     after 1 s -> a terminal state 4 s after creation (evaluated lazily on
+//     read, in `memberProfile` and the operation routes), except `mbr-13`'s
+//     resend, which is `stuck` and never leaves `dispatched`.
+//   - `POST /gms/v1/members/{mid}/email-change` requires an `Idempotency-Key`
+//     header (400 without it); replaying the same key with a different body
+//     is a 422 IDEMPOTENCY_KEY_REUSED. A `new_email` starting with `pris@`
+//     always finishes `failed` with `failure_code: email_unavailable`.
+//   - `POST /gms/v1/members/search` takes exactly one of `venue_id` or
+//     `all_venues` in the body (400 otherwise), plus optional `q`, `status`
+//     and a base64url offset `cursor`; results exclude cancelled members and
+//     are paginated 20 per page by default.
+//   - `GET /gms/v1/members/{mid}/attendance` defaults to the last 30 days,
+//     accepts `from`/`to`/`venue_id`/`limit`, and its `next_cursor` bundles
+//     the query so a client following it need not repeat `from`/`to`.
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { crc32, deflateSync } from 'node:zlib';
@@ -337,9 +377,6 @@ const staffVenues = new Map([
 // setMemberVenues's response, matching the real API's shape).
 const memberVenues = new Map();
 const memberMode = new Map(); // P3: login when created with an e-mail
-// H2: mbr-12's provisioning failed — no identity was ever created, so unlike
-// a normal login member its e-mail can still be corrected through PUT /members/{mid}.
-const memberInvitation = new Map([['mbr-12', 'failed']]);
 
 const members = [
   mkMember(
@@ -434,7 +471,7 @@ const members = [
     'Gueye',
     'drop_in',
     'expired',
-    undefined,
+    'abdoulaye.gueye@example.sn',
     '+221 76 666 77 88',
     -60,
     -30,
@@ -488,6 +525,177 @@ const members = [
     -15,
     [VENUE_1],
   ),
+  // ---- mbr-13 … mbr-26: SP-MM demo roster (search pagination, attendance, account ops) ----
+  mkMember(
+    'mbr-13',
+    'Fatou',
+    'Sow',
+    'monthly',
+    'active',
+    'fatou.sow@example.sn',
+    '+221 77 100 20 30',
+    -60,
+    30,
+    [VENUE_1],
+  ),
+  mkMember(
+    'mbr-14',
+    'Moussa',
+    'Ba',
+    'annual',
+    'active',
+    'moussa.ba@example.sn',
+    '+221 76 200 30 40',
+    -80,
+    285,
+    [VENUE_2],
+  ),
+  mkMember(
+    'mbr-15',
+    'Astou',
+    'Niang',
+    'monthly',
+    'active',
+    undefined,
+    '+221 78 300 40 50',
+    -50,
+    40,
+    [VENUE_1],
+  ),
+  mkMember(
+    'mbr-16',
+    'Ibrahima',
+    'Sarr',
+    'monthly',
+    'active',
+    undefined,
+    '+221 70 400 50 60',
+    -10,
+    80,
+    [VENUE_2],
+  ),
+  mkMember(
+    'mbr-17',
+    'Coumba',
+    'Diallo',
+    'drop_in',
+    'active',
+    'coumba.diallo@example.sn',
+    '+221 77 500 60 70',
+    -15,
+    undefined,
+    [VENUE_1, VENUE_2],
+    'chain_wide',
+  ),
+  mkMember(
+    'mbr-18',
+    'Pape',
+    'Diouf',
+    'monthly',
+    'expired',
+    undefined,
+    '+221 76 600 70 80',
+    -90,
+    -20,
+    [VENUE_1],
+  ),
+  mkMember(
+    'mbr-19',
+    'Aissatou',
+    'Gaye',
+    'annual',
+    'active',
+    'aissatou.gaye@example.sn',
+    '+221 78 700 80 90',
+    -120,
+    245,
+    [VENUE_2],
+  ),
+  mkMember(
+    'mbr-20',
+    'Boubacar',
+    'Sy',
+    'monthly',
+    'suspended',
+    undefined,
+    '+221 70 800 90 10',
+    -25,
+    5,
+    [VENUE_1],
+  ),
+  mkMember(
+    'mbr-21',
+    'Mame Diarra',
+    'Diop',
+    'trial',
+    'active',
+    'mame.diarra@example.sn',
+    '+221 77 900 10 20',
+    -7,
+    23,
+    [VENUE_1],
+  ),
+  mkMember(
+    'mbr-22',
+    'Alioune',
+    'Badji',
+    'monthly',
+    'active',
+    undefined,
+    '+221 76 010 20 30',
+    -35,
+    25,
+    [VENUE_2],
+  ),
+  mkMember(
+    'mbr-23',
+    'Rokhaya',
+    'Mbengue',
+    'annual',
+    'cancelled',
+    undefined,
+    '+221 78 020 30 40',
+    -200,
+    -60,
+    [VENUE_1],
+  ),
+  mkMember(
+    'mbr-24',
+    'Cheikhouna',
+    'Touré',
+    'monthly',
+    'active',
+    'cheikhouna.toure@example.sn',
+    '+221 70 030 40 50',
+    -45,
+    15,
+    [VENUE_1, VENUE_2],
+    'chain_wide',
+  ),
+  mkMember(
+    'mbr-25',
+    'Ndella',
+    'Kébé',
+    'drop_in',
+    'active',
+    undefined,
+    '+221 77 040 50 60',
+    -8,
+    undefined,
+    [VENUE_2],
+  ),
+  mkMember(
+    'mbr-26',
+    'Omar',
+    'Lô',
+    'monthly',
+    'expired',
+    'omar.lo@example.sn',
+    '+221 76 050 60 70',
+    -75,
+    -18,
+    [VENUE_1],
+  ),
 ];
 
 function mkMember(
@@ -527,6 +735,96 @@ function mkMember(
   memberMode.set(id, email ? 'login' : 'roster');
   return member;
 }
+
+// ---- member identity operations (Phase 5A account controls) -------------------
+// Operations are evaluated on read: requested → dispatched after 1 s, then
+// terminal 4 s after creation (unless `stuck`). `finish(op)` decides the end state.
+const memberInvitation = new Map([
+  ['mbr-01', 'sent'],
+  ['mbr-04', 'linked_existing'],
+  ['mbr-08', 'untracked'],
+  ['mbr-12', 'failed'],
+  ['mbr-13', 'sent'],
+  ['mbr-14', 'accepted'],
+]); // everyone else with login: 'accepted'
+const memberEmailState = new Map(); // id → 'verified' | 'change_pending' | 'change_failed'
+const memberOps = new Map(); // id → { provisioning, invitation_resend, session_revocation, email_change }
+const sharedIdentity = new Set(['mbr-14']);
+const stuckResend = new Set(['mbr-13']);
+const idempotency = new Map(); // `${mid}:${key}` → { body: string, response: [status, json] }
+
+function opsOf(id) {
+  if (!memberOps.has(id)) {
+    memberOps.set(id, { provisioning: null, invitation_resend: null, session_revocation: null, email_change: null });
+  }
+  return memberOps.get(id);
+}
+
+function mkOp(kind, { state = 'requested', at = now(), finish, stuck = false, result_code = null, failure_code = null } = {}) {
+  return { id: newId('op'), kind, state, result_code, failure_code, updated_at: iso(at), createdMs: at.getTime(), finish, stuck };
+}
+
+/** Advance a running op by wall-clock time; apply its end state once. */
+function advance(memberId, op) {
+  if (!op || !['requested', 'dispatched'].includes(op.state)) return;
+  const age = Date.now() - op.createdMs;
+  if (op.stuck) {
+    if (age >= 1000 && op.state === 'requested') { op.state = 'dispatched'; op.updated_at = iso(now()); }
+    return;
+  }
+  if (age >= 4000) {
+    op.finish?.(op, memberId);
+    op.updated_at = iso(now());
+  } else if (age >= 1000 && op.state === 'requested') {
+    op.state = 'dispatched';
+    op.updated_at = iso(now());
+  }
+}
+
+const publicOp = (op) =>
+  op && { id: op.id, kind: op.kind, state: op.state, result_code: op.result_code, failure_code: op.failure_code, updated_at: op.updated_at };
+
+// mbr-02: accepted long ago; signed out everywhere on 12 Sept.
+opsOf('mbr-02').provisioning = mkOp('provisioning', { state: 'completed', result_code: 'invitation_sent', at: daysFromNow(-200) });
+opsOf('mbr-02').session_revocation = mkOp('session_revocation', { state: 'completed', result_code: 'sessions_revoked', at: daysFromNow(-17) });
+opsOf('mbr-01').provisioning = mkOp('provisioning', { state: 'completed', result_code: 'invitation_sent', at: daysFromNow(-4) });
+opsOf('mbr-04').provisioning = mkOp('provisioning', { state: 'completed', result_code: 'existing_identity_linked', at: daysFromNow(-40) });
+opsOf('mbr-12').provisioning = mkOp('provisioning', { state: 'failed', failure_code: 'invalid_email', at: daysFromNow(-4) });
+opsOf('mbr-13').provisioning = mkOp('provisioning', { state: 'completed', result_code: 'invitation_sent', at: daysFromNow(-2) });
+// mbr-12's failure reason must be true: give it a malformed address (no TLD),
+// so a relaunch without correcting it fails again with invalid_email.
+members.find((m) => m.id === 'mbr-12').email = 'serigne.mbaye@exemple';
+memberEmailState.set('mbr-10', 'change_pending');
+opsOf('mbr-10').email_change = mkOp('email_change', { state: 'pending_verification', at: new Date(Date.now() - 3600_000) });
+
+// ---- member attendance (SP-MM) --------------------------------------------------
+const METHODS = ['qr', 'qr', 'manual', 'wallet'];
+const memberVisits = new Map(); // id → [{ id, venue_id, venue_name, checked_in_at, method, kind, booking_id }]
+(function seedVisits() {
+  for (const m of members) {
+    if (m.id === 'mbr-16' || m.membership_status === 'cancelled') continue;
+    const visits = [];
+    const vids = m.access_scope === 'chain_wide' ? [VENUE_1, VENUE_2] : (memberVenues.get(m.id) ?? [VENUE_1]);
+    const seed = Number(m.id.replace(/\D/g, '')) || 1;
+    const startDay = m.id === 'mbr-15' ? 40 : 0;
+    for (let day = startDay; day < 95; day += 1 + ((day * seed) % 3)) {
+      const at = daysFromNow(-day);
+      at.setHours(6 + ((day + seed) % 13), (day * 7 + seed * 11) % 60, 0, 0);
+      const venueId = vids[(day + seed) % vids.length];
+      const booked = (day + seed) % 2 === 0;
+      visits.push({
+        id: `vis-${m.id}-${day}`,
+        venue_id: venueId,
+        venue_name: venues.find((v) => v.id === venueId)?.name ?? venueId,
+        checked_in_at: iso(at),
+        method: METHODS[(day + seed) % METHODS.length],
+        kind: booked ? 'booked' : 'walk_in',
+        booking_id: booked ? `bkg-hist-${m.id}-${day}` : null,
+      });
+    }
+    memberVisits.set(m.id, visits.sort((a, b) => b.checked_in_at.localeCompare(a.checked_in_at)));
+  }
+})();
 
 // --- seed: plans ---------------------------------------------------------------
 const plans = [
@@ -1953,18 +2251,21 @@ function memberAccess(member) {
 
 function memberProfile(member) {
   const login = memberMode.get(member.id) === 'login';
+  const ops = opsOf(member.id);
+  for (const op of Object.values(ops)) advance(member.id, op);
   const invitation = login ? (memberInvitation.get(member.id) ?? 'accepted') : 'not_applicable';
+  const hasIdentity = login && !['failed', 'pending'].includes(invitation);
   return {
     ...member,
     access: memberAccess(member),
     account: {
       mode: login ? 'login' : 'roster',
       invitation,
-      // A failed provisioning never created an identity, so there is no
-      // login e-mail to verify — `not_applicable` fits (see H2 above).
-      email: login && invitation !== 'failed' ? 'verified' : 'not_applicable',
-      email_change: null,
-      invitation_resend: null,
+      email: hasIdentity ? (memberEmailState.get(member.id) ?? 'verified') : 'not_applicable',
+      provisioning: publicOp(ops.provisioning),
+      invitation_resend: publicOp(ops.invitation_resend),
+      session_revocation: publicOp(ops.session_revocation),
+      email_change: publicOp(ops.email_change),
     },
   };
 }
@@ -2057,6 +2358,37 @@ function listMembersHandler(query) {
   return [200, paginatedEnvelope(page, { next_cursor: nextCursor })];
 }
 
+// ---- tenant member-login policy (SP-MM) -----------------------------------------
+let configuredLoginMode = process.env.MOCK_LOGIN_MODE === 'roster' ? 'roster' : 'login';
+function loginPolicy() {
+  const capability = PLAN_CAPABILITIES[MOCK_PLAN].includes('member_self_service');
+  const effective = configuredLoginMode === 'login' && capability ? 'login' : 'roster';
+  return {
+    member_login_mode: configuredLoginMode,
+    member_login: {
+      configured_mode: configuredLoginMode,
+      effective_mode: effective,
+      required_capability: 'member_self_service',
+      capability_available: capability,
+      downgrade_reason: configuredLoginMode === 'login' && !capability ? 'plan_lacks_member_self_service' : null,
+    },
+  };
+}
+function getTenantSettingsHandler() {
+  return [200, envelope(loginPolicy())];
+}
+function patchTenantSettingsHandler(body) {
+  const mode = body?.member_login_mode;
+  if (!['login', 'roster'].includes(mode) || Object.keys(body).length !== 1) {
+    return badRequest('member_login_mode must be login or roster');
+  }
+  if (mode === 'login' && !PLAN_CAPABILITIES[MOCK_PLAN].includes('member_self_service')) {
+    return [403, errorBody('FEATURE_NOT_AVAILABLE', 'Plan lacks member_self_service')];
+  }
+  configuredLoginMode = mode;
+  return [200, envelope(loginPolicy())];
+}
+
 function registerMemberHandler(body) {
   const details = requireFields(body, [
     'first_name',
@@ -2070,6 +2402,10 @@ function registerMemberHandler(body) {
     (!Array.isArray(body?.venue_ids) || body.venue_ids.length === 0)
   ) {
     details.push({ field: 'venue_ids', message: 'venue_ids requis pour un accès venue_scoped.' });
+  }
+  const effective = loginPolicy().member_login.effective_mode;
+  if (effective === 'login' && !body?.email) {
+    details.push({ field: 'email', message: 'email is required for login members' });
   }
   if (details.length) return validationError(details);
   const id = newId('mbr');
@@ -2093,16 +2429,27 @@ function registerMemberHandler(body) {
   };
   members.push(member);
   memberVenues.set(id, body.venue_ids ?? []);
-  memberMode.set(id, body.email ? 'login' : 'roster');
-  const login = memberMode.get(id) === 'login';
+  memberMode.set(id, effective);
+  const login = effective === 'login';
+  let provisioning = null;
+  if (login) {
+    const op = mkOp('provisioning', {
+      finish: (o, mid) => {
+        o.state = 'completed';
+        o.result_code = 'invitation_sent';
+        memberInvitation.set(mid, 'sent');
+      },
+    });
+    opsOf(id).provisioning = op;
+    memberInvitation.set(id, 'pending');
+    provisioning = publicOp(op);
+  }
   return [
     201,
     envelope({
       ...member,
-      effective_mode: login ? 'login' : 'roster',
-      provisioning: login
-        ? { id: newId('op'), kind: 'provisioning', state: 'requested', updated_at: iso(now()) }
-        : null,
+      effective_mode: effective,
+      provisioning,
     }),
   ];
 }
@@ -2141,6 +2488,197 @@ function updateMemberHandler(memberId, body, query) {
   }
   touch(member);
   return [200, envelope(member)];
+}
+
+// ---- member identity operation routes (SP-MM) -----------------------------------
+function memberOr404(id) {
+  return members.find((m) => m.id === id) ?? null;
+}
+
+function invitationResendHandler(mid) {
+  const m = memberOr404(mid);
+  if (!m) return notFound(`Member ${mid} not found`);
+  if (memberMode.get(mid) !== 'login') return [409, errorBody('NOT_A_LOGIN_MEMBER', 'Roster member')];
+  if (m.membership_status === 'cancelled') return lifecycleConflict(m, 'invitation_resend', 'active');
+  if (sharedIdentity.has(mid)) return [409, errorBody('IDENTITY_SHARED', 'Identity is shared')];
+  const ops = opsOf(mid);
+  for (const op of Object.values(ops)) advance(mid, op);
+  const running = [ops.provisioning, ops.invitation_resend].find((op) => op && ['requested', 'dispatched'].includes(op.state));
+  if (running) return [202, envelope(publicOp(running))];
+  const invitation = memberInvitation.get(mid) ?? 'accepted';
+  if (invitation === 'accepted') return [409, errorBody('ACCOUNT_ALREADY_ACTIVE', 'Account already active')];
+  if (invitation === 'failed') {
+    if (loginPolicy().member_login.effective_mode !== 'login') {
+      return [409, errorBody('LOGIN_NOT_AVAILABLE', 'Tenant no longer provisions logins')];
+    }
+    const taken = members.some((o) => o.id !== mid && o.email && m.email && o.email.toLowerCase() === m.email.toLowerCase());
+    if (taken) return conflict('A member with this email already exists');
+    memberInvitation.set(mid, 'pending');
+    ops.provisioning = mkOp('provisioning', {
+      finish: (o) => {
+        if (!m.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m.email)) {
+          o.state = 'failed'; o.failure_code = 'invalid_email'; memberInvitation.set(mid, 'failed');
+        } else {
+          o.state = 'completed'; o.result_code = 'invitation_sent'; memberInvitation.set(mid, 'sent');
+        }
+      },
+    });
+    return [202, envelope(publicOp(ops.provisioning))];
+  }
+  ops.invitation_resend = mkOp('invitation_resend', {
+    stuck: stuckResend.has(mid),
+    finish: (o) => { o.state = 'completed'; o.result_code = 'invitation_sent'; },
+  });
+  return [202, envelope(publicOp(ops.invitation_resend))];
+}
+
+function sessionRevocationHandler(mid) {
+  const m = memberOr404(mid);
+  if (!m) return notFound(`Member ${mid} not found`);
+  if (memberMode.get(mid) !== 'login') return [409, errorBody('NOT_A_LOGIN_MEMBER', 'Roster member')];
+  const invitation = memberInvitation.get(mid) ?? 'accepted';
+  if (['pending', 'failed'].includes(invitation)) return [409, errorBody('LOGIN_NOT_PROVISIONED', 'No identity yet')];
+  if (sharedIdentity.has(mid)) return [409, errorBody('IDENTITY_SHARED', 'Identity is shared')];
+  const ops = opsOf(mid);
+  advance(mid, ops.session_revocation);
+  if (ops.session_revocation && ['requested', 'dispatched'].includes(ops.session_revocation.state)) {
+    return [202, envelope(publicOp(ops.session_revocation))];
+  }
+  ops.session_revocation = mkOp('session_revocation', {
+    finish: (o) => { o.state = 'completed'; o.result_code = 'sessions_revoked'; },
+  });
+  return [202, envelope(publicOp(ops.session_revocation))];
+}
+
+function emailChangeHandler(mid, body, headers) {
+  const key = headers['idempotency-key'];
+  if (!key) return badRequest('Idempotency-Key header is required');
+  const bodyText = JSON.stringify(body ?? {});
+  const stored = idempotency.get(`${mid}:${key}`);
+  if (stored) {
+    if (stored.body !== bodyText) return [422, errorBody('IDEMPOTENCY_KEY_REUSED', 'Key reused with another body')];
+    return stored.response;
+  }
+  const m = memberOr404(mid);
+  if (!m) return notFound(`Member ${mid} not found`);
+  const unknown = Object.keys(body ?? {}).filter((k) => k !== 'new_email');
+  if (unknown.length) return badRequest(`Unknown field: ${unknown[0]}`);
+  const next = String(body?.new_email ?? '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(next)) return validationError([{ field: 'new_email', message: 'invalid email' }]);
+  if (m.email && next.toLowerCase() === m.email.toLowerCase()) {
+    return validationError([{ field: 'new_email', message: 'same as current email' }]);
+  }
+  if (memberMode.get(mid) !== 'login') return [409, errorBody('NOT_A_LOGIN_MEMBER', 'Roster member')];
+  const invitation = memberInvitation.get(mid) ?? 'accepted';
+  if (['pending', 'failed'].includes(invitation)) return [409, errorBody('LOGIN_NOT_PROVISIONED', 'No identity yet')];
+  if (sharedIdentity.has(mid)) return [409, errorBody('IDENTITY_SHARED', 'Identity is shared')];
+  if (m.membership_status === 'cancelled') return lifecycleConflict(m, 'email_change', 'active');
+  if (members.some((o) => o.id !== mid && (o.email ?? '').toLowerCase() === next.toLowerCase())) {
+    return conflict('Email already used');
+  }
+  const ops = opsOf(mid);
+  const current = ops.email_change;
+  if (current && ['requested', 'dispatched', 'pending_verification'].includes(current.state)) {
+    if (current.target === next.toLowerCase()) return [202, envelope(publicOp(current))];
+    return [409, errorBody('EMAIL_CHANGE_IN_PROGRESS', 'Another change is in progress')];
+  }
+  const reinvite = invitation === 'sent' || invitation === 'untracked';
+  ops.email_change = mkOp('email_change', {
+    finish: (o) => {
+      if (next.toLowerCase().startsWith('pris@')) {
+        o.state = 'failed'; o.failure_code = 'email_unavailable'; memberEmailState.set(mid, 'change_failed');
+      } else if (reinvite) {
+        o.state = 'completed'; o.result_code = 'email_changed_reinvited'; m.email = next; touch(m);
+        memberEmailState.set(mid, 'verified');
+      } else {
+        o.state = 'pending_verification'; memberEmailState.set(mid, 'change_pending');
+      }
+    },
+  });
+  ops.email_change.target = next.toLowerCase();
+  memberEmailState.set(mid, 'change_pending');
+  const response = [202, envelope(publicOp(ops.email_change))];
+  idempotency.set(`${mid}:${key}`, { body: bodyText, response });
+  return response;
+}
+
+// ---- member search (SP-MM) -------------------------------------------------------
+const SEARCH_FIELDS = new Set(['venue_id', 'all_venues', 'q', 'status', 'cursor', 'limit']);
+function searchMembersHandler(body) {
+  const b = body ?? {};
+  const unknown = Object.keys(b).filter((k) => !SEARCH_FIELDS.has(k));
+  if (unknown.length) return badRequest('Unknown field in search body');
+  const byVenue = Boolean(typeof b.venue_id === 'string' && b.venue_id);
+  const all = b.all_venues === true;
+  if (byVenue === all) return badRequest('Provide exactly one of venue_id or all_venues');
+  if (byVenue && !venues.some((v) => v.id === b.venue_id)) return notFound('Venue not found');
+  const status = b.status ?? 'all';
+  if (!['active', 'expired', 'suspended', 'all'].includes(status)) return badRequest('Invalid status');
+  const q = typeof b.q === 'string' ? b.q.trim().toLowerCase() : '';
+  if (typeof b.q === 'string' && (b.q.length < 1 || b.q.length > 100)) return badRequest('q must be 1 to 100 characters');
+  let list = members.filter((m) => m.membership_status !== 'cancelled');
+  if (status !== 'all') list = list.filter((m) => m.membership_status === status);
+  if (byVenue) {
+    list = list.filter((m) => m.access_scope === 'chain_wide' || (memberVenues.get(m.id) ?? []).includes(b.venue_id));
+  }
+  if (q) {
+    list = list.filter((m) =>
+      [m.first_name, m.last_name, `${m.first_name} ${m.last_name}`, m.email ?? '', m.phone ?? '']
+        .some((field) => field.toLowerCase().includes(q)),
+    );
+  }
+  list = [...list].sort((a, b2) => `${a.last_name} ${a.first_name}`.localeCompare(`${b2.last_name} ${b2.first_name}`, 'fr'));
+  const limit = Number.isInteger(b.limit) && b.limit >= 1 && b.limit <= 100 ? b.limit : 20;
+  let offset = 0;
+  if (typeof b.cursor === 'string') {
+    const parsed = Number(Buffer.from(b.cursor, 'base64url').toString('utf8'));
+    offset = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }
+  const page = list.slice(offset, offset + limit);
+  const next = offset + limit < list.length ? Buffer.from(String(offset + limit)).toString('base64url') : null;
+  return [200, paginatedEnvelope(page, { next_cursor: next })];
+}
+
+// ---- member attendance route (SP-MM) ---------------------------------------------
+function memberAttendanceHandler(mid, query) {
+  if (!memberOr404(mid)) return notFound(`Member ${mid} not found`);
+  const all = memberVisits.get(mid) ?? [];
+  let from; let to; let venueId; let offset = 0;
+  const cursor = query.get('cursor');
+  if (cursor) {
+    try {
+      ({ from, to, venueId, offset } = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')));
+    } catch {
+      return badRequest('Invalid cursor');
+    }
+    for (const [param, value] of [['from', from], ['to', to], ['venue_id', venueId]]) {
+      const sent = query.get(param);
+      if (sent !== null && sent !== (value ?? '')) return badRequest(`${param} differs from the cursor`);
+    }
+  } else {
+    to = query.get('to') ?? iso(now());
+    from = query.get('from') ?? iso(new Date(new Date(to).getTime() - 30 * 86400_000));
+    venueId = query.get('venue_id') ?? null;
+  }
+  const fromMs = Date.parse(from); const toMs = Date.parse(to);
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs)) return validationError([{ field: 'from', message: 'invalid' }]);
+  if (fromMs >= toMs) return validationError([{ field: 'from', message: 'from must be before to' }]);
+  if (toMs - fromMs > 366 * 86400_000) return validationError([{ field: 'from', message: 'range over 366 days' }]);
+  const scoped = venueId ? all.filter((v) => v.venue_id === venueId) : all;
+  const inRange = scoped.filter((v) => { const t = Date.parse(v.checked_in_at); return t >= fromMs && t < toMs; });
+  const rawLimit = Number(query.get('limit'));
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.floor(rawLimit), 100) : 50;
+  const items = inRange.slice(offset, offset + limit);
+  const nextOffset = offset + limit;
+  return [200, envelope({
+    from, to,
+    total_visits: inRange.length,
+    last_visit_at: scoped[0]?.checked_in_at ?? null,
+    items,
+    next_cursor: nextOffset < inRange.length
+      ? Buffer.from(JSON.stringify({ from, to, venueId, offset: nextOffset })).toString('base64url')
+      : null,
+  })];
 }
 
 function setMemberAccessHandler(memberId, body, query) {
@@ -2624,6 +3162,13 @@ const routes = [
     pattern: /^\/gms\/v1\/members$/,
     handler: (_m, body) => registerMemberHandler(body),
   },
+  { method: 'POST', pattern: /^\/gms\/v1\/members\/search$/, handler: (_m, b) => searchMembersHandler(b) },
+  { method: 'GET', pattern: /^\/gms\/v1\/members\/([^/]+)\/attendance$/, handler: (m, _b, q) => memberAttendanceHandler(m[1], q) },
+  { method: 'POST', pattern: /^\/gms\/v1\/members\/([^/]+)\/invitation-resend$/, handler: (m) => invitationResendHandler(m[1]) },
+  { method: 'POST', pattern: /^\/gms\/v1\/members\/([^/]+)\/session-revocation$/, handler: (m) => sessionRevocationHandler(m[1]) },
+  { method: 'POST', pattern: /^\/gms\/v1\/members\/([^/]+)\/email-change$/, handler: (m, b, _q, h) => emailChangeHandler(m[1], b, h) },
+  { method: 'GET', pattern: /^\/gms\/v1\/tenant\/settings$/, handler: () => getTenantSettingsHandler() },
+  { method: 'PATCH', pattern: /^\/gms\/v1\/tenant\/settings$/, handler: (_m, b) => patchTenantSettingsHandler(b) },
   {
     method: 'GET',
     pattern: /^\/gms\/v1\/members\/([^/]+)$/,
@@ -2699,7 +3244,7 @@ const routes = [
   },
 ];
 
-function dispatch(method, pathname, body, query) {
+function dispatch(method, pathname, body, query, headers) {
   if (method === 'GET' && pathname === '/health') {
     return [200, JSON.stringify({ service: 'iziwellpass-owner-mock', status: 'ok' })];
   }
@@ -2708,7 +3253,7 @@ function dispatch(method, pathname, body, query) {
   for (const route of routes) {
     if (route.method !== method) continue;
     const match = route.pattern.exec(pathname);
-    if (match) return route.handler(match, body, query);
+    if (match) return route.handler(match, body, query, headers);
   }
   return [404, errorBody('NOT_FOUND', `No mock route for ${method} ${pathname}`)];
 }
@@ -2784,7 +3329,7 @@ http
 
     const [status, out] =
       mfaGate(url.pathname, req.headers.authorization) ??
-      dispatch(req.method ?? 'GET', url.pathname, body, url.searchParams);
+      dispatch(req.method ?? 'GET', url.pathname, body, url.searchParams, req.headers);
     console.log(`[mock] ${req.method} ${url.pathname} -> ${status}`);
     if (status === 204) {
       res.writeHead(204);
