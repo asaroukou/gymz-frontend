@@ -7,6 +7,7 @@ const resendConfirmationCode = vi.fn();
 const refreshSession = vi.fn();
 const getSession = vi.fn();
 const getCurrentUser = vi.fn();
+const sendMFACode = vi.fn();
 
 vi.mock('amazon-cognito-identity-js', () => {
   class CognitoUserPool {
@@ -21,6 +22,7 @@ vi.mock('amazon-cognito-identity-js', () => {
     getSession = getSession;
     resendConfirmationCode = resendConfirmationCode;
     refreshSession = refreshSession;
+    sendMFACode = sendMFACode;
   }
   class AuthenticationDetails {}
   return { CognitoUserPool, CognitoUser, AuthenticationDetails };
@@ -206,5 +208,151 @@ describe('forceRefreshSession', () => {
     await expect(client.forceRefreshSession()).resolves.toBe('new-id-token');
 
     expect(refreshSession).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('signIn TOTP challenge', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('resolves totp-required and submits the code as SOFTWARE_TOKEN_MFA', async () => {
+    authenticateUser.mockImplementation((_details, callbacks) => {
+      callbacks.totpRequired('SOFTWARE_TOKEN_MFA', {});
+    });
+    sendMFACode.mockImplementation((_code, callbacks) => {
+      callbacks.onSuccess({ getIdToken: () => ({ getJwtToken: () => 'id-mfa' }) });
+    });
+    const result = await client.signIn('a@b.c', 'pw');
+    if (result.kind !== 'totp-required') throw new Error('expected totp-required');
+    await expect(result.submit('123456')).resolves.toEqual({ idToken: 'id-mfa' });
+    expect(sendMFACode).toHaveBeenCalledWith('123456', expect.any(Object), 'SOFTWARE_TOKEN_MFA');
+  });
+
+  it('rejects submit with the Cognito error on a wrong code', async () => {
+    authenticateUser.mockImplementation((_details, callbacks) => {
+      callbacks.totpRequired('SOFTWARE_TOKEN_MFA', {});
+    });
+    const mismatch = Object.assign(new Error('Invalid code received for user'), {
+      name: 'CodeMismatchException',
+    });
+    sendMFACode.mockImplementation((_code, callbacks) => callbacks.onFailure(mismatch));
+    const result = await client.signIn('a@b.c', 'pw');
+    if (result.kind !== 'totp-required') throw new Error('expected totp-required');
+    await expect(result.submit('111111')).rejects.toMatchObject({ name: 'CodeMismatchException' });
+  });
+});
+
+describe('TOTP enrolment', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const session = {
+    isValid: () => true,
+    getIdToken: () => ({ payload: { email: 'awa+gym@studio.sn' }, getJwtToken: () => 'id' }),
+  };
+
+  function signedIn(overrides: Record<string, unknown> = {}) {
+    const user = {
+      getSession: vi.fn((cb: (err: Error | null, s: unknown) => void) => cb(null, session)),
+      getUsername: () => 'sub-123',
+      associateSoftwareToken: vi.fn(),
+      verifySoftwareToken: vi.fn(),
+      setUserMfaPreference: vi.fn(),
+      ...overrides,
+    };
+    getCurrentUser.mockReturnValue(user);
+    return user;
+  }
+
+  it('startTotpSetup returns the secret and an otpauth URI for the signed-in email', async () => {
+    const user = signedIn();
+    user.associateSoftwareToken.mockImplementation(
+      (callbacks: { associateSecretCode: (s: string) => void }) =>
+        callbacks.associateSecretCode('SECRET234'),
+    );
+    await expect(client.startTotpSetup()).resolves.toEqual({
+      secret: 'SECRET234',
+      otpauthUri:
+        'otpauth://totp/IziWellPass:awa%2Bgym%40studio.sn?secret=SECRET234&issuer=IziWellPass',
+    });
+  });
+
+  it('startTotpSetup falls back to the username when the token has no email', async () => {
+    const user = signedIn({
+      getSession: vi.fn((cb: (err: Error | null, s: unknown) => void) =>
+        cb(null, { isValid: () => true, getIdToken: () => ({ payload: {} }) }),
+      ),
+    });
+    user.associateSoftwareToken.mockImplementation(
+      (callbacks: { associateSecretCode: (s: string) => void }) => callbacks.associateSecretCode('S'),
+    );
+    const setup = await client.startTotpSetup();
+    expect(setup.otpauthUri).toContain('IziWellPass:sub-123?');
+  });
+
+  it('startTotpSetup rejects NotSignedInError when nobody is signed in', async () => {
+    getCurrentUser.mockReturnValue(null);
+    await expect(client.startTotpSetup()).rejects.toMatchObject({ name: 'NotSignedInError' });
+  });
+
+  it('startTotpSetup rejects NotSignedInError when the session is invalid', async () => {
+    signedIn({
+      getSession: vi.fn((cb: (err: Error | null, s: unknown) => void) =>
+        cb(null, { isValid: () => false }),
+      ),
+    });
+    await expect(client.startTotpSetup()).rejects.toMatchObject({ name: 'NotSignedInError' });
+  });
+
+  it('confirmTotpSetup verifies the code, then makes TOTP enabled and preferred', async () => {
+    const user = signedIn();
+    user.verifySoftwareToken.mockImplementation(
+      (_code: string, _name: string, callbacks: { onSuccess: (s: unknown) => void }) =>
+        callbacks.onSuccess({}),
+    );
+    user.setUserMfaPreference.mockImplementation(
+      (_sms: unknown, _totp: unknown, cb: (err: Error | null, r?: string) => void) =>
+        cb(null, 'SUCCESS'),
+    );
+    await expect(client.confirmTotpSetup('123456')).resolves.toBeUndefined();
+    expect(user.verifySoftwareToken).toHaveBeenCalledWith(
+      '123456',
+      'IziWellPass',
+      expect.any(Object),
+    );
+    expect(user.setUserMfaPreference).toHaveBeenCalledWith(
+      null,
+      { PreferredMfa: true, Enabled: true },
+      expect.any(Function),
+    );
+    expect(user.verifySoftwareToken.mock.invocationCallOrder[0]).toBeLessThan(
+      user.setUserMfaPreference.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it('confirmTotpSetup rejects without touching the preference on a wrong code', async () => {
+    const user = signedIn();
+    const wrong = Object.assign(new Error('Code mismatch'), {
+      name: 'EnableSoftwareTokenMFAException',
+    });
+    user.verifySoftwareToken.mockImplementation(
+      (_code: string, _name: string, callbacks: { onFailure: (e: Error) => void }) =>
+        callbacks.onFailure(wrong),
+    );
+    await expect(client.confirmTotpSetup('999999')).rejects.toMatchObject({
+      name: 'EnableSoftwareTokenMFAException',
+    });
+    expect(user.setUserMfaPreference).not.toHaveBeenCalled();
+  });
+
+  it('confirmTotpSetup rejects when setting the preference fails', async () => {
+    const user = signedIn();
+    user.verifySoftwareToken.mockImplementation(
+      (_code: string, _name: string, callbacks: { onSuccess: (s: unknown) => void }) =>
+        callbacks.onSuccess({}),
+    );
+    user.setUserMfaPreference.mockImplementation(
+      (_sms: unknown, _totp: unknown, cb: (err: Error | null) => void) =>
+        cb(new Error('boom')),
+    );
+    await expect(client.confirmTotpSetup('123456')).rejects.toThrow('boom');
   });
 });

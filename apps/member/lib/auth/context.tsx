@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
 import { configureApi } from '@iziwellpass/api/client';
 import { parseClaims, type SessionClaims } from '@iziwellpass/auth/claims';
-import { createMockAuthClient } from '@iziwellpass/auth/mock';
+import { createMemberMockClient } from './member-mock';
 import { createMemoryBackedStorage, type AsyncKV } from './storage';
 import { createMemberAuthClient, type SignInResult } from './cognito';
 import { reduceSession, initialSession } from './session';
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // On native the mock session lives in memory only (lost on app restart).
     const { storage, hydrate } = createMemoryBackedStorage(asyncKV);
     const client = env.authMock
-      ? createMockAuthClient()
+      ? createMemberMockClient()
       : createMemberAuthClient({
           userPoolId: env.cognitoUserPoolId,
           clientId: env.cognitoClientId,

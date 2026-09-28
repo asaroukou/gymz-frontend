@@ -9,6 +9,9 @@ import {
   type CognitoUserSession,
 } from 'amazon-cognito-identity-js';
 
+import { notSignedInError } from './errors';
+import { buildOtpauthUri, TOTP_ISSUER, type TotpSetup } from './totp';
+
 export interface AuthClientConfig {
   userPoolId: string;
   clientId: string;
@@ -20,6 +23,11 @@ export type SignInResult =
       kind: 'new-password-required';
       /** Complete the invited-staff first-login flow with a new password. */
       complete: (newPassword: string) => Promise<{ idToken: string }>;
+    }
+  | {
+      kind: 'totp-required';
+      /** Answers the sign-in's TOTP challenge with the 6-digit code from the user's authenticator app. */
+      submit: (code: string) => Promise<{ idToken: string }>;
     };
 
 export interface AuthClient {
@@ -39,6 +47,18 @@ export interface AuthClient {
    * throws for the signed-out case.
    */
   forceRefreshSession(): Promise<string | null>;
+  /**
+   * Starts TOTP enrolment for the signed-in user (AssociateSoftwareToken, with
+   * the user's own access token). Rejects `NotSignedInError` without a valid
+   * session. Each call issues a NEW secret that replaces the previous one.
+   */
+  startTotpSetup(): Promise<TotpSetup>;
+  /**
+   * Verifies the first code from the authenticator app (VerifySoftwareToken),
+   * then makes TOTP enabled and preferred (SetUserMFAPreference). The backend
+   * finalize call comes after this.
+   */
+  confirmTotpSetup(code: string): Promise<void>;
 }
 
 export function createAuthClient(config: AuthClientConfig): AuthClient {
@@ -48,6 +68,25 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
   });
 
   const user = (email: string) => new CognitoUser({ Username: email, Pool: pool });
+
+  // The enrolment calls need the SDK's in-memory session (signInUserSession),
+  // which getSession() restores from storage and refreshes if needed.
+  const signedInUser = () =>
+    new Promise<{ user: CognitoUser; session: CognitoUserSession }>((resolve, reject) => {
+      const current = pool.getCurrentUser();
+      if (!current) {
+        reject(notSignedInError());
+        return;
+      }
+      // Same overloaded-callback shape as getIdToken below.
+      current.getSession(((err: Error | null, session: CognitoUserSession | null) => {
+        if (err || !session || !session.isValid()) {
+          reject(notSignedInError());
+          return;
+        }
+        resolve({ user: current, session });
+      }) as Parameters<CognitoUser['getSession']>[0]);
+    });
 
   // Dedupes concurrent forceRefreshSession() calls: when several queries on a
   // page hit 401 at once, each would otherwise trigger its own Cognito
@@ -98,6 +137,22 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
                         res({ idToken: session.getIdToken().getJwtToken() }),
                       onFailure: (err: unknown) => rej(err),
                     },
+                  );
+                }),
+            }),
+          totpRequired: () =>
+            resolve({
+              kind: 'totp-required',
+              submit: (code: string) =>
+                new Promise((res, rej) => {
+                  cognitoUser.sendMFACode(
+                    code,
+                    {
+                      onSuccess: (session: CognitoUserSession) =>
+                        res({ idToken: session.getIdToken().getJwtToken() }),
+                      onFailure: (err: unknown) => rej(err),
+                    },
+                    'SOFTWARE_TOKEN_MFA',
                   );
                 }),
             }),
@@ -167,6 +222,34 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
         inflightRefresh = null;
       });
       return inflightRefresh;
+    },
+
+    async startTotpSetup() {
+      const { user: current, session } = await signedInUser();
+      const payload = session.getIdToken().payload as { email?: unknown };
+      const account = typeof payload.email === 'string' ? payload.email : current.getUsername();
+      return new Promise<TotpSetup>((resolve, reject) => {
+        current.associateSoftwareToken({
+          associateSecretCode: (secret: string) =>
+            resolve({ secret, otpauthUri: buildOtpauthUri(account, secret) }),
+          onFailure: (err: unknown) => reject(err),
+        });
+      });
+    },
+
+    async confirmTotpSetup(code) {
+      const { user: current } = await signedInUser();
+      await new Promise<void>((resolve, reject) => {
+        current.verifySoftwareToken(code, TOTP_ISSUER, {
+          onSuccess: () => resolve(),
+          onFailure: (err: Error) => reject(err),
+        });
+      });
+      await new Promise<void>((resolve, reject) => {
+        current.setUserMfaPreference(null, { PreferredMfa: true, Enabled: true }, (err) =>
+          err ? reject(err) : resolve(),
+        );
+      });
     },
   };
 }

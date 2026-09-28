@@ -18,6 +18,8 @@ function stubClient(idToken: string | null): AuthClient {
     signOut: vi.fn(),
     getIdToken: vi.fn().mockResolvedValue(idToken),
     forceRefreshSession: vi.fn().mockResolvedValue(null),
+    startTotpSetup: vi.fn(),
+    confirmTotpSetup: vi.fn(),
   };
 }
 

@@ -197,6 +197,7 @@
       "invalidPassword": "Ce mot de passe ne respecte pas les règles de sécurité.",
       "codeMismatch": "Code incorrect. Vérifiez les 6 chiffres reçus par e-mail.",
       "codeExpired": "Ce code a expiré. Renvoyez-en un nouveau.",
+      "sessionExpired": "Votre session a expiré. Reconnectez-vous.",
       "usernameExists": "Un compte existe déjà avec cet e-mail.",
       "network": "Connexion impossible. Vérifiez votre connexion et réessayez."
     }

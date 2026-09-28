@@ -202,7 +202,12 @@ function CredentialsCard({
         router.replace(next);
         return;
       }
-      onChallenge({ complete: result.complete });
+      if (result.kind === 'new-password-required') {
+        onChallenge({ complete: result.complete });
+        return;
+      }
+      // The TOTP code step arrives in the next task; until then say so.
+      form.setError('root', { message: t('login.error') });
     } catch (err) {
       const { message } = resolveError(err, t('login.error'));
       form.setError('root', { message });

@@ -197,6 +197,7 @@
       "invalidPassword": "This password doesn't meet the security rules.",
       "codeMismatch": "Incorrect code. Check the 6 digits from your email.",
       "codeExpired": "This code has expired. Request a new one.",
+      "sessionExpired": "Your session expired. Sign in again.",
       "usernameExists": "An account already exists with this email.",
       "network": "Can't connect. Check your connection and try again."
     }

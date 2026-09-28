@@ -198,7 +198,11 @@ function CredentialsCard({
         router.replace(next);
         return;
       }
-      onChallenge({ complete: result.complete });
+      if (result.kind === 'new-password-required') {
+        onChallenge({ complete: result.complete });
+        return;
+      }
+      form.setError('root', { message: t('login.totpUnsupported') });
     } catch (err) {
       const { message } = resolveError(err, t('login.error'));
       form.setError('root', { message });

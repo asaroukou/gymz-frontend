@@ -13,7 +13,8 @@
       "onboardedNotice": "Your venue is ready — sign in to continue.",
       "forgotPassword": "Forgot password?",
       "forgotPasswordSoon": "Coming soon",
-      "error": "Invalid email or password"
+      "error": "Invalid email or password",
+      "totpUnsupported": "Two-factor sign-in isn't supported here yet."
     },
     "newPassword": {
       "title": "Choose a new password",
@@ -46,6 +47,7 @@
       "tooManyAttempts": "Too many attempts. Wait a few minutes before trying again.",
       "passwordResetRequired": "Your password must be reset. Contact whoever gave you access.",
       "invalidPassword": "This password doesn't meet the security rules.",
+      "sessionExpired": "Your session expired. Sign in again.",
       "network": "Can't connect. Check your connection and try again."
     }
   },
