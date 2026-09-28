@@ -588,7 +588,10 @@
         "submit": "Save access",
         "submitting": "Saving…",
         "success": "Access updated",
-        "error": "Could not update access"
+        "error": "Could not update access",
+        "downscopeBlocked": "These venues can't be removed: upcoming bookings are still planned there.",
+        "downscopeVenue": "{venue} · {count, plural, one {# upcoming booking} other {# upcoming bookings}}",
+        "unknownVenue": "Unknown venue"
       }
     }
   },

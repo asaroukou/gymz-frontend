@@ -1,17 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { CircleAlertIcon, TriangleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
+import { unwrap } from '@iziwellpass/api/client';
 import {
   getGetMemberQueryKey,
   getListMembersQueryKey,
+  useListVenues,
   useSetMemberAccess,
   useSetMemberVenues,
 } from '@iziwellpass/api/generated';
 import type { StaffMemberView } from '@iziwellpass/api/schemas';
+import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
   Dialog,
@@ -33,6 +37,7 @@ import {
 import { VenueChecklist } from '@/components/venue-checklist';
 import { ACCESS_SCOPE_VALUES } from '@/lib/access-scope';
 import { apiErrorMessage } from '@/lib/api-error';
+import { classifyMemberError, downscopeLines, type DownscopeLine } from '@/lib/member-errors';
 
 // ---------------------------------------------------------------------------
 // Edit access dialog
@@ -55,14 +60,23 @@ export function EditAccessDialog({
   const [scope, setScope] = useState<(typeof ACCESS_SCOPE_VALUES)[number]>(member.access_scope);
   const [venueIds, setVenueIds] = useState<string[]>([]);
   const [venuesError, setVenuesError] = useState(false);
+  const [conflict, setConflict] = useState(false);
+  const [blocked, setBlocked] = useState<DownscopeLine[] | null>(null);
+  const venuesQuery = useListVenues({ query: { select: unwrap } });
 
-  // Reset local edit state whenever the dialog (re)opens for a member.
+  // Reset local edit state only on the closed -> open transition (P4): the
+  // dialog also stays open after a conflict, when member.access_scope may
+  // have just been refetched, and resetting then would wipe the selection.
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpen.current) {
       setScope(member.access_scope);
       setVenueIds([]);
       setVenuesError(false);
+      setConflict(false);
+      setBlocked(null);
     }
+    wasOpen.current = open;
   }, [open, member.access_scope]);
 
   const pending = setAccess.isPending || setVenues.isPending;
@@ -73,21 +87,36 @@ export function EditAccessDialog({
     toast.success(t('detail.access.success'));
     onOpenChange(false);
   };
-  const onErr = (err: unknown) => toast.error(apiErrorMessage(err, t('detail.access.error')));
+  const onErr = (err: unknown) => {
+    const error = classifyMemberError(err);
+    if (error.kind === 'versionMismatch') {
+      setBlocked(null);
+      setConflict(true);
+      void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
+      return;
+    }
+    if (error.kind === 'downscopeBlocked') {
+      setConflict(false);
+      setBlocked(downscopeLines(error.affected, venuesQuery.data ?? [], t('detail.access.unknownVenue')));
+      return;
+    }
+    toast.error(apiErrorMessage(err, t('detail.access.error')));
+  };
 
   const handleSave = () => {
+    const params = { expected_version: member.version };
     if (scope === 'venue_scoped') {
       if (venueIds.length === 0) {
         setVenuesError(true);
         return;
       }
       setVenues.mutate(
-        { mid: member.id, data: { venue_ids: venueIds } },
+        { mid: member.id, data: { venue_ids: venueIds }, params },
         { onSuccess: onDone, onError: onErr },
       );
     } else {
       setAccess.mutate(
-        { mid: member.id, data: { scope: 'chain_wide' } },
+        { mid: member.id, data: { scope: 'chain_wide' }, params },
         { onSuccess: onDone, onError: onErr },
       );
     }
@@ -100,6 +129,29 @@ export function EditAccessDialog({
           <DialogTitle>{t('detail.access.title')}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-[18px]">
+          {conflict ? (
+            <Alert variant="warning">
+              <TriangleAlertIcon />
+              <AlertDescription>{t('detail.versionConflict')}</AlertDescription>
+            </Alert>
+          ) : null}
+          {blocked ? (
+            <Alert variant="destructive">
+              <CircleAlertIcon />
+              <AlertDescription>
+                <p>{t('detail.access.downscopeBlocked')}</p>
+                {blocked.length > 0 ? (
+                  <ul className="mt-1.5 flex flex-col gap-0.5">
+                    {blocked.map((line) => (
+                      <li key={line.venueId}>
+                        {t('detail.access.downscopeVenue', { venue: line.name, count: line.count })}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </AlertDescription>
+            </Alert>
+          ) : null}
           <div className="flex flex-col gap-2">
             <Label htmlFor="access-scope">{t('detail.access.scopeLabel')}</Label>
             <Select value={scope} onValueChange={(v) => setScope(v as typeof scope)}>

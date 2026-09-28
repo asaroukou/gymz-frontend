@@ -588,7 +588,10 @@
         "submit": "Enregistrer l'accès",
         "submitting": "Enregistrement…",
         "success": "Accès mis à jour",
-        "error": "Impossible de mettre à jour l'accès"
+        "error": "Impossible de mettre à jour l'accès",
+        "downscopeBlocked": "Impossible de retirer ces salles : des réservations à venir y sont encore prévues.",
+        "downscopeVenue": "{venue} · {count, plural, one {# réservation à venir} other {# réservations à venir}}",
+        "unknownVenue": "Salle inconnue"
       }
     }
   },
