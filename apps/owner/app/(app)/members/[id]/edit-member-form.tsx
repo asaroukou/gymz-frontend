@@ -41,6 +41,7 @@ import { SectionHeading } from '@iziwellpass/ui/components/working-page';
 import { apiErrorMessage, applyFieldErrors } from '@/lib/api-error';
 import { classifyMemberError } from '@/lib/member-errors';
 import { buildMemberUpdate } from '@/lib/member-update';
+import { isForbidden } from '@/lib/plan-errors';
 
 const MEMBERSHIP_TYPE_VALUES = Object.values(MembershipType) as [
   MembershipType,
@@ -59,10 +60,14 @@ export function EditMemberForm({
   canEdit: boolean;
 }) {
   const t = useTranslations('members');
+  const tCap = useTranslations('capabilities');
   const queryClient = useQueryClient();
   const updateMember = useUpdateMember();
 
-  const loginMode = member.account.mode === 'login';
+  // A login member's e-mail is locked to the identity it was provisioned
+  // with — unless provisioning failed, in which case there is no identity
+  // yet and the backend lets the e-mail be corrected through this route.
+  const emailLocked = member.account.mode === 'login' && member.account.invitation !== 'failed';
   const [conflict, setConflict] = useState(false);
   // After a VERSION_MISMATCH the member is refetched; keep what the user typed
   // instead of resetting the form to the refetched values (H5).
@@ -73,16 +78,16 @@ export function EditMemberForm({
       z.object({
         first_name: z.string().min(1, t('validation.firstNameRequired')),
         last_name: z.string().min(1, t('validation.lastNameRequired')),
-        // A login member's e-mail is read-only and never sent (H4); validating
-        // its format would block saving every other field if the stored value
+        // A locked e-mail is read-only and never sent (H4); validating its
+        // format would block saving every other field if the stored value
         // happens to be malformed.
-        email: loginMode ? z.string() : z.email(t('validation.emailInvalid')).or(z.literal('')),
+        email: emailLocked ? z.string() : z.email(t('validation.emailInvalid')).or(z.literal('')),
         phone: z.string(),
         membership_type: z.enum(MEMBERSHIP_TYPE_VALUES),
         membership_end: z.string(),
         notes: z.string(),
       }),
-    [t, loginMode],
+    [t, emailLocked],
   );
 
   type EditMemberValues = z.infer<typeof schema>;
@@ -103,14 +108,20 @@ export function EditMemberForm({
   });
 
   useEffect(() => {
-    if (keepInputRef.current) return;
+    if (keepInputRef.current) {
+      // Merge in the refetched server values without discarding what the
+      // user typed: untouched fields take the concurrent change, the user's
+      // edited (dirty) fields are preserved for the retry (H1).
+      form.reset(toDefaults(member), { keepDirtyValues: true });
+      return;
+    }
     form.reset(toDefaults(member));
   }, [member, form]);
 
   const onSubmit = (values: EditMemberValues) => {
     // Read the version at submit time: after a conflict this is the refetched one.
     const { data, params } = buildMemberUpdate(values, {
-      mode: member.account.mode,
+      mode: emailLocked ? 'login' : 'roster',
       version: member.version,
     });
     updateMember.mutate(
@@ -133,6 +144,10 @@ export function EditMemberForm({
           }
           if (error.kind === 'loginEmailLocked') {
             form.setError('email', { type: 'server', message: t('detail.edit.emailLockedHint') });
+            return;
+          }
+          if (isForbidden(err)) {
+            toast.error(tCap('toast.forbidden'));
             return;
           }
           if (!applyFieldErrors(form, err)) {
@@ -193,9 +208,9 @@ export function EditMemberForm({
                 <FormItem>
                   <FormLabel>{t('detail.edit.email')}</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} disabled={!canEdit || loginMode} />
+                    <Input type="email" {...field} disabled={!canEdit || emailLocked} />
                   </FormControl>
-                  {loginMode ? (
+                  {emailLocked ? (
                     <FormDescription>{t('detail.edit.emailLockedHint')}</FormDescription>
                   ) : null}
                   <FormMessage />

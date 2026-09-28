@@ -39,7 +39,7 @@ export function MemberActions({
   menuRef,
 }: Omit<MemberRowProps, 'index'> & { size?: 'icon' | 'icon-sm' }) {
   const t = useTranslations('members');
-  const canSuspend = canManage && member.membership_status !== 'suspended';
+  const canSuspend = canManage && member.membership_status === 'active';
 
   return (
     <DropdownMenu>

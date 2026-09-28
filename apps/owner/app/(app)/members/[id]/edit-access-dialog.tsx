@@ -14,7 +14,7 @@ import {
   useSetMemberAccess,
   useSetMemberVenues,
 } from '@iziwellpass/api/generated';
-import type { StaffMemberView } from '@iziwellpass/api/schemas';
+import type { StaffMemberProfile } from '@iziwellpass/api/schemas';
 import { Alert, AlertDescription } from '@iziwellpass/ui/components/alert';
 import { Button } from '@iziwellpass/ui/components/button';
 import {
@@ -38,6 +38,7 @@ import { VenueChecklist } from '@/components/venue-checklist';
 import { ACCESS_SCOPE_VALUES } from '@/lib/access-scope';
 import { apiErrorMessage } from '@/lib/api-error';
 import { classifyMemberError, downscopeLines, type DownscopeLine } from '@/lib/member-errors';
+import { isForbidden } from '@/lib/plan-errors';
 
 // ---------------------------------------------------------------------------
 // Edit access dialog
@@ -48,12 +49,13 @@ export function EditAccessDialog({
   open,
   onOpenChange,
 }: {
-  member: StaffMemberView;
+  member: StaffMemberProfile;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations('members');
   const tCommon = useTranslations('common');
+  const tCap = useTranslations('capabilities');
   const queryClient = useQueryClient();
   const setAccess = useSetMemberAccess();
   const setVenues = useSetMemberVenues();
@@ -71,13 +73,13 @@ export function EditAccessDialog({
   useEffect(() => {
     if (open && !wasOpen.current) {
       setScope(member.access_scope);
-      setVenueIds([]);
+      setVenueIds(member.access.venue_ids);
       setVenuesError(false);
       setConflict(false);
       setBlocked(null);
     }
     wasOpen.current = open;
-  }, [open, member.access_scope]);
+  }, [open, member.access_scope, member.access.venue_ids]);
 
   const pending = setAccess.isPending || setVenues.isPending;
 
@@ -100,10 +102,16 @@ export function EditAccessDialog({
       setBlocked(downscopeLines(error.affected, venuesQuery.data ?? [], t('detail.access.unknownVenue')));
       return;
     }
+    if (isForbidden(err)) {
+      toast.error(tCap('toast.forbidden'));
+      return;
+    }
     toast.error(apiErrorMessage(err, t('detail.access.error')));
   };
 
   const handleSave = () => {
+    setConflict(false);
+    setBlocked(null);
     const params = { expected_version: member.version };
     if (scope === 'venue_scoped') {
       if (venueIds.length === 0) {
