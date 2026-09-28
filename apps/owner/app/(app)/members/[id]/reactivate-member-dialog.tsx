@@ -24,6 +24,7 @@ import {
 import { apiErrorMessage } from '@/lib/api-error';
 import { classifyMemberError } from '@/lib/member-errors';
 import { memberName } from '@/lib/member-search';
+import { isForbidden } from '@/lib/plan-errors';
 
 /** Confirm « Réactiver » (danger zone, canvas `L6sMyP`): `PUT /members/{mid}/reactivate`, 204. */
 export function ReactivateMemberDialog({
@@ -37,6 +38,7 @@ export function ReactivateMemberDialog({
 }) {
   const t = useTranslations('members');
   const tCommon = useTranslations('common');
+  const tCap = useTranslations('capabilities');
   const queryClient = useQueryClient();
   const reactivate = useReactivateMember();
 
@@ -59,6 +61,10 @@ export function ReactivateMemberDialog({
             toast.error(t('detail.reactivateDialog.notSuspended'));
             refresh();
             onOpenChange(false);
+            return;
+          }
+          if (isForbidden(err)) {
+            toast.error(tCap('toast.forbidden'));
             return;
           }
           toast.error(apiErrorMessage(err, t('detail.reactivateDialog.error')));

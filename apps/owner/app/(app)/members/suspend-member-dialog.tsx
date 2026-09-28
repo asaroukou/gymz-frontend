@@ -24,6 +24,7 @@ import {
 import { apiErrorMessage } from '@/lib/api-error';
 import { classifyMemberError } from '@/lib/member-errors';
 import { memberName } from '@/lib/member-search';
+import { isForbidden } from '@/lib/plan-errors';
 
 // ---------------------------------------------------------------------------
 // Suspend confirm dialog (driven from the row menu)
@@ -42,6 +43,7 @@ export function SuspendMemberDialog({
 }) {
   const t = useTranslations('members');
   const tCommon = useTranslations('common');
+  const tCap = useTranslations('capabilities');
   const queryClient = useQueryClient();
   const suspendMember = useSuspendMember();
 
@@ -61,6 +63,10 @@ export function SuspendMemberDialog({
             void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
             void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
             onOpenChange(false);
+            return;
+          }
+          if (isForbidden(err)) {
+            toast.error(tCap('toast.forbidden'));
             return;
           }
           toast.error(apiErrorMessage(err, t('detail.suspendDialog.error')));
