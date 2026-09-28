@@ -21,6 +21,7 @@ import { Button } from '@iziwellpass/ui/components/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -72,13 +73,16 @@ export function EditMemberForm({
       z.object({
         first_name: z.string().min(1, t('validation.firstNameRequired')),
         last_name: z.string().min(1, t('validation.lastNameRequired')),
-        email: z.email(t('validation.emailInvalid')).or(z.literal('')),
+        // A login member's e-mail is read-only and never sent (H4); validating
+        // its format would block saving every other field if the stored value
+        // happens to be malformed.
+        email: loginMode ? z.string() : z.email(t('validation.emailInvalid')).or(z.literal('')),
         phone: z.string(),
         membership_type: z.enum(MEMBERSHIP_TYPE_VALUES),
         membership_end: z.string(),
         notes: z.string(),
       }),
-    [t],
+    [t, loginMode],
   );
 
   type EditMemberValues = z.infer<typeof schema>;
@@ -192,9 +196,7 @@ export function EditMemberForm({
                     <Input type="email" {...field} disabled={!canEdit || loginMode} />
                   </FormControl>
                   {loginMode ? (
-                    <p className="text-sm text-muted-foreground">
-                      {t('detail.edit.emailLockedHint')}
-                    </p>
+                    <FormDescription>{t('detail.edit.emailLockedHint')}</FormDescription>
                   ) : null}
                   <FormMessage />
                 </FormItem>
