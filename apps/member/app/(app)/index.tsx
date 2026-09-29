@@ -1,6 +1,6 @@
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { LogOut, QrCode } from 'lucide-react-native';
+import { ChevronRight, LogOut, Mail, QrCode } from 'lucide-react-native';
 import { useMeMemberships, useMeProfile, useMeSubscription, useMeVenues } from '@iziwellpass/api/generated';
 import type {
   ApiResponseMyProfileResponseData,
@@ -19,6 +19,7 @@ import { formatDate, formatDayLine, formatMonthYear } from '@/lib/format';
 import { cardView, planLineText } from '@/lib/card-view';
 import type { CardState } from '@/lib/card-view';
 import { pickMembership } from '@/lib/venue';
+import { colors } from '@/lib/theme';
 
 type Profile = ApiResponseMyProfileResponseData;
 type Subscription = ApiResponseVecMySubscriptionResponseDataItem;
@@ -168,6 +169,22 @@ export default function CardScreen() {
       >
         {profile ? (
           <>
+            {profile.pending_email_change ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.navigate('/email-change')}
+                className="mt-6 min-h-[52px] flex-row items-center gap-3 rounded-pill bg-secondary px-4 py-3"
+              >
+                <Mail color={colors.mutedStrong} size={18} strokeWidth={1.5} />
+                <View className="flex-1 gap-0.5">
+                  <AppText variant="bodyStrong">{t('emailChange.bannerTitle')}</AppText>
+                  <AppText variant="caption" tone="mutedStrong">
+                    {t('emailChange.bannerBody')}
+                  </AppText>
+                </View>
+                <ChevronRight color={colors.mutedStrong} size={18} strokeWidth={1.5} />
+              </Pressable>
+            ) : null}
             <View className="mt-6">
               <Pass profile={profile} subscription={subscription} venue={venue} />
             </View>

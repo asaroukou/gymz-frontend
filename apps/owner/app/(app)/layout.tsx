@@ -8,6 +8,7 @@ import {
   CalendarDays,
   DoorOpen,
   LayoutDashboard,
+  Settings2Icon,
   Tags,
   UserCog,
   Users,
@@ -44,6 +45,7 @@ const NAV_ICONS: Record<NavLabelKey, LucideIcon> = {
   plans: Tags,
   venues: Building2,
   staff: UserCog,
+  settings: Settings2Icon,
 };
 
 /**

@@ -17,6 +17,7 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "footer": "Your access is created by your gym. Ask the front desk if needed.",
+    "sessionEnded": "Your session ended. Please sign in again.",
     "rules": {
       "length": "At least 12 characters",
       "uppercase": "One uppercase letter",
@@ -117,5 +118,29 @@
       "unknown": "Unknown"
     }
   },
-  "common": { "retry": "Retry", "loading": "Loading…", "close": "Close" }
+  "common": { "retry": "Retry", "loading": "Loading…", "close": "Close" },
+  "emailChange": {
+    "bannerTitle": "Confirm your new email address",
+    "bannerBody": "Enter the code you received to finish the change.",
+    "title": "Confirm your new address",
+    "body": "Your gym asked to change your sign-in address. We sent a verification code to the new address.",
+    "codeLabel": "Verification code",
+    "confirm": "Confirm",
+    "resend": "Resend the code",
+    "resendIn": "Resend the code ({time})",
+    "later": "Later",
+    "foot": "Without confirmation within 24 h, your current address is kept.",
+    "back": "Back",
+    "expired": "This address change has expired. Ask your gym to start a new one.",
+    "doneTitle": "Address changed",
+    "doneBody": "For your security, your session is about to end. Sign in again with your new address.",
+    "relogin": "Sign in again",
+    "errors": {
+      "mismatch": "Incorrect code.",
+      "expired": "This code has expired. Request a new one.",
+      "tooMany": "Too many attempts. Try again in a few minutes.",
+      "aliasExists": "This address is no longer available. Contact your gym.",
+      "network": "Cannot connect. Try again."
+    }
+  }
 }

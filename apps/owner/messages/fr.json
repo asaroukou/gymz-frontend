@@ -7,6 +7,7 @@
     "plans": "Offres",
     "venues": "Établissements",
     "staff": "Équipe",
+    "settings": "Réglages",
     "organizationGroup": "Organisation"
   },
   "venueSwitcher": {
@@ -412,18 +413,23 @@
   },
   "members": {
     "title": "Membres",
-    "subtitle": "{count, plural, =0 {Aucun membre} one {# membre} other {# membres}}",
-    "search": "Rechercher par nom ou e-mail",
+    "search": "Rechercher par nom, e-mail ou téléphone",
+    "searchPhone": "Nom, e-mail ou téléphone",
+    "clearSearch": "Effacer la recherche",
+    "showMore": "Afficher plus",
+    "loadMoreError": "Impossible de charger la suite.",
+    "scope": {
+      "venue": "Cet établissement",
+      "all": "Tous les établissements"
+    },
     "add": "Ajouter un membre",
     "errorTitle": "Une erreur est survenue",
     "loadError": "Impossible de charger les membres",
-    "footer": "{shown, plural, one {# membre} other {# membres}} sur {total}",
     "filters": {
       "all": "Tous",
       "active": "Actifs",
       "expired": "Expirés",
-      "suspended": "Suspendus",
-      "cancelled": "Annulés"
+      "suspended": "Suspendus"
     },
     "columns": {
       "member": "Membre",
@@ -454,20 +460,32 @@
       "suspend": "Suspendre"
     },
     "empty": {
-      "title": "Aucun membre",
-      "body": "Enregistrez votre premier membre pour commencer à gérer les abonnements.",
+      "title": "Ajoutez votre premier membre",
+      "body": "Ses abonnements, ses passages et son accès à l'app se gèrent ensuite depuis sa fiche.",
       "cta": "Ajouter un membre"
     },
     "noResults": {
-      "title": "Aucun résultat",
-      "body": "Aucun membre ne correspond à votre recherche ou à ce filtre."
+      "query": "Aucun membre ne correspond à « {q} »."
+    },
+    "emptyTab": {
+      "all": "Aucun membre dans cet établissement.",
+      "active": "Aucun membre actif.",
+      "expired": "Aucun membre expiré.",
+      "suspended": "Aucun membre suspendu."
     },
     "addDialog": {
       "title": "Ajouter un membre",
       "description": "Enregistrez un nouveau membre dans cet établissement.",
+      "hintLogin": "Le membre recevra une invitation par e-mail pour utiliser l'app.",
+      "hintRoster": "Fiche sans accès à l'app. L'équipe gère tout depuis la console.",
       "firstName": "Prénom",
       "lastName": "Nom",
       "email": "E-mail",
+      "emailOptional": "E-mail (facultatif)",
+      "emailHelpLogin": "Obligatoire : il sert d'identifiant dans l'app.",
+      "emailRequired": "L'e-mail est obligatoire : ce club donne accès à l'app à ses membres.",
+      "emailInvalid": "Adresse e-mail invalide.",
+      "emailTaken": "Un membre utilise déjà cette adresse.",
       "phone": "Téléphone",
       "type": "Type d'abonnement",
       "start": "Début d'abonnement",
@@ -481,6 +499,7 @@
       "submitAndAnother": "Ajouter et enchaîner",
       "submitting": "Ajout…",
       "success": "Membre ajouté",
+      "successLogin": "Membre ajouté. Envoi de l'invitation…",
       "error": "Impossible d'ajouter le membre"
     },
     "validation": {
@@ -552,7 +571,8 @@
         "firstName": "Prénom",
         "lastName": "Nom",
         "email": "E-mail",
-        "emailLockedHint": "Adresse de connexion : elle se change par une procédure sécurisée, bientôt disponible ici.",
+        "emailLockedHint": "Adresse de connexion : elle se change par une procédure sécurisée.",
+        "emailFailedHint": "Corrigez l'adresse si besoin, enregistrez, puis relancez la création de l'accès.",
         "phone": "Téléphone",
         "type": "Type d'abonnement",
         "end": "Fin d'abonnement",
@@ -564,9 +584,8 @@
       },
       "danger": {
         "title": "Zone sensible",
-        "description": "Ces actions modifient l'accès du membre. À utiliser avec précaution.",
+        "description": "Ces actions modifient l'accès du membre.",
         "suspend": "Suspendre le membre",
-        "suspended": "Membre suspendu",
         "reactivate": "Réactiver"
       },
       "suspendDialog": {
@@ -603,6 +622,158 @@
         "downscopeVenue": "{venue} · {count, plural, one {# réservation à venir} other {# réservations à venir}}",
         "unknownVenue": "Salle inconnue"
       }
+    },
+    "account": {
+      "title": "Accès à l'app",
+      "subtitle": "Connexion du membre à l'app IziWellPass : carte, QR code, réservations.",
+      "rows": {
+        "access": "Accès",
+        "email": "Adresse de connexion",
+        "lastAction": "Dernière action"
+      },
+      "badge": {
+        "none": "Sans app",
+        "pending": "Création en cours",
+        "sent": "Invitation envoyée",
+        "linkedExisting": "Compte existant lié",
+        "accepted": "App activée",
+        "untracked": "Accès app",
+        "failed": "Invitation échouée"
+      },
+      "explain": {
+        "none": "Ce membre n'a pas d'accès à l'app.",
+        "pending": "L'accès est en cours de création. L'invitation part dans quelques secondes.",
+        "sent": "Le membre n'a pas encore choisi son mot de passe.",
+        "linkedExisting": "Cette personne avait déjà un compte IziWellPass : aucune invitation n'a été envoyée.",
+        "accepted": "Le membre se connecte à l'app.",
+        "untracked": "Accès créé avant le suivi des invitations.",
+        "failedFix": "Corrigez l'adresse si besoin, puis relancez."
+      },
+      "provisioningFailure": {
+        "invalid_email": "L'adresse e-mail est invalide.",
+        "missing_email": "Aucune adresse e-mail.",
+        "identity_already_linked": "Cette adresse est déjà liée à un autre membre.",
+        "provider_unavailable": "Le service de connexion n'a pas répondu pendant 24 h."
+      },
+      "emailState": {
+        "changePending": "Changement en attente",
+        "changePendingLine": "Le membre doit saisir le code reçu à sa nouvelle adresse (24 h). Il se connecte avec l'adresse actuelle d'ici là.",
+        "changeFailed": "Changement échoué",
+        "changeFailedKeep": "L'adresse actuelle reste l'adresse de connexion."
+      },
+      "actions": {
+        "resend": "Renvoyer l'invitation",
+        "relaunch": "Relancer la création de l'accès",
+        "changeEmail": "Changer l'adresse"
+      },
+      "receptionistNote": "Seul un propriétaire ou un administrateur peut agir sur l'accès à l'app.",
+      "header": {
+        "changePending": "Changement d'adresse en attente",
+        "changeLink": "Changer l'adresse de connexion"
+      },
+      "signOut": {
+        "open": "Déconnecter de tous les appareils",
+        "title": "Déconnecter {name} de tous ses appareils ?",
+        "body": "Une nouvelle connexion avec le mot de passe sera nécessaire. L'effet peut prendre jusqu'à 10 minutes.",
+        "confirm": "Déconnecter"
+      },
+      "last": {
+        "invitationSent": "Invitation envoyée le {date} à {time}",
+        "linkedExisting": "Compte existant lié le {date} à {time}",
+        "provisioningFailed": "Échec de création le {date} à {time}",
+        "resent": "Invitation renvoyée le {date} à {time}",
+        "resendFailed": "Échec du renvoi le {date} à {time}",
+        "signedOut": "Déconnecté de tous les appareils le {date} à {time}",
+        "signOutFailed": "Échec de la déconnexion le {date} à {time}",
+        "emailRequested": "Changement demandé le {date} à {time}",
+        "emailChanged": "Adresse modifiée le {date} à {time}",
+        "emailFailed": "Échec du changement d'adresse le {date} à {time}"
+      },
+      "status": {
+        "sending": "Envoi de l'invitation…",
+        "creating": "Création de l'accès…",
+        "sendingCode": "Envoi du code à la nouvelle adresse…",
+        "finalizing": "Confirmation reçue. Mise à jour de l'adresse…",
+        "signingOut": "Déconnexion en cours…",
+        "stillRunning": "Toujours en cours. Cela peut prendre quelques minutes.",
+        "refresh": "Actualiser",
+        "waiting": "Code envoyé à la nouvelle adresse. En attente de confirmation par le membre."
+      },
+      "result": {
+        "invitationSentAt": "Invitation envoyée à {time}",
+        "linkedNoInvite": "Compte existant lié : aucune invitation envoyée.",
+        "alreadyActive": "Ce membre a déjà activé son compte : rien n'a été envoyé.",
+        "identityShared": "Ce compte sert aussi dans une autre organisation ou pour un accès équipe. Un renvoi bloquerait ces accès : contactez le support.",
+        "emailMismatch": "L'adresse du membre ne correspond plus à son compte. Contactez le support.",
+        "providerUnavailable": "Le service d'envoi est indisponible. Réessayez plus tard.",
+        "resendFailed": "L'invitation n'a pas pu être renvoyée.",
+        "emailConflict": "Cette adresse est déjà utilisée par un autre membre.",
+        "emailChangedSignedOut": "Adresse modifiée. Le membre a été déconnecté et se reconnecte avec sa nouvelle adresse.",
+        "emailChanged": "Adresse modifiée.",
+        "emailReinvited": "Adresse remplacée. Une nouvelle invitation a été envoyée.",
+        "emailExpired": "Le membre n'a pas confirmé sous 24 h. L'adresse actuelle est conservée.",
+        "emailUnavailable": "Cette adresse n'est pas disponible.",
+        "emailFailed": "Le changement d'adresse n'a pas abouti.",
+        "signedOutAt": "Membre déconnecté de tous ses appareils à {time}.",
+        "signOutShared": "Ce compte sert aussi dans une autre organisation ou pour un accès équipe : une déconnexion les toucherait aussi. Contactez le support.",
+        "signOutNotProvisioned": "L'accès du membre n'est pas encore créé : aucune session à fermer.",
+        "signOutFailed": "La déconnexion n'a pas abouti."
+      },
+      "resendDialog": {
+        "title": "Renvoyer l'invitation ?",
+        "body": "{name} recevra un nouvel e-mail avec un nouveau mot de passe temporaire. Le précédent ne fonctionnera plus.",
+        "confirm": "Renvoyer",
+        "cancel": "Annuler"
+      },
+      "relaunchDialog": {
+        "title": "Relancer la création de l'accès ?",
+        "body": "Une invitation sera envoyée à {email}.",
+        "confirm": "Relancer"
+      },
+      "refusal": {
+        "loginNotAvailable": "Votre club ne donne plus accès à l'app aux nouveaux membres. Modifiez ce réglage dans Réglages.",
+        "openSettings": "Ouvrir les réglages",
+        "forbidden": "Accès refusé"
+      },
+      "emailDialog": {
+        "title": "Changer l'adresse de connexion",
+        "current": "Adresse actuelle",
+        "new": "Nouvelle adresse",
+        "explain": "Le membre recevra un code à la nouvelle adresse et devra le saisir dans l'app. D'ici là, il continue de se connecter avec l'adresse actuelle. Sans confirmation sous 24 h, le changement est annulé.",
+        "explainInvited": "S'il ne s'est jamais connecté, l'adresse est remplacée tout de suite et une nouvelle invitation y est envoyée.",
+        "confirm": "Envoyer le code",
+        "sent": "Code envoyé à {email}",
+        "sentInvite": "Nouvelle invitation envoyée à {email}",
+        "same": "C'est déjà l'adresse actuelle.",
+        "invalid": "Adresse e-mail invalide.",
+        "taken": "Cette adresse est déjà utilisée.",
+        "inProgress": "Un changement vers une autre adresse est déjà en cours. Attendez qu'il aboutisse ou expire (24 h).",
+        "shared": "Ce compte sert aussi ailleurs sur IziWellPass : contactez le support.",
+        "notProvisioned": "L'accès du membre n'est pas encore créé.",
+        "processing": "Demande en cours de traitement. Réessayez dans un instant."
+      }
+    },
+    "attendance": {
+      "title": "Présences",
+      "count": "{count, plural, =0 {0 passage} one {# passage} other {# passages}} sur {days} jours",
+      "lastToday": "Dernier passage aujourd'hui à {time}",
+      "lastYesterday": "Dernier passage hier à {time}",
+      "lastDate": "Dernier passage le {date}",
+      "period": "{days} jours",
+      "allVenues": "Tous les établissements",
+      "method": {
+        "qr": "QR",
+        "manual": "Manuel",
+        "wallet": "Wallet"
+      },
+      "kind": {
+        "booked": "Réservation",
+        "walkIn": "Sans réservation"
+      },
+      "emptyPeriod": "Aucun passage sur les {days} derniers jours.",
+      "lastDateSentence": "Dernier passage le {date}.",
+      "never": "Aucun passage enregistré pour ce membre.",
+      "error": "Impossible de charger les présences."
     }
   },
   "planning": {
@@ -1175,6 +1346,37 @@
       "confirming": "Retrait…",
       "success": "Membre retiré",
       "error": "Impossible de retirer ce membre"
+    }
+  },
+  "settings": {
+    "title": "Réglages",
+    "subtitle": "S'appliquent à toute l'organisation, dans tous les établissements.",
+    "loadError": "Impossible de charger les réglages.",
+    "login": {
+      "title": "Connexion des membres",
+      "description": "Décide si les nouveaux membres reçoivent un accès à l'app. Ce réglage vaut pour toute l'organisation.",
+      "loginTitle": "Avec l'app",
+      "loginDescription": "Chaque nouveau membre reçoit une invitation par e-mail pour utiliser l'app IziWellPass : carte, QR code, réservations. L'e-mail devient obligatoire à la création.",
+      "rosterTitle": "Fiche seule",
+      "rosterDescription": "Les nouveaux membres sont enregistrés sans accès à l'app. L'équipe gère tout depuis la console.",
+      "foot": "Ce réglage ne concerne que les nouveaux membres. Les accès existants sont conservés.",
+      "save": "Enregistrer",
+      "saved": "Réglage enregistré",
+      "downgraded": "Votre plan n'inclut plus l'espace membre : les nouveaux membres sont créés sans accès à l'app.",
+      "seePlans": "Voir les plans",
+      "inactiveTag": "Inactif avec votre plan",
+      "lockedHint": "Disponible avec le plan {plan}",
+      "refused": "Votre plan ne permet pas l'accès des membres à l'app.",
+      "saveError": "Impossible d'enregistrer le réglage.",
+      "forbidden": "Accès refusé"
+    },
+    "security": {
+      "title": "Sécurité",
+      "mfa": "Double authentification",
+      "mfaDescription": "Un code de votre application d'authentification est demandé à chaque connexion.",
+      "enabled": "Activée",
+      "disabled": "Désactivée",
+      "enable": "Activer"
     }
   },
   "system": {

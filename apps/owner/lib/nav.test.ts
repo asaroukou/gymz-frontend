@@ -40,6 +40,16 @@ describe('nav capabilities', () => {
   });
 });
 
+describe('settings nav entry', () => {
+  it('shows Réglages to owners and admins only', () => {
+    const hrefs = (role: Parameters<typeof navForRole>[0]) => navForRole(role).map((i) => i.href);
+    expect(hrefs('owner')).toContain('/settings');
+    expect(hrefs('admin')).toContain('/settings');
+    expect(hrefs('receptionist')).not.toContain('/settings');
+    expect(hrefs('trainer')).not.toContain('/settings');
+  });
+});
+
 describe('hidden routes', () => {
   it('gates /plan to owner and admin without a nav entry', () => {
     expect(navForRole('owner').some((i) => i.href === '/plan')).toBe(false);

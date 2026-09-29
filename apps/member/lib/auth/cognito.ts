@@ -24,6 +24,8 @@ export interface MemberAuthClient {
   getIdToken(): Promise<string | null>;
   forceRefreshSession(): Promise<string | null>;
   signOut(): void;
+  verifyEmailCode(code: string): Promise<void>;
+  resendEmailCode(): Promise<void>;
 }
 
 export interface MemberAuthConfig {
@@ -88,6 +90,22 @@ export function createMemberAuthClient(config: MemberAuthConfig): MemberAuthClie
     });
   }
 
+  function sessionUser(): Promise<CognitoUser> {
+    return new Promise((resolve, reject) => {
+      const current = pool.getCurrentUser();
+      if (!current) {
+        reject(Object.assign(new Error('Not signed in'), { name: 'NotAuthorizedException' }));
+        return;
+      }
+      // getSession refreshes the tokens if needed and attaches them to `current`,
+      // which verifyAttribute/getAttributeVerificationCode need (access token).
+      current.getSession(((err: Error | null, session: CognitoUserSession | null) => {
+        if (err || !session) reject(err ?? new Error('No session'));
+        else resolve(current);
+      }) as Parameters<CognitoUser['getSession']>[0]);
+    });
+  }
+
   return {
     signIn,
     getIdToken: async () => {
@@ -117,6 +135,25 @@ export function createMemberAuthClient(config: MemberAuthConfig): MemberAuthClie
       }),
     signOut: () => {
       pool.getCurrentUser()?.signOut();
+    },
+    verifyEmailCode: async (code) => {
+      const current = await sessionUser();
+      await new Promise<void>((resolve, reject) => {
+        current.verifyAttribute('email', code, {
+          onSuccess: () => resolve(),
+          onFailure: (err) => reject(err),
+        });
+      });
+    },
+    resendEmailCode: async () => {
+      const current = await sessionUser();
+      await new Promise<void>((resolve, reject) => {
+        current.getAttributeVerificationCode('email', {
+          onSuccess: () => resolve(),
+          onFailure: (err) => reject(err),
+          inputVerificationCode: () => resolve(),
+        });
+      });
     },
   };
 }

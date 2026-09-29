@@ -21,4 +21,16 @@ describe('reduceSession', () => {
     const out = reduceSession(inA, { type: 'signed-out' });
     expect(out).toEqual({ status: 'signed-out', claims: null });
   });
+  it('records why the session ended', () => {
+    const inA = reduceSession(initialSession, { type: 'resolved', claims });
+    expect(reduceSession(inA, { type: 'signed-out', reason: 'session-ended' })).toEqual({
+      status: 'signed-out',
+      claims: null,
+      reason: 'session-ended',
+    });
+  });
+  it('clears the reason on sign-in', () => {
+    const ended = reduceSession(initialSession, { type: 'signed-out', reason: 'session-ended' });
+    expect(reduceSession(ended, { type: 'signed-in', claims })).toEqual({ status: 'signed-in', claims });
+  });
 });

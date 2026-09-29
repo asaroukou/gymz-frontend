@@ -14,6 +14,9 @@
 //   MOCK_BOOKINGS=empty                  /me/bookings returns []
 //   MOCK_QR=unavailable                  POST /me/qr answers 403 FEATURE_NOT_AVAILABLE
 //   MOCK_QR_TTL=<seconds>                QR token lifetime (default 300, the backend's)
+//   MOCK_EMAIL_CHANGE=pending|expired    GET /me reports pending_email_change; POST
+//                                        /me/email-change/confirm answers 200 (pending)
+//                                        or 409 NO_EMAIL_CHANGE_PENDING (expired)
 // In-memory state: cancelling a booking flips it to `cancelled`; booking
 // `bkg-fenetre` always answers 409 (cancellation window closed). Restart to reset.
 import http from 'node:http';
@@ -39,6 +42,7 @@ const atLocal = (dayOffset, hh, mm) => {
 const MOCK_CARD = process.env.MOCK_CARD ?? 'active';
 const MOCK_BOOKINGS = process.env.MOCK_BOOKINGS ?? '';
 const MOCK_QR = process.env.MOCK_QR ?? '';
+const MOCK_EMAIL_CHANGE = process.env.MOCK_EMAIL_CHANGE ?? '';
 
 const slots = [
   ['slot-yoga-lun', 2, 6, 30, 60],
@@ -155,7 +159,29 @@ function handle(req, url, claims) {
     return [401, errorBody(401, 'UNAUTHORIZED', 'Missing bearer token')];
   }
   if (req.method === 'GET' && pathname === '/gms/v1/me') {
-    return [200, envelope(profileFor(claims))];
+    return [
+      200,
+      envelope({
+        ...profileFor(claims),
+        pending_email_change: MOCK_EMAIL_CHANGE === 'pending' || MOCK_EMAIL_CHANGE === 'expired',
+      }),
+    ];
+  }
+  if (req.method === 'POST' && pathname === '/gms/v1/me/email-change/confirm') {
+    if (MOCK_EMAIL_CHANGE === 'pending') {
+      return [
+        200,
+        envelope({
+          id: 'op-email-1',
+          kind: 'email_change',
+          state: 'verified',
+          result_code: null,
+          failure_code: null,
+          updated_at: new Date().toISOString(),
+        }),
+      ];
+    }
+    return [409, errorBody(409, 'NO_EMAIL_CHANGE_PENDING', 'No email change is pending')];
   }
   if (req.method === 'GET' && pathname === '/gms/v1/me/memberships') {
     return [

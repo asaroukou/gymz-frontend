@@ -67,3 +67,18 @@ describe('parseClaims', () => {
     expect(parseClaims(token).name).toBeNull();
   });
 });
+
+describe('parseClaims: mfaEnrolled', () => {
+  it('is true when mfa_enrolled_at is a non-empty string', () => {
+    const token = fakeJwt({ mfa_enrolled_at: '2026-09-28T10:00:00Z' });
+    expect(parseClaims(token).mfaEnrolled).toBe(true);
+  });
+  it('is true when mfa_enrolled_at is a number', () => {
+    const token = fakeJwt({ mfa_enrolled_at: 1790000000 });
+    expect(parseClaims(token).mfaEnrolled).toBe(true);
+  });
+  it('is false when absent or empty', () => {
+    expect(parseClaims(fakeJwt({})).mfaEnrolled).toBe(false);
+    expect(parseClaims(fakeJwt({ mfa_enrolled_at: '' })).mfaEnrolled).toBe(false);
+  });
+});

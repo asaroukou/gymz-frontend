@@ -44,12 +44,15 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  closeDisabled = false,
   onInteractOutside,
   onCloseAutoFocus,
   restoreFocusTo,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
+  /** Disables the × while the dialog must stay open (e.g. a request in flight). */
+  closeDisabled?: boolean;
   /** Where focus goes when the overlay closes, for overlays opened without a Trigger (row menus, chips). */
   restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
@@ -85,7 +88,8 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="absolute top-7 right-7 grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-side disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]"
+            disabled={closeDisabled}
+            className="absolute top-7 right-7 grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-side disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]"
           >
             <XIcon />
             <span className="sr-only">Close</span>

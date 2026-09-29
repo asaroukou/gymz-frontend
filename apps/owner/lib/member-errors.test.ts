@@ -79,7 +79,7 @@ describe('classifyMemberError', () => {
   });
 
   it('falls back to other', () => {
-    expect(classifyMemberError(api(400, 'VALIDATION_ERROR'))).toEqual({ kind: 'other' });
+    expect(classifyMemberError(api(400, 'SOME_UNKNOWN_CODE'))).toEqual({ kind: 'other' });
     expect(classifyMemberError(api(500, 'CONFLICT'))).toEqual({ kind: 'other' });
     expect(classifyMemberError(new Error('network'))).toEqual({ kind: 'other' });
     expect(classifyMemberError(undefined)).toEqual({ kind: 'other' });
@@ -112,5 +112,47 @@ describe('downscopeLines', () => {
     expect(
       downscopeLines([{ venueId: 'v9', futureBookings: 4 }], venues, 'Salle inconnue'),
     ).toEqual([{ venueId: 'v9', name: 'Salle inconnue', count: 4 }]);
+  });
+});
+
+describe('classifyMemberError: account operations', () => {
+  it.each([
+    ['ACCOUNT_ALREADY_ACTIVE', 'accountAlreadyActive'],
+    ['LOGIN_NOT_AVAILABLE', 'loginNotAvailable'],
+    ['IDENTITY_SHARED', 'identityShared'],
+    ['NOT_A_LOGIN_MEMBER', 'notALoginMember'],
+    ['LOGIN_NOT_PROVISIONED', 'loginNotProvisioned'],
+    ['EMAIL_CHANGE_IN_PROGRESS', 'emailChangeInProgress'],
+    ['IDEMPOTENCY_KEY_IN_PROGRESS', 'idempotencyInProgress'],
+  ])('maps 409 %s', (code, kind) => {
+    expect(classifyMemberError(api(409, code))).toEqual({ kind });
+  });
+
+  it('maps a plan refusal', () => {
+    expect(classifyMemberError(api(403, 'FEATURE_NOT_AVAILABLE'))).toEqual({
+      kind: 'featureNotAvailable',
+    });
+  });
+
+  it('lists the fields of a validation error', () => {
+    expect(
+      classifyMemberError(
+        api(400, 'VALIDATION_ERROR', [
+          { field: 'email', message: 'required' },
+          { field: 'new_email', message: 'invalid' },
+        ]),
+      ),
+    ).toEqual({ kind: 'validation', fields: ['email', 'new_email'] });
+  });
+
+  it('keeps the validation kind when details are malformed', () => {
+    expect(classifyMemberError(api(400, 'VALIDATION_ERROR', 'oops'))).toEqual({
+      kind: 'validation',
+      fields: [],
+    });
+  });
+
+  it('leaves a plain 403 as other (callers use isForbidden)', () => {
+    expect(classifyMemberError(api(403, 'FORBIDDEN'))).toEqual({ kind: 'other' });
   });
 });

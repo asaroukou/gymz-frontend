@@ -17,12 +17,39 @@ export type MemberError =
   | { kind: 'downscopeBlocked'; affected: AffectedVenue[] }
   | { kind: 'loginEmailLocked' }
   | { kind: 'duplicate' }
+  | { kind: 'accountAlreadyActive' }
+  | { kind: 'loginNotAvailable' }
+  | { kind: 'identityShared' }
+  | { kind: 'notALoginMember' }
+  | { kind: 'loginNotProvisioned' }
+  | { kind: 'emailChangeInProgress' }
+  | { kind: 'idempotencyInProgress' }
+  | { kind: 'featureNotAvailable' }
+  | { kind: 'validation'; fields: string[] }
   | { kind: 'other' };
+
+const SIMPLE_KINDS: Record<string, MemberError['kind']> = {
+  ACCOUNT_ALREADY_ACTIVE: 'accountAlreadyActive',
+  LOGIN_NOT_AVAILABLE: 'loginNotAvailable',
+  IDENTITY_SHARED: 'identityShared',
+  NOT_A_LOGIN_MEMBER: 'notALoginMember',
+  LOGIN_NOT_PROVISIONED: 'loginNotProvisioned',
+  EMAIL_CHANGE_IN_PROGRESS: 'emailChangeInProgress',
+  IDEMPOTENCY_KEY_IN_PROGRESS: 'idempotencyInProgress',
+  FEATURE_NOT_AVAILABLE: 'featureNotAvailable',
+};
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
+}
+
+function parseFields(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => asRecord(entry)?.field)
+    .filter((field): field is string => typeof field === 'string');
 }
 
 function parseAffected(value: unknown): AffectedVenue[] {
@@ -39,6 +66,9 @@ function parseAffected(value: unknown): AffectedVenue[] {
 
 export function classifyMemberError(err: unknown): MemberError {
   if (!(err instanceof ApiError)) return { kind: 'other' };
+  if (err.code === 'VALIDATION_ERROR') return { kind: 'validation', fields: parseFields(err.details) };
+  const simple = SIMPLE_KINDS[err.code];
+  if (simple) return { kind: simple } as MemberError;
   const details = asRecord(err.details);
   switch (err.code) {
     case 'VERSION_MISMATCH':

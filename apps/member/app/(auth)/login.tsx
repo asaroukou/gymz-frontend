@@ -57,7 +57,7 @@ function Checklist({ value }: { value: string }) {
 }
 
 export default function Login() {
-  const { signIn, onSignedIn } = useAuth();
+  const { signIn, onSignedIn, sessionEnded } = useAuth();
   const insets = useSafeAreaInsets();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -155,6 +155,9 @@ export default function Login() {
           </AppText>
         </View>
         {formError ? <Notice variant="destructive" message={formError} /> : null}
+        {sessionEnded && !formError ? (
+          <Notice variant="neutral" message={t('login.sessionEnded')} />
+        ) : null}
         <View className="gap-4">
           <TextField
             control={creds.control}

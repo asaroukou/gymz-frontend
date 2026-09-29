@@ -84,6 +84,8 @@ export default function AppLayout() {
           ),
         }}
       />
+      {/* Reached from the Carte banner, not a tab of its own. */}
+      <Tabs.Screen name="email-change" options={{ href: null }} />
     </Tabs>
   );
 }
