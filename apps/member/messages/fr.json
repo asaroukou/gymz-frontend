@@ -118,5 +118,29 @@
       "unknown": "Inconnu"
     }
   },
-  "common": { "retry": "Réessayer", "loading": "Chargement…", "close": "Fermer" }
+  "common": { "retry": "Réessayer", "loading": "Chargement…", "close": "Fermer" },
+  "emailChange": {
+    "bannerTitle": "Confirmez votre nouvelle adresse e-mail",
+    "bannerBody": "Saisissez le code reçu pour terminer le changement.",
+    "title": "Confirmer votre nouvelle adresse",
+    "body": "Votre club a demandé à changer votre adresse de connexion. Nous avons envoyé un code de vérification à la nouvelle adresse.",
+    "codeLabel": "Code de vérification",
+    "confirm": "Confirmer",
+    "resend": "Renvoyer le code",
+    "resendIn": "Renvoyer le code ({time})",
+    "later": "Plus tard",
+    "foot": "Sans confirmation sous 24 h, votre adresse actuelle est conservée.",
+    "back": "Retour",
+    "expired": "Ce changement d'adresse a expiré. Demandez à votre club d'en relancer un.",
+    "doneTitle": "Adresse modifiée",
+    "doneBody": "Pour votre sécurité, votre session va se fermer. Reconnectez-vous avec votre nouvelle adresse.",
+    "relogin": "Se reconnecter",
+    "errors": {
+      "mismatch": "Code incorrect.",
+      "expired": "Ce code a expiré. Demandez-en un nouveau.",
+      "tooMany": "Trop d'essais. Réessayez dans quelques minutes.",
+      "aliasExists": "Cette adresse n'est plus disponible. Contactez votre club.",
+      "network": "Connexion impossible. Réessayez."
+    }
+  }
 }
