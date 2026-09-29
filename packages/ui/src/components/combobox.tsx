@@ -5,6 +5,7 @@ import { Command as CommandPrimitive } from 'cmdk';
 import { CheckIcon, ChevronsUpDownIcon, SearchIcon } from 'lucide-react';
 
 import { cn } from '@iziwellpass/ui/lib/utils';
+import { floatingItem } from '@iziwellpass/ui/lib/floating';
 import { Popover, PopoverContent, PopoverTrigger } from '@iziwellpass/ui/components/popover';
 
 export interface ComboboxOption {
@@ -70,10 +71,7 @@ function Combobox({
         align="start"
         className={cn('w-(--radix-popover-trigger-width) p-0', contentClassName)}
       >
-        <CommandPrimitive
-          data-slot="combobox-command"
-          className="flex flex-col overflow-hidden rounded-lg bg-side text-foreground"
-        >
+        <CommandPrimitive data-slot="combobox-command" className="flex flex-col overflow-hidden">
           <div className="flex items-center gap-2 px-3">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
             <CommandPrimitive.Input
@@ -81,7 +79,7 @@ function Combobox({
               className="flex h-11 w-full bg-transparent py-2 text-base placeholder:text-muted-foreground focus-visible:outline-offset-[-3px]"
             />
           </div>
-          <CommandPrimitive.List className="max-h-56 overflow-y-auto p-2">
+          <CommandPrimitive.List className="max-h-56 overflow-y-auto p-1.5">
             <CommandPrimitive.Empty className="py-6 text-center text-sm text-muted-foreground">
               {emptyText}
             </CommandPrimitive.Empty>
@@ -95,7 +93,10 @@ function Combobox({
                   onValueChange?.(option.value);
                   setOpen(false);
                 }}
-                className="flex h-10 cursor-default items-center justify-between gap-2 rounded-full px-3.5 text-base select-none data-[selected=true]:bg-secondary data-[selected=true]:text-accent-foreground data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
+                className={cn(
+                  floatingItem,
+                  'flex cursor-default items-center justify-between px-3 text-base select-none data-[selected=true]:bg-secondary data-[selected=true]:text-accent-foreground data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
+                )}
               >
                 <span className="truncate">{option.label}</span>
                 {option.hint ? (

@@ -157,7 +157,7 @@ This system replaces « Le studio documentaire » (bone ground, ink controls, dr
 - One dark pill per screen: the primary action is the only solid dark control in view.
 - Tinted tiles carry glanceable content: five pastels at lightness 0.93 to 0.96, dark ink on all of them.
 - Hairlines, never boxes: tables and lists separate with a 1 px `#dcdcdc` line; nothing is wrapped in a bordered container.
-- Zero elevation: no shadows, no blur, no borders on surfaces. Overlays separate with a 25 % ink scrim.
+- Zero elevation: no shadows, no blur, no borders on surfaces. Overlays separate with a 25 % ink scrim; floating menus take the one hairline (see Elevation).
 
 ## 2. Colors
 
@@ -231,11 +231,13 @@ None. The system has no shadows, no blur, no borders around surfaces, and no lay
 3. **Hairline.** A 1 px `#dcdcdc` line between rows in a table or list. Never around a group.
 4. **Scrim.** Dialogs and sheets sit on a 25 % encre scrim over the page. The dialog itself is a white 28 px-radius panel with no border and no shadow.
 
+**The menu exception.** Floating panels that open without a scrim (dropdown menus, selects, the combobox, popovers) are white with a 1 px `#dcdcdc` hairline and a 16 px radius, 6 px inside padding, and still no shadow. They open over both the white page and the grey side column, and no single tone separates from both: a grey panel vanished against the column. Rows are 40 px, 10 px radius, 12 px padding, ink label and ink icon; the selected row sits on the pilule at weight 500; the danger row is `#8f2f22`. Source: the `Menu` components on « IziWellPass · Plat ».
+
 **The wash exception.** A hub screen (dashboard, front desk, auth) may place one soft radial wash of lavis behind its heading, fading to transparent within about 640 px. It is the only gradient in the system, it carries no meaning, and it is optional. Decision E-008 otherwise stands: no linear gradients, no gradient fills on controls, no gradient text.
 
 ### Named Rules
 
-**The No-Elevation Rule.** `box-shadow`, `backdrop-filter`, and container borders are prohibited. If two regions need separating, add space, change tone, or draw a hairline between rows.
+**The No-Elevation Rule.** `box-shadow`, `backdrop-filter`, and container borders are prohibited. If two regions need separating, add space, change tone, or draw a hairline between rows. The only border on a surface is the floating-menu hairline (the menu exception above).
 
 **The No-Box Rule.** Content is never wrapped in a bordered or shadowed card. A group of fields is a heading and some fields. A table is rows with hairlines. A stat is a number over a label.
 
@@ -309,7 +311,7 @@ Controls are pills; content is tiles or hairline rows; the page is white. Touch 
 
 ### Don't:
 
-- **Don't** add a shadow, a blur, or a border around a group. The No-Elevation Rule has no exceptions.
+- **Don't** add a shadow, a blur, or a border around a group. The only surface border is the floating-menu hairline.
 - **Don't** use a second dark control, a coloured button, or a coloured underline for selection.
 - **Don't** set a heading above 500 weight or a row label above 600.
 - **Don't** use uppercase, tracked labels, or the retired eyebrow.

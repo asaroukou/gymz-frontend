@@ -136,7 +136,7 @@
       "One dark pill per screen: the primary action is the only solid dark control in view.",
       "Tinted tiles carry glanceable content: five pastels at equal lightness, dark ink on all.",
       "Hairlines, never boxes: rows separate with a 1 px line; nothing is wrapped in a container.",
-      "Zero elevation: no shadows, no blur, no surface borders; overlays use a 25 % ink scrim."
+      "Zero elevation: no shadows, no blur, no surface borders; overlays use a 25 % ink scrim; floating menus (dropdowns, selects, popovers) are white with a 1 px #dcdcdc hairline and a 16 px radius."
     ],
     "rules": [
       { "name": "The One Dark Rule", "body": "Encre is the only solid dark control on a screen, and there is one of it.", "section": "colors" },
@@ -145,7 +145,7 @@
       { "name": "The Light Heading Rule", "body": "Headings are 400 or 500. If one needs to be bolder to be seen, give it space instead.", "section": "typography" },
       { "name": "The Sentence Case Rule", "body": "French sentence case everywhere. No uppercase, no tracked labels.", "section": "typography" },
       { "name": "The Tabular Rule", "body": "Any value someone compares or reads back renders with tabular figures.", "section": "typography" },
-      { "name": "The No-Elevation Rule", "body": "box-shadow, backdrop-filter, and container borders are prohibited. Separate with space, tone, or a hairline between rows.", "section": "elevation" },
+      { "name": "The No-Elevation Rule", "body": "box-shadow, backdrop-filter, and container borders are prohibited. Separate with space, tone, or a hairline between rows. Sole exception: floating menus carry a 1 px #dcdcdc hairline.", "section": "elevation" },
       { "name": "The No-Box Rule", "body": "Content is never wrapped in a bordered or shadowed card.", "section": "elevation" }
     ],
     "dos": [

@@ -149,7 +149,8 @@ export function VenueSwitcher({
         <DropdownMenuRadioGroup value={selectedVenueId ?? undefined} onValueChange={onSelect}>
           {venues.map((venue) => (
             <DropdownMenuRadioItem key={venue.id} value={venue.id}>
-              {venue.name}
+              <Building2Icon aria-hidden />
+              <span className="truncate">{venue.name}</span>
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
