@@ -17,6 +17,7 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "footer": "Your access is created by your gym. Ask the front desk if needed.",
+    "sessionEnded": "Your session ended. Please sign in again.",
     "rules": {
       "length": "At least 12 characters",
       "uppercase": "One uppercase letter",

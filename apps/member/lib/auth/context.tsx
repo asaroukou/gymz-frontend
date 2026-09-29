@@ -12,10 +12,13 @@ import { env } from '../env';
 interface AuthContextValue {
   status: 'loading' | 'signed-in' | 'signed-out';
   claims: SessionClaims | null;
+  sessionEnded: boolean;
   signIn: (email: string, password: string) => Promise<SignInResult>;
   onSignedIn: (idToken: string) => void;
   signOut: () => void;
   getToken: () => Promise<string | null>;
+  verifyEmailCode: (code: string) => Promise<void>;
+  resendEmailCode: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -59,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!fresh) {
           client.signOut();
           qc.clear();
-          dispatch({ type: 'signed-out' });
+          dispatch({ type: 'signed-out', reason: 'session-ended' });
         }
         return fresh;
       },
@@ -89,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextValue = {
     status: state.status,
     claims: state.claims,
+    sessionEnded: state.reason === 'session-ended',
     signIn: (email, password) => client.signIn(email, password),
     onSignedIn: (idToken) => dispatch({ type: 'signed-in', claims: parseClaims(idToken) }),
     signOut: () => {
@@ -97,6 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'signed-out' });
     },
     getToken: () => client.getIdToken(),
+    verifyEmailCode: (code) => client.verifyEmailCode(code),
+    resendEmailCode: () => client.resendEmailCode(),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

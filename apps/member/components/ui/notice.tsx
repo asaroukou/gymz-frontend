@@ -3,19 +3,21 @@ import { CircleAlert, Info, TriangleAlert } from 'lucide-react-native';
 import { AppText } from './text';
 import { colors } from '@/lib/theme';
 
-type Variant = 'destructive' | 'warning' | 'info';
+type Variant = 'destructive' | 'warning' | 'info' | 'neutral';
 
 const BG: Record<Variant, string> = {
   destructive: 'bg-destructive',
   warning: 'bg-warning',
   info: 'bg-info',
+  neutral: 'bg-secondary',
 };
 const FG: Record<Variant, string> = {
   destructive: colors.destructive.foreground,
   warning: colors.warning.foreground,
   info: colors.info.foreground,
+  neutral: colors.mutedStrong,
 };
-const ICON = { destructive: CircleAlert, warning: TriangleAlert, info: Info } as const;
+const ICON = { destructive: CircleAlert, warning: TriangleAlert, info: Info, neutral: Info } as const;
 
 /** Inline tinted notice: icon + (title) + message (+ text action). */
 export function Notice({

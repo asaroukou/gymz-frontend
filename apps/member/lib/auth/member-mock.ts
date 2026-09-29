@@ -21,5 +21,18 @@ export function createMemberMockClient(): MemberAuthClient {
     getIdToken: () => mock.getIdToken(),
     forceRefreshSession: () => mock.forceRefreshSession(),
     signOut: () => mock.signOut(),
+    verifyEmailCode: async (code) => {
+      const fail = (name: string) => {
+        const err = new Error(name);
+        err.name = name;
+        throw err;
+      };
+      if (code === '123456') return;
+      if (code === '000000') fail('ExpiredCodeException');
+      if (code === '111111') fail('AliasExistsException');
+      if (code === '999999') fail('LimitExceededException');
+      fail('CodeMismatchException');
+    },
+    resendEmailCode: async () => {},
   };
 }

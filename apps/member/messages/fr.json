@@ -17,6 +17,7 @@
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
     "footer": "Votre accès est créé par votre salle. Contactez l'accueil si besoin.",
+    "sessionEnded": "Votre session a pris fin. Reconnectez-vous.",
     "rules": {
       "length": "12 caractères minimum",
       "uppercase": "Une majuscule",
