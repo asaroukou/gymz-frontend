@@ -84,8 +84,8 @@ export default function AppLayout() {
           ),
         }}
       />
-      {/* Reached from the Carte banner, not a tab of its own. */}
-      <Tabs.Screen name="email-change" options={{ href: null }} />
+      {/* Reached from the Carte banner: a full-screen step (gTXh4…F95Y7E), no tab and no tab bar. */}
+      <Tabs.Screen name="email-change" options={{ href: null, tabBarStyle: { display: 'none' } }} />
     </Tabs>
   );
 }

@@ -423,6 +423,7 @@
       "all": "Tous les établissements"
     },
     "add": "Ajouter un membre",
+    "addShort": "Ajouter",
     "errorTitle": "Une erreur est survenue",
     "loadError": "Impossible de charger les membres",
     "filters": {

@@ -216,9 +216,17 @@ export function AddMemberDialog({ variant = 'default' }: { variant?: 'default' |
       }}
     >
       <DialogTrigger asChild>
-        <Button variant={variant}>
+        <Button variant={variant} aria-label={t('add')}>
           <PlusIcon />
-          {t('add')}
+          {/* f0WPx: the header button reads « Ajouter » on phone. */}
+          {variant === 'default' ? (
+            <>
+              <span className="sm:hidden">{t('addShort')}</span>
+              <span className="hidden sm:inline">{t('add')}</span>
+            </>
+          ) : (
+            t('add')
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[560px]">

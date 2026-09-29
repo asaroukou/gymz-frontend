@@ -90,7 +90,7 @@ function MemberDetailContent() {
           <Skeleton className="size-[72px] rounded-full" />
           <Skeleton className="h-9 w-64" />
         </div>
-        <div className="grid gap-10 md:grid-cols-2 md:gap-16">
+        <div className="grid grid-cols-1 gap-10 xl:grid-cols-2 xl:gap-16">
           <Skeleton className="h-64 w-full" />
           <Skeleton className="h-64 w-full" />
         </div>
@@ -127,13 +127,13 @@ function MemberDetailContent() {
     <WorkingPage>
       {backLink}
       <MemberHeader member={member} account={view} canManage={canEdit} />
-      <div className="grid gap-10 md:grid-cols-2 md:gap-16">
-        <div className="flex flex-col gap-10">
+      <div className="grid grid-cols-1 gap-10 xl:grid-cols-2 xl:gap-16">
+        <div className="flex min-w-0 flex-col gap-10">
           <MembershipSection member={member} />
           <SubscriptionsSection memberId={member.id} canManage={canEdit} />
           <AttendanceSection memberId={member.id} />
         </div>
-        <div className="flex flex-col gap-10">
+        <div className="flex min-w-0 flex-col gap-10">
           <EditMemberForm
             key={member.id}
             member={member}

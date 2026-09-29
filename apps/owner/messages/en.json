@@ -423,6 +423,7 @@
       "all": "All venues"
     },
     "add": "Add member",
+    "addShort": "Add",
     "errorTitle": "Something went wrong",
     "loadError": "Could not load members",
     "filters": {
