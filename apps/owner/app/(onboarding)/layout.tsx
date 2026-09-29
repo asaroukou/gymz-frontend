@@ -5,7 +5,7 @@ import { Wordmark } from '@iziwellpass/ui/components/wordmark';
 
 // Same surface as (auth) at 620px — deliberately NOT the AppShell: a
 // signed-in-but-role-less user has nothing to navigate to yet. Session
-// presence is enforced by middleware (see apps/owner/middleware.ts); the page
+// presence is enforced by the proxy (see apps/owner/proxy.ts); the page
 // re-checks client-side for the loading/signed-out/has-role branches.
 export default function OnboardingLayout({ children }: { children: ReactNode }) {
   return (
