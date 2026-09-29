@@ -22,7 +22,8 @@ export function CodeInput({
   accessibilityLabel: string;
 }) {
   const input = useRef<TextInput>(null);
-  const focusIndex = Math.min(value.length, CODE_LENGTH - 1);
+  // -1 once all boxes are filled: there is no next box to show a focus stroke on.
+  const focusIndex = value.length < CODE_LENGTH ? value.length : -1;
   return (
     <Pressable onPress={() => input.current?.focus()} accessibilityRole="none">
       <View className="flex-row justify-between gap-2">

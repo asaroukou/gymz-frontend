@@ -26,6 +26,7 @@ export default function EmailChangeScreen() {
   const [phase, setPhase] = useState<Phase>('entry');
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [resending, setResending] = useState(false);
   const [cooldownEnds, setCooldownEnds] = useState(() => Date.now() + RESEND_COOLDOWN_S * 1000);
   const [now, setNow] = useState(() => Date.now());
 
@@ -74,13 +75,16 @@ export default function EmailChangeScreen() {
   };
 
   const onResend = async () => {
-    if (remaining > 0) return;
+    if (remaining > 0 || resending) return;
+    setResending(true);
     try {
       await resendEmailCode();
       setCooldownEnds(Date.now() + RESEND_COOLDOWN_S * 1000);
       setErrorKey(null);
     } catch (err) {
       setErrorKey(codeErrorKey(classifyCodeError(err)));
+    } finally {
+      setResending(false);
     }
   };
 
@@ -161,7 +165,7 @@ export default function EmailChangeScreen() {
       </View>
 
       {phase === 'entry' ? (
-        <View className="mt-6">
+        <View className="mt-6 gap-3">
           <Button
             label={t('emailChange.confirm')}
             onPress={() => void onConfirm()}
@@ -173,6 +177,7 @@ export default function EmailChangeScreen() {
             variant="ghost"
             onPress={() => void onResend()}
             disabled={remaining > 0}
+            loading={resending}
           />
           <Button label={t('emailChange.later')} variant="ghost" onPress={goBack} />
         </View>
