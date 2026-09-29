@@ -7,6 +7,7 @@
     "plans": "Plans",
     "venues": "Venues",
     "staff": "Staff",
+    "settings": "Settings",
     "organizationGroup": "Organization"
   },
   "venueSwitcher": {
@@ -1341,6 +1342,37 @@
       "confirming": "Removing…",
       "success": "Member removed",
       "error": "Could not remove this member"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Apply to the whole organization, across every venue.",
+    "loadError": "Could not load settings.",
+    "login": {
+      "title": "Member sign-in",
+      "description": "Decides whether new members get access to the app. This setting applies to the whole organization.",
+      "loginTitle": "With the app",
+      "loginDescription": "Every new member gets an e-mail invitation to use the IziWellPass app: card, QR code, bookings. E-mail becomes required at creation.",
+      "rosterTitle": "Roster only",
+      "rosterDescription": "New members are registered without app access. The team manages everything from the console.",
+      "foot": "This setting only concerns new members. Existing access is kept.",
+      "save": "Save",
+      "saved": "Setting saved",
+      "downgraded": "Your plan no longer includes the member space: new members are created without app access.",
+      "seePlans": "See plans",
+      "inactiveTag": "Inactive with your plan",
+      "lockedHint": "Available with the {plan} plan",
+      "refused": "Your plan does not allow member access to the app.",
+      "saveError": "Could not save the setting.",
+      "forbidden": "Access denied"
+    },
+    "security": {
+      "title": "Security",
+      "mfa": "Two-factor authentication",
+      "mfaDescription": "A code from your authenticator app is required at every sign-in.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enable": "Enable"
     }
   },
   "system": {

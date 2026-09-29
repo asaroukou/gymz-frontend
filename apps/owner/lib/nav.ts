@@ -3,7 +3,14 @@ import type { Role } from '@iziwellpass/auth/claims';
 
 /** Key into the `nav` i18n namespace; the app resolves it to a display label. */
 export type NavLabelKey =
-  'dashboard' | 'frontdesk' | 'members' | 'planning' | 'plans' | 'venues' | 'staff';
+  | 'dashboard'
+  | 'frontdesk'
+  | 'members'
+  | 'planning'
+  | 'plans'
+  | 'venues'
+  | 'staff'
+  | 'settings';
 
 export type NavScope = 'venue' | 'org';
 
@@ -31,6 +38,7 @@ export const NAV_ITEMS: readonly OwnerNavItem[] = [
   },
   { labelKey: 'venues', href: '/venues', roles: ['owner', 'admin'], scope: 'org' },
   { labelKey: 'staff', href: '/staff', roles: ['owner', 'admin'], scope: 'org', capability: 'staff_accounts' },
+  { labelKey: 'settings', href: '/settings', roles: ['owner', 'admin'], scope: 'org' },
 ];
 
 export function navForRole(role: Role | null): { labelKey: NavLabelKey; href: string }[] {

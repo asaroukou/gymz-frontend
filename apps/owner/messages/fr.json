@@ -7,6 +7,7 @@
     "plans": "Offres",
     "venues": "Établissements",
     "staff": "Équipe",
+    "settings": "Réglages",
     "organizationGroup": "Organisation"
   },
   "venueSwitcher": {
@@ -1341,6 +1342,37 @@
       "confirming": "Retrait…",
       "success": "Membre retiré",
       "error": "Impossible de retirer ce membre"
+    }
+  },
+  "settings": {
+    "title": "Réglages",
+    "subtitle": "S'appliquent à toute l'organisation, dans tous les établissements.",
+    "loadError": "Impossible de charger les réglages.",
+    "login": {
+      "title": "Connexion des membres",
+      "description": "Décide si les nouveaux membres reçoivent un accès à l'app. Ce réglage vaut pour toute l'organisation.",
+      "loginTitle": "Avec l'app",
+      "loginDescription": "Chaque nouveau membre reçoit une invitation par e-mail pour utiliser l'app IziWellPass : carte, QR code, réservations. L'e-mail devient obligatoire à la création.",
+      "rosterTitle": "Fiche seule",
+      "rosterDescription": "Les nouveaux membres sont enregistrés sans accès à l'app. L'équipe gère tout depuis la console.",
+      "foot": "Ce réglage ne concerne que les nouveaux membres. Les accès existants sont conservés.",
+      "save": "Enregistrer",
+      "saved": "Réglage enregistré",
+      "downgraded": "Votre plan n'inclut plus l'espace membre : les nouveaux membres sont créés sans accès à l'app.",
+      "seePlans": "Voir les plans",
+      "inactiveTag": "Inactif avec votre plan",
+      "lockedHint": "Disponible avec le plan {plan}",
+      "refused": "Votre plan ne permet pas l'accès des membres à l'app.",
+      "saveError": "Impossible d'enregistrer le réglage.",
+      "forbidden": "Accès refusé"
+    },
+    "security": {
+      "title": "Sécurité",
+      "mfa": "Double authentification",
+      "mfaDescription": "Un code de votre application d'authentification est demandé à chaque connexion.",
+      "enabled": "Activée",
+      "disabled": "Désactivée",
+      "enable": "Activer"
     }
   },
   "system": {
