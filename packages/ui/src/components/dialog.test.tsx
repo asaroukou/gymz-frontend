@@ -53,4 +53,15 @@ describe('DialogContent', () => {
 
     document.body.removeChild(backButton);
   });
+
+  it('disables the close button with closeDisabled', () => {
+    const { getByRole } = render(
+      <Dialog open>
+        <DialogContent closeDisabled aria-describedby={undefined}>
+          <DialogTitle>t</DialogTitle>
+        </DialogContent>
+      </Dialog>,
+    );
+    expect((getByRole('button', { name: 'Close' }) as HTMLButtonElement).disabled).toBe(true);
+  });
 });
