@@ -1,6 +1,6 @@
 import { createAuthMiddleware } from '@iziwellpass/auth/middleware';
 
-export const middleware = createAuthMiddleware({
+export const proxy = createAuthMiddleware({
   loginPath: '/login',
   publicPaths: ['/login', '/signup'],
 });
