@@ -24,20 +24,23 @@ import { isForbidden } from '@/lib/plan-errors';
 
 /**
  * « Déconnecter de tous les appareils » (canvas `eLtfl`, phone `s3tkfq`):
- * `POST /members/{mid}/sessions/revoke`. The body is the gender-neutral line
- * (spec §9), not the canvas « Il devra… ». The phone keeps the centred
- * dialog; its footer already stacks full-width buttons (spec §3).
+ * `POST /members/{mid}/session-revocation`. The body is the gender-neutral
+ * line (spec §9), not the canvas « Il devra… ». The phone keeps the centred
+ * dialog; its footer already stacks full-width buttons (spec §3). While the
+ * request runs the dialog cannot be closed.
  */
 export function SignOutEverywhereDialog({
   member,
   open,
   onOpenChange,
   onStarted,
+  restoreFocusTo,
 }: {
   member: StaffMemberProfile;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStarted: (operationId: string) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('members');
   const tCommon = useTranslations('common');
@@ -64,9 +67,21 @@ export function SignOutEverywhereDialog({
     },
   });
 
+  const pending = mutation.isPending;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && pending) return;
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent
+        className="sm:max-w-[480px]"
+        closeDisabled={pending}
+        restoreFocusTo={restoreFocusTo}
+      >
         <DialogHeader>
           <DialogTitle>{t('account.signOut.title', { name: member.first_name })}</DialogTitle>
           <DialogDescription>{t('account.signOut.body')}</DialogDescription>
@@ -81,12 +96,14 @@ export function SignOutEverywhereDialog({
         ) : null}
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">{tCommon('cancel')}</Button>
+            <Button variant="ghost" disabled={pending}>
+              {tCommon('cancel')}
+            </Button>
           </DialogClose>
           <Button
             variant="destructive"
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending}
+            disabled={pending}
           >
             {t('account.signOut.confirm')}
           </Button>

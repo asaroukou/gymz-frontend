@@ -417,6 +417,7 @@
     "searchPhone": "Nom, e-mail ou téléphone",
     "clearSearch": "Effacer la recherche",
     "showMore": "Afficher plus",
+    "loadMoreError": "Impossible de charger la suite.",
     "scope": {
       "venue": "Cet établissement",
       "all": "Tous les établissements"
@@ -467,6 +468,7 @@
       "query": "Aucun membre ne correspond à « {q} »."
     },
     "emptyTab": {
+      "all": "Aucun membre dans cet établissement.",
       "active": "Aucun membre actif.",
       "expired": "Aucun membre expiré.",
       "suspended": "Aucun membre suspendu."
@@ -482,6 +484,7 @@
       "emailOptional": "E-mail (facultatif)",
       "emailHelpLogin": "Obligatoire : il sert d'identifiant dans l'app.",
       "emailRequired": "L'e-mail est obligatoire : ce club donne accès à l'app à ses membres.",
+      "emailInvalid": "Adresse e-mail invalide.",
       "emailTaken": "Un membre utilise déjà cette adresse.",
       "phone": "Téléphone",
       "type": "Type d'abonnement",
@@ -740,6 +743,7 @@
         "explainInvited": "S'il ne s'est jamais connecté, l'adresse est remplacée tout de suite et une nouvelle invitation y est envoyée.",
         "confirm": "Envoyer le code",
         "sent": "Code envoyé à {email}",
+        "sentInvite": "Nouvelle invitation envoyée à {email}",
         "same": "C'est déjà l'adresse actuelle.",
         "invalid": "Adresse e-mail invalide.",
         "taken": "Cette adresse est déjà utilisée.",

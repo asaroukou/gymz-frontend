@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
-import { LockIcon, RefreshCwIcon, TriangleAlertIcon } from 'lucide-react';
+import { CircleAlertIcon, LockIcon, RefreshCwIcon, TriangleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -133,7 +133,7 @@ function LoginSection({
                       {t('login.lockedHint', { plan: planLabel(minPlanFor('member_self_service')) })}
                       <Link
                         href="/plan"
-                        className="inline-flex min-h-11 items-center font-medium text-foreground underline underline-offset-4 md:min-h-0"
+                        className="inline-flex min-h-11 cursor-pointer items-center font-medium text-foreground underline underline-offset-4 md:min-h-0"
                       >
                         {t('login.seePlans')}
                       </Link>
@@ -171,6 +171,12 @@ function SettingsContent() {
   const configured = data?.member_login.configured_mode ?? 'roster';
   const effectiveSelection = selection ?? configured;
   const view = data ? settingsView(data.member_login, effectiveSelection) : null;
+
+  // A refusal belongs to the choice that was refused.
+  const select = (mode: MemberLoginMode) => {
+    setSelection(mode);
+    setSaveError(null);
+  };
 
   const handleSave = () => {
     if (!selection) return;
@@ -226,7 +232,7 @@ function SettingsContent() {
                 </div>
               ) : (
                 <>
-                  <LoginSection policy={data.member_login} selection={effectiveSelection} onSelect={setSelection} />
+                  <LoginSection policy={data.member_login} selection={effectiveSelection} onSelect={select} />
                   <p className="text-[13px] text-muted-foreground">{t('login.foot')}</p>
                   <div className="flex w-full flex-col items-start gap-3">
                     <Button
@@ -237,7 +243,8 @@ function SettingsContent() {
                       {t('login.save')}
                     </Button>
                     {saveError ? (
-                      <p role="alert" className="text-[13px] text-destructive-foreground">
+                      <p role="alert" className="flex items-start gap-2 text-[13px] text-destructive-foreground">
+                        <CircleAlertIcon aria-hidden strokeWidth={1.5} className="mt-px size-4 shrink-0" />
                         {saveError}
                       </p>
                     ) : null}

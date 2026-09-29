@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Building2Icon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import type { StaffMemberProfile } from '@iziwellpass/api/schemas';
@@ -22,6 +23,8 @@ import { EditAccessDialog } from './edit-access-dialog';
  * (type, status, access, app badge + « Gérer l'accès »), and the contact
  * block on the right (email 15/500, phone, « Membre depuis le … » 13px).
  * `x7QjF`: a pending e-mail change adds a 12/500 muted line under the e-mail.
+ * Phone (`TOqY8`, R14): no access-scope badge in the badge row, and « Gérer
+ * l'accès » becomes an outline pill under the contact block.
  */
 export function MemberHeader({
   member,
@@ -52,12 +55,20 @@ export function MemberHeader({
             <Badge variant={memberStatusBadgeVariant(member.membership_status)}>
               {t(`status.${member.membership_status}`)}
             </Badge>
-            <Badge variant={member.access_scope === 'chain_wide' ? 'info' : 'default'}>
+            <Badge
+              variant={member.access_scope === 'chain_wide' ? 'info' : 'default'}
+              className="hidden md:inline-flex"
+            >
               {scopeLabel(member.access_scope)}
             </Badge>
             <AccountStatusBadge badge={account.badge} />
             {canManage ? (
-              <Button variant="ghost" size="sm" onClick={() => setAccessOpen(true)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden md:inline-flex"
+                onClick={() => setAccessOpen(true)}
+              >
                 {t('detail.access.manage')}
               </Button>
             ) : null}
@@ -83,6 +94,16 @@ export function MemberHeader({
         <p className="text-sm text-muted-foreground">
           {t('detail.memberSince', { date: formatCalendarDate(member.created_at, locale) })}
         </p>
+        {canManage ? (
+          <Button
+            variant="outline"
+            className="mt-3 self-start md:hidden"
+            onClick={() => setAccessOpen(true)}
+          >
+            <Building2Icon aria-hidden strokeWidth={1.5} />
+            {t('detail.access.manage')}
+          </Button>
+        ) : null}
       </div>
       <EditAccessDialog member={member} open={accessOpen} onOpenChange={setAccessOpen} />
     </div>

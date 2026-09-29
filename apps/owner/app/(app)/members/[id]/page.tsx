@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -17,10 +17,10 @@ import { apiErrorMessage } from '@/lib/api-error';
 import { describeAccount, type AccountAction } from '@/lib/member-account';
 import { useAccountTracking } from '@/lib/use-account-tracking';
 
-import { AccountSection } from './account-section';
+import { ACCOUNT_HEADING_ID, AccountSection } from './account-section';
 import { AttendanceSection } from './attendance-section';
 import { ChangeEmailDialog } from './change-email-dialog';
-import { DangerZone } from './danger-zone';
+import { DANGER_HEADING_ID, DangerZone } from './danger-zone';
 import { EditMemberForm } from './edit-member-form';
 import { MemberHeader } from './member-header';
 import { MembershipSection } from './membership-section';
@@ -48,15 +48,30 @@ function MemberDetailContent() {
   const [dialog, setDialog] = useState<AccountAction | 'signOut' | null>(null);
   // Latched so the resend/relaunch dialog keeps its copy while it animates out.
   const [resendMode, setResendMode] = useState<'resend' | 'relaunch'>('resend');
+  // Focus on close: back to the opener after a cancel; after a 202 the opener
+  // becomes disabled or hidden, so a stable section heading takes it.
+  const openerRef = useRef<HTMLElement | null>(null);
+  const startedRef = useRef(false);
+  const openDialog = (next: AccountAction | 'signOut') => {
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    startedRef.current = false;
+    setDialog(next);
+  };
+  const focusAfterClose = (headingId: string) => () => {
+    const opener = openerRef.current;
+    if (!startedRef.current && opener?.isConnected && !opener.matches(':disabled')) return opener;
+    return document.getElementById(headingId);
+  };
   const openAction = (action: AccountAction) => {
     if (action === 'resend' || action === 'relaunch') setResendMode(action);
-    setDialog(action);
+    openDialog(action);
   };
   const closeDialog = (open: boolean) => {
     if (!open) setDialog(null);
   };
   // A started operation is watched and gets a fresh 30 s polling window.
   const onStarted = (operationId: string) => {
+    startedRef.current = true;
     tracking.watch(operationId);
     tracking.refresh();
   };
@@ -126,13 +141,13 @@ function MemberDetailContent() {
             canChangeEmail={
               view.actions.includes('changeEmail') && view.status?.runningAction !== 'changeEmail'
             }
-            onChangeEmail={() => setDialog('changeEmail')}
+            onChangeEmail={() => openDialog('changeEmail')}
           />
           {canEdit ? (
             <AccountSection member={member} view={view} tracking={tracking} onAction={openAction} />
           ) : null}
           {canEdit ? (
-            <DangerZone member={member} view={view} onSignOut={() => setDialog('signOut')} />
+            <DangerZone member={member} view={view} onSignOut={() => openDialog('signOut')} />
           ) : null}
         </div>
       </div>
@@ -142,18 +157,21 @@ function MemberDetailContent() {
         open={dialog === 'resend' || dialog === 'relaunch'}
         onOpenChange={closeDialog}
         onStarted={onStarted}
+        restoreFocusTo={focusAfterClose(ACCOUNT_HEADING_ID)}
       />
       <ChangeEmailDialog
         member={member}
         open={dialog === 'changeEmail'}
         onOpenChange={closeDialog}
         onStarted={onStarted}
+        restoreFocusTo={focusAfterClose(ACCOUNT_HEADING_ID)}
       />
       <SignOutEverywhereDialog
         member={member}
         open={dialog === 'signOut'}
         onOpenChange={closeDialog}
         onStarted={onStarted}
+        restoreFocusTo={focusAfterClose(DANGER_HEADING_ID)}
       />
     </WorkingPage>
   );

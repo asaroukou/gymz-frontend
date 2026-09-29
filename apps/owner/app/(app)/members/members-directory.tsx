@@ -82,8 +82,12 @@ export function MembersDirectory({
   const isLoading = search.isLoading || (scope === 'venue' && !selectedVenueId);
   const hasError = search.isError && !members.length;
 
-  const isFirstMemberEmpty =
+  const nothingToShow =
     !isLoading && !hasError && !members.length && status === 'all' && !debounced.trim();
+  // cKk1G is the first-member state of the whole organisation. In venue scope
+  // an owner/admin with several venues keeps the toolbar (so they can switch
+  // to « Tous les établissements ») and gets the empty-tab line instead.
+  const isFirstMemberEmpty = nothingToShow && (scope === 'all' || !canPickScope);
 
   useEffect(() => {
     onEmptyChange?.(isFirstMemberEmpty);
@@ -183,6 +187,7 @@ export function MembersDirectory({
           {search.isFetching && !search.isFetchingNextPage ? (
             <LoaderCircleIcon
               aria-hidden
+              strokeWidth={1.5}
               className="pointer-events-none absolute top-1/2 right-11 size-[18px] -translate-y-1/2 animate-spin text-muted-foreground"
             />
           ) : null}
@@ -307,7 +312,8 @@ export function MembersDirectory({
       </div>
 
       {bodyState === 'rows' && search.hasNextPage ? (
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-2">
+          {/* A failed page keeps the button as the retry. */}
           <Button
             variant="outline"
             className="w-full md:w-auto"
@@ -315,10 +321,15 @@ export function MembersDirectory({
             disabled={search.isFetchingNextPage}
           >
             {search.isFetchingNextPage ? (
-              <LoaderCircleIcon aria-hidden className="animate-spin" />
+              <LoaderCircleIcon aria-hidden strokeWidth={1.5} className="animate-spin" />
             ) : null}
             {t('showMore')}
           </Button>
+          {search.isFetchNextPageError && !search.isFetchingNextPage ? (
+            <p role="alert" className="text-sm text-destructive-foreground">
+              {t('loadMoreError')}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

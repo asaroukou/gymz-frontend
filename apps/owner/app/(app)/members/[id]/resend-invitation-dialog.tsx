@@ -27,7 +27,8 @@ import { isForbidden } from '@/lib/plan-errors';
  * « Renvoyer l'invitation » (canvas `f4Mtn`) and « Relancer la création de
  * l'accès » (`w6dqTN`, refused `L8mxU`): both `POST /members/{mid}/invitation-resend`,
  * the backend deciding between a resend and a provisioning retry. A refusal
- * stays in the dialog with the confirm disabled; reopening clears it.
+ * stays in the dialog with the confirm disabled; reopening clears it. While
+ * the request runs the dialog cannot be closed.
  */
 export function ResendInvitationDialog({
   member,
@@ -35,12 +36,14 @@ export function ResendInvitationDialog({
   open,
   onOpenChange,
   onStarted,
+  restoreFocusTo,
 }: {
   member: StaffMemberProfile;
   mode: 'resend' | 'relaunch';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStarted: (operationId: string) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('members');
   const queryClient = useQueryClient();
@@ -97,9 +100,21 @@ export function ResendInvitationDialog({
           confirm: t('account.resendDialog.confirm'),
         };
 
+  const pending = mutation.isPending;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && pending) return;
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent
+        className="sm:max-w-[480px]"
+        closeDisabled={pending}
+        restoreFocusTo={restoreFocusTo}
+      >
         <DialogHeader>
           <DialogTitle>{copy.title}</DialogTitle>
           <DialogDescription className="break-words">{copy.body}</DialogDescription>
@@ -122,9 +137,11 @@ export function ResendInvitationDialog({
         ) : null}
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">{t('account.resendDialog.cancel')}</Button>
+            <Button variant="ghost" disabled={pending}>
+              {t('account.resendDialog.cancel')}
+            </Button>
           </DialogClose>
-          <Button onClick={() => mutation.mutate()} disabled={error !== null || mutation.isPending}>
+          <Button onClick={() => mutation.mutate()} disabled={error !== null || pending}>
             {copy.confirm}
           </Button>
         </DialogFooter>

@@ -124,6 +124,24 @@ function canManageAccount(role: Role | null): boolean {
   return role === 'owner' || role === 'admin' || role === 'platform_admin';
 }
 
+/**
+ * R13: changing an invited member's address (never signed in) re-invites them
+ * at the new address, so it reads as an invitation, not as a code.
+ */
+function isInvited(invitation: Invitation): boolean {
+  return invitation === 'sent' || invitation === 'untracked';
+}
+
+/** The success toast of « Changer l'adresse de connexion », rendered with `{ email }`. */
+export function emailChangeSentKey(invitation: Invitation): string {
+  return isInvited(invitation) ? 'account.emailDialog.sentInvite' : 'account.emailDialog.sent';
+}
+
+function progressKey(kind: OperationView['kind'], invitation: Invitation): string {
+  if (kind === 'email_change' && isInvited(invitation)) return 'account.status.sending';
+  return PROGRESS[kind].key;
+}
+
 function statusRow(
   account: MemberAccountSummary,
   watched: ReadonlySet<string>,
@@ -134,7 +152,11 @@ function statusRow(
   if (running) {
     const p = PROGRESS[running.kind];
     const finalizing = running.kind === 'email_change' && running.state === 'verified';
-    const key = stale ? 'account.status.stillRunning' : finalizing ? 'account.status.finalizing' : p.key;
+    const key = stale
+      ? 'account.status.stillRunning'
+      : finalizing
+        ? 'account.status.finalizing'
+        : progressKey(running.kind, account.invitation);
     return { kind: 'progress', key, runningAction: p.action };
   }
   if (account.email_change?.state === 'pending_verification') {

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { Building2Icon, FileTextIcon, LockIcon, PlusIcon, SmartphoneIcon } from 'lucide-react';
+import { FileTextIcon, LockIcon, PlusIcon, SmartphoneIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -191,12 +191,12 @@ export function AddMemberDialog({ variant = 'default' }: { variant?: 'default' |
             form.setError('email', { type: 'server', message: t('addDialog.emailTaken') });
             return;
           }
-          if (
-            applyFieldErrors(
-              form,
-              overrideFieldMessages(err, { email: t('addDialog.emailRequired') }),
-            )
-          ) {
+          // A 400 on `email` means « required » only when none was sent;
+          // otherwise the sent address was refused as malformed.
+          const emailMessage = values.email.trim()
+            ? t('addDialog.emailInvalid')
+            : t('addDialog.emailRequired');
+          if (applyFieldErrors(form, overrideFieldMessages(err, { email: emailMessage }))) {
             return;
           }
           toast.error(apiErrorMessage(err, t('addDialog.error')));
@@ -394,11 +394,10 @@ export function AddMemberDialog({ variant = 'default' }: { variant?: 'default' |
                     id="add-member-access"
                     aria-readonly="true"
                     aria-labelledby="add-member-access-label"
-                    className="flex min-h-11 items-center gap-2 rounded-full border border-input bg-side px-[18px] text-base text-muted-foreground"
+                    className="flex h-12 items-center gap-2 rounded-full border border-input bg-side px-[18px] text-base text-muted-strong"
                   >
-                    <Building2Icon className="size-4 shrink-0" aria-hidden />
                     <span className="flex-1 truncate">{selectedVenue?.name}</span>
-                    <LockIcon className="size-4 shrink-0" aria-hidden />
+                    <LockIcon strokeWidth={1.5} className="size-4 shrink-0" aria-hidden />
                   </div>
                 </div>
               )}

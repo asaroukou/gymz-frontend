@@ -4,6 +4,7 @@ import type { MemberAccountSummary, OperationView } from '@iziwellpass/api/schem
 
 import {
   describeAccount,
+  emailChangeSentKey,
   formatOpMoment,
   hasRunningOperation,
   runningOperationIds,
@@ -227,6 +228,32 @@ describe('describeAccount: status row priority', () => {
     });
   });
 
+  it.each(['sent', 'untracked'] as const)(
+    'R13: a running e-mail change for an invited (%s) member reads as a new invitation',
+    (invitation) => {
+      const view = describeAccount(
+        acc({ invitation, email_change: op({ kind: 'email_change', state: 'dispatched' }) }),
+        owner,
+      );
+      expect(view.status).toEqual({
+        kind: 'progress',
+        key: 'account.status.sending',
+        runningAction: 'changeEmail',
+      });
+    },
+  );
+
+  it.each(['accepted', 'linked_existing'] as const)(
+    'a running e-mail change for a %s member sends a code',
+    (invitation) => {
+      const view = describeAccount(
+        acc({ invitation, email_change: op({ kind: 'email_change', state: 'requested' }) }),
+        owner,
+      );
+      expect(view.status?.key).toBe('account.status.sendingCode');
+    },
+  );
+
   it('reports already active when a watched resend completes after the member accepted', () => {
     const resend = op({ id: 'op-9', kind: 'invitation_resend', state: 'completed', result_code: 'invitation_sent' });
     const view = describeAccount(acc({ invitation: 'accepted', invitation_resend: resend }), {
@@ -238,6 +265,17 @@ describe('describeAccount: status row priority', () => {
       key: 'account.result.alreadyActive',
       at: resend.updated_at,
     });
+  });
+});
+
+describe('emailChangeSentKey (R13)', () => {
+  it.each([
+    ['sent', 'account.emailDialog.sentInvite'],
+    ['untracked', 'account.emailDialog.sentInvite'],
+    ['accepted', 'account.emailDialog.sent'],
+    ['linked_existing', 'account.emailDialog.sent'],
+  ] as const)('%s → %s', (invitation, key) => {
+    expect(emailChangeSentKey(invitation)).toBe(key);
   });
 });
 
@@ -365,6 +403,7 @@ describe('members.account copy', () => {
       ...['none', 'pending', 'sent', 'linkedExisting', 'accepted', 'untracked', 'failedFix'].map((k) => `account.explain.${k}`),
       ...['invalid_email', 'missing_email', 'identity_already_linked', 'provider_unavailable'].map((k) => `account.provisioningFailure.${k}`),
       ...['changePending', 'changePendingLine', 'changeFailed', 'changeFailedKeep'].map((k) => `account.emailState.${k}`),
+      ...['sent', 'sentInvite'].map((k) => `account.emailDialog.${k}`),
       ...['sending', 'creating', 'sendingCode', 'finalizing', 'signingOut', 'stillRunning', 'waiting'].map(
         (k) => `account.status.${k}`,
       ),

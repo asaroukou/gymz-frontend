@@ -417,6 +417,7 @@
     "searchPhone": "Name, email or phone",
     "clearSearch": "Clear search",
     "showMore": "Show more",
+    "loadMoreError": "Couldn't load more.",
     "scope": {
       "venue": "This venue",
       "all": "All venues"
@@ -467,6 +468,7 @@
       "query": "No member matches \"{q}\"."
     },
     "emptyTab": {
+      "all": "No members at this venue.",
       "active": "No active members.",
       "expired": "No expired members.",
       "suspended": "No suspended members."
@@ -482,6 +484,7 @@
       "emailOptional": "Email (optional)",
       "emailHelpLogin": "Required: it is used as the app login.",
       "emailRequired": "Email is required: this club gives its members access to the app.",
+      "emailInvalid": "Invalid e-mail address.",
       "emailTaken": "A member already uses this address.",
       "phone": "Phone",
       "type": "Membership type",
@@ -740,6 +743,7 @@
         "explainInvited": "If they have never signed in, the address is replaced right away and a new invitation is sent to it.",
         "confirm": "Send the code",
         "sent": "Code sent to {email}",
+        "sentInvite": "New invitation sent to {email}",
         "same": "This is already the current address.",
         "invalid": "Invalid e-mail address.",
         "taken": "This address is already in use.",

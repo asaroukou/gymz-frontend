@@ -13,6 +13,9 @@ import type { AccountView } from '@/lib/member-account';
 import { SuspendMemberDialog } from '../suspend-member-dialog';
 import { ReactivateMemberDialog } from './reactivate-member-dialog';
 
+/** Focus target after the sign-out dialog starts an operation (its trigger becomes disabled). */
+export const DANGER_HEADING_ID = 'member-danger-heading';
+
 /**
  * « Zone sensible » (canvas `caWdo`, board `WeVjb`): one lifecycle button at a
  * time (« Suspendre le membre » when active, « Réactiver » when suspended,
@@ -40,6 +43,9 @@ export function DangerZone({
   return (
     <section className="flex flex-col gap-4">
       <SectionHeading
+        id={DANGER_HEADING_ID}
+        tabIndex={-1}
+        className="outline-none"
         title={t('detail.danger.title')}
         description={t('detail.danger.description')}
       />

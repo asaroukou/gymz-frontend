@@ -113,16 +113,25 @@ export function EditMemberForm({
     defaultValues: toDefaults(member),
   });
 
+  // Reset only when the editable data changes. The account polling (2 s while
+  // an operation runs) hands a new `member` object on every tick; resetting
+  // on identity would wipe what the user is typing.
+  const memberRef = useRef(member);
   useEffect(() => {
+    memberRef.current = member;
+  });
+  const dataKey = `${member.id}:${member.version}:${member.email ?? ''}`;
+  useEffect(() => {
+    const current = memberRef.current;
     if (keepInputRef.current) {
       // Merge in the refetched server values without discarding what the
       // user typed: untouched fields take the concurrent change, the user's
       // edited (dirty) fields are preserved for the retry (H1).
-      form.reset(toDefaults(member), { keepDirtyValues: true });
+      form.reset(toDefaults(current), { keepDirtyValues: true });
       return;
     }
-    form.reset(toDefaults(member));
-  }, [member, form]);
+    form.reset(toDefaults(current));
+  }, [dataKey, form]);
 
   const onSubmit = (values: EditMemberValues) => {
     // Read the version at submit time: after a conflict this is the refetched one.

@@ -206,15 +206,25 @@ export function AttendanceSection({ memberId }: { memberId: string }) {
                 ))}
               </div>
               {query.hasNextPage ? (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => void query.fetchNextPage()}
-                  disabled={query.isFetchingNextPage}
-                >
-                  {query.isFetchingNextPage ? <LoaderCircleIcon aria-hidden className="animate-spin" /> : null}
-                  {t('showMore')}
-                </Button>
+                <div className="flex flex-col items-center gap-2">
+                  {/* A failed page keeps the button as the retry. */}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => void query.fetchNextPage()}
+                    disabled={query.isFetchingNextPage}
+                  >
+                    {query.isFetchingNextPage ? (
+                      <LoaderCircleIcon aria-hidden strokeWidth={1.5} className="animate-spin" />
+                    ) : null}
+                    {t('showMore')}
+                  </Button>
+                  {query.isFetchNextPageError && !query.isFetchingNextPage ? (
+                    <p role="alert" className="text-sm text-destructive-foreground">
+                      {t('loadMoreError')}
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
             </>
           )}

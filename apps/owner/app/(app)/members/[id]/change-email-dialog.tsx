@@ -19,7 +19,8 @@ import {
 import { Input } from '@iziwellpass/ui/components/input';
 import { Label } from '@iziwellpass/ui/components/label';
 
-import { idempotencyKeyFor, normalizeEmail, type KeyState } from '@/lib/idempotency';
+import { idempotencyKeyFor, sameAddress, type KeyState } from '@/lib/idempotency';
+import { emailChangeSentKey } from '@/lib/member-account';
 import { classifyMemberError, type MemberError } from '@/lib/member-errors';
 import { isForbidden } from '@/lib/plan-errors';
 
@@ -37,21 +38,24 @@ const ERROR_KEYS: Partial<Record<MemberError['kind'], string>> = {
 
 /**
  * « Changer l'adresse de connexion » (canvas `tbCt2`, error `OXBVd`):
- * `POST /members/{mid}/email-change` with an Idempotency-Key kept per intended
- * address, so a retry of the same address is deduplicated and a different
- * address gets a new key (Review Focus 4). The new address only ever shows in
- * the success toast.
+ * `POST /members/{mid}/email-change` with an Idempotency-Key kept per sent
+ * address (trimmed, case kept), so a retry of the same body is deduplicated
+ * and any other address gets a new key (Review Focus 4). The new address only
+ * ever shows in the success toast. While the request runs the dialog cannot
+ * be closed, so its callbacks always belong to this dialog.
  */
 export function ChangeEmailDialog({
   member,
   open,
   onOpenChange,
   onStarted,
+  restoreFocusTo,
 }: {
   member: StaffMemberProfile;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStarted: (operationId: string) => void;
+  restoreFocusTo?: () => HTMLElement | null | undefined;
 }) {
   const t = useTranslations('members');
   const tCommon = useTranslations('common');
@@ -74,7 +78,8 @@ export function ChangeEmailDialog({
     mutationFn: ({ email, key }: { email: string; key: string }) =>
       changeLoginEmail(member.id, { new_email: email }, { headers: { 'Idempotency-Key': key } }),
     onSuccess: (res, { email }) => {
-      toast.success(t('account.emailDialog.sent', { email }));
+      // R13: an invited member is re-invited at the new address, no code.
+      toast.success(t(emailChangeSentKey(member.account.invitation), { email }));
       onStarted(res.data.id);
       void queryClient.invalidateQueries({ queryKey: getGetMemberQueryKey(member.id) });
       onOpenChange(false);
@@ -92,7 +97,7 @@ export function ChangeEmailDialog({
     event.preventDefault();
     if (mutation.isPending) return;
     const next = value.trim();
-    if (normalizeEmail(next) === normalizeEmail(member.email ?? '')) {
+    if (sameAddress(next, member.email ?? '')) {
       setFieldError(t('account.emailDialog.same'));
       return;
     }
@@ -104,9 +109,22 @@ export function ChangeEmailDialog({
     mutation.mutate({ email: next, key: keyRef.current.key });
   };
 
+  const pending = mutation.isPending;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]" aria-describedby={undefined}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && pending) return;
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent
+        className="sm:max-w-[480px]"
+        aria-describedby={undefined}
+        closeDisabled={pending}
+        restoreFocusTo={restoreFocusTo}
+      >
         <DialogHeader>
           <DialogTitle>{t('account.emailDialog.title')}</DialogTitle>
         </DialogHeader>
@@ -146,11 +164,11 @@ export function ChangeEmailDialog({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="ghost">
+              <Button type="button" variant="ghost" disabled={pending}>
                 {tCommon('cancel')}
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={mutation.isPending || value.trim() === ''}>
+            <Button type="submit" disabled={pending || value.trim() === ''}>
               {t('account.emailDialog.confirm')}
             </Button>
           </DialogFooter>

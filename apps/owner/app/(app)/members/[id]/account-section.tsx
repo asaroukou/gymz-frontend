@@ -98,6 +98,13 @@ const STATUS_STYLE: Record<StatusRow['kind'], { icon: LucideIcon; className: str
   failed: { icon: CircleAlertIcon, className: 'font-medium text-destructive-foreground' },
 };
 
+/**
+ * Focus target after a dialog opened from this section (or the form's
+ * « Changer l'adresse » link) starts an operation: its trigger becomes
+ * disabled or hidden, so focus lands on the section heading instead.
+ */
+export const ACCOUNT_HEADING_ID = 'member-account-heading';
+
 const ACTION_LABEL: Record<AccountAction, string> = {
   resend: 'account.actions.resend',
   relaunch: 'account.actions.relaunch',
@@ -124,18 +131,26 @@ export function AccountSection({
   const locale = useLocale();
   const isLogin = member.account.mode === 'login';
   const status = view.status;
-  // R9: a failed relaunch reports the provisioning reason already listed under
-  // « Accès »; do not say it twice.
-  const showStatus = status != null && !view.lines.some((line) => line.key === status.key);
+  // R12: a failed relaunch is announced by the status row (inside the live
+  // region); the same reason listed under « Accès » is dropped so it is not
+  // shown twice.
+  const lines =
+    status?.kind === 'failed' ? view.lines.filter((line) => line.key !== status.key) : view.lines;
 
   return (
     <section className="flex flex-col gap-4">
-      <SectionHeading title={t('account.title')} description={t('account.subtitle')} />
+      <SectionHeading
+        id={ACCOUNT_HEADING_ID}
+        tabIndex={-1}
+        className="outline-none"
+        title={t('account.title')}
+        description={t('account.subtitle')}
+      />
       <div className="flex flex-col gap-5">
         <dl className="flex flex-col [&>*+*]:border-t [&>*+*]:border-border">
           <AccountRow
             label={t('account.rows.access')}
-            notes={view.lines.map((line) => (
+            notes={lines.map((line) => (
               <RowNote key={line.key} tone={line.tone}>
                 {t(line.key)}
               </RowNote>
@@ -202,9 +217,9 @@ export function AccountSection({
         */}
         <div className="flex flex-col items-start gap-1 has-[>[role=status]:empty]:sr-only">
           <div role="status" aria-live="polite">
-            {showStatus ? <StatusLine status={status} /> : null}
+            {status ? <StatusLine status={status} /> : null}
           </div>
-          {showStatus && status.key === 'account.status.stillRunning' ? (
+          {status?.key === 'account.status.stillRunning' ? (
             <button
               type="button"
               onClick={tracking.refresh}
