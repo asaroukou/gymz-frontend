@@ -1,4 +1,4 @@
-// Next.js middleware factory: server-side redirect for signed-out users based
+// Next.js proxy (formerly middleware) factory: server-side redirect for signed-out users based
 // on the marker cookie. UX-only guard — API authorization is the real boundary.
 
 import { NextResponse, type NextRequest } from 'next/server';

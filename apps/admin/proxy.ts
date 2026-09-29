@@ -1,6 +1,6 @@
 import { createAuthMiddleware } from '@iziwellpass/auth/middleware';
 
-export const middleware = createAuthMiddleware({
+export const proxy = createAuthMiddleware({
   loginPath: '/login',
   // '/design' is the design-system preview: components only, never data, and
   // marked noindex. Prefix match, so this covers the whole group.
