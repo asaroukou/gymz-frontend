@@ -1,0 +1,48 @@
+# Keeps `preview` (deployed by Vercel to preview.venue.iziwellpass.com) up to
+# date with `main`. Fast-forwards when `preview` has no commits of its own,
+# otherwise merges main into it. Never force-pushes: a conflict fails the run
+# and leaves `preview` untouched, to be resolved by hand.
+name: Sync preview with main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-preview
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Merge main into preview
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          if ! git ls-remote --exit-code --heads origin preview > /dev/null; then
+            git push origin origin/main:refs/heads/preview
+            echo "Created preview from main."
+            exit 0
+          fi
+
+          git checkout -B preview origin/preview
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "preview already contains main, nothing to do."
+            exit 0
+          fi
+
+          if ! git merge --no-edit -m "Merge branch 'main' into preview" origin/main; then
+            echo "::error::main does not merge cleanly into preview. Merge it by hand."
+            exit 1
+          fi
+          git push origin preview
