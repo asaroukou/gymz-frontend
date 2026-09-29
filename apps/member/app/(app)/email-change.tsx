@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -29,6 +29,10 @@ export default function EmailChangeScreen() {
   const [resending, setResending] = useState(false);
   const [cooldownEnds, setCooldownEnds] = useState(() => Date.now() + RESEND_COOLDOWN_S * 1000);
   const [now, setNow] = useState(() => Date.now());
+  // Set once Cognito accepted the code: a code is single-use, so a retry after
+  // a failed confirm goes straight to the confirm call. Cleared when the code
+  // is edited or a new one is sent.
+  const codeVerifiedRef = useRef(false);
 
   // Only the entry phase shows a live countdown; no point ticking elsewhere.
   useEffect(() => {
@@ -42,11 +46,14 @@ export default function EmailChangeScreen() {
   const goBack = () => router.back();
 
   const onConfirm = async () => {
-    if (code.length !== CODE_LENGTH || pending) return;
+    if (code.length !== CODE_LENGTH || pending || resending) return;
     setPending(true);
     setErrorKey(null);
     try {
-      await verifyEmailCode(code);
+      if (!codeVerifiedRef.current) {
+        await verifyEmailCode(code);
+        codeVerifiedRef.current = true;
+      }
     } catch (err) {
       const kind = classifyCodeError(err);
       if (kind === 'aliasExists') {
@@ -75,10 +82,11 @@ export default function EmailChangeScreen() {
   };
 
   const onResend = async () => {
-    if (remaining > 0 || resending) return;
+    if (remaining > 0 || resending || pending) return;
     setResending(true);
     try {
       await resendEmailCode();
+      codeVerifiedRef.current = false;
       setCooldownEnds(Date.now() + RESEND_COOLDOWN_S * 1000);
       setErrorKey(null);
     } catch (err) {
@@ -148,6 +156,7 @@ export default function EmailChangeScreen() {
         <CodeInput
           value={code}
           onChange={(next) => {
+            if (next !== code) codeVerifiedRef.current = false;
             setCode(next);
             if (errorKey) setErrorKey(null);
           }}
@@ -169,14 +178,14 @@ export default function EmailChangeScreen() {
           <Button
             label={t('emailChange.confirm')}
             onPress={() => void onConfirm()}
-            disabled={code.length !== CODE_LENGTH}
+            disabled={code.length !== CODE_LENGTH || resending}
             loading={pending}
           />
           <Button
             label={remaining > 0 ? t('emailChange.resendIn', { time: formatCountdown(remaining) }) : t('emailChange.resend')}
             variant="ghost"
             onPress={() => void onResend()}
-            disabled={remaining > 0}
+            disabled={remaining > 0 || pending}
             loading={resending}
           />
           <Button label={t('emailChange.later')} variant="ghost" onPress={goBack} />
