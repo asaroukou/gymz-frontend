@@ -172,7 +172,7 @@ export function MembersDirectory({
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-center gap-4">
-        <div className="relative w-full md:w-[380px]">
+        <div className="relative w-full md:max-w-[440px] md:flex-1">
           <SearchIcon className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
@@ -204,30 +204,34 @@ export function MembersDirectory({
             </Button>
           ) : null}
         </div>
-        {canPickScope ? (
-          <Select value={scope} onValueChange={(value) => onScopeChange(value as DirectoryScope)}>
-            <SelectTrigger className="w-[230px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="venue">{t('scope.venue')}</SelectItem>
-              <SelectItem value="all">{t('scope.all')}</SelectItem>
-            </SelectContent>
-          </Select>
-        ) : null}
-        <Tabs
-          value={status}
-          onValueChange={(value) => setStatus(value as DirectoryStatus)}
-          className="max-w-full overflow-x-auto"
-        >
-          <TabsList aria-label={t('columns.status')}>
-            {tabs.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        {/* f0WPx: on phone the scope select and the status tabs share one
+            horizontally scrolling row; from md they join the toolbar row. */}
+        <div className="flex w-full items-center gap-2 overflow-x-auto md:contents">
+          {canPickScope ? (
+            <Select value={scope} onValueChange={(value) => onScopeChange(value as DirectoryScope)}>
+              <SelectTrigger className="w-[190px] shrink-0 md:w-[230px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="venue">{t('scope.venue')}</SelectItem>
+                <SelectItem value="all">{t('scope.all')}</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : null}
+          <Tabs
+            value={status}
+            onValueChange={(value) => setStatus(value as DirectoryStatus)}
+            className="shrink-0 md:ml-auto md:max-w-full md:overflow-x-auto"
+          >
+            <TabsList aria-label={t('columns.status')}>
+              {tabs.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* Phone: stacked hairline rows, or the state notice, no table header. */}
